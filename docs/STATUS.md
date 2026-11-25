@@ -36,7 +36,7 @@ M1 in progress.
 | E12 | Partial | Grapheme-cluster navigation and deletion (`crates/sanain-core/src/grapheme.rs`) |
 | E05 | Partial | UTF-8, UTF-8 BOM, UTF-16 LE/BE BOM, line endings preserved; legacy encodings not started |
 | E02 | Not started | Single document only |
-| E06 | Partial | Unsaved-changes prompts on close/new/open; no crash recovery yet |
+| E06 | Partial | Unsaved-changes prompts; crash recovery verified on macOS (kill -9 → relaunch restores text). Not yet: session restore of multiple buffers, disk-full drill |
 | Others | Not started | |
 
 Known M1 limits: native menus only on macOS (Windows/Linux use in-window
@@ -78,7 +78,6 @@ because nobody independent exists; no fake approvals.
 ## Next
 - Line/column mapping, vertical movement, word movement, line operations.
 - Hard-link-safe save strategy.
-- Crash recovery journal for unsaved buffers (E06).
 - Word movement, line operations, sticky column.
 - Tabs (E02), then search (E04).
 - Manual IME and screen-reader pass on macOS; Windows and Linux GUI smoke

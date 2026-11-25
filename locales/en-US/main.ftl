@@ -57,3 +57,5 @@ app-hide-others = Hide Others
 app-show-all = Show All
 window-minimize = Minimize
 window-zoom = Zoom
+status-recovered = Restored unsaved changes from the last session
+status-recovery-failed = Could not save a recovery copy: { $reason }
