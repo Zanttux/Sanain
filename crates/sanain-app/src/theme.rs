@@ -11,6 +11,7 @@ pub struct Palette {
     pub accent: Color32,
     pub border: Color32,
     pub error: Color32,
+    pub warning: Color32,
 }
 
 pub const LIGHT: Palette = Palette {
@@ -21,6 +22,7 @@ pub const LIGHT: Palette = Palette {
     accent: Color32::from_rgb(0x08, 0x7A, 0x52),
     border: Color32::from_rgb(0xD4, 0xDD, 0xD9),
     error: Color32::from_rgb(0xB4, 0x23, 0x18),
+    warning: Color32::from_rgb(0x8A, 0x52, 0x00),
 };
 
 pub const DARK: Palette = Palette {
@@ -31,6 +33,7 @@ pub const DARK: Palette = Palette {
     accent: Color32::from_rgb(0x70, 0xDB, 0xA1),
     border: Color32::from_rgb(0x3B, 0x46, 0x50),
     error: Color32::from_rgb(0xFF, 0x91, 0x8A),
+    warning: Color32::from_rgb(0xF6, 0xC6, 0x6D),
 };
 
 pub fn palette(ctx: &egui::Context) -> &'static Palette {

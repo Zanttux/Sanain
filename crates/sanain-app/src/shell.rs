@@ -11,6 +11,7 @@ use sanain_core::LineEnding;
 use sanain_i18n::{FluentValue, Localizer};
 use sanain_io::{LoadError, TextEncoding};
 
+use crate::find::{FindBar, FindEvent};
 use crate::menu::{self, MenuAction};
 use crate::theme;
 use crate::view::EditorView;
@@ -49,6 +50,7 @@ pub struct Shell {
     status: Option<(String, bool)>,
     title: String,
     allow_close: bool,
+    find: FindBar,
     #[cfg(target_os = "macos")]
     native_menu: Option<menu::NativeMenu>,
 }
@@ -89,6 +91,7 @@ impl Shell {
             status,
             title: String::new(),
             allow_close: false,
+            find: FindBar::default(),
             #[cfg(target_os = "macos")]
             native_menu: None,
         };
@@ -100,14 +103,49 @@ impl Shell {
     }
 
     fn t(&self, id: &str, args: &[(&str, FluentValue<'_>)]) -> String {
-        let mut fa = sanain_i18n::FluentArgs::new();
-        for (k, v) in args {
-            fa.set(*k, v.clone());
+        tr(&self.l10n, id, args)
+    }
+
+    /// Move to the next or previous match and select it.
+    fn find_step(&mut self, forward: bool) {
+        let id = self.ws.active().id;
+        self.find.refresh(id, &self.ws.active().editor);
+        let sel = self.editor().selections().primary().range();
+        let from = if forward { sel.end } else { sel.start };
+        if let Some(i) = self.find.matches.next_from(from, forward) {
+            let r = self.find.matches.ranges[i].clone();
+            self.editor_mut().select(r);
+            self.views.entry(id).or_default().reveal();
         }
-        // Isolation marks would show as boxes in egui's text rendering.
-        self.l10n
-            .format(id, Some(&fa))
-            .replace(['\u{2068}', '\u{2069}'], "")
+    }
+
+    fn find_event(&mut self, event: FindEvent) {
+        let id = self.ws.active().id;
+        match event {
+            FindEvent::Next => self.find_step(true),
+            FindEvent::Prev => self.find_step(false),
+            FindEvent::Close => {
+                self.find.open = false;
+                self.focus_active();
+            }
+            FindEvent::Replace => {
+                self.find.refresh(id, &self.ws.active().editor);
+                let with = self.find.replacement.clone();
+                if let Some(m) = self.find.matcher().cloned() {
+                    self.editor_mut().replace_selected(&m, &with);
+                }
+                self.find_step(true);
+            }
+            FindEvent::ReplaceAll => {
+                self.find.refresh(id, &self.ws.active().editor);
+                let with = self.find.replacement.clone();
+                if let Some(m) = self.find.matcher().cloned() {
+                    let n = self.editor_mut().replace_all(&m, &with) as i64;
+                    let msg = self.t("status-replaced", &[("count", n.into())]);
+                    self.status = Some((msg, false));
+                }
+            }
+        }
     }
 
     fn editor(&self) -> &Editor {
@@ -302,6 +340,18 @@ impl Shell {
             MenuAction::Quit => {
                 ctx.send_viewport_cmd(ViewportCommand::Close);
                 None
+            }
+            MenuAction::Find | MenuAction::Replace => {
+                let seed = self.editor().copy();
+                self.find.open(action == MenuAction::Replace, seed);
+                return;
+            }
+            MenuAction::FindNext | MenuAction::FindPrev => {
+                if !self.find.open {
+                    self.find.open(false, None);
+                }
+                self.find_step(action == MenuAction::FindNext);
+                return;
             }
             MenuAction::Undo => editor_cmd(Command::Undo),
             MenuAction::Redo => editor_cmd(Command::Redo),
@@ -592,6 +642,10 @@ impl eframe::App for Shell {
                 MenuAction::ReopenTab,
                 MenuAction::PrevTab,
                 MenuAction::NextTab,
+                MenuAction::Replace,
+                MenuAction::Find,
+                MenuAction::FindPrev,
+                MenuAction::FindNext,
                 MenuAction::Quit,
             ] {
                 if let Some(s) = a.shortcut()
@@ -627,6 +681,33 @@ impl eframe::App for Shell {
         egui::Panel::top("tabs")
             .frame(egui::Frame::NONE.fill(p.surface))
             .show(ui, |ui| self.tab_bar(ui, &ctx));
+        if self.find.open {
+            let tab = self.ws.active().id;
+            self.find.refresh(tab, &self.ws.active().editor);
+            let current = self
+                .find
+                .matches
+                .index_of(&self.editor().selections().primary().range());
+            let l10n = &self.l10n;
+            let t = |id: &str, a: Option<(&str, i64)>, b: Option<(&str, i64)>| {
+                let args: Vec<(&str, FluentValue<'_>)> = [a, b]
+                    .into_iter()
+                    .flatten()
+                    .map(|(k, v)| (k, v.into()))
+                    .collect();
+                tr(l10n, id, &args)
+            };
+            let frame = egui::Frame::NONE
+                .fill(p.surface)
+                .inner_margin(egui::Margin::symmetric(8, 6));
+            let mut event = None;
+            egui::Panel::top("find").frame(frame).show(ui, |ui| {
+                event = self.find.show(ui, &t, current);
+            });
+            if let Some(e) = event {
+                self.find_event(e);
+            }
+        }
         egui::Panel::bottom("status").show(ui, |ui| self.status_bar(ui));
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE.fill(p.canvas))
@@ -636,9 +717,14 @@ impl eframe::App for Shell {
                 let id = self.ws.active().id;
                 let view = self.views.entry(id).or_default();
                 let editor = &mut self.ws.active_mut().editor;
+                let highlights: &[std::ops::Range<usize>] = if self.find.open {
+                    &self.find.matches.ranges
+                } else {
+                    &[]
+                };
                 ui.push_id(id, |ui| {
                     ui.add_enabled_ui(interactive, |ui| {
-                        if view.show(ui, editor, &name) {
+                        if view.show(ui, editor, &name, highlights) {
                             self.status = None;
                         }
                     });
@@ -673,6 +759,17 @@ impl eframe::App for Shell {
             self.title = title;
         }
     }
+}
+
+/// Format a localized message. Fluent's isolation marks are stripped
+/// because egui renders them as visible boxes.
+fn tr(l10n: &Localizer, id: &str, args: &[(&str, FluentValue<'_>)]) -> String {
+    let mut fa = sanain_i18n::FluentArgs::new();
+    for (k, v) in args {
+        fa.set(*k, v.clone());
+    }
+    l10n.format(id, Some(&fa))
+        .replace(['\u{2068}', '\u{2069}'], "")
 }
 
 pub fn describe_load_error(l10n: &Localizer, path: &Path, e: &LoadError) -> String {

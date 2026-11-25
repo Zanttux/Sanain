@@ -69,3 +69,27 @@ file-reopen-tab = Avaa suljettu välilehti uudelleen
 window-next-tab = Seuraava välilehti
 window-prev-tab = Edellinen välilehti
 tab-close = Sulje välilehti
+edit-find = Etsi…
+edit-find-next = Etsi seuraava
+edit-find-prev = Etsi edellinen
+edit-replace = Korvaa…
+find-placeholder = Etsi
+replace-placeholder = Korvaa tekstillä
+find-match-case = Sama kirjainkoko
+find-whole-word = Kokonainen sana
+find-regex = Säännöllinen lauseke
+find-no-results = Ei tuloksia
+find-count = { $total ->
+    [one] 1 osuma
+   *[other] { $total } osumaa
+    }
+find-count-current = { $current }/{ $total }
+find-prev = Edellinen osuma (Vaihto+Enter)
+find-next = Seuraava osuma (Enter)
+find-close = Sulje (Esc)
+replace-one = Korvaa
+replace-all = Korvaa kaikki
+status-replaced = { $count ->
+    [one] 1 osuma korvattiin
+   *[other] { $count } osumaa korvattiin
+    }

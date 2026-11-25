@@ -18,6 +18,7 @@ unicode-segmentation = "1.12"
 fluent-bundle = "0.16"
 unic-langid = "0.9.6"
 proptest = "1"
+regex = "1.13"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

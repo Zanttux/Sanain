@@ -20,6 +20,7 @@ pub struct EditorView {
     /// Widest line seen so far, for the horizontal scroll extent.
     max_width: f32,
     focus_requested: bool,
+    reveal_requested: bool,
 }
 
 impl EditorView {
@@ -27,8 +28,21 @@ impl EditorView {
         self.focus_requested = true;
     }
 
+    /// Scroll the primary caret into view on the next frame.
+    pub fn reveal(&mut self) {
+        self.reveal_requested = true;
+    }
+
     /// Returns true when the document or selection changed.
-    pub fn show(&mut self, ui: &mut Ui, editor: &mut Editor, accessible_name: &str) -> bool {
+    /// `highlights` are ascending, non-overlapping char ranges (search
+    /// matches) painted behind the text.
+    pub fn show(
+        &mut self,
+        ui: &mut Ui,
+        editor: &mut Editor,
+        accessible_name: &str,
+        highlights: &[std::ops::Range<usize>],
+    ) -> bool {
         let font = FontId::monospace(FONT_SIZE);
         let (row_h, char_w) = ui.fonts_mut(|f| (f.row_height(&font), f.glyph_width(&font, '0')));
         let palette = theme::palette(ui.ctx());
@@ -134,9 +148,27 @@ impl EditorView {
                         text_x + galley.pos_from_cursor(CCursor::new(col)).min.x
                     };
 
+                    let first_hit = highlights.partition_point(|h| h.end <= start);
+                    for h in highlights[first_hit..]
+                        .iter()
+                        .take_while(|h| h.start < line_end)
+                    {
+                        let x0 = x_of(h.start.max(start));
+                        let x1 = x_of(h.end.min(content_end)).max(x0 + 2.0);
+                        painter.rect_filled(
+                            Rect::from_min_max(pos2(x0, y), pos2(x1, y + row_h)),
+                            2.0,
+                            palette.warning.gamma_multiply(0.35),
+                        );
+                    }
+
                     for s in &sels {
                         let r = s.range();
-                        if r.is_empty() || r.end <= start || r.start > line_end {
+                        // A selection starting at the next line's first char
+                        // does not touch this line's break.
+                        let starts_after =
+                            r.start > line_end || (r.start == line_end && line_end > content_end);
+                        if r.is_empty() || r.end <= start || starts_after {
                             continue;
                         }
                         let x0 = x_of(r.start.max(start));
@@ -200,7 +232,7 @@ impl EditorView {
                     let x = text_x + galley.pos_from_cursor(CCursor::new(col)).min.x;
                     Rect::from_min_size(pos2(x, origin.y + line as f32 * row_h), vec2(2.0, row_h))
                 });
-                if moved_by_keyboard {
+                if moved_by_keyboard || std::mem::take(&mut self.reveal_requested) {
                     ui.scroll_to_rect(caret_rect.expand2(Vec2::new(char_w * 4.0, row_h)), None);
                 }
                 if response.has_focus() {

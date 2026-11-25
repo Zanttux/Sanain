@@ -301,6 +301,42 @@ impl Editor {
         None
     }
 
+    /// Select `range` as the only selection (e.g. a search match).
+    pub fn select(&mut self, range: std::ops::Range<usize>) {
+        let len = self.doc.len_chars();
+        self.goal = None;
+        self.sels = Selections::single(Selection::new(range.start.min(len), range.end.min(len)));
+    }
+
+    /// Replace every match in one undoable step; returns how many.
+    pub fn replace_all(&mut self, matcher: &sanain_core::search::Matcher, with: &str) -> usize {
+        let (tx, n) = matcher.replace_all(self.doc.rope(), with);
+        if n > 0 {
+            let first = tx.caret_positions().first().copied().unwrap_or(0);
+            if self.doc.apply(&tx).is_ok() {
+                self.sels = Selections::single(Selection::cursor(first.min(self.doc.len_chars())));
+            }
+        }
+        n
+    }
+
+    /// Replace the primary selection if it is exactly a match. Returns
+    /// whether a replacement happened.
+    pub fn replace_selected(&mut self, matcher: &sanain_core::search::Matcher, with: &str) -> bool {
+        let range = self.sels.primary().range();
+        if range.is_empty() {
+            return false;
+        }
+        match matcher.replacement_for(self.doc.rope(), range.clone(), with) {
+            Some(text) => {
+                self.select(range);
+                self.execute(Command::Insert(text));
+                true
+            }
+            None => false,
+        }
+    }
+
     /// Text of the current selections for Copy.
     pub fn copy(&self) -> Option<String> {
         let t = sel::selected_text(self.doc.rope(), &self.sels);
@@ -512,6 +548,33 @@ mod tests {
         ed.execute(Command::Undo);
         ed.execute(Command::Undo);
         assert_eq!(ed.document().text(), "one\ntwo");
+    }
+
+    #[test]
+    fn replace_selected_and_all() {
+        use sanain_core::search::Query;
+        let mut ed = Editor::new();
+        ed.execute(Command::Insert("a1 a2 a3".into()));
+        let m = Query {
+            pattern: r"a(\d)".into(),
+            regex: true,
+            ..Default::default()
+        }
+        .compile()
+        .unwrap()
+        .unwrap();
+        ed.select(0..1);
+        assert!(
+            !ed.replace_selected(&m, "b$1"),
+            "partial match is not replaced"
+        );
+        ed.select(3..5);
+        assert!(ed.replace_selected(&m, "b$1"));
+        assert_eq!(ed.document().text(), "a1 b2 a3");
+        assert_eq!(ed.replace_all(&m, "c$1"), 2);
+        assert_eq!(ed.document().text(), "c1 b2 c3");
+        ed.execute(Command::Undo);
+        assert_eq!(ed.document().text(), "a1 b2 a3", "replace all is one step");
     }
 
     #[test]
