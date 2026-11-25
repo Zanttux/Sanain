@@ -222,7 +222,8 @@ mod tests {
         assert_eq!(l, vec![11..12]);
         assert_eq!(r, vec![0..1, 12..13]);
         let (l, r) = intraline("äö x", "äö y");
-        assert_eq!((l, r), (vec![3..4], vec![3..4]), "char indices, not bytes");
+        assert_eq!(l, std::slice::from_ref(&(3..4)), "char indices, not bytes");
+        assert_eq!(r, std::slice::from_ref(&(3..4)));
         // Unrelated lines: no detail.
         assert_eq!(intraline("abcdef", "uvwxyz"), (vec![], vec![]));
     }
