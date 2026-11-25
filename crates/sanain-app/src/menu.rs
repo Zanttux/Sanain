@@ -17,10 +17,14 @@ pub enum MenuAction {
     Copy,
     Paste,
     SelectAll,
+    DuplicateLine,
+    DeleteLine,
+    MoveLineUp,
+    MoveLineDown,
 }
 
 impl MenuAction {
-    const ALL: [MenuAction; 11] = [
+    const ALL: [MenuAction; 15] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -32,6 +36,10 @@ impl MenuAction {
         Self::Copy,
         Self::Paste,
         Self::SelectAll,
+        Self::DuplicateLine,
+        Self::DeleteLine,
+        Self::MoveLineUp,
+        Self::MoveLineDown,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -48,6 +56,10 @@ impl MenuAction {
             Self::Copy => "edit.copy",
             Self::Paste => "edit.paste",
             Self::SelectAll => "edit.select-all",
+            Self::DuplicateLine => "edit.duplicate-line",
+            Self::DeleteLine => "edit.delete-line",
+            Self::MoveLineUp => "edit.move-line-up",
+            Self::MoveLineDown => "edit.move-line-down",
         }
     }
 
@@ -70,6 +82,10 @@ impl MenuAction {
             Self::Copy => "edit-copy",
             Self::Paste => "edit-paste",
             Self::SelectAll => "edit-select-all",
+            Self::DuplicateLine => "edit-duplicate-line",
+            Self::DeleteLine => "edit-delete-line",
+            Self::MoveLineUp => "edit-move-line-up",
+            Self::MoveLineDown => "edit-move-line-down",
         }
     }
 
@@ -88,6 +104,10 @@ impl MenuAction {
             Self::Copy => (cmd, Key::C),
             Self::Paste => (cmd, Key::V),
             Self::SelectAll => (cmd, Key::A),
+            Self::DuplicateLine => (Modifiers::ALT.plus(Modifiers::SHIFT), Key::ArrowDown),
+            Self::DeleteLine => (cmd_shift, Key::K),
+            Self::MoveLineUp => (Modifiers::ALT, Key::ArrowUp),
+            Self::MoveLineDown => (Modifiers::ALT, Key::ArrowDown),
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -112,6 +132,11 @@ const EDIT_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::Paste),
     None,
     Some(MenuAction::SelectAll),
+    None,
+    Some(MenuAction::DuplicateLine),
+    Some(MenuAction::DeleteLine),
+    Some(MenuAction::MoveLineUp),
+    Some(MenuAction::MoveLineDown),
 ];
 
 /// Draw the in-window menu bar. Returns the chosen action, if any.
@@ -182,6 +207,10 @@ mod native {
             MenuAction::Copy => (cmd, Code::KeyC),
             MenuAction::Paste => (cmd, Code::KeyV),
             MenuAction::SelectAll => (cmd, Code::KeyA),
+            MenuAction::DuplicateLine => (Modifiers::ALT | Modifiers::SHIFT, Code::ArrowDown),
+            MenuAction::DeleteLine => (cmd_shift, Code::KeyK),
+            MenuAction::MoveLineUp => (Modifiers::ALT, Code::ArrowUp),
+            MenuAction::MoveLineDown => (Modifiers::ALT, Code::ArrowDown),
         };
         Some(Accelerator::new(m, k))
     }

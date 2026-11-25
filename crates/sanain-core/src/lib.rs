@@ -7,6 +7,7 @@
 
 mod document;
 pub mod grapheme;
+pub mod lines;
 pub mod selection;
 mod transaction;
 

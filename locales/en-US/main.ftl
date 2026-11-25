@@ -59,3 +59,7 @@ window-minimize = Minimize
 window-zoom = Zoom
 status-recovered = Restored unsaved changes from the last session
 status-recovery-failed = Could not save a recovery copy: { $reason }
+edit-duplicate-line = Duplicate Line
+edit-delete-line = Delete Line
+edit-move-line-up = Move Line Up
+edit-move-line-down = Move Line Down

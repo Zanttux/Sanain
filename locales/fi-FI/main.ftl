@@ -60,3 +60,7 @@ window-minimize = Pienennä
 window-zoom = Zoomaa
 status-recovered = Edellisen istunnon tallentamattomat muutokset palautettiin
 status-recovery-failed = Palautuskopiota ei voitu tallentaa: { $reason }
+edit-duplicate-line = Monista rivi
+edit-delete-line = Poista rivi
+edit-move-line-up = Siirrä riviä ylös
+edit-move-line-down = Siirrä riviä alas

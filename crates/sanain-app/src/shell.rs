@@ -240,6 +240,18 @@ impl Shell {
             MenuAction::SelectAll => {
                 self.editor.execute(Command::SelectAll);
             }
+            MenuAction::DuplicateLine => {
+                self.editor.execute(Command::DuplicateLine);
+            }
+            MenuAction::DeleteLine => {
+                self.editor.execute(Command::DeleteLine);
+            }
+            MenuAction::MoveLineUp => {
+                self.editor.execute(Command::MoveLineUp);
+            }
+            MenuAction::MoveLineDown => {
+                self.editor.execute(Command::MoveLineDown);
+            }
             MenuAction::Copy => {
                 if let Some(t) = self.editor.copy() {
                     ctx.copy_text(t);
