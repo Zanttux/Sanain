@@ -21,6 +21,8 @@ pub struct Style<'a> {
     pub p: &'a Palette,
     pub size: f32,
     pub untranslated: &'a dyn Fn(&str) -> String,
+    /// Resolve and load an image by its Markdown URL.
+    pub image: &'a dyn Fn(&str) -> crate::imagecache::ImageView,
 }
 
 /// What the user did in the preview this frame.
@@ -90,6 +92,13 @@ fn block(ui: &mut egui::Ui, b: &Block, st: &Style<'_>, depth: usize, ev: &mut Op
             text(ui, inlines, st, st.size * scale, p.text, true, ev);
             if *level <= 2 {
                 ui.add(egui::Separator::default().spacing(4.0));
+            }
+        }
+        BlockKind::Paragraph(inlines) if is_image_paragraph(inlines) => {
+            for i in inlines {
+                if let Inline::Image { url, alt } = i {
+                    image(ui, url, alt, st);
+                }
             }
         }
         BlockKind::Paragraph(inlines) => text(ui, inlines, st, st.size, body(p), false, ev),
@@ -225,6 +234,48 @@ fn text(
         let response = response.on_hover_text(url);
         if response.clicked() {
             *ev = Some(Event::LinkClicked(url.clone()));
+        }
+    }
+}
+
+/// A paragraph holding only images (and line breaks) shows them as images;
+/// images inside running text stay as their alt text.
+fn is_image_paragraph(inlines: &[Inline]) -> bool {
+    let mut any = false;
+    for i in inlines {
+        match i {
+            Inline::Image { .. } => any = true,
+            Inline::SoftBreak | Inline::LineBreak => {}
+            Inline::Text(t) if t.trim().is_empty() => {}
+            _ => return false,
+        }
+    }
+    any
+}
+
+fn image(ui: &mut egui::Ui, url: &str, alt: &str, st: &Style<'_>) {
+    use crate::imagecache::ImageView;
+    match (st.image)(url) {
+        ImageView::Ready(tex) => {
+            let natural = tex.size_vec2() / ui.ctx().pixels_per_point();
+            let width = natural.x.min(ui.available_width());
+            let size = egui::vec2(width, natural.y * width / natural.x.max(1.0));
+            let mut img = egui::Image::new((tex.id(), size));
+            if !alt.is_empty() {
+                img = img.alt_text(alt);
+            }
+            ui.add(img).on_hover_text(alt);
+        }
+        ImageView::Loading => {
+            ui.spinner();
+        }
+        ImageView::Note(id) => {
+            let label = if alt.is_empty() { url } else { alt };
+            ui.label(
+                RichText::new(format!("[{label}] {}", (st.untranslated)(id)))
+                    .color(st.p.muted)
+                    .italics(),
+            );
         }
     }
 }

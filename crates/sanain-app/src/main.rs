@@ -2,6 +2,7 @@
 
 mod diffview;
 mod find;
+mod imagecache;
 mod menu;
 mod palette;
 mod preview;

@@ -140,6 +140,7 @@ pub struct Shell {
     md_synced: HashMap<TabId, usize>,
     /// Heading anchor to scroll the preview to, per tab.
     md_anchor: HashMap<TabId, String>,
+    images: std::cell::RefCell<crate::imagecache::ImageCache>,
     applied_theme: Option<ThemeChoice>,
     /// Set once the session was recorded for the current quit attempt.
     quit_recorded: bool,
@@ -205,6 +206,7 @@ impl Shell {
             md_cache: HashMap::new(),
             md_synced: HashMap::new(),
             md_anchor: HashMap::new(),
+            images: Default::default(),
             applied_theme: None,
             quit_recorded: false,
             #[cfg(target_os = "macos")]
@@ -1122,10 +1124,27 @@ impl Shell {
         self.md_synced.insert(id, caret_line);
         let l10n = &self.l10n;
         let untranslated = |key: &str| tr(l10n, key, &[]);
+        let doc_dir = self
+            .editor()
+            .file()
+            .and_then(|f| f.path.parent().map(std::path::Path::to_path_buf));
+        let ctx = ui.ctx().clone();
+        let images = &self.images;
+        let image = |url: &str| {
+            use crate::imagecache::ImageView;
+            use sanain_app::images::ImageSource;
+            match sanain_app::images::resolve(url, doc_dir.as_deref()) {
+                ImageSource::Local(path) => images.borrow_mut().get(&ctx, &path),
+                ImageSource::Remote => ImageView::Note("image-remote"),
+                ImageSource::Blocked => ImageView::Note("image-blocked"),
+            }
+        };
+        self.images.borrow_mut().poll(&ctx);
         let style = preview::Style {
             p,
             size: self.settings.font_size + 1.0,
             untranslated: &untranslated,
+            image: &image,
         };
         egui::Frame::NONE
             .fill(p.canvas)

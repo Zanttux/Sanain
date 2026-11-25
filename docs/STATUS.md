@@ -37,7 +37,7 @@ M1 in progress.
 | E03 | Partial | Undo/redo, grouped transactions, property test, multi-cursor insert/delete |
 | E12 | Partial | Grapheme-cluster navigation and deletion (`crates/sanain-core/src/grapheme.rs`) |
 | E04 | Partial | Find/replace in the current tab: literal, regex, case, whole word, highlight, count, replace all as one undo. Not yet: preview before replace-all, cancellation for huge files, search across files |
-| E08 | Partial | Source/split/preview, GFM blocks and inlines, front matter, caret-following preview, raw HTML inert, source bytes unchanged (hash checked). Links: web with confirmation, local files, anchors, unsafe schemes blocked. Not yet: images, Mermaid, outline panel, syntax colours in code blocks |
+| E08 | Partial | Source/split/preview, GFM blocks and inlines, front matter, caret-following preview, raw HTML inert, source bytes unchanged (hash checked). Links: web with confirmation, local files, anchors, unsafe schemes blocked. Local images inside the document folder (limits enforced; remote never fetched). Not yet: permission flow for images outside the folder, Mermaid, outline panel, syntax colours in code blocks |
 | E10 | Partial | Two-tab side-by-side line diff (time-bounded), apply hunk in either direction as one undo, stale-revision check. Not yet: intraline highlight, whitespace options, files/clipboard as sources |
 | E05 | Partial | UTF-8, UTF-8 BOM, UTF-16 LE/BE BOM, 17 legacy encodings by explicit choice (exact round trip enforced), explicit encoding and LF/CRLF conversion. Not yet: UTF-16 without BOM, automatic legacy detection |
 | E09 | Partial | JSON validate/format/minify preserving lexemes; read-only JSON tree; read-only CSV/TSV grid with delimiter detection. Not yet: XML/YAML inspection, editing in structured views |
@@ -86,6 +86,6 @@ because nobody independent exists; no fake approvals.
 ## Next
 - Line/column mapping, vertical movement, word movement, line operations.
 - Hard-link-safe save strategy.
-- Local images in the Markdown preview, then accessibility pass (E12) and Windows/Linux runtime checks.
+- Accessibility pass (E12): VoiceOver reading of editor text, focus order, high contrast; then folding (E07).
 - Manual IME and screen-reader pass on macOS; Windows and Linux GUI smoke
   test (needs hardware or VM access).
