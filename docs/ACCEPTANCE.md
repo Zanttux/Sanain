@@ -15,4 +15,5 @@ Evidence per scenario: commit, OS, fixture, expected/actual, test command, pass/
 | Scenario | Date | OS | Result | Evidence |
 |---|---|---|---|---|
 | E06 recovery after kill | 2026-11-25 | macOS 27.2.1 | Pass | Typed into untitled buffer, waited 3 s, `kill -9`, relaunched: text restored, marked unsaved, status shown. Don't Save removed the checkpoint. Disk-full part not run. |
+| E08 preview (partial) | 2026-11-25 | macOS 27.2.1 | Pass for implemented parts | GFM demo with front matter, task lists, table, code, Mermaid block and `<script>`: split and preview render; script shown as text; SHA-256 of the file identical after viewing and quitting. Images, link opening and Mermaid not implemented. |
 | E01 external change | 2026-11-25 | macOS, CI all OS | Pass (automated) | `crates/sanain-io/tests/file_lifecycle.rs`, `crates/sanain-app/src/editor.rs` tests |

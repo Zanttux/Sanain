@@ -34,10 +34,13 @@ pub enum MenuAction {
     ZoomOut,
     ZoomReset,
     CommandPalette,
+    MarkdownSource,
+    MarkdownSplit,
+    MarkdownPreview,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 28] = [
+    pub const ALL: [MenuAction; 31] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -66,6 +69,9 @@ impl MenuAction {
         Self::ZoomOut,
         Self::ZoomReset,
         Self::CommandPalette,
+        Self::MarkdownSource,
+        Self::MarkdownSplit,
+        Self::MarkdownPreview,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -99,6 +105,9 @@ impl MenuAction {
             Self::ZoomOut => "view.zoom-out",
             Self::ZoomReset => "view.zoom-reset",
             Self::CommandPalette => "view.command-palette",
+            Self::MarkdownSource => "view.markdown-source",
+            Self::MarkdownSplit => "view.markdown-split",
+            Self::MarkdownPreview => "view.markdown-preview",
         }
     }
 
@@ -138,6 +147,9 @@ impl MenuAction {
             Self::ZoomOut => "view-zoom-out",
             Self::ZoomReset => "view-zoom-reset",
             Self::CommandPalette => "view-command-palette",
+            Self::MarkdownSource => "view-markdown-source",
+            Self::MarkdownSplit => "view-markdown-split",
+            Self::MarkdownPreview => "view-markdown-preview",
         }
     }
 
@@ -174,6 +186,8 @@ impl MenuAction {
             Self::ZoomOut => (cmd, Key::Minus),
             Self::ZoomReset => (cmd, Key::Num0),
             Self::CommandPalette => (cmd_shift, Key::P),
+            Self::MarkdownSplit => (cmd_shift, Key::V),
+            Self::MarkdownSource | Self::MarkdownPreview => return None,
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -195,6 +209,10 @@ const FILE_ITEMS: &[Option<MenuAction>] = &[
 const WINDOW_ITEMS: &[Option<MenuAction>] = &[Some(MenuAction::NextTab), Some(MenuAction::PrevTab)];
 const VIEW_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::CommandPalette),
+    None,
+    Some(MenuAction::MarkdownSource),
+    Some(MenuAction::MarkdownSplit),
+    Some(MenuAction::MarkdownPreview),
     None,
     Some(MenuAction::ZoomIn),
     Some(MenuAction::ZoomOut),
@@ -287,7 +305,7 @@ mod native {
     /// Shortcuts as logical keys (the character a key produces), as macOS
     /// expects: physical key codes break punctuation shortcuts on non-US
     /// layouts (e.g. "=" is Shift+0 on Finnish keyboards).
-    fn accelerator(action: MenuAction) -> KeyAccelerator {
+    fn accelerator(action: MenuAction) -> Option<KeyAccelerator> {
         let cmd = Modifiers::META;
         let cmd_shift = Modifiers::META | Modifiers::SHIFT;
         let ch = |c: &str| Key::Character(c.into());
@@ -326,8 +344,10 @@ mod native {
             MenuAction::ZoomOut => (cmd, ch("-")),
             MenuAction::ZoomReset => (cmd, ch("0")),
             MenuAction::CommandPalette => (cmd_shift, ch("p")),
+            MenuAction::MarkdownSplit => (cmd_shift, ch("v")),
+            MenuAction::MarkdownSource | MenuAction::MarkdownPreview => return None,
         };
-        KeyAccelerator::new(m, k)
+        Some(KeyAccelerator::new(m, k))
     }
 
     impl NativeMenu {
@@ -337,7 +357,7 @@ mod native {
             let mut items = Vec::new();
             let mut make = |action: MenuAction| {
                 let item = MenuItem::with_id(action.id(), label(action.label_id()), true, None);
-                let _ = item.set_key_accelerator(Some(accelerator(action)));
+                let _ = item.set_key_accelerator(accelerator(action));
                 items.push((action, item.clone()));
                 item
             };
