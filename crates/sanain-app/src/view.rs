@@ -18,6 +18,8 @@ pub struct ViewOptions {
     pub font_size: f32,
     /// Text inserted by the Tab key.
     pub indent: String,
+    /// Tab width in columns, for indentation-based folding.
+    pub tab_width: usize,
 }
 
 #[derive(Debug, Default)]
@@ -62,11 +64,15 @@ impl EditorView {
             .auto_shrink(false)
             .show_viewport(ui, |ui, viewport| {
                 let line_count = editor.document().rope().len_lines();
+                let tab = opts.tab_width.max(1);
+                let folds = editor.fold_map(tab).clone();
                 let digits = line_count.to_string().len().max(3) as f32;
-                let gutter_w = (digits + 2.0) * char_w;
+                // Line numbers, then a fold marker column.
+                let gutter_w = (digits + 3.5) * char_w;
+                let rows = folds.rows(line_count);
                 let size = vec2(
                     (gutter_w + self.max_width + 4.0 * char_w).max(ui.available_width()),
-                    (line_count as f32 * row_h + row_h * 4.0).max(ui.available_height()),
+                    (rows as f32 * row_h + row_h * 4.0).max(ui.available_height()),
                 );
                 let (_, rect) = ui.allocate_space(size);
                 let response = ui.interact(rect, id, Sense::click_and_drag());
@@ -104,15 +110,28 @@ impl EditorView {
                     let job = line_job(text, start, syntax, &font, palette);
                     ui.fonts_mut(|f| f.layout_job(job))
                 };
+                let line_at = |pos: Pos2| -> usize {
+                    let row = ((pos.y - origin.y) / row_h).floor().max(0.0) as usize;
+                    folds.line_of_row(row).min(line_count.saturating_sub(1))
+                };
                 let hit = |ui: &Ui, pos: Pos2, editor: &Editor| -> usize {
                     let rope = editor.document().rope();
-                    let line = (((pos.y - origin.y) / row_h).floor().max(0.0) as usize)
-                        .min(rope.len_lines().saturating_sub(1));
+                    let line = line_at(pos);
                     let galley = layout(ui, line, editor);
                     let c = galley.cursor_from_pos(vec2(pos.x - text_x, row_h / 2.0));
                     rope.line_to_char(line) + c.index.0
                 };
-                if let Some(pos) = response.interact_pointer_pos() {
+                // A click on the fold marker column toggles the fold.
+                let marker_x = (text_x - 1.6 * char_w)..(text_x - 0.2 * char_w);
+                let mut toggled = false;
+                if response.clicked()
+                    && let Some(pos) = response.interact_pointer_pos()
+                    && marker_x.contains(&pos.x)
+                {
+                    toggled = editor.toggle_fold(line_at(pos), tab);
+                    changed |= toggled;
+                }
+                if let Some(pos) = response.interact_pointer_pos().filter(|_| !toggled) {
                     let shift = ui.input(|i| i.modifiers.shift);
                     if response.drag_started() || response.clicked() {
                         response.request_focus();
@@ -138,16 +157,20 @@ impl EditorView {
                     }
                 }
 
-                // Paint visible lines.
+                // Paint visible lines. Folds may have changed this frame.
+                let folds = editor.fold_map(tab).clone();
+                let line_count = editor.document().rope().len_lines();
                 let painter = ui.painter_at(viewport.translate(origin.to_vec2()).intersect(rect));
                 let first = (viewport.min.y / row_h).floor().max(0.0) as usize;
-                let last = ((viewport.max.y / row_h).ceil() as usize + 1).min(line_count);
+                let last =
+                    ((viewport.max.y / row_h).ceil() as usize + 1).min(folds.rows(line_count));
                 let rope = editor.document().rope();
                 let sels: Vec<_> = editor.selections().iter().copied().collect();
                 let primary_head = editor.selections().primary().head;
                 let mut caret_rect = None;
-                for line in first..last {
-                    let y = origin.y + line as f32 * row_h;
+                for row in first..last {
+                    let line = folds.line_of_row(row);
+                    let y = origin.y + row as f32 * row_h;
                     let galley = layout(ui, line, editor);
                     self.max_width = self.max_width.max(galley.size().x);
                     let start = rope.line_to_char(line);
@@ -194,13 +217,36 @@ impl EditorView {
                     }
 
                     painter.text(
-                        pos2(text_x - char_w, y),
+                        pos2(text_x - 2.0 * char_w, y),
                         Align2::RIGHT_TOP,
                         (line + 1).to_string(),
                         font.clone(),
                         palette.muted,
                     );
+                    let folded = editor.is_folded(line);
+                    if folded || sanain_core::folding::is_fold_start(rope, line, tab) {
+                        painter.text(
+                            pos2(text_x - 0.9 * char_w, y),
+                            Align2::CENTER_TOP,
+                            if folded { "▸" } else { "▾" },
+                            font.clone(),
+                            palette.muted,
+                        );
+                    }
                     painter.galley(pos2(text_x, y), galley.clone(), palette.text);
+                    if folded {
+                        let x = text_x + galley.size().x + char_w;
+                        let r =
+                            Rect::from_min_size(pos2(x, y + 2.0), vec2(char_w * 3.0, row_h - 4.0));
+                        painter.rect_filled(r, 3.0, palette.surface);
+                        painter.text(
+                            r.center(),
+                            Align2::CENTER_CENTER,
+                            "…",
+                            font.clone(),
+                            palette.muted,
+                        );
+                    }
 
                     for s in &sels {
                         if s.head < start || s.head > content_end {
@@ -240,7 +286,8 @@ impl EditorView {
                     let galley = layout(ui, line, editor);
                     let col = primary_head - rope.line_to_char(line);
                     let x = text_x + galley.pos_from_cursor(CCursor::new(col)).min.x;
-                    Rect::from_min_size(pos2(x, origin.y + line as f32 * row_h), vec2(2.0, row_h))
+                    let row = folds.row_of_line(line);
+                    Rect::from_min_size(pos2(x, origin.y + row as f32 * row_h), vec2(2.0, row_h))
                 });
                 if moved_by_keyboard || std::mem::take(&mut self.reveal_requested) {
                     ui.scroll_to_rect(caret_rect.expand2(Vec2::new(char_w * 4.0, row_h)), None);
@@ -273,7 +320,7 @@ impl EditorView {
                         CCursor::new(end - start)
                     };
                     let range = egui::text_selection::CCursorRange::two(anchor, head);
-                    let origin = vec2(text_x, origin.y + line as f32 * row_h);
+                    let origin = vec2(text_x, origin.y + folds.row_of_line(line) as f32 * row_h);
                     egui::text_selection::accesskit_text::update_accesskit_for_text_widget(
                         ui.ctx(),
                         id,

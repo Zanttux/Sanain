@@ -205,3 +205,6 @@ image-unsupported = Kuvamuotoa ei tueta.
 image-too-large = Kuva on liian suuri näytettäväksi.
 image-unreadable = Kuvaa ei voitu lukea.
 settings-theme-high-contrast = Suuri kontrasti
+view-fold = Laskosta
+view-unfold = Avaa laskos
+view-unfold-all = Avaa kaikki laskokset
