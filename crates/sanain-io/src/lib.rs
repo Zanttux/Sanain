@@ -14,4 +14,4 @@ mod file;
 pub mod recovery;
 
 pub use encoding::{DecodeError, TextEncoding, decode, encode};
-pub use file::{Fingerprint, LoadError, Loaded, SaveError, SaveMode, load, save};
+pub use file::{Fingerprint, LoadError, Loaded, SaveError, SaveMode, load, save, write_atomic};
