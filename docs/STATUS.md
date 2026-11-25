@@ -42,7 +42,7 @@ M1 in progress.
 Known M1 limits: native menus only on macOS (Windows/Linux use in-window
 menus); running the bare binary on macOS shows "sanain" in the menu bar,
 use `scripts/macos-bundle.sh` for the proper app name;
-no word-wise movement, sticky column or line wrapping; every visible line
+no sticky column or line wrapping; every visible line
 is re-laid out each frame (very long lines will be slow); dialog button
 order follows macOS on all platforms; IME composition and VoiceOver
 reading of document text not yet verified by a person.
@@ -78,7 +78,7 @@ because nobody independent exists; no fake approvals.
 ## Next
 - Line/column mapping, vertical movement, word movement, line operations.
 - Hard-link-safe save strategy.
-- Word movement, line operations, sticky column.
+- Line operations, sticky column.
 - Tabs (E02), then search (E04).
 - Manual IME and screen-reader pass on macOS; Windows and Linux GUI smoke
   test (needs hardware or VM access).

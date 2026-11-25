@@ -17,6 +17,14 @@ pub enum Command {
     Left {
         extend: bool,
     },
+    WordLeft {
+        extend: bool,
+    },
+    WordRight {
+        extend: bool,
+    },
+    DeleteWordBackward,
+    DeleteWordForward,
     Right {
         extend: bool,
     },
@@ -190,6 +198,16 @@ impl Editor {
                 let (tx, s) = sel::insert(&self.sels, "");
                 self.commit(tx, s);
                 return Some(text);
+            }
+            Command::WordLeft { extend } => (None, sel::move_word(rope, &self.sels, false, extend)),
+            Command::WordRight { extend } => (None, sel::move_word(rope, &self.sels, true, extend)),
+            Command::DeleteWordBackward => {
+                let (tx, s) = sel::delete_word(rope, &self.sels, false);
+                (Some(tx), s)
+            }
+            Command::DeleteWordForward => {
+                let (tx, s) = sel::delete_word(rope, &self.sels, true);
+                (Some(tx), s)
             }
             Command::Left { extend } => {
                 (None, sel::move_horizontal(rope, &self.sels, false, extend))

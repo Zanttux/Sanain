@@ -222,6 +222,90 @@ pub fn move_vertical(rope: &Rope, sels: &Selections, down: bool, extend: bool) -
     Selections::new(moved, sels.primary, rope.len_chars())
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum CharClass {
+    Space,
+    LineBreak,
+    Word,
+    Punct,
+}
+
+fn class_at(rope: &Rope, idx: usize) -> CharClass {
+    match rope.char(idx) {
+        '\n' | '\r' | '\u{0B}' | '\u{0C}' | '\u{85}' | '\u{2028}' | '\u{2029}' => {
+            CharClass::LineBreak
+        }
+        c if c.is_whitespace() => CharClass::Space,
+        c if c.is_alphanumeric() || c == '_' => CharClass::Word,
+        _ => CharClass::Punct,
+    }
+}
+
+/// The next word boundary from `from`, stepping by grapheme clusters.
+/// Forward: skip spaces, then one run of word or punctuation characters.
+/// A line break is a stop of its own. Backward mirrors this.
+pub fn word_boundary(rope: &Rope, from: usize, forward: bool) -> usize {
+    let len = rope.len_chars();
+    let mut i = from.min(len);
+    let step = |i: usize| {
+        if forward {
+            grapheme::next_boundary(rope, i)
+        } else {
+            grapheme::prev_boundary(rope, i)
+        }
+    };
+    // Class of the grapheme we are about to cross.
+    let peek = |i: usize| -> Option<CharClass> {
+        if forward {
+            (i < len).then(|| class_at(rope, i))
+        } else {
+            (i > 0).then(|| class_at(rope, grapheme::prev_boundary(rope, i)))
+        }
+    };
+    while peek(i) == Some(CharClass::Space) {
+        i = step(i);
+    }
+    match peek(i) {
+        None => i,
+        Some(CharClass::LineBreak) if i == from.min(len) => step(i),
+        Some(CharClass::LineBreak) => i,
+        Some(run) => {
+            while peek(i) == Some(run) {
+                i = step(i);
+            }
+            i
+        }
+    }
+}
+
+/// Alt/Ctrl+Arrow: move each caret to the next word boundary.
+pub fn move_word(rope: &Rope, sels: &Selections, forward: bool, extend: bool) -> Selections {
+    let moved = sels
+        .iter()
+        .map(|s| {
+            let head = word_boundary(rope, s.head, forward);
+            if extend {
+                Selection::new(s.anchor, head)
+            } else {
+                Selection::cursor(head)
+            }
+        })
+        .collect();
+    Selections::new(moved, sels.primary, rope.len_chars())
+}
+
+/// Alt/Ctrl+Backspace or Delete: delete the selection, or to the word
+/// boundary in that direction.
+pub fn delete_word(rope: &Rope, sels: &Selections, forward: bool) -> (Transaction, Selections) {
+    replace_each(sels, |s| {
+        if !s.is_empty() {
+            return (s.range(), String::new());
+        }
+        let b = word_boundary(rope, s.head, forward);
+        (s.head.min(b)..s.head.max(b), String::new())
+    })
+}
+
 /// Home/End: move to the start or content end of the caret's line.
 pub fn move_line_edge(rope: &Rope, sels: &Selections, end: bool, extend: bool) -> Selections {
     let moved = sels
@@ -466,5 +550,37 @@ mod tests {
         assert_eq!(line_content_end(&rope, 1), 3);
         assert_eq!(line_content_end(&rope, 2), 6);
         assert_eq!(line_content_end(&rope, 3), 8);
+    }
+
+    #[test]
+    fn word_boundaries() {
+        let rope = Rope::from_str("foo_bar  baz.qux()\r\nnext é\u{301}x");
+        let fwd: Vec<usize> = std::iter::successors(Some(0), |&i| {
+            let n = word_boundary(&rope, i, true);
+            (n != i).then_some(n)
+        })
+        .collect();
+        // foo_bar| baz|.|qux|()|CRLF|next| é́x|
+        assert_eq!(fwd, vec![0, 7, 12, 13, 16, 18, 20, 24, 28]);
+        let back: Vec<usize> = std::iter::successors(Some(28), |&i| {
+            let n = word_boundary(&rope, i, false);
+            (n != i).then_some(n)
+        })
+        .collect();
+        assert_eq!(back, vec![28, 25, 20, 18, 16, 13, 12, 9, 0]);
+    }
+
+    #[test]
+    fn delete_word_backward_and_forward() {
+        let rope = Rope::from_str("hello big world");
+        let s = Selections::single(Selection::cursor(9));
+        let (tx, next) = delete_word(&rope, &s, false);
+        let mut doc = crate::Document::from_saved_text("hello big world");
+        doc.apply(&tx).unwrap();
+        assert_eq!(doc.text(), "hello  world");
+        assert_eq!(next.primary(), Selection::cursor(6));
+        let (tx, _) = delete_word(doc.rope(), &next, true);
+        doc.apply(&tx).unwrap();
+        assert_eq!(doc.text(), "hello ");
     }
 }

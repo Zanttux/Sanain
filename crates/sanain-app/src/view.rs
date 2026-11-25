@@ -272,9 +272,19 @@ impl EditorView {
                     return None;
                 }
                 let extend = m.shift;
+                // Word navigation: Option on macOS, Ctrl elsewhere.
+                let word = if cfg!(target_os = "macos") {
+                    m.alt
+                } else {
+                    m.ctrl
+                };
                 match key {
                     Key::Enter if !m.command => Command::NewLine,
                     Key::Tab if !m.command && !m.shift => Command::Insert("\t".into()),
+                    Key::Backspace if word => Command::DeleteWordBackward,
+                    Key::Delete if word => Command::DeleteWordForward,
+                    Key::ArrowLeft if word => Command::WordLeft { extend },
+                    Key::ArrowRight if word => Command::WordRight { extend },
                     Key::Backspace => Command::Backspace,
                     Key::Delete => Command::Delete,
                     Key::ArrowLeft if m.mac_cmd => Command::LineStart { extend },
