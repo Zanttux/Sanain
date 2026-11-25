@@ -66,6 +66,11 @@ fn encoding_choices(reopen: bool) -> Vec<TextEncoding> {
 enum Structured {
     Csv(sanain_tools::csv::Table),
     Json(Result<sanain_tools::json::Node, sanain_tools::json::JsonError>),
+    /// XML or YAML as a tree; the message id names the format.
+    Tree(
+        &'static str,
+        Result<sanain_tools::json::Node, sanain_tools::markup::TreeError>,
+    ),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -73,6 +78,8 @@ enum DataKind {
     Csv,
     Tsv,
     Json,
+    Xml,
+    Yaml,
 }
 
 /// How a Markdown tab is shown.
@@ -1262,6 +1269,10 @@ impl Shell {
             "csv" => Some(DataKind::Csv),
             "tsv" | "tab" => Some(DataKind::Tsv),
             "json" | "geojson" => Some(DataKind::Json),
+            "xml" | "xsd" | "xsl" | "xslt" | "svg" | "plist" | "xaml" | "csproj" | "fsproj"
+            | "vbproj" | "props" | "targets" | "resx" | "xhtml" | "rss" | "atom" | "gpx"
+            | "kml" => Some(DataKind::Xml),
+            "yaml" | "yml" => Some(DataKind::Yaml),
             _ => None,
         }
     }
@@ -1394,6 +1405,12 @@ impl Shell {
             let text = self.editor().document().text();
             let data = match kind {
                 DataKind::Json => Structured::Json(sanain_tools::json::tree(&text)),
+                DataKind::Xml => {
+                    Structured::Tree("format-xml", sanain_tools::markup::xml_tree(&text))
+                }
+                DataKind::Yaml => {
+                    Structured::Tree("format-yaml", sanain_tools::markup::yaml_tree(&text))
+                }
                 DataKind::Csv | DataKind::Tsv => {
                     let hint = override_delim.or((kind == DataKind::Tsv).then_some('\t'));
                     let d = sanain_tools::csv::detect_delimiter(&text, hint);
@@ -1441,7 +1458,7 @@ impl Shell {
                     });
                 crate::structured::csv(ui, table, p, size, true);
             }
-            Structured::Json(Ok(root)) => {
+            Structured::Json(Ok(root)) | Structured::Tree(_, Ok(root)) => {
                 let more = |n: usize| tr(l10n, "json-more", &[("count", (n as i64).into())]);
                 crate::structured::json(ui, root, p, &more);
             }
@@ -1456,6 +1473,21 @@ impl Shell {
                     ],
                 );
                 ui.colored_label(p.error, msg);
+            }
+            Structured::Tree(format, Err(e)) => {
+                let msg = tr(
+                    l10n,
+                    "tools-tree-error",
+                    &[
+                        ("format", tr(l10n, format, &[]).into()),
+                        ("line", (e.line as i64).into()),
+                        ("column", (e.column as i64).into()),
+                        ("reason", e.message.clone().into()),
+                    ],
+                );
+                egui::Frame::NONE
+                    .inner_margin(egui::Margin::same(12))
+                    .show(ui, |ui| ui.colored_label(p.error, msg));
             }
         }
         if let Some(c) = pick {

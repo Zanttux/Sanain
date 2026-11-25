@@ -162,7 +162,7 @@ compare-close = Karşılaştırmayı Kapat
 compare-to-left = Bu değişikliği sola kopyala
 compare-to-right = Bu değişikliği sağa kopyala
 compare-stale = Karşılaştırma sırasında bir belge değişti. Karşılaştırma yenilendi; yeniden deneyin.
-view-structured = Yapılandırılmış Görünüm (CSV, JSON)
+view-structured = Yapılandırılmış Görünüm (CSV, JSON, XML, YAML)
 csv-delimiter = Ayırıcı
 csv-rows = { $count ->
     [one] 1 satır
@@ -299,3 +299,6 @@ goto-line-note = { $count ->
 goto-line-invalid = Bir satır numarası girin; isteğe bağlı olarak ardından :sütun ekleyin.
 goto-heading-hint = Başlıkları filtrelemek için yazın
 goto-heading-none = Bu belgede başlık yok.
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = Satır { $line }, sütun { $column } konumunda geçersiz { $format }: { $reason }

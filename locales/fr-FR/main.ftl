@@ -167,7 +167,7 @@ compare-close = Fermer la comparaison
 compare-to-left = Copier cette modification à gauche
 compare-to-right = Copier cette modification à droite
 compare-stale = Un document a été modifié pendant la comparaison. La comparaison a été actualisée ; réessayez.
-view-structured = Vue structurée (CSV, JSON)
+view-structured = Vue structurée (CSV, JSON, XML, YAML)
 csv-delimiter = Séparateur
 csv-rows = { $count ->
     [one] { $count } ligne
@@ -313,3 +313,6 @@ goto-line-note = { $count ->
 goto-line-invalid = Saisissez un numéro de ligne, éventuellement suivi de :colonne.
 goto-heading-hint = Tapez pour filtrer les titres
 goto-heading-none = Ce document ne contient aucun titre.
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = { $format } non valide à la ligne { $line }, colonne { $column } : { $reason }

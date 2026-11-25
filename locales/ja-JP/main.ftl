@@ -157,7 +157,7 @@ compare-close = 比較を閉じる
 compare-to-left = この変更を左側にコピー
 compare-to-right = この変更を右側にコピー
 compare-stale = 比較中に書類が変更されました。比較を更新しました。もう一度実行してください。
-view-structured = 構造化表示 (CSV, JSON)
+view-structured = 構造化表示 (CSV, JSON, XML, YAML)
 csv-delimiter = 区切り文字
 csv-rows = { $count ->
    *[other] { $count } 行
@@ -285,3 +285,6 @@ goto-line-note = { $count ->
 goto-line-invalid = 行番号を入力してください（必要に応じて :列 を付けます）。
 goto-heading-hint = 入力して見出しを絞り込む
 goto-heading-none = この文書には見出しがありません。
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = 無効な { $format }（{ $line } 行、{ $column } 列）: { $reason }

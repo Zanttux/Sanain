@@ -162,7 +162,7 @@ compare-close = Stäng jämförelse
 compare-to-left = Kopiera ändringen till vänster
 compare-to-right = Kopiera ändringen till höger
 compare-stale = Ett dokument ändrades under jämförelsen. Jämförelsen har uppdaterats; försök igen.
-view-structured = Strukturerad vy (CSV, JSON)
+view-structured = Strukturerad vy (CSV, JSON, XML, YAML)
 csv-delimiter = Avgränsare
 csv-rows = { $count ->
     [one] 1 rad
@@ -299,3 +299,6 @@ goto-line-note = { $count ->
 goto-line-invalid = Ange ett radnummer, eventuellt följt av :kolumn.
 goto-heading-hint = Skriv för att filtrera rubriker
 goto-heading-none = Det här dokumentet har inga rubriker.
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = Ogiltig { $format } på rad { $line }, kolumn { $column }: { $reason }

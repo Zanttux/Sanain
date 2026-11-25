@@ -11,6 +11,8 @@ publish.workspace = true
 [dependencies]
 thiserror.workspace = true
 similar = "3.2"
+quick-xml = "0.42"
+saphyr-parser = "0.4"
 
 [dev-dependencies]
 proptest.workspace = true

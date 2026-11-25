@@ -172,7 +172,7 @@ compare-close = Закрыть сравнение
 compare-to-left = Скопировать это изменение влево
 compare-to-right = Скопировать это изменение вправо
 compare-stale = Документ изменился во время сравнения. Сравнение обновлено; повторите попытку.
-view-structured = Структурированный вид (CSV, JSON)
+view-structured = Структурированный вид (CSV, JSON, XML, YAML)
 csv-delimiter = Разделитель
 csv-rows = { $count ->
     [one] { $count } строка
@@ -327,3 +327,6 @@ goto-line-note = { $count ->
 goto-line-invalid = Введите номер строки, при необходимости с :столбец.
 goto-heading-hint = Введите текст для фильтрации заголовков
 goto-heading-none = В этом документе нет заголовков.
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = Некорректный { $format } в строке { $line }, столбце { $column }: { $reason }

@@ -157,7 +157,7 @@ compare-close = 비교 닫기
 compare-to-left = 이 변경 사항을 왼쪽으로 복사
 compare-to-right = 이 변경 사항을 오른쪽으로 복사
 compare-stale = 비교 중에 문서가 변경되었습니다. 비교를 새로 고쳤으니 다시 시도하십시오.
-view-structured = 구조화된 보기 (CSV, JSON)
+view-structured = 구조화된 보기 (CSV, JSON, XML, YAML)
 csv-delimiter = 구분 기호
 csv-rows = { $count ->
    *[other] { $count }행
@@ -285,3 +285,6 @@ goto-line-note = { $count ->
 goto-line-invalid = 줄 번호를 입력하세요. 필요하면 뒤에 :열을 붙이세요.
 goto-heading-hint = 입력하여 제목 필터링
 goto-heading-none = 이 문서에는 제목이 없습니다.
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = 잘못된 { $format }, { $line }줄 { $column }열: { $reason }

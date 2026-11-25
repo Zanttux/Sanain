@@ -167,7 +167,7 @@ compare-close = Închide compararea
 compare-to-left = Copiază această modificare în stânga
 compare-to-right = Copiază această modificare în dreapta
 compare-stale = Un document s-a modificat în timpul comparării. Compararea a fost reîmprospătată; încercați din nou.
-view-structured = Vizualizare structurată (CSV, JSON)
+view-structured = Vizualizare structurată (CSV, JSON, XML, YAML)
 csv-delimiter = Delimitator
 csv-rows = { $count ->
     [one] 1 rând
@@ -313,3 +313,6 @@ goto-line-note = { $count ->
 goto-line-invalid = Introdu un număr de linie, urmat opțional de :coloană.
 goto-heading-hint = Tastează pentru a filtra titlurile
 goto-heading-none = Acest document nu are titluri.
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = { $format } nevalid la linia { $line }, coloana { $column }: { $reason }

@@ -162,7 +162,7 @@ compare-close = Sulje vertailu
 compare-to-left = Kopioi tämä muutos vasemmalle
 compare-to-right = Kopioi tämä muutos oikealle
 compare-stale = Asiakirja muuttui vertailun aikana. Vertailu päivitettiin; yritä uudelleen.
-view-structured = Rakenteinen näkymä (CSV, JSON)
+view-structured = Rakenteinen näkymä (CSV, JSON, XML, YAML)
 csv-delimiter = Erotin
 csv-rows = { $count ->
     [one] 1 rivi
@@ -299,3 +299,6 @@ goto-line-note = { $count ->
 goto-line-invalid = Anna rivinumero ja halutessasi :sarake.
 goto-heading-hint = Suodata otsikoita kirjoittamalla
 goto-heading-none = Tässä asiakirjassa ei ole otsikoita.
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = Virheellinen { $format } rivillä { $line }, sarakkeessa { $column }: { $reason }

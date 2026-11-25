@@ -5,6 +5,7 @@
 pub mod csv;
 pub mod diff;
 pub mod json;
+pub mod markup;
 
 /// Which line ending to convert to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
