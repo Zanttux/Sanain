@@ -2,6 +2,7 @@
 //! an in-window menu bar until native menus are verified there.
 
 use eframe::egui::{self, Key, KeyboardShortcut, Modifiers};
+use sanain_app::keymap::{Binding, Chord, Keymap, Mods};
 
 /// Everything a menu item can do. Both menu implementations emit these.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -225,7 +226,30 @@ impl MenuAction {
         }
     }
 
-    pub fn shortcut(self) -> Option<KeyboardShortcut> {
+    /// The shortcut for this command under `keymap`.
+    pub fn shortcut(self, keymap: &Keymap) -> Option<KeyboardShortcut> {
+        match keymap.binding(self.id()) {
+            Binding::Default => self.default_shortcut(),
+            Binding::None => None,
+            Binding::Chord(c) => chord_to_egui(&c),
+        }
+    }
+
+    /// Commands that edit text: in a focused text field other than the
+    /// editor they belong to that field.
+    pub fn edits_text(self) -> bool {
+        matches!(
+            self,
+            Self::Undo | Self::Redo | Self::SelectAll | Self::Cut | Self::Copy | Self::Paste
+        )
+    }
+
+    /// Stable command id, also used as the keymap key.
+    pub fn command_id(self) -> &'static str {
+        self.id()
+    }
+
+    fn default_shortcut(self) -> Option<KeyboardShortcut> {
         let cmd = Modifiers::COMMAND;
         let cmd_shift = Modifiers::COMMAND.plus(Modifiers::SHIFT);
         let (mods, key) = match self {
@@ -281,6 +305,47 @@ impl MenuAction {
         };
         Some(KeyboardShortcut::new(mods, key))
     }
+}
+
+pub fn chord_to_egui(c: &Chord) -> Option<KeyboardShortcut> {
+    let mut m = Modifiers::NONE;
+    if c.mods.command {
+        m = m.plus(Modifiers::COMMAND);
+    }
+    if c.mods.ctrl {
+        m = m.plus(Modifiers::CTRL);
+    }
+    if c.mods.alt {
+        m = m.plus(Modifiers::ALT);
+    }
+    if c.mods.shift {
+        m = m.plus(Modifiers::SHIFT);
+    }
+    Some(KeyboardShortcut::new(m, Key::from_name(&c.key)?))
+}
+
+/// The chord for a key press, if it makes a usable shortcut (a modifier or
+/// a function key is required so plain typing is never captured).
+pub fn chord_from_press(key: Key, m: Modifiers) -> Option<Chord> {
+    let mods = Mods {
+        command: m.command,
+        ctrl: m.ctrl && cfg!(target_os = "macos"),
+        alt: m.alt,
+        shift: m.shift,
+    };
+    let name = key.name();
+    let function_key =
+        name.len() > 1 && name.starts_with('F') && name[1..].chars().all(|c| c.is_ascii_digit());
+    if !(mods.command || mods.ctrl || mods.alt || function_key) {
+        return None;
+    }
+    Chord::parse(
+        &Chord {
+            mods,
+            key: name.to_owned(),
+        }
+        .format(),
+    )
 }
 
 /// Labels resolved by the caller (keeps this module free of l10n state).
@@ -359,6 +424,7 @@ pub fn in_window(
     ui: &mut egui::Ui,
     label: Label<'_>,
     enabled: impl Fn(MenuAction) -> bool,
+    keymap: &Keymap,
 ) -> Option<MenuAction> {
     let mut chosen = None;
     let ctx = ui.ctx().clone();
@@ -385,7 +451,7 @@ pub fn in_window(
                         continue;
                     };
                     let mut button = egui::Button::new(label(action.label_id()));
-                    if let Some(s) = action.shortcut() {
+                    if let Some(s) = action.shortcut(keymap) {
                         button = button.shortcut_text(ctx.format_shortcut(&s));
                     }
                     if ui.add_enabled(enabled(*action), button).clicked() {
@@ -421,7 +487,72 @@ mod native {
     /// Shortcuts as logical keys (the character a key produces), as macOS
     /// expects: physical key codes break punctuation shortcuts on non-US
     /// layouts (e.g. "=" is Shift+0 on Finnish keyboards).
-    fn accelerator(action: MenuAction) -> Option<KeyAccelerator> {
+    fn accelerator(action: MenuAction, keymap: &super::Keymap) -> Option<KeyAccelerator> {
+        match keymap.binding(action.id()) {
+            super::Binding::Default => default_accelerator(action),
+            super::Binding::None => None,
+            super::Binding::Chord(c) => chord_accelerator(&c),
+        }
+    }
+
+    fn chord_accelerator(c: &super::Chord) -> Option<KeyAccelerator> {
+        let mut m = Modifiers::empty();
+        if c.mods.command {
+            m |= Modifiers::META;
+        }
+        if c.mods.ctrl {
+            m |= Modifiers::CONTROL;
+        }
+        if c.mods.alt {
+            m |= Modifiers::ALT;
+        }
+        if c.mods.shift {
+            m |= Modifiers::SHIFT;
+        }
+        let named = |n| Some(Key::Named(n));
+        let key = match c.key.as_str() {
+            "ArrowUp" => named(NamedKey::ArrowUp),
+            "ArrowDown" => named(NamedKey::ArrowDown),
+            "ArrowLeft" => named(NamedKey::ArrowLeft),
+            "ArrowRight" => named(NamedKey::ArrowRight),
+            "Tab" => named(NamedKey::Tab),
+            "Enter" => named(NamedKey::Enter),
+            "Escape" => named(NamedKey::Escape),
+            "Backspace" => named(NamedKey::Backspace),
+            "Delete" => named(NamedKey::Delete),
+            "Home" => named(NamedKey::Home),
+            "End" => named(NamedKey::End),
+            "PageUp" => named(NamedKey::PageUp),
+            "PageDown" => named(NamedKey::PageDown),
+            "F1" => named(NamedKey::F1),
+            "F2" => named(NamedKey::F2),
+            "F3" => named(NamedKey::F3),
+            "F4" => named(NamedKey::F4),
+            "F5" => named(NamedKey::F5),
+            "F6" => named(NamedKey::F6),
+            "F7" => named(NamedKey::F7),
+            "F8" => named(NamedKey::F8),
+            "F9" => named(NamedKey::F9),
+            "F10" => named(NamedKey::F10),
+            "F11" => named(NamedKey::F11),
+            "F12" => named(NamedKey::F12),
+            "Plus" => Some(Key::Character("+".into())),
+            "Minus" => Some(Key::Character("-".into())),
+            "Equals" => Some(Key::Character("=".into())),
+            "Comma" => Some(Key::Character(",".into())),
+            "Period" => Some(Key::Character(".".into())),
+            "Slash" => Some(Key::Character("/".into())),
+            "Semicolon" => Some(Key::Character(";".into())),
+            "OpenBracket" => Some(Key::Character("[".into())),
+            "CloseBracket" => Some(Key::Character("]".into())),
+            "Space" => Some(Key::Character(" ".into())),
+            k if k.len() == 1 => Some(Key::Character(k.to_ascii_lowercase())),
+            _ => None,
+        }?;
+        Some(KeyAccelerator::new(m, key))
+    }
+
+    fn default_accelerator(action: MenuAction) -> Option<KeyAccelerator> {
         let cmd = Modifiers::META;
         let cmd_shift = Modifiers::META | Modifiers::SHIFT;
         let ch = |c: &str| Key::Character(c.into());
@@ -487,11 +618,15 @@ mod native {
     impl NativeMenu {
         /// Build and install the menu bar. Call once the app has started.
         /// `wake` is called from the menu callback to repaint the UI.
-        pub fn install(label: Label<'_>, wake: impl Fn() + Send + Sync + 'static) -> Option<Self> {
+        pub fn install(
+            label: Label<'_>,
+            keymap: &super::Keymap,
+            wake: impl Fn() + Send + Sync + 'static,
+        ) -> Option<Self> {
             let mut items = Vec::new();
             let mut make = |action: MenuAction| {
                 let item = MenuItem::with_id(action.id(), label(action.label_id()), true, None);
-                let _ = item.set_key_accelerator(accelerator(action));
+                let _ = item.set_key_accelerator(accelerator(action, keymap));
                 items.push((action, item.clone()));
                 item
             };
@@ -567,6 +702,20 @@ mod native {
                 items,
                 rx,
             })
+        }
+
+        /// Apply a (changed) keymap to the menu items' shortcuts.
+        pub fn apply_keymap(&self, keymap: &super::Keymap) {
+            for (action, item) in &self.items {
+                let _ = item.set_key_accelerator(accelerator(*action, keymap));
+            }
+        }
+
+        /// Remove all shortcuts (while the user records a new one).
+        pub fn clear_shortcuts(&self) {
+            for (_, item) in &self.items {
+                let _ = item.set_key_accelerator(None);
+            }
         }
 
         pub fn poll(&self) -> Vec<MenuAction> {

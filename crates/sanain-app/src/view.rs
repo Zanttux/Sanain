@@ -30,6 +30,8 @@ pub struct EditorView {
     max_width: f32,
     focus_requested: bool,
     reveal_requested: bool,
+    /// The editor widget's id, to tell it apart from other focused fields.
+    pub widget_id: Option<egui::Id>,
 }
 
 impl EditorView {
@@ -58,6 +60,7 @@ impl EditorView {
         let (row_h, char_w) = ui.fonts_mut(|f| (f.row_height(&font), f.glyph_width(&font, '0')));
         let palette = theme::palette(ui.ctx());
         let id = ui.make_persistent_id("sanain-editor");
+        self.widget_id = Some(id);
         let mut changed = false;
 
         egui::ScrollArea::both()
