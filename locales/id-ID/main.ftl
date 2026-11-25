@@ -289,3 +289,9 @@ format-xml = XML
 format-yaml = YAML
 tools-tree-error = { $format } tidak valid pada baris { $line }, kolom { $column }: { $reason }
 edit-select-next-occurrence = Pilih Kemunculan Berikutnya
+tools-record-macro = Mulai atau Hentikan Perekaman Makro
+tools-play-macro = Putar Makro
+macro-recording = Merekam makro
+macro-recorded = { $count ->
+   *[other] Makro direkam: { $count } langkah.
+    }

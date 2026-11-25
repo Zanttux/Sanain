@@ -52,8 +52,11 @@ pub struct Document {
     revision: Revision,
     /// History entries are tagged with unique ids. The id of the newest
     /// undo entry identifies the current content state in history.
-    undo: Vec<(u64, Transaction)>,
-    redo: Vec<(u64, Transaction)>,
+    /// History entries: an id and the transactions to apply, in order, to
+    /// step back (or forward). Most entries hold one transaction; grouped
+    /// edits (see [`Document::merge_undo_since`]) hold several.
+    undo: Vec<(u64, Vec<Transaction>)>,
+    redo: Vec<(u64, Vec<Transaction>)>,
     next_id: u64,
     /// History position (top undo id, `None` = empty history) of the last
     /// clean state: the loaded file, the last save, or a fresh empty buffer.
@@ -134,10 +137,29 @@ impl Document {
         let inverse = tx.apply(&mut self.rope)?;
         let id = self.next_id;
         self.next_id += 1;
-        self.undo.push((id, inverse));
+        self.undo.push((id, vec![inverse]));
         self.redo.clear();
         self.bump();
         Ok(())
+    }
+
+    /// Number of undo entries, to pass to [`Document::merge_undo_since`].
+    pub fn undo_mark(&self) -> usize {
+        self.undo.len()
+    }
+
+    /// Turn every undo entry added since `mark` into one, so a series of
+    /// edits (a macro run) undoes in one step. Positions inside the group
+    /// stop being reachable; a save point among them leaves the document
+    /// dirty, as it should.
+    pub fn merge_undo_since(&mut self, mark: usize) {
+        if self.undo.len() <= mark + 1 {
+            return;
+        }
+        let tail = self.undo.split_off(mark);
+        let id = tail.last().map_or(0, |(id, _)| *id);
+        let group: Vec<Transaction> = tail.into_iter().rev().flat_map(|(_, txs)| txs).collect();
+        self.undo.push((id, group));
     }
 
     pub fn undo(&mut self) -> bool {
@@ -164,21 +186,31 @@ impl Document {
         } else {
             (&mut self.undo, &mut self.redo)
         };
-        let (id, tx) = from.pop()?;
-        let carets = tx.caret_positions();
+        let (id, txs) = from.pop()?;
+        let carets = txs
+            .last()
+            .map(Transaction::caret_positions)
+            .unwrap_or_default();
         // History entries were produced from valid edits of this exact rope
-        // state, so applying them cannot fail; keep the entry on error anyway.
-        match tx.apply(&mut self.rope) {
-            Ok(inverse) => {
-                to.push((id, inverse));
-                self.bump();
-                Some(carets)
-            }
-            Err(_) => {
-                from.push((id, tx));
-                None
+        // state, so applying them cannot fail; on error, roll back what was
+        // applied and keep the entry.
+        let mut inverses = Vec::with_capacity(txs.len());
+        for tx in &txs {
+            match tx.apply(&mut self.rope) {
+                Ok(inv) => inverses.push(inv),
+                Err(_) => {
+                    for inv in inverses.iter().rev() {
+                        let _ = inv.apply(&mut self.rope);
+                    }
+                    from.push((id, txs));
+                    return None;
+                }
             }
         }
+        inverses.reverse();
+        to.push((id, inverses));
+        self.bump();
+        Some(carets)
     }
 
     fn bump(&mut self) {
@@ -190,6 +222,31 @@ impl Document {
 mod tests {
     use super::*;
     use crate::Change;
+
+    #[test]
+    fn merged_edits_undo_and_redo_as_one_step() {
+        let mut doc = Document::from_saved_text("abc");
+        doc.apply(&Transaction::single(Change::insert(0, "0")))
+            .unwrap();
+        let mark = doc.undo_mark();
+        doc.apply(&Transaction::single(Change::insert(4, "d")))
+            .unwrap();
+        doc.apply(&Transaction::single(Change::delete(1..2)))
+            .unwrap();
+        doc.apply(&Transaction::single(Change::insert(0, ">")))
+            .unwrap();
+        doc.merge_undo_since(mark);
+        assert_eq!(doc.text(), ">0bcd");
+        assert!(doc.undo());
+        assert_eq!(doc.text(), "0abc", "the whole group at once");
+        assert!(doc.redo());
+        assert_eq!(doc.text(), ">0bcd");
+        assert!(doc.undo() && doc.undo());
+        assert_eq!(doc.text(), "abc");
+        assert!(!doc.is_dirty());
+        doc.merge_undo_since(doc.undo_mark()); // nothing to merge
+        assert!(!doc.undo());
+    }
 
     #[test]
     fn insert_undo_redo() {

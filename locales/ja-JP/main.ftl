@@ -289,3 +289,9 @@ format-xml = XML
 format-yaml = YAML
 tools-tree-error = 無効な { $format }（{ $line } 行、{ $column } 列）: { $reason }
 edit-select-next-occurrence = 次の出現箇所を選択
+tools-record-macro = マクロの記録を開始/停止
+tools-play-macro = マクロを再生
+macro-recording = マクロを記録中
+macro-recorded = { $count ->
+   *[other] マクロを記録しました: { $count } ステップ。
+    }

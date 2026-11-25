@@ -289,3 +289,9 @@ format-xml = XML
 format-yaml = YAML
 tools-tree-error = { $format } 無效，位於第 { $line } 行第 { $column } 欄：{ $reason }
 edit-select-next-occurrence = 選取下一個符合項目
+tools-record-macro = 開始或停止錄製巨集
+tools-play-macro = 播放巨集
+macro-recording = 正在錄製巨集
+macro-recorded = { $count ->
+   *[other] 巨集已錄製：{ $count } 個步驟。
+    }

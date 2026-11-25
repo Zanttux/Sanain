@@ -331,3 +331,12 @@ format-xml = XML
 format-yaml = YAML
 tools-tree-error = Neplatný { $format } na řádku { $line }, sloupci { $column }: { $reason }
 edit-select-next-occurrence = Vybrat další výskyt
+tools-record-macro = Spustit nebo zastavit záznam makra
+tools-play-macro = Přehrát makro
+macro-recording = Nahrává se makro
+macro-recorded = { $count ->
+    [one] Makro zaznamenáno: 1 krok.
+    [few] Makro zaznamenáno: { $count } kroky.
+    [many] Makro zaznamenáno: { $count } kroku.
+   *[other] Makro zaznamenáno: { $count } kroků.
+    }

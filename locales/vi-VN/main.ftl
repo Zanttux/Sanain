@@ -289,3 +289,9 @@ format-xml = XML
 format-yaml = YAML
 tools-tree-error = { $format } không hợp lệ tại dòng { $line }, cột { $column }: { $reason }
 edit-select-next-occurrence = Chọn lần xuất hiện tiếp theo
+tools-record-macro = Bắt đầu hoặc dừng ghi macro
+tools-play-macro = Phát macro
+macro-recording = Đang ghi macro
+macro-recorded = { $count ->
+   *[other] Đã ghi macro: { $count } bước.
+    }

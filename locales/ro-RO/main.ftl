@@ -317,3 +317,11 @@ format-xml = XML
 format-yaml = YAML
 tools-tree-error = { $format } nevalid la linia { $line }, coloana { $column }: { $reason }
 edit-select-next-occurrence = Selectează următoarea apariție
+tools-record-macro = Pornește sau oprește înregistrarea macro
+tools-play-macro = Redă macro
+macro-recording = Se înregistrează macro
+macro-recorded = { $count ->
+    [one] Macro înregistrat: 1 pas.
+    [few] Macro înregistrat: { $count } pași.
+   *[other] Macro înregistrat: { $count } de pași.
+    }

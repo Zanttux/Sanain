@@ -303,3 +303,10 @@ format-xml = XML
 format-yaml = YAML
 tools-tree-error = Ungültiges { $format } in Zeile { $line }, Spalte { $column }: { $reason }
 edit-select-next-occurrence = Nächstes Vorkommen auswählen
+tools-record-macro = Makroaufzeichnung starten oder beenden
+tools-play-macro = Makro abspielen
+macro-recording = Makro wird aufgezeichnet
+macro-recorded = { $count ->
+    [one] Makro aufgezeichnet: 1 Schritt.
+   *[other] Makro aufgezeichnet: { $count } Schritte.
+    }

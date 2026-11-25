@@ -303,3 +303,10 @@ format-xml = XML
 format-yaml = YAML
 tools-tree-error = Μη έγκυρο { $format } στη γραμμή { $line }, στήλη { $column }: { $reason }
 edit-select-next-occurrence = Επιλογή επόμενης εμφάνισης
+tools-record-macro = Έναρξη ή διακοπή εγγραφής μακροεντολής
+tools-play-macro = Αναπαραγωγή μακροεντολής
+macro-recording = Εγγραφή μακροεντολής
+macro-recorded = { $count ->
+    [one] Η μακροεντολή καταγράφηκε: 1 βήμα.
+   *[other] Η μακροεντολή καταγράφηκε: { $count } βήματα.
+    }

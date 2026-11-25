@@ -289,3 +289,9 @@ format-xml = XML
 format-yaml = YAML
 tools-tree-error = { $format } 无效，位于第 { $line } 行第 { $column } 列：{ $reason }
 edit-select-next-occurrence = 选择下一个匹配项
+tools-record-macro = 开始或停止录制宏
+tools-play-macro = 回放宏
+macro-recording = 正在录制宏
+macro-recorded = { $count ->
+   *[other] 宏已录制：{ $count } 步。
+    }

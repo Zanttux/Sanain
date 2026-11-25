@@ -303,3 +303,10 @@ format-xml = XML
 format-yaml = YAML
 tools-tree-error = Satır { $line }, sütun { $column } konumunda geçersiz { $format }: { $reason }
 edit-select-next-occurrence = Sonraki Eşleşmeyi Seç
+tools-record-macro = Makro Kaydını Başlat veya Durdur
+tools-play-macro = Makroyu Oynat
+macro-recording = Makro kaydediliyor
+macro-recorded = { $count ->
+    [one] Makro kaydedildi: 1 adım.
+   *[other] Makro kaydedildi: { $count } adım.
+    }
