@@ -215,3 +215,15 @@ settings-shortcut-change = Change
 settings-shortcut-reset = Reset
 settings-shortcut-press = Press a shortcut… (Esc cancels)
 settings-shortcut-moved = Shortcut moved from:
+edit-find-in-folder = Find in Folder…
+folder-search-placeholder = Find in folder
+folder-search-run = Search
+folder-search-stop = Stop
+folder-search-no-folder = Choose folder
+folder-search-summary = { $count ->
+    [one] 1 match
+   *[other] { $count } matches
+    } in { $files ->
+    [one] 1 file
+   *[other] { $files } files
+    }

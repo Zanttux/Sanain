@@ -75,6 +75,15 @@ impl Query {
 }
 
 impl Matcher {
+    /// Non-empty matches in `text` as byte ranges (for searching files
+    /// without building a rope).
+    pub fn find_in_str<'t>(&'t self, text: &'t str) -> impl Iterator<Item = Range<usize>> + 't {
+        self.re
+            .find_iter(text)
+            .filter(|m| m.start() != m.end())
+            .map(|m| m.range())
+    }
+
     pub fn find_all(&self, rope: &Rope) -> Matches {
         let text = rope.to_string();
         let mut out = Matches::default();

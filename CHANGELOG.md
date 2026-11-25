@@ -32,6 +32,11 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   shortcuts; restyled in-window menus on Windows and Linux.
 - Cut, Copy and Paste work (system clipboard was not enabled before).
 - macOS app bundle script (`scripts/macos-bundle.sh`).
+- Find in Folder (Cmd/Ctrl+Shift+F): search the text files under a
+  folder with the same options as Find; results stream in, grouped by
+  file, and a click opens the file with the match selected. Hidden and
+  build folders, binary and non-UTF-8 files and files over 10 MB are
+  skipped; folder links are not followed. Stop cancels at once.
 - Keyboard shortcuts are configurable in Settings: pick a preset (Sanain
   or Notepad++) and change or reset any command's shortcut by pressing
   the new keys. A shortcut taken from another command is reported.
