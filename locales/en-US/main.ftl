@@ -282,3 +282,5 @@ log-close = Close Viewer
 log-opened-large = { $name } is large, so it opened read-only in the log viewer.
 tab-pin = Pin Tab
 tab-unpin = Unpin Tab
+edit-add-cursor-above = Add Cursor Above
+edit-add-cursor-below = Add Cursor Below

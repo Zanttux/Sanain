@@ -270,3 +270,5 @@ log-close = 뷰어 닫기
 log-opened-large = { $name }은(는) 크기가 커서 로그 뷰어에서 읽기 전용으로 열렸습니다.
 tab-pin = 탭 고정
 tab-unpin = 탭 고정 해제
+edit-add-cursor-above = 위에 커서 추가
+edit-add-cursor-below = 아래에 커서 추가

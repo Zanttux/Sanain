@@ -270,3 +270,5 @@ log-close = Đóng trình xem
 log-opened-large = { $name } quá lớn nên đã được mở ở chế độ chỉ đọc trong trình xem nhật ký.
 tab-pin = Ghim thẻ
 tab-unpin = Bỏ ghim thẻ
+edit-add-cursor-above = Thêm con trỏ phía trên
+edit-add-cursor-below = Thêm con trỏ phía dưới

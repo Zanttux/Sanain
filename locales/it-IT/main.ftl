@@ -283,3 +283,5 @@ log-close = Chiudi visualizzatore
 log-opened-large = { $name } è grande, quindi è stato aperto in sola lettura nel visualizzatore di log.
 tab-pin = Blocca scheda
 tab-unpin = Sblocca scheda
+edit-add-cursor-above = Aggiungi cursore sopra
+edit-add-cursor-below = Aggiungi cursore sotto

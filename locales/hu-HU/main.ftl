@@ -283,3 +283,5 @@ log-close = Megjelenítő bezárása
 log-opened-large = A(z) { $name } nagy, ezért csak olvasható módon nyílt meg a naplómegjelenítőben.
 tab-pin = Lap rögzítése
 tab-unpin = Lap rögzítésének feloldása
+edit-add-cursor-above = Kurzor hozzáadása fölé
+edit-add-cursor-below = Kurzor hozzáadása alá

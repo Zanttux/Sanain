@@ -34,7 +34,7 @@ M1 in progress.
 | ID | State | Evidence |
 |---|---|---|
 | E01 | Partial | Round-trip and conflict tests in `crates/sanain-io/tests/file_lifecycle.rs` |
-| E03 | Partial | Undo/redo, grouped transactions, property test, multi-cursor insert/delete |
+| E03 | Partial | Undo/redo, grouped transactions, property test, multi-cursor editing created by Alt+click, Add Cursor Above/Below (keyboard) and Alt+drag rectangular selection; Esc collapses. Not yet: rectangular selection by keyboard, virtual space past line ends, add next occurrence |
 | E12 | Partial | Grapheme-cluster navigation and deletion; editor exposes the caret line, caret and selection to AccessKit (checked via the macOS accessibility API: AXValue and AXSelectedText follow the caret); high-contrast appearance; every command reachable by keyboard (menus, palette). Not yet: tested with VoiceOver speech by a person, NVDA/Orca, IME composition by a person |
 | E04 | Partial | Find/replace in the current tab: literal, regex, case, whole word, highlight, count, replace all as one undo. Not yet: preview before replace-all, cancellation for huge files, search across files |
 | E08 | Partial | Source/split/preview, GFM blocks and inlines, front matter, caret-following preview, raw HTML inert, source bytes unchanged (hash checked). Links: web with confirmation, local files, anchors, unsafe schemes blocked. Local images inside the document folder (limits enforced; remote never fetched). Not yet: permission flow for images outside the folder, Mermaid, outline panel, syntax colours in code blocks |

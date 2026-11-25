@@ -283,3 +283,5 @@ log-close = Görüntüleyiciyi Kapat
 log-opened-large = { $name } büyük olduğu için günlük görüntüleyicide salt okunur olarak açıldı.
 tab-pin = Sekmeyi Sabitle
 tab-unpin = Sekmenin Sabitlemesini Kaldır
+edit-add-cursor-above = Yukarıya İmleç Ekle
+edit-add-cursor-below = Aşağıya İmleç Ekle

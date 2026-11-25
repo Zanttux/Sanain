@@ -309,3 +309,5 @@ log-close = Zavřít prohlížeč
 log-opened-large = Soubor { $name } je velký, proto byl otevřen jen pro čtení v prohlížeči protokolů.
 tab-pin = Připnout kartu
 tab-unpin = Odepnout kartu
+edit-add-cursor-above = Přidat kurzor nad
+edit-add-cursor-below = Přidat kurzor pod

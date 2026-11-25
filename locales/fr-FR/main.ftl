@@ -296,3 +296,5 @@ log-close = Fermer la visionneuse
 log-opened-large = { $name } est volumineux et a donc été ouvert en lecture seule dans la visionneuse de journaux.
 tab-pin = Épingler l’onglet
 tab-unpin = Détacher l’onglet
+edit-add-cursor-above = Ajouter un curseur au-dessus
+edit-add-cursor-below = Ajouter un curseur en dessous

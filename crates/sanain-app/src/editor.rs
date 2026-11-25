@@ -48,6 +48,20 @@ pub enum Command {
     },
     SelectAll,
     /// Place a single caret, or extend the primary selection to `at`.
+    /// Add a caret at `at`, or remove the selection there if there are
+    /// several.
+    AddCaret {
+        at: usize,
+    },
+    /// Add a caret on the line above the topmost (or below the
+    /// bottommost) selection, at the same column.
+    AddCaretVertical {
+        down: bool,
+    },
+    /// Replace all selections: (anchor, head) pairs; the last is primary.
+    SetSelections(Vec<(usize, usize)>),
+    /// Keep only the primary selection.
+    SingleSelection,
     PlaceCaret {
         at: usize,
         extend: bool,
@@ -302,6 +316,65 @@ impl Editor {
                 };
                 (None, Selections::single(s))
             }
+            Command::AddCaret { at } => {
+                let at = snap(rope, at);
+                let mut items: Vec<Selection> = self.sels.iter().copied().collect();
+                let hit = items
+                    .iter()
+                    .position(|s| s.range().contains(&at) || s.head == at);
+                match hit {
+                    Some(i) if items.len() > 1 => {
+                        items.remove(i);
+                        let p = items.len() - 1;
+                        (None, Selections::new(items, p, rope.len_chars()))
+                    }
+                    Some(_) => return None,
+                    None => {
+                        items.push(Selection::cursor(at));
+                        let p = items.len() - 1;
+                        (None, Selections::new(items, p, rope.len_chars()))
+                    }
+                }
+            }
+            Command::AddCaretVertical { down } => {
+                let items: Vec<Selection> = self.sels.iter().copied().collect();
+                let line_of = |s: &Selection| rope.char_to_line(s.head);
+                let edge = if down {
+                    items.iter().max_by_key(|s| line_of(s))
+                } else {
+                    items.iter().min_by_key(|s| line_of(s))
+                };
+                let edge = edge.copied()?;
+                let line = line_of(&edge);
+                // Repeated presses keep the first column (like Up/Down).
+                let col = match goal.as_deref() {
+                    Some(&[c]) => c,
+                    _ => edge.head - rope.line_to_char(line),
+                };
+                self.goal = Some(vec![col]);
+                let target = if down {
+                    (line + 1 < rope.len_lines()).then_some(line + 1)
+                } else {
+                    line.checked_sub(1)
+                };
+                let t = target?;
+                let start = rope.line_to_char(t);
+                let at = snap(rope, (start + col).min(sel::line_content_end(rope, t)));
+                let mut items = items;
+                items.push(Selection::cursor(at));
+                let p = items.len() - 1;
+                (None, Selections::new(items, p, rope.len_chars()))
+            }
+            Command::SetSelections(pairs) => {
+                let len = rope.len_chars();
+                let items: Vec<Selection> = pairs
+                    .into_iter()
+                    .map(|(a, h)| Selection::new(snap(rope, a.min(len)), snap(rope, h.min(len))))
+                    .collect();
+                let p = items.len().saturating_sub(1);
+                (None, Selections::new(items, p, len))
+            }
+            Command::SingleSelection => (None, Selections::single(self.sels.primary())),
             Command::Undo | Command::Redo => {
                 let carets = if cmd == Command::Undo {
                     self.doc.undo_carets()
@@ -607,6 +680,41 @@ fn preferred_newline(text: &str) -> &'static str {
 mod tests {
     use super::*;
     use std::fs;
+
+    #[test]
+    fn creating_multiple_cursors() {
+        let mut ed = Editor::new();
+        ed.execute(Command::Insert("abcd\nab\nabcdef\n".into()));
+        ed.execute(Command::PlaceCaret {
+            at: 3,
+            extend: false,
+        });
+        ed.execute(Command::AddCaretVertical { down: true });
+        ed.execute(Command::AddCaretVertical { down: true });
+        let heads: Vec<usize> = ed.selections().iter().map(|s| s.head).collect();
+        assert_eq!(heads, vec![3, 7, 11], "column clamped on the short line");
+        ed.execute(Command::Insert("X".into()));
+        assert_eq!(ed.document().text(), "abcXd\nabX\nabcXdef\n");
+        ed.execute(Command::Undo);
+        // Alt+click toggles: add, then remove again.
+        ed.execute(Command::PlaceCaret {
+            at: 0,
+            extend: false,
+        });
+        ed.execute(Command::AddCaret { at: 5 });
+        assert_eq!(ed.selections().len(), 2);
+        ed.execute(Command::AddCaret { at: 5 });
+        assert_eq!(ed.selections().len(), 1);
+        ed.execute(Command::AddCaret { at: 0 });
+        assert_eq!(ed.selections().len(), 1, "never removes the last caret");
+        // Block selection, then back to one.
+        ed.execute(Command::SetSelections(vec![(1, 3), (6, 7), (9, 11)]));
+        assert_eq!(ed.copy().as_deref(), Some("bc\nb\nbc"));
+        assert_eq!(ed.selections().primary().head, 11);
+        ed.execute(Command::SingleSelection);
+        assert_eq!(ed.selections().len(), 1);
+        assert_eq!(ed.selections().primary().head, 11);
+    }
 
     #[test]
     fn replacing_whole_text_is_one_undo_step() {

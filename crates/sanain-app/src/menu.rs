@@ -63,10 +63,12 @@ pub enum MenuAction {
     OpenLog,
     PinTab,
     UnpinTab,
+    AddCursorAbove,
+    AddCursorBelow,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 56] = [
+    pub const ALL: [MenuAction; 58] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -123,6 +125,8 @@ impl MenuAction {
         Self::OpenLog,
         Self::PinTab,
         Self::UnpinTab,
+        Self::AddCursorAbove,
+        Self::AddCursorBelow,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -184,6 +188,8 @@ impl MenuAction {
             Self::OpenLog => "file.open-log",
             Self::PinTab => "window.pin-tab",
             Self::UnpinTab => "window.unpin-tab",
+            Self::AddCursorAbove => "edit.add-cursor-above",
+            Self::AddCursorBelow => "edit.add-cursor-below",
         }
     }
 
@@ -251,6 +257,8 @@ impl MenuAction {
             Self::OpenLog => "file-open-log",
             Self::PinTab => "tab-pin",
             Self::UnpinTab => "tab-unpin",
+            Self::AddCursorAbove => "edit-add-cursor-above",
+            Self::AddCursorBelow => "edit-add-cursor-below",
         }
     }
 
@@ -293,6 +301,8 @@ impl MenuAction {
             Self::Paste => (cmd, Key::V),
             Self::SelectAll => (cmd, Key::A),
             Self::DuplicateLine => (Modifiers::ALT.plus(Modifiers::SHIFT), Key::ArrowDown),
+            Self::AddCursorAbove => (cmd.plus(Modifiers::ALT), Key::ArrowUp),
+            Self::AddCursorBelow => (cmd.plus(Modifiers::ALT), Key::ArrowDown),
             Self::DeleteLine => (cmd_shift, Key::K),
             Self::MoveLineUp => (Modifiers::ALT, Key::ArrowUp),
             Self::MoveLineDown => (Modifiers::ALT, Key::ArrowDown),
@@ -463,6 +473,9 @@ const EDIT_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::DeleteLine),
     Some(MenuAction::MoveLineUp),
     Some(MenuAction::MoveLineDown),
+    None,
+    Some(MenuAction::AddCursorAbove),
+    Some(MenuAction::AddCursorBelow),
 ];
 
 /// Draw the in-window menu bar. Returns the chosen action, if any.
@@ -620,6 +633,8 @@ mod native {
                 Key::Named(NamedKey::ArrowDown),
             ),
             MenuAction::DeleteLine => (cmd_shift, ch("k")),
+            MenuAction::AddCursorAbove => (cmd | Modifiers::ALT, Key::Named(NamedKey::ArrowUp)),
+            MenuAction::AddCursorBelow => (cmd | Modifiers::ALT, Key::Named(NamedKey::ArrowDown)),
             MenuAction::MoveLineUp => (Modifiers::ALT, Key::Named(NamedKey::ArrowUp)),
             MenuAction::MoveLineDown => (Modifiers::ALT, Key::Named(NamedKey::ArrowDown)),
             MenuAction::CloseTab => (cmd, ch("w")),
