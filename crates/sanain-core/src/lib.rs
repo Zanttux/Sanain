@@ -6,6 +6,7 @@
 //! indices); callers convert to bytes or graphemes explicitly.
 
 mod document;
+pub mod folding;
 pub mod grapheme;
 pub mod lines;
 pub mod search;

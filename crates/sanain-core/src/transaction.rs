@@ -100,6 +100,21 @@ impl Transaction {
         carets
     }
 
+    /// Where `pos` (a char index before the transaction) ends up after it.
+    /// Positions inside a replaced range move to its start.
+    pub fn map_pos(&self, mut pos: usize) -> usize {
+        for c in &self.changes {
+            let inserted = c.text.chars().count();
+            let removed = c.range.end.saturating_sub(c.range.start);
+            if pos >= c.range.end {
+                pos = pos + inserted - removed;
+            } else if pos > c.range.start {
+                pos = c.range.start;
+            }
+        }
+        pos
+    }
+
     /// Apply to `rope`, returning the exact inverse.
     ///
     /// Validation happens against a scratch copy first so a failing

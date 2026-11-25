@@ -204,3 +204,6 @@ image-unsupported = Unsupported image format.
 image-too-large = Image is too large to show.
 image-unreadable = Image could not be read.
 settings-theme-high-contrast = High contrast
+view-fold = Fold
+view-unfold = Unfold
+view-unfold-all = Unfold All

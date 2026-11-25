@@ -52,10 +52,13 @@ pub enum MenuAction {
     StructuredView,
     ReopenWithEncoding,
     SaveWithEncoding,
+    Fold,
+    Unfold,
+    UnfoldAll,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 46] = [
+    pub const ALL: [MenuAction; 49] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -102,6 +105,9 @@ impl MenuAction {
         Self::StructuredView,
         Self::ReopenWithEncoding,
         Self::SaveWithEncoding,
+        Self::Fold,
+        Self::Unfold,
+        Self::UnfoldAll,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -153,6 +159,9 @@ impl MenuAction {
             Self::StructuredView => "view.structured",
             Self::ReopenWithEncoding => "file.reopen-encoding",
             Self::SaveWithEncoding => "file.save-encoding",
+            Self::Fold => "view.fold",
+            Self::Unfold => "view.unfold",
+            Self::UnfoldAll => "view.unfold-all",
         }
     }
 
@@ -210,6 +219,9 @@ impl MenuAction {
             Self::StructuredView => "view-structured",
             Self::ReopenWithEncoding => "file-reopen-encoding",
             Self::SaveWithEncoding => "file-save-encoding",
+            Self::Fold => "view-fold",
+            Self::Unfold => "view-unfold",
+            Self::UnfoldAll => "view-unfold-all",
         }
     }
 
@@ -262,7 +274,10 @@ impl MenuAction {
             | Self::CompareTabs
             | Self::StructuredView
             | Self::ReopenWithEncoding
-            | Self::SaveWithEncoding => return None,
+            | Self::SaveWithEncoding
+            | Self::Fold
+            | Self::Unfold
+            | Self::UnfoldAll => return None,
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -309,6 +324,10 @@ const VIEW_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::MarkdownSplit),
     Some(MenuAction::MarkdownPreview),
     Some(MenuAction::StructuredView),
+    None,
+    Some(MenuAction::Fold),
+    Some(MenuAction::Unfold),
+    Some(MenuAction::UnfoldAll),
     None,
     Some(MenuAction::ZoomIn),
     Some(MenuAction::ZoomOut),
@@ -457,7 +476,10 @@ mod native {
             | MenuAction::CompareTabs
             | MenuAction::StructuredView
             | MenuAction::ReopenWithEncoding
-            | MenuAction::SaveWithEncoding => return None,
+            | MenuAction::SaveWithEncoding
+            | MenuAction::Fold
+            | MenuAction::Unfold
+            | MenuAction::UnfoldAll => return None,
         };
         Some(KeyAccelerator::new(m, k))
     }

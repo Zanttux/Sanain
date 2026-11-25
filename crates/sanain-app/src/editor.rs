@@ -2,6 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
+use sanain_core::folding::{self, FoldMap};
 use sanain_core::lines;
 use sanain_core::selection::{self as sel, Selection, Selections};
 use sanain_core::{Document, LineEnding, Transaction};
@@ -86,6 +87,13 @@ pub struct Editor {
     newline: &'static str,
     /// Goal columns kept across consecutive Up/Down moves.
     goal: Option<Vec<usize>>,
+    /// Folded regions, as the char index where each fold's start line
+    /// begins. Mapped through edits so folds stay on their lines.
+    folds: Vec<usize>,
+    /// Tab width the folds were computed with (from settings).
+    fold_tab: usize,
+    /// Cached hidden-line map: (revision, folds, tab width, map).
+    fold_cache: Option<(sanain_core::Revision, Vec<usize>, usize, FoldMap)>,
 }
 
 impl Default for Editor {
@@ -103,6 +111,9 @@ impl Editor {
             untitled_encoding: TextEncoding::Utf8,
             newline: platform_newline(),
             goal: None,
+            folds: Vec::new(),
+            fold_tab: 4,
+            fold_cache: None,
         }
     }
 
@@ -142,6 +153,9 @@ impl Editor {
         Ok(Self {
             newline: preferred_newline(&loaded.text),
             goal: None,
+            folds: Vec::new(),
+            fold_tab: 4,
+            fold_cache: None,
             doc: Document::from_saved_text(&loaded.text),
             sels: Selections::single(Selection::cursor(0)),
             untitled_encoding: loaded.encoding,
@@ -298,6 +312,9 @@ impl Editor {
                     let len = self.doc.len_chars();
                     let list = c.into_iter().map(Selection::cursor).collect();
                     self.sels = Selections::new(list, 0, len);
+                    // The undone change is not available to map folds
+                    // through; open them rather than fold the wrong lines.
+                    self.folds.clear();
                 }
                 return None;
             }
@@ -306,6 +323,7 @@ impl Editor {
             Some(tx) => self.commit(tx, next),
             None => self.sels = next,
         }
+        self.unfold_around_caret();
         None
     }
 
@@ -396,9 +414,116 @@ impl Editor {
         // is left unchanged by `apply` in that case.
         if self.doc.apply(&tx).is_ok() {
             self.sels = next;
+            let rope = self.doc.rope();
+            let mut folds: Vec<usize> = self
+                .folds
+                .iter()
+                .map(|&p| rope.line_to_char(rope.char_to_line(tx.map_pos(p).min(rope.len_chars()))))
+                .collect();
+            folds.sort_unstable();
+            folds.dedup();
+            self.folds = folds;
+            self.unfold_around_caret();
         } else {
             debug_assert!(false, "command produced an invalid transaction");
         }
+    }
+
+    /// Lines hidden by folds (cached per revision and fold set).
+    pub fn fold_map(&mut self, tab: usize) -> &FoldMap {
+        self.fold_tab = tab;
+        let rev = self.doc.revision();
+        let fresh = matches!(&self.fold_cache, Some((r, f, t, _)) if *r == rev && *f == self.folds && *t == tab);
+        if !fresh {
+            let rope = self.doc.rope();
+            let ranges = self
+                .folds
+                .iter()
+                .filter_map(|&p| {
+                    folding::fold_range(rope, rope.char_to_line(p.min(rope.len_chars())), tab)
+                })
+                .collect();
+            self.fold_cache = Some((rev, self.folds.clone(), tab, FoldMap::new(ranges)));
+        }
+        match &self.fold_cache {
+            Some((_, _, _, m)) => m,
+            None => unreachable!("cache was just filled"),
+        }
+    }
+
+    pub fn is_folded(&self, line: usize) -> bool {
+        let rope = self.doc.rope();
+        line < rope.len_lines() && self.folds.contains(&rope.line_to_char(line))
+    }
+
+    /// Fold or unfold at `line` if it starts a fold. Returns whether
+    /// anything changed.
+    pub fn toggle_fold(&mut self, line: usize, tab: usize) -> bool {
+        self.fold_tab = tab;
+        let rope = self.doc.rope();
+        if line >= rope.len_lines() {
+            return false;
+        }
+        let at = rope.line_to_char(line);
+        if let Some(i) = self.folds.iter().position(|&p| p == at) {
+            self.folds.remove(i);
+            return true;
+        }
+        if folding::fold_range(rope, line, tab).is_none() {
+            return false;
+        }
+        self.folds.push(at);
+        self.folds.sort_unstable();
+        // Move the caret out of the hidden lines.
+        let head_line = rope.char_to_line(self.sels.primary().head);
+        if folding::fold_range(rope, line, tab).is_some_and(|r| r.contains(&head_line)) {
+            let end = sel::line_content_end(rope, line);
+            self.sels = Selections::single(Selection::cursor(end));
+        }
+        true
+    }
+
+    /// Fold the innermost region containing the caret.
+    pub fn fold_at_caret(&mut self, tab: usize) -> bool {
+        let rope = self.doc.rope();
+        let line = rope.char_to_line(self.sels.primary().head);
+        let start = (0..=line).rev().find(|&l| {
+            l == line && folding::is_fold_start(rope, l, tab)
+                || folding::fold_range(rope, l, tab).is_some_and(|r| r.contains(&line))
+        });
+        match start {
+            Some(l) if !self.is_folded(l) => self.toggle_fold(l, tab),
+            _ => false,
+        }
+    }
+
+    /// Unfold the fold on the caret's line, if any.
+    pub fn unfold_at_caret(&mut self) -> bool {
+        let rope = self.doc.rope();
+        let at = rope.line_to_char(rope.char_to_line(self.sels.primary().head));
+        let before = self.folds.len();
+        self.folds.retain(|&p| p != at);
+        self.folds.len() != before
+    }
+
+    pub fn unfold_all(&mut self) -> bool {
+        let any = !self.folds.is_empty();
+        self.folds.clear();
+        any
+    }
+
+    /// A caret moving into hidden lines opens the folds around it.
+    fn unfold_around_caret(&mut self) {
+        if self.folds.is_empty() {
+            return;
+        }
+        let rope = self.doc.rope();
+        let head = rope.char_to_line(self.sels.primary().head);
+        let tab = self.fold_tab;
+        self.folds.retain(|&p| {
+            let l = rope.char_to_line(p.min(rope.len_chars()));
+            !folding::fold_range(rope, l, tab).is_some_and(|r| r.contains(&head))
+        });
     }
 
     pub fn save(&mut self) -> SaveOutcome {
@@ -674,6 +799,31 @@ mod tests {
         ed.execute(Command::Insert("漢".into()));
         assert!(matches!(ed.save_with_encoding(enc), SaveOutcome::Failed(_)));
         assert_eq!(fs::read(&path).unwrap(), "naïve\n".as_bytes(), "unchanged");
+    }
+
+    #[test]
+    fn folds_follow_edits_and_open_for_the_caret() {
+        let mut ed = Editor::new();
+        ed.execute(Command::Insert("a {\n  b\n  c\n}\nd\n".into()));
+        ed.execute(Command::PlaceCaret {
+            at: 0,
+            extend: false,
+        });
+        assert!(ed.toggle_fold(0, 4));
+        assert_eq!(ed.fold_map(4).hidden(), std::slice::from_ref(&(1..3)));
+        // Typing above keeps the fold on its line.
+        ed.execute(Command::Insert("x\n".into()));
+        assert!(ed.is_folded(1));
+        assert_eq!(ed.fold_map(4).hidden(), std::slice::from_ref(&(2..4)));
+        // Moving into the hidden region opens it.
+        ed.execute(Command::PlaceCaret {
+            at: 7,
+            extend: false,
+        });
+        assert!(ed.fold_map(4).is_empty());
+        assert!(ed.fold_at_caret(4));
+        assert!(!ed.fold_map(4).is_empty());
+        assert!(ed.unfold_all());
     }
 
     #[test]

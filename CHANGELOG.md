@@ -32,6 +32,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   shortcuts; restyled in-window menus on Windows and Linux.
 - Cut, Copy and Paste work (system clipboard was not enabled before).
 - macOS app bundle script (`scripts/macos-bundle.sh`).
+- Code folding by indentation, for any file type: click the ▾/▸ marker
+  next to the line number, or use View > Fold / Unfold / Unfold All.
+  Folds stay on their lines while you edit above them and open when the
+  caret moves into them.
 - Screen readers: the editor exposes the caret's line as its text value,
   with the caret and selection, so VoiceOver can read where you are
   (verified through the macOS accessibility API).

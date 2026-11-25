@@ -1083,6 +1083,7 @@ impl Shell {
         let opts = ViewOptions {
             font_size: self.settings.font_size,
             indent: self.settings.indent(),
+            tab_width: usize::from(self.settings.tab_width),
         };
         let highlights: &[std::ops::Range<usize>] = if self.find.open {
             &self.find.matches.ranges
@@ -1332,6 +1333,19 @@ impl Shell {
             MenuAction::CommandPalette => {
                 self.palette.open();
                 return;
+            }
+            MenuAction::Fold => {
+                let tab = usize::from(self.settings.tab_width);
+                self.editor_mut().fold_at_caret(tab);
+                None
+            }
+            MenuAction::Unfold => {
+                self.editor_mut().unfold_at_caret();
+                None
+            }
+            MenuAction::UnfoldAll => {
+                self.editor_mut().unfold_all();
+                None
             }
             MenuAction::ReopenWithEncoding => {
                 match self.editor().file().map(|f| f.path.clone()) {
