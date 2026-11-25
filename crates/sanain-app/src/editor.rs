@@ -179,6 +179,24 @@ impl Editor {
             .map(|n| n.to_string_lossy().into_owned())
     }
 
+    /// The line break to insert: the document's first existing break, so
+    /// edits never mix conventions; the file's or platform's default when
+    /// the document has none.
+    fn newline(&self) -> &'static str {
+        let rope = self.doc.rope();
+        if rope.len_lines() < 2 {
+            return self.newline;
+        }
+        let end = sel::line_content_end(rope, 0);
+        let brk: String = rope.slice(end..rope.line_to_char(1)).into();
+        match brk.as_str() {
+            "\r\n" => "\r\n",
+            "\r" => "\r",
+            "\n" => "\n",
+            _ => self.newline,
+        }
+    }
+
     /// Run a command. Returns text for the clipboard (Cut) if any.
     pub fn execute(&mut self, cmd: Command) -> Option<String> {
         let goal = self.goal.take();
@@ -189,7 +207,7 @@ impl Editor {
                 (Some(tx), s)
             }
             Command::NewLine => {
-                let (tx, s) = sel::insert(&self.sels, self.newline);
+                let (tx, s) = sel::insert(&self.sels, self.newline());
                 (Some(tx), s)
             }
             Command::Backspace => {
@@ -239,7 +257,7 @@ impl Editor {
                 (Some(tx), s)
             }
             Command::DuplicateLine => {
-                let (tx, s) = lines::duplicate_lines(rope, &self.sels, self.newline);
+                let (tx, s) = lines::duplicate_lines(rope, &self.sels, self.newline());
                 (Some(tx), s)
             }
             Command::MoveLineUp | Command::MoveLineDown => {
@@ -459,6 +477,21 @@ mod tests {
         ed.execute(Command::Left { extend: false });
         ed.execute(Command::Up { extend: false });
         assert_eq!(ed.selections().primary(), Selection::cursor(8));
+    }
+
+    #[test]
+    fn new_breaks_follow_the_document_not_the_platform() {
+        let mut ed = Editor::new();
+        ed.newline = "\r\n"; // as on Windows
+        ed.execute(Command::Insert("a\nb".into()));
+        ed.execute(Command::NewLine);
+        ed.execute(Command::DuplicateLine);
+        assert_eq!(ed.document().text(), "a\nb\n\n");
+        let mut ed = Editor::new();
+        ed.newline = "\n";
+        ed.execute(Command::Insert("x\r\ny".into()));
+        ed.execute(Command::NewLine);
+        assert_eq!(ed.document().text(), "x\r\ny\r\n");
     }
 
     #[test]
