@@ -329,3 +329,4 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Vain 200 ensimmäistä muuttuvaa riviä näytetään.
 replace-preview-stale = Asiakirja muuttui, joten mitään ei korvattu. Valitse Korvaa kaikki uudelleen.
+view-split-editor = Jaa editori

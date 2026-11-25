@@ -73,10 +73,11 @@ pub enum MenuAction {
     PlayMacro,
     CompareSaved,
     CompareClipboard,
+    SplitEditor,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 66] = [
+    pub const ALL: [MenuAction; 67] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -143,6 +144,7 @@ impl MenuAction {
         Self::PlayMacro,
         Self::CompareSaved,
         Self::CompareClipboard,
+        Self::SplitEditor,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -214,6 +216,7 @@ impl MenuAction {
             Self::PlayMacro => "tools.play-macro",
             Self::CompareSaved => "tools.compare-saved",
             Self::CompareClipboard => "tools.compare-clipboard",
+            Self::SplitEditor => "view.split-editor",
         }
     }
 
@@ -291,6 +294,7 @@ impl MenuAction {
             Self::PlayMacro => "tools-play-macro",
             Self::CompareSaved => "tools-compare-saved",
             Self::CompareClipboard => "tools-compare-clipboard",
+            Self::SplitEditor => "view-split-editor",
         }
     }
 
@@ -337,6 +341,7 @@ impl MenuAction {
             Self::AddCursorBelow => (cmd.plus(Modifiers::ALT), Key::ArrowDown),
             Self::DeleteLine => (cmd_shift, Key::K),
             Self::GoToLine => (cmd, Key::L),
+            Self::SplitEditor => (cmd, Key::Backslash),
             Self::GoToHeading => (cmd_shift, Key::O),
             Self::SelectNextOccurrence => (cmd, Key::D),
             Self::RecordMacro => (cmd_shift, Key::R),
@@ -494,6 +499,7 @@ const VIEW_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::Unfold),
     Some(MenuAction::UnfoldAll),
     Some(MenuAction::WordWrap),
+    Some(MenuAction::SplitEditor),
     None,
     Some(MenuAction::ZoomIn),
     Some(MenuAction::ZoomOut),
@@ -684,6 +690,7 @@ mod native {
             ),
             MenuAction::DeleteLine => (cmd_shift, ch("k")),
             MenuAction::GoToLine => (cmd, ch("l")),
+            MenuAction::SplitEditor => (cmd, ch("\\")),
             MenuAction::GoToHeading => (cmd_shift, ch("o")),
             MenuAction::SelectNextOccurrence => (cmd, ch("d")),
             MenuAction::RecordMacro => (cmd_shift, ch("r")),

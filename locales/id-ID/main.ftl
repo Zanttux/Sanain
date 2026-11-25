@@ -312,3 +312,4 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Hanya 200 baris pertama yang berubah yang ditampilkan.
 replace-preview-stale = Dokumen telah berubah; tidak ada yang diganti. Jalankan Ganti Semua lagi.
+view-split-editor = Pisahkan Editor

@@ -329,3 +329,4 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Solo se muestran las primeras 200 líneas modificadas.
 replace-preview-stale = El documento ha cambiado; no se ha reemplazado nada. Vuelva a ejecutar Reemplazar todo.
+view-split-editor = Dividir editor

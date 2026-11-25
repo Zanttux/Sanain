@@ -363,3 +363,4 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Zobrazeno je pouze prvních 200 změněných řádků.
 replace-preview-stale = Dokument se změnil, nic nebylo nahrazeno. Spusťte znovu Nahradit vše.
+view-split-editor = Rozdělit editor

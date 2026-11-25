@@ -312,3 +312,4 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Chỉ hiển thị 200 dòng thay đổi đầu tiên.
 replace-preview-stale = Tài liệu đã thay đổi; không có gì được thay thế. Hãy chạy lại Thay thế tất cả.
+view-split-editor = Chia trình soạn thảo

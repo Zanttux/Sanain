@@ -363,3 +363,4 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Показано лише перші 200 змінених рядків.
 replace-preview-stale = Документ змінився; нічого не замінено. Виконайте «Замінити все» ще раз.
+view-split-editor = Розділити редактор

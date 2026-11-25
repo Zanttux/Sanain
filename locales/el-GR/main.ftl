@@ -329,3 +329,4 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Εμφανίζονται μόνο οι πρώτες 200 γραμμές που αλλάζουν.
 replace-preview-stale = Το έγγραφο άλλαξε· δεν αντικαταστάθηκε τίποτα. Εκτελέστε ξανά την Αντικατάσταση όλων.
+view-split-editor = Διαίρεση επεξεργαστή

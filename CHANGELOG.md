@@ -5,6 +5,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Split editor (View > Split Editor, Cmd/Ctrl+\): two tabs side by side.
+  The pane you work in is the active one (marked with a line on top), so
+  menus and shortcuts act on it.
 - Comparisons highlight the changed characters within changed lines.
 - Replace All first shows the lines it would change, before and after,
   and replaces only when confirmed.
