@@ -6,9 +6,9 @@ members = ["crates/*"]
 version = "0.0.1"
 edition = "2024"
 rust-version = "1.88"
+license = "MPL-2.0"
+repository = "https://github.com/Zanttux/sanain"
 publish = false
-# License pending owner decision (docs/LICENSE_DECISION.md). Do not add a
-# `license` field until a LICENSE file is installed.
 
 [workspace.dependencies]
 ropey = "1.6.1"

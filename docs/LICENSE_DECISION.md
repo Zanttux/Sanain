@@ -1,9 +1,9 @@
 # License gate
 
-Status: owner decision pending. No LICENSE file is installed; do not
-publish or accept external contributions until one is.
+Status: decided. MPL-2.0, approved by the owner on 2026-11-25. The
+verbatim text from mozilla.org is in LICENSE.
 
-## Recommendation: MPL-2.0
+## Reasons
 - File-level copyleft: improvements to Sanain's own files stay open, while
   the code can be combined with code under other licenses.
 - Compatible with the current dependency set (41 runtime crates, all

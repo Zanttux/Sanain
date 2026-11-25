@@ -1,8 +1,8 @@
 # Contributing
 
 Contributions from people and AI-assisted contributors go through the same
-review. The project license is not chosen yet; external contributions can
-be accepted only after it is (docs/LICENSE_DECISION.md).
+review. Contributions are accepted under the project license, MPL-2.0
+(inbound = outbound). No CLA.
 
 1. Open an issue for anything larger than a small fix.
 2. Use synthetic test files. Never include secrets or private documents.

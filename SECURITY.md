@@ -1,2 +1,17 @@
-# Security policy (draft)
-Report vulnerabilities privately via a contact channel to be configured before public release. Do not publish exploit details or sensitive documents. Maintainers acknowledge and triage as capacity permits; no SLA yet. Threats: data loss, hostile files, parser DoS, symlink races, unsafe rendering, supply chain, recovery leakage, malicious extensions, AI exfiltration. Default offline; no scripts or network from documents. Use least privilege, bounded parsing, safe Rust, signed releases where feasible, locked dependencies, audit and SBOM. No auto-update execution without verified signatures. Security contact and supported versions must be finalized before release.
+# Security policy
+
+Report vulnerabilities privately through GitHub:
+**Security → Report a vulnerability** on github.com/Zanttux/sanain.
+Do not open public issues for security problems or attach real documents.
+
+Sanain is pre-alpha; no version is supported for production use yet and
+there is no response-time commitment. Reports are acknowledged and triaged
+as capacity allows.
+
+In scope: data loss or corruption, hostile files (parser crashes, resource
+exhaustion), unsafe rendering, unexpected network access, recovery-file
+leakage, supply-chain issues in the build.
+
+Design rules: offline by default, no scripts or network from documents,
+bounded parsing, `unsafe_code` forbidden in project crates, locked
+dependencies.

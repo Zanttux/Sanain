@@ -1,7 +1,7 @@
 # ADR 0001: GUI toolkit
 
 - Date: 2026-11-25
-- Status: Proposed — owner review required (docs/ARCHITECTURE.md, GUI spike gate)
+- Status: Accepted — owner approved egui/eframe on 2026-11-25
 - Decision ID: D07
 
 ## Context
