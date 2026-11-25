@@ -8,9 +8,10 @@ Sanain is a modern, native, open-source text editor in development built in Rust
 **Free. Forever. For everyone.** All features are intended to remain free; voluntary sponsorship supports development. No mandatory accounts, ads or telemetry.
 
 ## Status
-Version 0.0.1, pre-alpha. There is no application window yet. The document
-model, byte-exact file loading and atomic saving, and localization are in
-place and tested. See docs/STATUS.md and docs/ROADMAP.md. 
+Version 0.0.1, pre-alpha. A single-document editor window works: open,
+type, select, undo, save, with byte-exact file handling and English and
+Finnish UI. No tabs, search or session recovery yet. Tested by hand on
+macOS only; Windows and Linux are covered by automated tests in CI. See docs/STATUS.md and docs/ROADMAP.md. 
 
 ## License
 Mozilla Public License 2.0. See LICENSE.
@@ -19,5 +20,6 @@ Mozilla Public License 2.0. See LICENSE.
 Requires Rust via rustup; the toolchain version is pinned in
 `rust-toolchain.toml`.
 
+    cargo run --release -p sanain-app -- path/to/file.txt
     cargo test --workspace
     cargo clippy --workspace --all-targets -- -D warnings

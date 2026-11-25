@@ -141,33 +141,42 @@ impl Document {
     }
 
     pub fn undo(&mut self) -> bool {
-        self.step(false)
+        self.step(false).is_some()
     }
 
     pub fn redo(&mut self) -> bool {
+        self.step(true).is_some()
+    }
+
+    /// Undo and return where carets belong afterwards, or `None` if there
+    /// was nothing to undo.
+    pub fn undo_carets(&mut self) -> Option<Vec<usize>> {
+        self.step(false)
+    }
+
+    pub fn redo_carets(&mut self) -> Option<Vec<usize>> {
         self.step(true)
     }
 
-    fn step(&mut self, redo: bool) -> bool {
+    fn step(&mut self, redo: bool) -> Option<Vec<usize>> {
         let (from, to) = if redo {
             (&mut self.redo, &mut self.undo)
         } else {
             (&mut self.undo, &mut self.redo)
         };
-        let Some((id, tx)) = from.pop() else {
-            return false;
-        };
+        let (id, tx) = from.pop()?;
+        let carets = tx.caret_positions();
         // History entries were produced from valid edits of this exact rope
         // state, so applying them cannot fail; keep the entry on error anyway.
         match tx.apply(&mut self.rope) {
             Ok(inverse) => {
                 to.push((id, inverse));
                 self.bump();
-                true
+                Some(carets)
             }
             Err(_) => {
                 from.push((id, tx));
-                false
+                None
             }
         }
     }
@@ -316,6 +325,20 @@ mod tests {
         assert_eq!(doc.text(), "a\r\n🙂xé\r\n");
         doc.undo();
         assert_eq!(doc.text(), "a\r\n🙂é\r\n");
+    }
+
+    #[test]
+    fn undo_reports_caret_positions() {
+        let mut doc = Document::from_saved_text("abcd");
+        let mut tx = Transaction::new();
+        // Descending order, as multi-cursor commands emit.
+        tx.push(Change::insert(3, "XX"))
+            .push(Change::insert(1, "Y"));
+        doc.apply(&tx).unwrap();
+        assert_eq!(doc.text(), "aYbcXXd");
+        assert_eq!(doc.undo_carets(), Some(vec![1, 3]));
+        assert_eq!(doc.redo_carets(), Some(vec![2, 6]));
+        assert_eq!(doc.redo_carets(), None);
     }
 
     #[test]

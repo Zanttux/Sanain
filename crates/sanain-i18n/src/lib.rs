@@ -7,11 +7,11 @@
 
 use std::collections::HashMap;
 
+use fluent_bundle::FluentResource;
 use fluent_bundle::concurrent::FluentBundle;
-use fluent_bundle::{FluentArgs, FluentResource};
 use unic_langid::LanguageIdentifier;
 
-pub use fluent_bundle::FluentValue;
+pub use fluent_bundle::{FluentArgs, FluentValue};
 
 /// The canonical locale. Every message must exist here.
 pub const FALLBACK: &str = "en-US";

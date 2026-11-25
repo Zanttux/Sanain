@@ -15,6 +15,12 @@ M1 in progress.
   `cargo clippy --workspace --all-targets --locked -D warnings` clean;
   `cargo test --workspace --locked` 45 passed, 0 failed.
 - Multi-cursor selections and grapheme-aware editing commands.
+- First egui editor window (`cargo run -p sanain-app -- file`). Verified
+  by hand on macOS with synthetic keystrokes: typing, Backspace, arrows,
+  Enter (inserts the file's CRLF), Cmd+S writes the expected bytes; close
+  with unsaved changes prompts; Save / Don't Save / Cancel each behave
+  correctly; dialog buttons are reachable through the macOS accessibility
+  tree; Finnish UI renders.
 - Fresh-context review of the IO and core crates: no silent data loss
   found; five gaps fixed (ADR 0002). Hard links still split on save.
 - CI passes on ubuntu-latest, windows-latest and macos-latest
@@ -29,9 +35,18 @@ M1 in progress.
 | E03 | Partial | Undo/redo, grouped transactions, property test, multi-cursor insert/delete |
 | E12 | Partial | Grapheme-cluster navigation and deletion (`crates/sanain-core/src/grapheme.rs`) |
 | E05 | Partial | UTF-8, UTF-8 BOM, UTF-16 LE/BE BOM, line endings preserved; legacy encodings not started |
+| E02 | Not started | Single document only |
+| E06 | Partial | Unsaved-changes prompts on close/new/open; no crash recovery yet |
 | Others | Not started | |
 
-Windows and Linux: automated tests only (CI). No GUI exists yet.
+Known M1 limits: menus are drawn in the window, not the macOS menu bar;
+no word-wise movement, sticky column or line wrapping; every visible line
+is re-laid out each frame (very long lines will be slow); dialog button
+order follows macOS on all platforms; IME composition and VoiceOver
+reading of document text not yet verified by a person.
+
+Windows and Linux: automated tests and builds only (CI); the GUI has not
+been run on them.
 
 ## Name availability (2026-11-25, automated lookups)
 crates.io `sanain*`: free. GitHub user `sanain`: taken (repository must
@@ -58,4 +73,8 @@ because nobody independent exists; no fake approvals.
 ## Next
 - Line/column mapping, vertical movement, word movement, line operations.
 - Hard-link-safe save strategy.
-- `sanain-app` with the first egui editor window: open, type, save.
+- Crash recovery journal for unsaved buffers (E06).
+- Word movement, line operations, sticky column.
+- Tabs (E02), then search (E04).
+- Manual IME and screen-reader pass on macOS; Windows and Linux GUI smoke
+  test (needs hardware or VM access).

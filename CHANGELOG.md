@@ -21,5 +21,12 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 - MPL-2.0 license, security policy with private reporting, CODEOWNERS,
   Dependabot.
 
+- First editor window (egui): open from the command line or File > Open,
+  typing with IME support, mouse and keyboard selection, multi-line
+  undo/redo, cut/copy/paste, Save and Save As with native dialogs, prompts
+  for unsaved changes on close/new/open, external-change and read-only
+  confirmations, status bar with position, line ending and encoding,
+  light and dark themes from the brand tokens.
+
 ### Changed
 - Wordmark set in a single colour.

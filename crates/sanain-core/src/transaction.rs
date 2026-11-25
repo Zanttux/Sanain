@@ -79,6 +79,27 @@ impl Transaction {
             .all(|c| c.range.start == c.range.end && c.text.is_empty())
     }
 
+    /// Caret positions after applying this transaction: the end of each
+    /// change's inserted text, in final document coordinates, ascending.
+    pub fn caret_positions(&self) -> Vec<usize> {
+        let mut carets: Vec<usize> = Vec::with_capacity(self.changes.len());
+        for c in &self.changes {
+            let inserted = c.text.chars().count();
+            let removed = c.range.end.saturating_sub(c.range.start);
+            for p in &mut carets {
+                if *p >= c.range.end {
+                    *p = *p + inserted - removed;
+                } else if *p > c.range.start {
+                    *p = c.range.start + inserted;
+                }
+            }
+            carets.push(c.range.start + inserted);
+        }
+        carets.sort_unstable();
+        carets.dedup();
+        carets
+    }
+
     /// Apply to `rope`, returning the exact inverse.
     ///
     /// Validation happens against a scratch copy first so a failing
