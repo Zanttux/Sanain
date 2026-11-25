@@ -75,6 +75,8 @@ enum Dialog {
     Conflict,
     ReadOnly,
     Error(String),
+    /// Confirm opening a web link in the system browser.
+    OpenLink(String),
 }
 
 pub struct Shell {
@@ -104,6 +106,8 @@ pub struct Shell {
     md_cache: HashMap<TabId, (Revision, std::sync::Arc<Vec<sanain_markdown::Block>>)>,
     /// Caret line the preview was last scrolled to, per tab.
     md_synced: HashMap<TabId, usize>,
+    /// Heading anchor to scroll the preview to, per tab.
+    md_anchor: HashMap<TabId, String>,
     applied_theme: Option<ThemeChoice>,
     /// Set once the session was recorded for the current quit attempt.
     quit_recorded: bool,
@@ -167,6 +171,7 @@ impl Shell {
             md_modes: HashMap::new(),
             md_cache: HashMap::new(),
             md_synced: HashMap::new(),
+            md_anchor: HashMap::new(),
             applied_theme: None,
             quit_recorded: false,
             #[cfg(target_os = "macos")]
@@ -333,6 +338,7 @@ impl Shell {
                     self.md_cache.remove(&id);
                     self.md_modes.remove(&id);
                     self.md_synced.remove(&id);
+                    self.md_anchor.remove(&id);
                     self.structured.remove(&id);
                     self.structured_cache.remove(&id);
                     self.csv_delimiter.remove(&id);
@@ -882,6 +888,9 @@ impl Shell {
         let caret_line =
             sanain_core::selection::line_col(self.editor().document().rope(), head).0 + 1;
         let scroll = self.md_synced.get(&id) != Some(&caret_line);
+        // An anchor click scrolls once, on the next frame.
+        let anchor = self.md_anchor.remove(&id);
+        let mut event = None;
         self.md_synced.insert(id, caret_line);
         let l10n = &self.l10n;
         let untranslated = |key: &str| tr(l10n, key, &[]);
@@ -899,9 +908,52 @@ impl Shell {
                     .auto_shrink(false)
                     .show(ui, |ui| {
                         ui.set_max_width(760.0_f32.min(ui.available_width()));
-                        preview::show(ui, &blocks, &style, caret_line, scroll);
+                        event = preview::show(
+                            ui,
+                            &blocks,
+                            &style,
+                            caret_line,
+                            scroll,
+                            anchor.as_deref(),
+                        );
                     });
             });
+        if let Some(preview::Event::LinkClicked(url)) = event {
+            self.follow_link(&url);
+        }
+    }
+
+    /// Act on a link clicked in the preview. Web links need confirmation;
+    /// local files open in a tab; anchors scroll; everything else is refused.
+    fn follow_link(&mut self, url: &str) {
+        use sanain_markdown::LinkKind;
+        match sanain_markdown::classify_link(url) {
+            LinkKind::External => self.dialog = Some(Dialog::OpenLink(url.trim().to_owned())),
+            LinkKind::Anchor => {
+                let id = self.ws.active().id;
+                self.md_anchor
+                    .insert(id, url.trim().trim_start_matches('#').to_owned());
+            }
+            LinkKind::Relative => {
+                let target = url
+                    .split(['#', '?'])
+                    .next()
+                    .unwrap_or("")
+                    .replace("%20", " ");
+                let base = self
+                    .editor()
+                    .file()
+                    .and_then(|f| f.path.parent().map(std::path::Path::to_path_buf));
+                match base.map(|b| b.join(&target)).filter(|p| p.is_file()) {
+                    Some(path) => self.open(&path),
+                    None => {
+                        let msg = self.t("link-not-found", &[("target", target.into())]);
+                        self.status = Some((msg, true));
+                    }
+                }
+            }
+            LinkKind::Blocked => self.status = Some((self.t("link-blocked", &[]), true)),
+        }
     }
 
     fn language(ed: &Editor) -> Option<Lang> {
@@ -1272,6 +1324,7 @@ impl Shell {
                     self.t("dialog-readonly-body", &[]),
                 ),
                 Dialog::Error(msg) => (msg.clone(), String::new()),
+                Dialog::OpenLink(url) => (self.t("dialog-open-link-title", &[]), url.clone()),
             };
             ui.strong(title);
             if !body.is_empty() {
@@ -1311,6 +1364,15 @@ impl Shell {
                         if ui.button(self.t("button-save-as", &[])).clicked() {
                             close = true;
                             after = Some(Action::SaveAs);
+                        }
+                        if ui.button(self.t("button-cancel", &[])).clicked() {
+                            close = true;
+                        }
+                    }
+                    Dialog::OpenLink(url) => {
+                        if ui.button(self.t("button-open", &[])).clicked() {
+                            ui.ctx().open_url(egui::OpenUrl::new_tab(url));
+                            close = true;
                         }
                         if ui.button(self.t("button-cancel", &[])).clicked() {
                             close = true;

@@ -171,3 +171,7 @@ csv-rows = { $count ->
 csv-unterminated = Sulkematon lainausmerkki rivillä { $line }
 csv-truncated = Näytetään ensimmäiset 200 000 riviä
 json-more = … { $count } lisää
+dialog-open-link-title = Avataanko linkki selaimessa?
+button-open = Avaa
+link-blocked = Tämäntyyppistä linkkiä ei avata turvallisuussyistä.
+link-not-found = Linkitettyä tiedostoa ei löydy: { $target }

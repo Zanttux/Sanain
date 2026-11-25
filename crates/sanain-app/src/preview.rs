@@ -1,11 +1,14 @@
 //! Read-only Markdown preview rendered from `sanain_markdown` blocks.
 //!
-//! Nothing here touches the network or runs document content. Links are
-//! shown (with their target on hover) but not opened yet; images show their
-//! alt text.
+//! Nothing here touches the network or runs document content. Clicking a
+//! link only reports it; the shell decides what is allowed (confirmation
+//! for web links, never for blocked schemes). Images show their alt text.
+
+use std::ops::Range;
 
 use eframe::egui::{
-    self, Color32, FontFamily, FontId, RichText, Stroke, text::LayoutJob, text::TextFormat,
+    self, Color32, CursorIcon, FontFamily, FontId, RichText, Sense, Stroke, text::LayoutJob,
+    text::TextFormat,
 };
 use sanain_markdown::{Align, Block, BlockKind, Inline, MAX_DEPTH};
 
@@ -20,20 +23,57 @@ pub struct Style<'a> {
     pub untranslated: &'a dyn Fn(&str) -> String,
 }
 
+/// What the user did in the preview this frame.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Event {
+    LinkClicked(String),
+}
+
+/// Byte ranges in a layout job's text that belong to a link target.
+type Links = Vec<(Range<usize>, String)>;
+
 /// Render `blocks`. `sync_line` (1-based source line) scrolls the block at
-/// or before that line to the top when `scroll` is true.
-pub fn show(ui: &mut egui::Ui, blocks: &[Block], st: &Style<'_>, sync_line: usize, scroll: bool) {
+/// or before that line to the top when `scroll` is true. `anchor` scrolls
+/// to the heading with that slug.
+pub fn show(
+    ui: &mut egui::Ui,
+    blocks: &[Block],
+    st: &Style<'_>,
+    sync_line: usize,
+    scroll: bool,
+    anchor: Option<&str>,
+) -> Option<Event> {
     let target = blocks.iter().rposition(|b| b.line <= sync_line);
+    let mut event = None;
     for (i, b) in blocks.iter().enumerate() {
-        let r = ui.scope(|ui| block(ui, b, st, 0)).response;
-        if scroll && Some(i) == target {
+        let r = ui.scope(|ui| block(ui, b, st, 0, &mut event)).response;
+        let anchored = anchor.is_some_and(|a| match &b.kind {
+            BlockKind::Heading { inlines, .. } => slug(&sanain_markdown::inline_text(inlines)) == a,
+            _ => false,
+        });
+        if anchored || (scroll && anchor.is_none() && Some(i) == target) {
             ui.scroll_to_rect(r.rect, Some(egui::Align::TOP));
         }
         ui.add_space(st.size * 0.6);
     }
+    event
 }
 
-fn block(ui: &mut egui::Ui, b: &Block, st: &Style<'_>, depth: usize) {
+/// GitHub-style heading anchor: lowercase, spaces to '-', punctuation
+/// removed.
+pub fn slug(text: &str) -> String {
+    text.trim()
+        .to_lowercase()
+        .chars()
+        .filter_map(|c| match c {
+            ' ' => Some('-'),
+            c if c.is_alphanumeric() || c == '-' || c == '_' => Some(c),
+            _ => None,
+        })
+        .collect()
+}
+
+fn block(ui: &mut egui::Ui, b: &Block, st: &Style<'_>, depth: usize, ev: &mut Option<Event>) {
     if depth > MAX_DEPTH {
         return;
     }
@@ -47,15 +87,13 @@ fn block(ui: &mut egui::Ui, b: &Block, st: &Style<'_>, depth: usize) {
                 _ => 1.05,
             };
             ui.add_space(st.size * 0.4);
-            ui.label(job(inlines, st, st.size * scale, p.text, true));
+            text(ui, inlines, st, st.size * scale, p.text, true, ev);
             if *level <= 2 {
                 ui.add(egui::Separator::default().spacing(4.0));
             }
         }
-        BlockKind::Paragraph(inlines) => {
-            ui.label(job(inlines, st, st.size, body(p), false));
-        }
-        BlockKind::Code { lang, text } => {
+        BlockKind::Paragraph(inlines) => text(ui, inlines, st, st.size, body(p), false, ev),
+        BlockKind::Code { lang, text: code } => {
             if lang.eq_ignore_ascii_case("mermaid") {
                 ui.label(
                     RichText::new((st.untranslated)("preview-mermaid-unsupported"))
@@ -63,7 +101,7 @@ fn block(ui: &mut egui::Ui, b: &Block, st: &Style<'_>, depth: usize) {
                         .italics(),
                 );
             }
-            code_frame(ui, text.trim_end_matches('\n'), st);
+            code_frame(ui, code.trim_end_matches('\n'), st);
         }
         BlockKind::Quote(children) => {
             let r = egui::Frame::NONE
@@ -75,7 +113,7 @@ fn block(ui: &mut egui::Ui, b: &Block, st: &Style<'_>, depth: usize) {
                 })
                 .show(ui, |ui| {
                     for c in children {
-                        block(ui, c, st, depth + 1);
+                        block(ui, c, st, depth + 1, ev);
                     }
                 })
                 .response;
@@ -98,7 +136,7 @@ fn block(ui: &mut egui::Ui, b: &Block, st: &Style<'_>, depth: usize) {
                     );
                     ui.vertical(|ui| {
                         for c in &item.blocks {
-                            block(ui, c, st, depth + 1);
+                            block(ui, c, st, depth + 1, ev);
                         }
                     });
                 });
@@ -116,7 +154,7 @@ fn block(ui: &mut egui::Ui, b: &Block, st: &Style<'_>, depth: usize) {
                         .striped(true)
                         .spacing([st.size, st.size * 0.4])
                         .show(ui, |ui| {
-                            let cell =
+                            let mut cell =
                                 |ui: &mut egui::Ui, inl: &[Inline], col: usize, strong: bool| {
                                     let layout = match aligns.get(col) {
                                         Some(Align::Right) => {
@@ -128,7 +166,7 @@ fn block(ui: &mut egui::Ui, b: &Block, st: &Style<'_>, depth: usize) {
                                         _ => egui::Layout::left_to_right(egui::Align::Center),
                                     };
                                     ui.with_layout(layout, |ui| {
-                                        ui.label(job(inl, st, st.size, body(p), strong));
+                                        text(ui, inl, st, st.size, body(p), strong, ev);
                                     });
                                 };
                             for (c, h) in header.iter().enumerate() {
@@ -147,16 +185,51 @@ fn block(ui: &mut egui::Ui, b: &Block, st: &Style<'_>, depth: usize) {
         BlockKind::Rule => {
             ui.separator();
         }
-        BlockKind::Html(raw) => {
-            code_frame(ui, raw.trim_end(), st);
-        }
-        BlockKind::FrontMatter(fm) => {
-            code_frame(ui, fm, st);
+        BlockKind::Html(raw) => code_frame(ui, raw.trim_end(), st),
+        BlockKind::FrontMatter(fm) => code_frame(ui, fm, st),
+    }
+}
+
+/// A wrapped text block whose link spans are clickable.
+fn text(
+    ui: &mut egui::Ui,
+    inlines: &[Inline],
+    st: &Style<'_>,
+    size: f32,
+    color: Color32,
+    strong: bool,
+    ev: &mut Option<Event>,
+) {
+    let (job, links) = job(inlines, st, size, color, strong);
+    if links.is_empty() {
+        ui.label(job);
+        return;
+    }
+    let label = egui::Label::new(job).sense(Sense::click());
+    let (pos, galley, response) = label.layout_in_ui(ui);
+    ui.painter().galley(pos, galley.clone(), color);
+    let Some(pointer) = response.hover_pos() else {
+        return;
+    };
+    let cursor = galley.cursor_from_pos(pointer - pos);
+    // Galley cursors count chars; links are byte ranges in the job text.
+    let byte = galley
+        .job
+        .text
+        .char_indices()
+        .nth(cursor.index.0)
+        .map_or(galley.job.text.len(), |(b, _)| b);
+    let hit = links.iter().find(|(r, _)| r.contains(&byte));
+    if let Some((_, url)) = hit {
+        ui.ctx().set_cursor_icon(CursorIcon::PointingHand);
+        let response = response.on_hover_text(url);
+        if response.clicked() {
+            *ev = Some(Event::LinkClicked(url.clone()));
         }
     }
 }
 
-fn code_frame(ui: &mut egui::Ui, text: &str, st: &Style<'_>) {
+fn code_frame(ui: &mut egui::Ui, code: &str, st: &Style<'_>) {
     egui::Frame::NONE
         .fill(st.p.surface)
         .stroke(Stroke::new(1.0, st.p.border))
@@ -165,11 +238,11 @@ fn code_frame(ui: &mut egui::Ui, text: &str, st: &Style<'_>) {
         .show(ui, |ui| {
             ui.set_width(ui.available_width());
             egui::ScrollArea::horizontal()
-                .id_salt(text.len())
+                .id_salt(code.len())
                 .show(ui, |ui| {
                     ui.add(
                         egui::Label::new(
-                            RichText::new(text)
+                            RichText::new(code)
                                 .font(FontId::monospace(st.size * 0.92))
                                 .color(st.p.text),
                         )
@@ -179,20 +252,30 @@ fn code_frame(ui: &mut egui::Ui, text: &str, st: &Style<'_>) {
         });
 }
 
-/// Lay out inline content as one wrapped text job.
-fn job(inlines: &[Inline], st: &Style<'_>, size: f32, color: Color32, strong: bool) -> LayoutJob {
+/// Lay out inline content as one wrapped text job, collecting link spans.
+fn job(
+    inlines: &[Inline],
+    st: &Style<'_>,
+    size: f32,
+    color: Color32,
+    strong: bool,
+) -> (LayoutJob, Links) {
     let mut j = LayoutJob::default();
+    let mut links = Vec::new();
     let base = TextFormat {
         font_id: FontId::new(size, FontFamily::Proportional),
         color,
         ..Default::default()
     };
-    append(&mut j, inlines, st, &base, strong, 0);
-    j
+    append(&mut j, &mut links, None, inlines, st, &base, strong, 0);
+    (j, links)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn append(
     j: &mut LayoutJob,
+    links: &mut Links,
+    link: Option<&str>,
     inlines: &[Inline],
     st: &Style<'_>,
     fmt: &TextFormat,
@@ -203,39 +286,46 @@ fn append(
         return;
     }
     let p = st.p;
+    let push = |j: &mut LayoutJob, links: &mut Links, s: &str, f: TextFormat| {
+        let start = j.text.len();
+        j.append(s, 0.0, f);
+        if let Some(url) = link {
+            links.push((start..j.text.len(), url.to_owned()));
+        }
+    };
     for i in inlines {
         match i {
             Inline::Text(t) => {
                 let mut f = fmt.clone();
                 // egui ships no bold face: body text uses a softer colour so
                 // strong text (full contrast) stands out.
-                if strong {
+                if strong && link.is_none() {
                     f.color = p.text;
                 }
-                j.append(t, 0.0, f);
+                push(j, links, t, f);
             }
             Inline::Code(t) => {
                 let mut f = fmt.clone();
                 f.font_id = FontId::monospace(fmt.font_id.size * 0.92);
                 f.background = p.surface;
-                j.append(t, 0.0, f);
+                push(j, links, t, f);
             }
-            Inline::Strong(c) => append(j, c, st, fmt, true, depth + 1),
+            Inline::Strong(c) => append(j, links, link, c, st, fmt, true, depth + 1),
             Inline::Emph(c) => {
                 let mut f = fmt.clone();
                 f.italics = true;
-                append(j, c, st, &f, strong, depth + 1);
+                append(j, links, link, c, st, &f, strong, depth + 1);
             }
             Inline::Strike(c) => {
                 let mut f = fmt.clone();
                 f.strikethrough = Stroke::new(1.0, fmt.color);
-                append(j, c, st, &f, strong, depth + 1);
+                append(j, links, link, c, st, &f, strong, depth + 1);
             }
-            Inline::Link { children, .. } => {
+            Inline::Link { url, children } => {
                 let mut f = fmt.clone();
                 f.color = p.accent;
                 f.underline = Stroke::new(1.0, p.accent);
-                append(j, children, st, &f, strong, depth + 1);
+                append(j, links, Some(url), children, st, &f, strong, depth + 1);
             }
             Inline::Image { alt, .. } => {
                 let mut f = fmt.clone();
@@ -246,20 +336,29 @@ fn append(
                 } else {
                     alt.clone()
                 };
-                j.append(&format!("[{label}]"), 0.0, f);
+                push(j, links, &format!("[{label}]"), f);
             }
             Inline::Html(h) => {
                 let mut f = fmt.clone();
                 f.font_id = FontId::monospace(fmt.font_id.size * 0.92);
                 f.color = p.muted;
-                j.append(h, 0.0, f);
+                push(j, links, h, f);
             }
-            Inline::SoftBreak => j.append(" ", 0.0, fmt.clone()),
-            Inline::LineBreak => j.append("\n", 0.0, fmt.clone()),
+            Inline::SoftBreak => push(j, links, " ", fmt.clone()),
+            Inline::LineBreak => push(j, links, "\n", fmt.clone()),
         }
     }
 }
 
 fn body(p: &Palette) -> Color32 {
     p.text.lerp_to_gamma(p.muted, 0.3)
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn heading_slugs() {
+        assert_eq!(super::slug("Getting Started!"), "getting-started");
+        assert_eq!(super::slug("  Ääkköset & more "), "ääkköset--more");
+    }
 }

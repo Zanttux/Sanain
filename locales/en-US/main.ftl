@@ -170,3 +170,7 @@ csv-rows = { $count ->
 csv-unterminated = Unterminated quote starting on line { $line }
 csv-truncated = Showing the first 200,000 rows
 json-more = … { $count } more
+dialog-open-link-title = Open this link in your web browser?
+button-open = Open
+link-blocked = This kind of link is not opened, for safety.
+link-not-found = Linked file not found: { $target }
