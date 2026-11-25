@@ -5,6 +5,7 @@ use eframe::egui::{
     self, Align2, CursorIcon, Event, EventFilter, FontId, Galley, ImeEvent, Key, Pos2, Rect, Sense,
     Stroke, Ui, Vec2, pos2, text::CCursor, vec2,
 };
+use sanain_app::syntax::CharSpan;
 use sanain_app::{Command, Editor};
 use sanain_core::selection::line_content_end;
 use std::sync::Arc;
@@ -42,6 +43,7 @@ impl EditorView {
         editor: &mut Editor,
         accessible_name: &str,
         highlights: &[std::ops::Range<usize>],
+        syntax: &[CharSpan],
     ) -> bool {
         let font = FontId::monospace(FONT_SIZE);
         let (row_h, char_w) = ui.fonts_mut(|f| (f.row_height(&font), f.glyph_width(&font, '0')));
@@ -92,7 +94,8 @@ impl EditorView {
                     let start = rope.line_to_char(line);
                     let end = line_content_end(rope, line);
                     let text = rope.slice(start..end).to_string();
-                    ui.fonts_mut(|f| f.layout_no_wrap(text, font.clone(), palette.text))
+                    let job = line_job(text, start, syntax, &font, palette);
+                    ui.fonts_mut(|f| f.layout_job(job))
                 };
                 let hit = |ui: &Ui, pos: Pos2, editor: &Editor| -> usize {
                     let rope = editor.document().rope();
@@ -344,4 +347,56 @@ impl EditorView {
         editor.execute(cmd);
         Some(true)
     }
+}
+
+/// Build a layout job for one line's text (starting at document char
+/// `start`), colouring the parts covered by syntax spans.
+fn line_job(
+    text: String,
+    start: usize,
+    syntax: &[CharSpan],
+    font: &FontId,
+    palette: &theme::Palette,
+) -> egui::text::LayoutJob {
+    use egui::text::{LayoutJob, TextFormat};
+    let plain = TextFormat::simple(font.clone(), palette.text);
+    let end = start + text.chars().count();
+    let first = syntax.partition_point(|s| s.range.end <= start);
+    let spans = syntax[first..].iter().take_while(|s| s.range.start < end);
+    // Spans ascend, so walk char → byte offsets incrementally.
+    let (mut chr, mut byte) = (0usize, 0usize);
+    let advance = |chr: &mut usize, byte: &mut usize, to: usize| -> usize {
+        while *chr < to {
+            match text[*byte..].chars().next() {
+                Some(c) => *byte += c.len_utf8(),
+                None => break,
+            }
+            *chr += 1;
+        }
+        *byte
+    };
+    let mut job = LayoutJob::default();
+    let mut cursor = 0usize; // byte offset in `text` already appended
+    for s in spans {
+        let from = s.range.start.max(start) - start;
+        let to = s.range.end.min(end) - start;
+        if from < chr {
+            continue; // overlapping span; keep the first
+        }
+        let a = advance(&mut chr, &mut byte, from);
+        let b = advance(&mut chr, &mut byte, to);
+        if a >= b {
+            continue;
+        }
+        if a > cursor {
+            job.append(&text[cursor..a], 0.0, plain.clone());
+        }
+        let fmt = TextFormat::simple(font.clone(), theme::syntax(palette, s.style));
+        job.append(&text[a..b], 0.0, fmt);
+        cursor = b;
+    }
+    if cursor < text.len() || job.sections.is_empty() {
+        job.append(&text[cursor..], 0.0, plain);
+    }
+    job
 }

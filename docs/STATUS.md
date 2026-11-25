@@ -26,7 +26,9 @@ M1 in progress.
 - CI passes on ubuntu-latest, windows-latest and macos-latest
   (run 45646960690).
 - GUI spike (GPUI vs egui) recorded in docs/adr/0001-gui-toolkit.md.
-- Runtime dependency licenses: 41 crates, all permissive.
+- Runtime dependency licenses (2026-11-25): 405 crates, none copyleft-only;
+  two are dual-licensed with a GPL/LGPL option and are used under their
+  permissive option. Automated checking (cargo-deny) not yet in CI.
 
 ## Requirement evidence
 | ID | State | Evidence |
@@ -37,6 +39,7 @@ M1 in progress.
 | E04 | Partial | Find/replace in the current tab: literal, regex, case, whole word, highlight, count, replace all as one undo. Not yet: preview before replace-all, cancellation for huge files, search across files |
 | E05 | Partial | UTF-8, UTF-8 BOM, UTF-16 LE/BE BOM, line endings preserved; legacy encodings not started |
 | E02 | Partial | Tabs, close/reopen, keyboard switching, dirty markers, per-tab recovery. Not yet: drag reorder in UI (model supports it), pin, split editor |
+| E07 | Partial | Tree-sitter highlighting for 8 languages, background worker with cancellation, line numbers, keyboard navigation. Not yet: folding, themes/zoom settings, incremental parsing, more languages |
 | E06 | Partial | Unsaved-changes prompts; crash recovery per tab (kill -9 → relaunch restores text); session restore of open files and active tab. Not yet: settings opt-out UI, disk-full drill |
 | Others | Not started | |
 
@@ -79,6 +82,6 @@ because nobody independent exists; no fake approvals.
 ## Next
 - Line/column mapping, vertical movement, word movement, line operations.
 - Hard-link-safe save strategy.
-- Syntax highlighting (E07), then settings (font, tab width, theme, restore).
+- Settings (font, tab width, theme, session restore) and zoom (E07, E11).
 - Manual IME and screen-reader pass on macOS; Windows and Linux GUI smoke
   test (needs hardware or VM access).

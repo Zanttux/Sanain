@@ -32,6 +32,11 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   shortcuts; restyled in-window menus on Windows and Linux.
 - Cut, Copy and Paste work (system clipboard was not enabled before).
 - macOS app bundle script (`scripts/macos-bundle.sh`).
+- Syntax highlighting with Tree-sitter for Rust, Python, JavaScript,
+  JSON, TOML, YAML, CSS and shell scripts, chosen by file extension and
+  shown in the status bar. Highlighting runs on a background thread and
+  is skipped for files over 8 MB. All syntax colours meet WCAG AA
+  contrast on the editor background.
 - Session restore: open files and the active tab return on the next
   launch when Sanain starts without file arguments (`SANAIN_NO_SESSION=1`
   disables it until a setting exists).

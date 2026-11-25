@@ -92,3 +92,4 @@ status-replaced = { $count ->
     [one] Replaced 1 match
    *[other] Replaced { $count } matches
     }
+language-plain = Plain Text
