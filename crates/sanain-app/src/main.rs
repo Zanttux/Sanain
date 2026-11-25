@@ -6,6 +6,7 @@ mod menu;
 mod palette;
 mod preview;
 mod shell;
+mod structured;
 mod theme;
 mod view;
 

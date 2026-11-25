@@ -30,6 +30,19 @@ struct Compare {
     diff: sanain_tools::diff::Diff,
 }
 
+/// Parsed data behind a structured view, for one document revision.
+enum Structured {
+    Csv(sanain_tools::csv::Table),
+    Json(Result<sanain_tools::json::Node, sanain_tools::json::JsonError>),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum DataKind {
+    Csv,
+    Tsv,
+    Json,
+}
+
 /// How a Markdown tab is shown.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum MdMode {
@@ -83,6 +96,9 @@ pub struct Shell {
     settings_open: bool,
     palette: Palette,
     compare: Option<Compare>,
+    structured: std::collections::HashSet<TabId>,
+    structured_cache: HashMap<TabId, (Revision, Option<char>, Structured)>,
+    csv_delimiter: HashMap<TabId, char>,
     compare_pick: bool,
     md_modes: HashMap<TabId, MdMode>,
     md_cache: HashMap<TabId, (Revision, std::sync::Arc<Vec<sanain_markdown::Block>>)>,
@@ -144,6 +160,9 @@ impl Shell {
             settings_open: false,
             palette: Palette::default(),
             compare: None,
+            structured: Default::default(),
+            structured_cache: HashMap::new(),
+            csv_delimiter: HashMap::new(),
             compare_pick: false,
             md_modes: HashMap::new(),
             md_cache: HashMap::new(),
@@ -314,6 +333,9 @@ impl Shell {
                     self.md_cache.remove(&id);
                     self.md_modes.remove(&id);
                     self.md_synced.remove(&id);
+                    self.structured.remove(&id);
+                    self.structured_cache.remove(&id);
+                    self.csv_delimiter.remove(&id);
                 }
             }
             Then::Quit => {
@@ -526,6 +548,103 @@ impl Shell {
                 self.status = Some((msg, true));
             }
         }
+    }
+
+    fn data_kind(ed: &Editor) -> Option<DataKind> {
+        let ext = ed.file()?.path.extension()?.to_str()?.to_ascii_lowercase();
+        match ext.as_str() {
+            "csv" => Some(DataKind::Csv),
+            "tsv" | "tab" => Some(DataKind::Tsv),
+            "json" | "geojson" => Some(DataKind::Json),
+            _ => None,
+        }
+    }
+
+    /// Draw the structured view if enabled for the active tab.
+    fn structured_area(&mut self, ui: &mut egui::Ui) -> bool {
+        let id = self.ws.active().id;
+        let Some(kind) = Self::data_kind(self.editor()).filter(|_| self.structured.contains(&id))
+        else {
+            return false;
+        };
+        let rev = self.editor().document().revision();
+        let override_delim = self.csv_delimiter.get(&id).copied();
+        let fresh = self
+            .structured_cache
+            .get(&id)
+            .is_some_and(|(r, d, _)| *r == rev && *d == override_delim);
+        if !fresh {
+            let text = self.editor().document().text();
+            let data = match kind {
+                DataKind::Json => Structured::Json(sanain_tools::json::tree(&text)),
+                DataKind::Csv | DataKind::Tsv => {
+                    let hint = override_delim.or((kind == DataKind::Tsv).then_some('\t'));
+                    let d = sanain_tools::csv::detect_delimiter(&text, hint);
+                    Structured::Csv(sanain_tools::csv::parse(&text, d))
+                }
+            };
+            self.structured_cache
+                .insert(id, (rev, override_delim, data));
+        }
+        let p = theme::palette(ui.ctx());
+        let size = self.settings.font_size;
+        let l10n = &self.l10n;
+        let Some((_, _, data)) = self.structured_cache.get(&id) else {
+            return false;
+        };
+        let mut pick = None;
+        match data {
+            Structured::Csv(table) => {
+                egui::Frame::NONE
+                    .fill(p.surface)
+                    .inner_margin(egui::Margin::symmetric(8, 6))
+                    .show(ui, |ui| {
+                        ui.horizontal(|ui| {
+                            ui.label(tr(l10n, "csv-delimiter", &[]));
+                            for (c, name) in [(',', ","), (';', ";"), ('\t', "Tab"), ('|', "|")] {
+                                if ui.selectable_label(table.delimiter == c, name).clicked() {
+                                    pick = Some(c);
+                                }
+                            }
+                            // The first row is shown as the header.
+                            let rows = table.rows.len().saturating_sub(1) as i64;
+                            ui.colored_label(
+                                p.muted,
+                                tr(l10n, "csv-rows", &[("count", rows.into())]),
+                            );
+                            if let Some(line) = table.unterminated_quote {
+                                let msg =
+                                    tr(l10n, "csv-unterminated", &[("line", (line as i64).into())]);
+                                ui.colored_label(p.error, msg);
+                            }
+                            if table.truncated {
+                                ui.colored_label(p.muted, tr(l10n, "csv-truncated", &[]));
+                            }
+                        });
+                    });
+                crate::structured::csv(ui, table, p, size, true);
+            }
+            Structured::Json(Ok(root)) => {
+                let more = |n: usize| tr(l10n, "json-more", &[("count", (n as i64).into())]);
+                crate::structured::json(ui, root, p, &more);
+            }
+            Structured::Json(Err(e)) => {
+                let msg = tr(
+                    l10n,
+                    "tools-json-error",
+                    &[
+                        ("line", (e.line as i64).into()),
+                        ("column", (e.column as i64).into()),
+                        ("reason", tr(l10n, &json_reason_id(e.message), &[]).into()),
+                    ],
+                );
+                ui.colored_label(p.error, msg);
+            }
+        }
+        if let Some(c) = pick {
+            self.csv_delimiter.insert(id, c);
+        }
+        true
     }
 
     fn start_compare(&mut self, right: TabId) {
@@ -827,6 +946,7 @@ impl Shell {
                 MenuAction::MarkdownSource
                 | MenuAction::MarkdownSplit
                 | MenuAction::MarkdownPreview => Self::is_markdown(self.editor()),
+                MenuAction::StructuredView => Self::data_kind(self.editor()).is_some(),
                 _ => true,
             }
     }
@@ -910,6 +1030,15 @@ impl Shell {
             MenuAction::CommandPalette => {
                 self.palette.open();
                 return;
+            }
+            MenuAction::StructuredView => {
+                if Self::data_kind(self.editor()).is_some() {
+                    let id = self.ws.active().id;
+                    if !self.structured.remove(&id) {
+                        self.structured.insert(id);
+                    }
+                }
+                None
             }
             MenuAction::CompareTabs => {
                 if self.compare.take().is_none() {
@@ -1335,7 +1464,7 @@ impl eframe::App for Shell {
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE.fill(p.canvas))
             .show(ui, |ui| {
-                if self.compare_area(ui) {
+                if self.compare_area(ui) || self.structured_area(ui) {
                     return;
                 }
                 match self.md_mode() {

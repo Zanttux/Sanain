@@ -161,3 +161,12 @@ compare-close = Close Comparison
 compare-to-left = Copy this change to the left
 compare-to-right = Copy this change to the right
 compare-stale = A document changed during the comparison. The comparison was refreshed; try again.
+view-structured = Structured View (CSV, JSON)
+csv-delimiter = Delimiter
+csv-rows = { $count ->
+    [one] 1 row
+   *[other] { $count } rows
+    }
+csv-unterminated = Unterminated quote starting on line { $line }
+csv-truncated = Showing the first 200,000 rows
+json-more = … { $count } more

@@ -162,3 +162,12 @@ compare-close = Sulje vertailu
 compare-to-left = Kopioi tämä muutos vasemmalle
 compare-to-right = Kopioi tämä muutos oikealle
 compare-stale = Asiakirja muuttui vertailun aikana. Vertailu päivitettiin; yritä uudelleen.
+view-structured = Rakenteinen näkymä (CSV, JSON)
+csv-delimiter = Erotin
+csv-rows = { $count ->
+    [one] 1 rivi
+   *[other] { $count } riviä
+    }
+csv-unterminated = Sulkematon lainausmerkki rivillä { $line }
+csv-truncated = Näytetään ensimmäiset 200 000 riviä
+json-more = … { $count } lisää

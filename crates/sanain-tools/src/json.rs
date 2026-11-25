@@ -315,6 +315,80 @@ pub fn minify(src: &str) -> Result<String, JsonError> {
     Ok(out)
 }
 
+/// A node of a read-only JSON tree. Scalars keep their source lexeme.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Node {
+    /// Members as (raw key lexeme including quotes, value).
+    Object(Vec<(String, Node)>),
+    Array(Vec<Node>),
+    Scalar(String),
+}
+
+// The default drop of a deep tree recurses once per level and can
+// overflow the stack on hostile input; drop iteratively instead.
+impl Drop for Node {
+    fn drop(&mut self) {
+        let mut stack: Vec<Node> = Vec::new();
+        let take = |n: &mut Node, stack: &mut Vec<Node>| match n {
+            Node::Object(m) => stack.extend(m.drain(..).map(|(_, v)| v)),
+            Node::Array(a) => stack.append(a),
+            Node::Scalar(_) => {}
+        };
+        take(self, &mut stack);
+        while let Some(mut n) = stack.pop() {
+            take(&mut n, &mut stack);
+        }
+    }
+}
+
+/// Parse into a tree without recursion. Duplicate keys and number lexemes
+/// are kept as written.
+pub fn tree(src: &str) -> Result<Node, JsonError> {
+    let toks = tokenize(src)?;
+    // Stack of containers being built, with the pending key for objects.
+    enum Open {
+        Obj(Vec<(String, Node)>, Option<String>),
+        Arr(Vec<Node>),
+    }
+    let mut stack: Vec<Open> = Vec::new();
+    let mut root = None;
+    let push_value =
+        |stack: &mut Vec<Open>, v: Node, root: &mut Option<Node>| match stack.last_mut() {
+            Some(Open::Obj(members, key)) => {
+                if let Some(k) = key.take() {
+                    members.push((k, v));
+                }
+            }
+            Some(Open::Arr(items)) => items.push(v),
+            None => *root = Some(v),
+        };
+    for (t, r) in &toks {
+        let text = &src[r.clone()];
+        match t {
+            Tok::OpenObj => stack.push(Open::Obj(Vec::new(), None)),
+            Tok::OpenArr => stack.push(Open::Arr(Vec::new())),
+            Tok::CloseObj | Tok::CloseArr => {
+                let node = match stack.pop() {
+                    Some(Open::Obj(m, _)) => Node::Object(m),
+                    Some(Open::Arr(a)) => Node::Array(a),
+                    None => continue,
+                };
+                push_value(&mut stack, node, &mut root);
+            }
+            Tok::Scalar => {
+                // In an object with no pending key, a string is the key.
+                if let Some(Open::Obj(_, key @ None)) = stack.last_mut() {
+                    *key = Some(text.to_owned());
+                } else {
+                    push_value(&mut stack, Node::Scalar(text.to_owned()), &mut root);
+                }
+            }
+            Tok::Colon | Tok::Comma => {}
+        }
+    }
+    Ok(root.unwrap_or(Node::Scalar(String::new())))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -328,6 +402,24 @@ mod tests {
             "{\n  \"a\": 1.0,\n  \"a\": 1e3,\n  \"big\": 123456789012345678901234567890,\n  \"s\": \"\\u00e4\\n\",\n  \"e\": {},\n  \"l\": []\n}"
         );
         assert_eq!(minify(&out).unwrap(), src);
+    }
+
+    #[test]
+    fn tree_keeps_lexemes_duplicates_and_order() {
+        let t = tree(r#"{"b":[1.0,{"x":null}],"a":2,"a":"\u0041"}"#).unwrap();
+        let Node::Object(m) = &t else { panic!() };
+        let keys: Vec<&str> = m.iter().map(|(k, _)| k.as_str()).collect();
+        assert_eq!(keys, ["\"b\"", "\"a\"", "\"a\""]);
+        assert_eq!(
+            m[0].1,
+            Node::Array(vec![
+                Node::Scalar("1.0".into()),
+                Node::Object(vec![("\"x\"".into(), Node::Scalar("null".into()))]),
+            ])
+        );
+        assert_eq!(m[2].1, Node::Scalar("\"\\u0041\"".into()));
+        let deep = "[".repeat(100_000) + &"]".repeat(100_000);
+        assert!(tree(&deep).is_ok(), "no recursion");
     }
 
     #[test]
