@@ -40,7 +40,7 @@ M1 in progress.
 | E08 | Partial | Source/split/preview, GFM blocks and inlines, front matter, caret-following preview, raw HTML inert, source bytes unchanged (hash checked). Not yet: images, link opening with confirmation, Mermaid, outline panel, syntax colours in code blocks |
 | E10 | Partial | Two-tab side-by-side line diff (time-bounded), apply hunk in either direction as one undo, stale-revision check. Not yet: intraline highlight, whitespace options, files/clipboard as sources |
 | E05 | Partial | UTF-8, UTF-8 BOM, UTF-16 LE/BE BOM, line endings preserved, explicit LF/CRLF conversion; legacy encodings not started |
-| E09 | Partial | JSON validate/format/minify preserving lexemes, error position. Not yet: JSON tree view, XML/YAML inspection, CSV grid |
+| E09 | Partial | JSON validate/format/minify preserving lexemes; read-only JSON tree; read-only CSV/TSV grid with delimiter detection. Not yet: XML/YAML inspection, editing in structured views |
 | E02 | Partial | Tabs, close/reopen, keyboard switching, dirty markers, per-tab recovery. Not yet: drag reorder in UI (model supports it), pin, split editor |
 | E07 | Partial | Tree-sitter highlighting for 8 languages, background worker with cancellation, line numbers, keyboard navigation, light/dark/system theme, zoom. Not yet: folding, incremental parsing, more languages |
 | E11 | Partial | Menus with standard shortcuts (logical keys on macOS); command palette with fuzzy search. Not yet: configurable shortcuts, Notepad++ preset |
@@ -86,6 +86,6 @@ because nobody independent exists; no fake approvals.
 ## Next
 - Line/column mapping, vertical movement, word movement, line operations.
 - Hard-link-safe save strategy.
-- CSV grid and JSON tree views (E09), then image and link handling in the Markdown preview.
+- Markdown preview: local images and links with confirmation; then legacy encodings (E05).
 - Manual IME and screen-reader pass on macOS; Windows and Linux GUI smoke
   test (needs hardware or VM access).

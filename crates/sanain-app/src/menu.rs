@@ -49,10 +49,11 @@ pub enum MenuAction {
     ToLf,
     ToCrLf,
     CompareTabs,
+    StructuredView,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 43] = [
+    pub const ALL: [MenuAction; 44] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -96,6 +97,7 @@ impl MenuAction {
         Self::ToLf,
         Self::ToCrLf,
         Self::CompareTabs,
+        Self::StructuredView,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -144,6 +146,7 @@ impl MenuAction {
             Self::ToLf => "tools.to-lf",
             Self::ToCrLf => "tools.to-crlf",
             Self::CompareTabs => "tools.compare",
+            Self::StructuredView => "view.structured",
         }
     }
 
@@ -198,6 +201,7 @@ impl MenuAction {
             Self::ToLf => "tools-to-lf",
             Self::ToCrLf => "tools-to-crlf",
             Self::CompareTabs => "tools-compare",
+            Self::StructuredView => "view-structured",
         }
     }
 
@@ -247,7 +251,8 @@ impl MenuAction {
             | Self::LowerCase
             | Self::ToLf
             | Self::ToCrLf
-            | Self::CompareTabs => return None,
+            | Self::CompareTabs
+            | Self::StructuredView => return None,
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -291,6 +296,7 @@ const VIEW_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::MarkdownSource),
     Some(MenuAction::MarkdownSplit),
     Some(MenuAction::MarkdownPreview),
+    Some(MenuAction::StructuredView),
     None,
     Some(MenuAction::ZoomIn),
     Some(MenuAction::ZoomOut),
@@ -436,7 +442,8 @@ mod native {
             | MenuAction::LowerCase
             | MenuAction::ToLf
             | MenuAction::ToCrLf
-            | MenuAction::CompareTabs => return None,
+            | MenuAction::CompareTabs
+            | MenuAction::StructuredView => return None,
         };
         Some(KeyAccelerator::new(m, k))
     }
