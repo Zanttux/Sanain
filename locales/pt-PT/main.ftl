@@ -302,3 +302,14 @@ view-word-wrap = Moldar texto
 status-wrap-on = As linhas longas são agora moldadas à largura da janela.
 status-wrap-off = As linhas longas já não são moldadas.
 settings-word-wrap = Moldar linhas longas
+edit-go-to-line = Ir para a linha…
+edit-go-to-heading = Ir para o título…
+goto-line-hint = Linha ou linha:coluna
+goto-line-note = { $count ->
+    [one] O documento tem 1 linha.
+    [many] O documento tem { $count } de linhas.
+   *[other] O documento tem { $count } linhas.
+    }
+goto-line-invalid = Introduza um número de linha, opcionalmente seguido de :coluna.
+goto-heading-hint = Escreva para filtrar os títulos
+goto-heading-none = Este documento não tem títulos.

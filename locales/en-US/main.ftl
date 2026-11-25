@@ -288,3 +288,13 @@ view-word-wrap = Word Wrap
 status-wrap-on = Long lines now wrap to the window width.
 status-wrap-off = Long lines no longer wrap.
 settings-word-wrap = Wrap long lines
+edit-go-to-line = Go to Line…
+edit-go-to-heading = Go to Heading…
+goto-line-hint = Line or line:column
+goto-line-note = { $count ->
+    [one] The document has 1 line.
+   *[other] The document has { $count } lines.
+    }
+goto-line-invalid = Enter a line number, optionally followed by :column.
+goto-heading-hint = Type to filter headings
+goto-heading-none = This document has no headings.

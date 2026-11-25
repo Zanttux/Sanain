@@ -315,3 +315,15 @@ view-word-wrap = Перенос по словам
 status-wrap-on = Длинные строки теперь переносятся по ширине окна.
 status-wrap-off = Длинные строки больше не переносятся.
 settings-word-wrap = Переносить длинные строки
+edit-go-to-line = Перейти к строке…
+edit-go-to-heading = Перейти к заголовку…
+goto-line-hint = Строка или строка:столбец
+goto-line-note = { $count ->
+    [one] В документе { $count } строка.
+    [few] В документе { $count } строки.
+    [many] В документе { $count } строк.
+   *[other] В документе { $count } строки.
+    }
+goto-line-invalid = Введите номер строки, при необходимости с :столбец.
+goto-heading-hint = Введите текст для фильтрации заголовков
+goto-heading-none = В этом документе нет заголовков.

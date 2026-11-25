@@ -276,3 +276,12 @@ view-word-wrap = 折り返し
 status-wrap-on = 長い行をウィンドウの幅で折り返すようになりました。
 status-wrap-off = 長い行を折り返さなくなりました。
 settings-word-wrap = 長い行を折り返す
+edit-go-to-line = 行へ移動…
+edit-go-to-heading = 見出しへ移動…
+goto-line-hint = 行 または 行:列
+goto-line-note = { $count ->
+   *[other] この文書は { $count } 行です。
+    }
+goto-line-invalid = 行番号を入力してください（必要に応じて :列 を付けます）。
+goto-heading-hint = 入力して見出しを絞り込む
+goto-heading-none = この文書には見出しがありません。

@@ -289,3 +289,13 @@ view-word-wrap = Zeilenumbruch
 status-wrap-on = Lange Zeilen werden jetzt an der Fensterbreite umbrochen.
 status-wrap-off = Lange Zeilen werden nicht mehr umbrochen.
 settings-word-wrap = Lange Zeilen umbrechen
+edit-go-to-line = Gehe zu Zeile…
+edit-go-to-heading = Gehe zu Überschrift…
+goto-line-hint = Zeile oder Zeile:Spalte
+goto-line-note = { $count ->
+    [one] Das Dokument hat 1 Zeile.
+   *[other] Das Dokument hat { $count } Zeilen.
+    }
+goto-line-invalid = Geben Sie eine Zeilennummer ein, optional gefolgt von :Spalte.
+goto-heading-hint = Tippen, um Überschriften zu filtern
+goto-heading-none = Dieses Dokument hat keine Überschriften.

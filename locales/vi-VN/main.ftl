@@ -276,3 +276,12 @@ view-word-wrap = Ngắt dòng tự động
 status-wrap-on = Các dòng dài giờ được ngắt theo chiều rộng cửa sổ.
 status-wrap-off = Các dòng dài không còn được ngắt nữa.
 settings-word-wrap = Ngắt các dòng dài
+edit-go-to-line = Đi tới dòng…
+edit-go-to-heading = Đi tới tiêu đề…
+goto-line-hint = Dòng hoặc dòng:cột
+goto-line-note = { $count ->
+   *[other] Tài liệu có { $count } dòng.
+    }
+goto-line-invalid = Nhập số dòng, có thể kèm theo :cột.
+goto-heading-hint = Nhập để lọc tiêu đề
+goto-heading-none = Tài liệu này không có tiêu đề.

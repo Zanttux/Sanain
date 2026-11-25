@@ -66,10 +66,12 @@ pub enum MenuAction {
     AddCursorAbove,
     AddCursorBelow,
     WordWrap,
+    GoToLine,
+    GoToHeading,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 59] = [
+    pub const ALL: [MenuAction; 61] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -129,6 +131,8 @@ impl MenuAction {
         Self::AddCursorAbove,
         Self::AddCursorBelow,
         Self::WordWrap,
+        Self::GoToLine,
+        Self::GoToHeading,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -193,6 +197,8 @@ impl MenuAction {
             Self::AddCursorAbove => "edit.add-cursor-above",
             Self::AddCursorBelow => "edit.add-cursor-below",
             Self::WordWrap => "view.word-wrap",
+            Self::GoToLine => "edit.go-to-line",
+            Self::GoToHeading => "edit.go-to-heading",
         }
     }
 
@@ -263,6 +269,8 @@ impl MenuAction {
             Self::AddCursorAbove => "edit-add-cursor-above",
             Self::AddCursorBelow => "edit-add-cursor-below",
             Self::WordWrap => "view-word-wrap",
+            Self::GoToLine => "edit-go-to-line",
+            Self::GoToHeading => "edit-go-to-heading",
         }
     }
 
@@ -308,6 +316,8 @@ impl MenuAction {
             Self::AddCursorAbove => (cmd.plus(Modifiers::ALT), Key::ArrowUp),
             Self::AddCursorBelow => (cmd.plus(Modifiers::ALT), Key::ArrowDown),
             Self::DeleteLine => (cmd_shift, Key::K),
+            Self::GoToLine => (cmd, Key::L),
+            Self::GoToHeading => (cmd_shift, Key::O),
             Self::MoveLineUp => (Modifiers::ALT, Key::ArrowUp),
             Self::MoveLineDown => (Modifiers::ALT, Key::ArrowDown),
             Self::CloseTab => (cmd, Key::W),
@@ -475,6 +485,9 @@ const EDIT_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::Replace),
     Some(MenuAction::FindInFolder),
     None,
+    Some(MenuAction::GoToLine),
+    Some(MenuAction::GoToHeading),
+    None,
     Some(MenuAction::DuplicateLine),
     Some(MenuAction::DeleteLine),
     Some(MenuAction::MoveLineUp),
@@ -639,6 +652,8 @@ mod native {
                 Key::Named(NamedKey::ArrowDown),
             ),
             MenuAction::DeleteLine => (cmd_shift, ch("k")),
+            MenuAction::GoToLine => (cmd, ch("l")),
+            MenuAction::GoToHeading => (cmd_shift, ch("o")),
             MenuAction::AddCursorAbove => (cmd | Modifiers::ALT, Key::Named(NamedKey::ArrowUp)),
             MenuAction::AddCursorBelow => (cmd | Modifiers::ALT, Key::Named(NamedKey::ArrowDown)),
             MenuAction::MoveLineUp => (Modifiers::ALT, Key::Named(NamedKey::ArrowUp)),

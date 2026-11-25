@@ -315,3 +315,15 @@ view-word-wrap = Перенесення слів
 status-wrap-on = Довгі рядки тепер переносяться за шириною вікна.
 status-wrap-off = Довгі рядки більше не переносяться.
 settings-word-wrap = Переносити довгі рядки
+edit-go-to-line = Перейти до рядка…
+edit-go-to-heading = Перейти до заголовка…
+goto-line-hint = Рядок або рядок:стовпець
+goto-line-note = { $count ->
+    [one] У документі { $count } рядок.
+    [few] У документі { $count } рядки.
+    [many] У документі { $count } рядків.
+   *[other] У документі { $count } рядка.
+    }
+goto-line-invalid = Введіть номер рядка, за потреби з :стовпець.
+goto-heading-hint = Введіть текст для фільтрування заголовків
+goto-heading-none = У цьому документі немає заголовків.

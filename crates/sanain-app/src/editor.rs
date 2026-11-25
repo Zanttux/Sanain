@@ -439,6 +439,16 @@ impl Editor {
         self.execute(Command::Insert(text.to_owned()));
     }
 
+    /// Put the caret at 0-based `line`, `col` (clamped to the document
+    /// and the line's length).
+    pub fn go_to(&mut self, line: usize, col: usize) {
+        let rope = self.doc.rope();
+        let line = line.min(rope.len_lines().saturating_sub(1));
+        let start = rope.line_to_char(line);
+        let at = (start + col).min(sel::line_content_end(rope, line));
+        self.execute(Command::PlaceCaret { at, extend: false });
+    }
+
     /// Select `range` as the only selection (e.g. a search match).
     pub fn select(&mut self, range: std::ops::Range<usize>) {
         let len = self.doc.len_chars();
@@ -652,6 +662,22 @@ impl Editor {
     }
 }
 
+/// Parse a Go to Line target: `line` or `line:column`, both 1-based.
+/// Returns 0-based (line, column).
+pub fn parse_line_target(s: &str) -> Option<(usize, usize)> {
+    let s = s.trim();
+    let (l, c) = match s.split_once([':', ',']) {
+        Some((l, c)) => (l.trim(), Some(c.trim())),
+        None => (s, None),
+    };
+    let line: usize = l.parse().ok()?;
+    let col: usize = match c {
+        Some(c) => c.parse().ok()?,
+        None => 1,
+    };
+    Some((line.max(1) - 1, col.max(1) - 1))
+}
+
 fn snap(rope: &ropey::Rope, at: usize) -> usize {
     let at = at.min(rope.len_chars());
     if sanain_core::grapheme::is_boundary(rope, at) {
@@ -680,6 +706,23 @@ fn preferred_newline(text: &str) -> &'static str {
 mod tests {
     use super::*;
     use std::fs;
+
+    #[test]
+    fn go_to_line_targets() {
+        assert_eq!(parse_line_target("12"), Some((11, 0)));
+        assert_eq!(parse_line_target(" 3:7 "), Some((2, 6)));
+        assert_eq!(parse_line_target("3,7"), Some((2, 6)));
+        assert_eq!(parse_line_target("0"), Some((0, 0)));
+        for bad in ["", "x", "3:", "-1", "1:y"] {
+            assert_eq!(parse_line_target(bad), None, "{bad}");
+        }
+        let mut ed = Editor::new();
+        ed.execute(Command::Insert("one\ntwo\nthree".into()));
+        ed.go_to(1, 99);
+        assert_eq!(ed.selections().primary().head, 7, "clamped to line end");
+        ed.go_to(99, 2);
+        assert_eq!(ed.selections().primary().head, 10, "last line");
+    }
 
     #[test]
     fn creating_multiple_cursors() {

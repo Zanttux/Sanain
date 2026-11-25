@@ -276,3 +276,12 @@ view-word-wrap = 自動換行
 status-wrap-on = 長行現在會依視窗寬度自動換行。
 status-wrap-off = 長行不再自動換行。
 settings-word-wrap = 長行自動換行
+edit-go-to-line = 移至行…
+edit-go-to-heading = 移至標題…
+goto-line-hint = 行 或 行:欄
+goto-line-note = { $count ->
+   *[other] 文件共有 { $count } 行。
+    }
+goto-line-invalid = 請輸入行號，可選擇在後面加上 :欄。
+goto-heading-hint = 輸入以篩選標題
+goto-heading-none = 此文件沒有標題。

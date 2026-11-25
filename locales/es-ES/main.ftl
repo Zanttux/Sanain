@@ -289,3 +289,13 @@ view-word-wrap = Ajuste de línea
 status-wrap-on = Las líneas largas se ajustan ahora al ancho de la ventana.
 status-wrap-off = Las líneas largas ya no se ajustan.
 settings-word-wrap = Ajustar las líneas largas
+edit-go-to-line = Ir a la línea…
+edit-go-to-heading = Ir al encabezado…
+goto-line-hint = Línea o línea:columna
+goto-line-note = { $count ->
+    [one] El documento tiene 1 línea.
+   *[other] El documento tiene { $count } líneas.
+    }
+goto-line-invalid = Introduce un número de línea, seguido opcionalmente de :columna.
+goto-heading-hint = Escribe para filtrar los encabezados
+goto-heading-none = Este documento no tiene encabezados.

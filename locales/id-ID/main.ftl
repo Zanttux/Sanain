@@ -276,3 +276,12 @@ view-word-wrap = Bungkus Kata
 status-wrap-on = Baris panjang kini dibungkus sesuai lebar jendela.
 status-wrap-off = Baris panjang tidak lagi dibungkus.
 settings-word-wrap = Bungkus baris panjang
+edit-go-to-line = Ke Baris…
+edit-go-to-heading = Ke Judul…
+goto-line-hint = Baris atau baris:kolom
+goto-line-note = { $count ->
+   *[other] Dokumen ini memiliki { $count } baris.
+    }
+goto-line-invalid = Masukkan nomor baris, opsional diikuti :kolom.
+goto-heading-hint = Ketik untuk menyaring judul
+goto-heading-none = Dokumen ini tidak memiliki judul.

@@ -5,6 +5,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Go to Line (Cmd/Ctrl+L, accepts `line` or `line:column`) and, in
+  Markdown, Go to Heading (Cmd/Ctrl+Shift+O) with a filterable list of
+  headings. The command palette list now scrolls through every command.
 - Word wrap: long lines wrap at word boundaries to the window width (on
   by default; View > Word Wrap or Settings to turn it off). Up/Down move
   by display row. Documents over 1 M characters are not wrapped yet.

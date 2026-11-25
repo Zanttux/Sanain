@@ -289,3 +289,13 @@ view-word-wrap = A capo automatico
 status-wrap-on = Le righe lunghe ora vanno a capo alla larghezza della finestra.
 status-wrap-off = Le righe lunghe non vanno più a capo.
 settings-word-wrap = Manda a capo le righe lunghe
+edit-go-to-line = Vai alla riga…
+edit-go-to-heading = Vai al titolo…
+goto-line-hint = Riga o riga:colonna
+goto-line-note = { $count ->
+    [one] Il documento ha 1 riga.
+   *[other] Il documento ha { $count } righe.
+    }
+goto-line-invalid = Inserisci un numero di riga, eventualmente seguito da :colonna.
+goto-heading-hint = Digita per filtrare i titoli
+goto-heading-none = Questo documento non ha titoli.

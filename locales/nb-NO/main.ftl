@@ -289,3 +289,13 @@ view-word-wrap = Tekstbryting
 status-wrap-on = Lange linjer brytes nå ved vindusbredden.
 status-wrap-off = Lange linjer brytes ikke lenger.
 settings-word-wrap = Bryt lange linjer
+edit-go-to-line = Gå til linje…
+edit-go-to-heading = Gå til overskrift…
+goto-line-hint = Linje eller linje:kolonne
+goto-line-note = { $count ->
+    [one] Dokumentet har 1 linje.
+   *[other] Dokumentet har { $count } linjer.
+    }
+goto-line-invalid = Skriv inn et linjenummer, eventuelt etterfulgt av :kolonne.
+goto-heading-hint = Skriv for å filtrere overskrifter
+goto-heading-none = Dette dokumentet har ingen overskrifter.

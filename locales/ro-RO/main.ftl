@@ -302,3 +302,14 @@ view-word-wrap = Încadrare cuvinte
 status-wrap-on = Rândurile lungi se încadrează acum în lățimea ferestrei.
 status-wrap-off = Rândurile lungi nu se mai încadrează.
 settings-word-wrap = Încadrează rândurile lungi
+edit-go-to-line = Salt la linia…
+edit-go-to-heading = Salt la titlu…
+goto-line-hint = Linie sau linie:coloană
+goto-line-note = { $count ->
+    [one] Documentul are 1 linie.
+    [few] Documentul are { $count } linii.
+   *[other] Documentul are { $count } de linii.
+    }
+goto-line-invalid = Introdu un număr de linie, urmat opțional de :coloană.
+goto-heading-hint = Tastează pentru a filtra titlurile
+goto-heading-none = Acest document nu are titluri.
