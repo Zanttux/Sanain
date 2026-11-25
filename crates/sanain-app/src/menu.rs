@@ -56,10 +56,11 @@ pub enum MenuAction {
     Fold,
     Unfold,
     UnfoldAll,
+    FindInFolder,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 49] = [
+    pub const ALL: [MenuAction; 50] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -109,6 +110,7 @@ impl MenuAction {
         Self::Fold,
         Self::Unfold,
         Self::UnfoldAll,
+        Self::FindInFolder,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -163,6 +165,7 @@ impl MenuAction {
             Self::Fold => "view.fold",
             Self::Unfold => "view.unfold",
             Self::UnfoldAll => "view.unfold-all",
+            Self::FindInFolder => "edit.find-in-folder",
         }
     }
 
@@ -223,6 +226,7 @@ impl MenuAction {
             Self::Fold => "view-fold",
             Self::Unfold => "view-unfold",
             Self::UnfoldAll => "view-unfold-all",
+            Self::FindInFolder => "edit-find-in-folder",
         }
     }
 
@@ -282,6 +286,7 @@ impl MenuAction {
             Self::ZoomOut => (cmd, Key::Minus),
             Self::ZoomReset => (cmd, Key::Num0),
             Self::CommandPalette => (cmd_shift, Key::P),
+            Self::FindInFolder => (cmd_shift, Key::F),
             Self::MarkdownSplit => (cmd_shift, Key::V),
             Self::MarkdownSource | Self::MarkdownPreview => return None,
             Self::JsonValidate
@@ -412,6 +417,7 @@ const EDIT_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::FindNext),
     Some(MenuAction::FindPrev),
     Some(MenuAction::Replace),
+    Some(MenuAction::FindInFolder),
     None,
     Some(MenuAction::DuplicateLine),
     Some(MenuAction::DeleteLine),
@@ -591,6 +597,7 @@ mod native {
             MenuAction::ZoomOut => (cmd, ch("-")),
             MenuAction::ZoomReset => (cmd, ch("0")),
             MenuAction::CommandPalette => (cmd_shift, ch("p")),
+            MenuAction::FindInFolder => (cmd_shift, ch("f")),
             MenuAction::MarkdownSplit => (cmd_shift, ch("v")),
             MenuAction::MarkdownSource | MenuAction::MarkdownPreview => return None,
             MenuAction::JsonValidate

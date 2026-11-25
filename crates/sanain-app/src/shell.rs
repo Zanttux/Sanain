@@ -119,6 +119,7 @@ pub struct Shell {
     title: String,
     allow_close: bool,
     find: FindBar,
+    folder: crate::folderpanel::FolderPanel,
     syntax: SyntaxWorker,
     /// Latest highlight result and the revision requested last, per tab.
     spans: HashMap<TabId, (Revision, Vec<CharSpan>)>,
@@ -195,6 +196,7 @@ impl Shell {
             title: String::new(),
             allow_close: false,
             find: FindBar::default(),
+            folder: Default::default(),
             syntax: SyntaxWorker::start(),
             spans: HashMap::new(),
             requested: HashMap::new(),
@@ -1500,6 +1502,17 @@ impl Shell {
                 self.palette.open();
                 return;
             }
+            MenuAction::FindInFolder => {
+                let dir = self
+                    .editor()
+                    .file()
+                    .and_then(|f| f.path.parent().map(std::path::Path::to_path_buf));
+                self.folder.show_panel(dir);
+                if self.folder.root.is_none() {
+                    self.folder.root = rfd::FileDialog::new().pick_folder();
+                }
+                return;
+            }
             MenuAction::Fold => {
                 let tab = usize::from(self.settings.tab_width);
                 self.editor_mut().fold_at_caret(tab);
@@ -1958,6 +1971,49 @@ impl eframe::App for Shell {
         }
         self.update_syntax(&ctx);
         egui::Panel::bottom("status").show(ui, |ui| self.status_bar(ui));
+        if self.folder.open {
+            let l10n = &self.l10n;
+            let t = |id: &str, a: Option<(&str, i64)>, b: Option<(&str, i64)>| {
+                let args: Vec<(&str, FluentValue<'_>)> = [a, b]
+                    .into_iter()
+                    .flatten()
+                    .map(|(k, v)| (k, v.into()))
+                    .collect();
+                tr(l10n, id, &args)
+            };
+            let mut event = None;
+            egui::Panel::bottom("folder-search")
+                .resizable(true)
+                .default_size(240.0)
+                .frame(
+                    egui::Frame::NONE
+                        .fill(p.surface)
+                        .inner_margin(egui::Margin::same(8)),
+                )
+                .show(ui, |ui| event = self.folder.ui(ui, &t));
+            use crate::folderpanel::PanelEvent;
+            match event {
+                Some(PanelEvent::Close) => {
+                    self.folder.open = false;
+                    self.focus_active();
+                }
+                Some(PanelEvent::ChooseFolder) => {
+                    if let Some(dir) = rfd::FileDialog::new().pick_folder() {
+                        self.folder.root = Some(dir);
+                    }
+                }
+                Some(PanelEvent::OpenHit(hit)) => {
+                    self.open(&hit.path);
+                    if self.editor().file().is_some_and(|f| f.path == hit.path) {
+                        self.editor_mut().select(hit.chars.clone());
+                        let id = self.ws.active().id;
+                        self.views.entry(id).or_default().reveal();
+                        self.focus_active();
+                    }
+                }
+                None => {}
+            }
+        }
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE.fill(p.canvas))
             .show(ui, |ui| {

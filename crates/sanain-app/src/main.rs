@@ -2,6 +2,7 @@
 
 mod diffview;
 mod find;
+mod folderpanel;
 mod imagecache;
 mod menu;
 mod palette;

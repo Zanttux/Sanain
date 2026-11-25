@@ -216,3 +216,15 @@ settings-shortcut-change = Vaihda
 settings-shortcut-reset = Palauta
 settings-shortcut-press = Paina pikanäppäintä… (Esc peruu)
 settings-shortcut-moved = Pikanäppäin siirrettiin komennolta:
+edit-find-in-folder = Etsi kansiosta…
+folder-search-placeholder = Etsi kansiosta
+folder-search-run = Hae
+folder-search-stop = Pysäytä
+folder-search-no-folder = Valitse kansio
+folder-search-summary = { $count ->
+    [one] 1 osuma
+   *[other] { $count } osumaa
+    } { $files ->
+    [one] 1 tiedostossa
+   *[other] { $files } tiedostossa
+    }
