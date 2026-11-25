@@ -138,6 +138,67 @@ pub fn take_right<'r>(hunk: &Hunk, right: &'r str) -> (Range<usize>, &'r str) {
     (hunk.left_bytes.clone(), &right[hunk.right_bytes.clone()])
 }
 
+/// Lines longer than this are not compared character by character.
+const INTRALINE_MAX: usize = 2_000;
+
+/// Changed character ranges within a pair of changed lines, for
+/// highlighting: (ranges in `left`, ranges in `right`), in chars. Empty
+/// when the lines are too long or too different for the detail to help
+/// (less than 40 % in common).
+pub fn intraline(left: &str, right: &str) -> (Vec<Range<usize>>, Vec<Range<usize>>) {
+    let (a, b): (Vec<char>, Vec<char>) = (left.chars().collect(), right.chars().collect());
+    if a.len() > INTRALINE_MAX || b.len() > INTRALINE_MAX {
+        return (Vec::new(), Vec::new());
+    }
+    let ops = capture_diff_slices_deadline(
+        Algorithm::Myers,
+        &a,
+        &b,
+        Some(Instant::now() + Duration::from_millis(20)),
+    );
+    let same: usize = ops
+        .iter()
+        .map(|op| match op {
+            DiffOp::Equal { len, .. } => *len,
+            _ => 0,
+        })
+        .sum();
+    if same * 10 < a.len().max(b.len()) * 4 {
+        return (Vec::new(), Vec::new());
+    }
+    let (mut l, mut r) = (Vec::new(), Vec::new());
+    let push = |v: &mut Vec<Range<usize>>, range: Range<usize>| {
+        if range.is_empty() {
+            return;
+        }
+        match v.last_mut() {
+            Some(last) if last.end == range.start => last.end = range.end,
+            _ => v.push(range),
+        }
+    };
+    for op in ops {
+        match op {
+            DiffOp::Equal { .. } => {}
+            DiffOp::Delete {
+                old_index, old_len, ..
+            } => push(&mut l, old_index..old_index + old_len),
+            DiffOp::Insert {
+                new_index, new_len, ..
+            } => push(&mut r, new_index..new_index + new_len),
+            DiffOp::Replace {
+                old_index,
+                old_len,
+                new_index,
+                new_len,
+            } => {
+                push(&mut l, old_index..old_index + old_len);
+                push(&mut r, new_index..new_index + new_len);
+            }
+        }
+    }
+    (l, r)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -150,6 +211,20 @@ mod tests {
             out.replace_range(r, t);
         }
         out
+    }
+
+    #[test]
+    fn intraline_marks_only_the_changed_part() {
+        let (l, r) = intraline("let a = 1;", "let a = 10;");
+        assert_eq!(l, Vec::<Range<usize>>::new());
+        assert_eq!(r, vec![9..10]);
+        let (l, r) = intraline("println!(\"hi\")", "eprintln!(\"ho\")");
+        assert_eq!(l, vec![11..12]);
+        assert_eq!(r, vec![0..1, 12..13]);
+        let (l, r) = intraline("äö x", "äö y");
+        assert_eq!((l, r), (vec![3..4], vec![3..4]), "char indices, not bytes");
+        // Unrelated lines: no detail.
+        assert_eq!(intraline("abcdef", "uvwxyz"), (vec![], vec![]));
     }
 
     #[test]
