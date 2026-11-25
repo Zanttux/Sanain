@@ -155,6 +155,7 @@ def main() -> int:
             lines.append("")
     for spdx, body in sorted(appendix.items()):
         lines += [f"## License text: {spdx}", "", "```text", body, "```", ""]
+    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
     print(f"{out_path}: {len(crates)} crates, {len(missing)} without a license file")
