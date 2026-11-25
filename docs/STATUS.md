@@ -35,7 +35,7 @@ M1 in progress.
 |---|---|---|
 | E01 | Partial | Round-trip and conflict tests in `crates/sanain-io/tests/file_lifecycle.rs` |
 | E03 | Partial | Undo/redo, grouped transactions, property test, multi-cursor insert/delete |
-| E12 | Partial | Grapheme-cluster navigation and deletion (`crates/sanain-core/src/grapheme.rs`) |
+| E12 | Partial | Grapheme-cluster navigation and deletion; editor exposes the caret line, caret and selection to AccessKit (checked via the macOS accessibility API: AXValue and AXSelectedText follow the caret); high-contrast appearance; every command reachable by keyboard (menus, palette). Not yet: tested with VoiceOver speech by a person, NVDA/Orca, IME composition by a person |
 | E04 | Partial | Find/replace in the current tab: literal, regex, case, whole word, highlight, count, replace all as one undo. Not yet: preview before replace-all, cancellation for huge files, search across files |
 | E08 | Partial | Source/split/preview, GFM blocks and inlines, front matter, caret-following preview, raw HTML inert, source bytes unchanged (hash checked). Links: web with confirmation, local files, anchors, unsafe schemes blocked. Local images inside the document folder (limits enforced; remote never fetched). Not yet: permission flow for images outside the folder, Mermaid, outline panel, syntax colours in code blocks |
 | E10 | Partial | Two-tab side-by-side line diff (time-bounded), apply hunk in either direction as one undo, stale-revision check. Not yet: intraline highlight, whitespace options, files/clipboard as sources |
@@ -86,6 +86,6 @@ because nobody independent exists; no fake approvals.
 ## Next
 - Line/column mapping, vertical movement, word movement, line operations.
 - Hard-link-safe save strategy.
-- Accessibility pass (E12): VoiceOver reading of editor text, focus order, high contrast; then folding (E07).
+- Code folding (E07), then configurable shortcuts and a Notepad++ keymap preset (E11).
 - Manual IME and screen-reader pass on macOS; Windows and Linux GUI smoke
   test (needs hardware or VM access).

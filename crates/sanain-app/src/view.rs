@@ -255,6 +255,36 @@ impl EditorView {
                         });
                     });
                 }
+                // Screen readers: expose the caret's line as text with the
+                // caret/selection inside it. egui only builds this when an
+                // accessibility client is active.
+                if response.has_focus() {
+                    let sel = editor.selections().primary();
+                    let (line, col) = sanain_core::selection::line_col(rope, sel.head);
+                    let start = rope.line_to_char(line);
+                    let end = line_content_end(rope, line);
+                    let galley = layout(ui, line, editor);
+                    let head = CCursor::new(col.min(end - start));
+                    let anchor = if (start..=end).contains(&sel.anchor) {
+                        CCursor::new(sel.anchor - start)
+                    } else if sel.anchor < start {
+                        CCursor::new(0)
+                    } else {
+                        CCursor::new(end - start)
+                    };
+                    let range = egui::text_selection::CCursorRange::two(anchor, head);
+                    let origin = vec2(text_x, origin.y + line as f32 * row_h);
+                    egui::text_selection::accesskit_text::update_accesskit_for_text_widget(
+                        ui.ctx(),
+                        id,
+                        Some(range),
+                        egui::emath::TSTransform::from_translation(origin),
+                        &galley,
+                    );
+                    let text = galley.text().to_owned();
+                    ui.ctx()
+                        .accesskit_node_builder(id, |node| node.set_value(text));
+                }
             });
         changed
     }

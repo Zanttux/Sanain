@@ -36,15 +36,53 @@ pub const DARK: Palette = Palette {
     warning: Color32::from_rgb(0xF6, 0xC6, 0x6D),
 };
 
+/// High-contrast palette: pure black/white with a yellow accent.
+pub const HIGH_CONTRAST: Palette = Palette {
+    canvas: Color32::from_rgb(0x00, 0x00, 0x00),
+    surface: Color32::from_rgb(0x0A, 0x0A, 0x0A),
+    text: Color32::from_rgb(0xFF, 0xFF, 0xFF),
+    muted: Color32::from_rgb(0xD6, 0xD6, 0xD6),
+    accent: Color32::from_rgb(0xFF, 0xD6, 0x0A),
+    border: Color32::from_rgb(0xFF, 0xFF, 0xFF),
+    error: Color32::from_rgb(0xFF, 0x8A, 0x8A),
+    warning: Color32::from_rgb(0xFF, 0xD6, 0x0A),
+};
+
+static HIGH_CONTRAST_ON: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 pub fn palette(ctx: &egui::Context) -> &'static Palette {
     match ctx.theme() {
+        Theme::Dark if HIGH_CONTRAST_ON.load(std::sync::atomic::Ordering::Relaxed) => {
+            &HIGH_CONTRAST
+        }
         Theme::Dark => &DARK,
         Theme::Light => &LIGHT,
     }
 }
 
+/// Switch the dark theme between the normal and high-contrast palette.
+pub fn set_high_contrast(ctx: &egui::Context, on: bool) {
+    HIGH_CONTRAST_ON.store(on, std::sync::atomic::Ordering::Relaxed);
+    apply(ctx, Theme::Dark, if on { &HIGH_CONTRAST } else { &DARK });
+    ctx.style_mut_of(Theme::Dark, |s| {
+        let w = &mut s.visuals.widgets;
+        let stroke = if on { 1.5 } else { 1.0 };
+        for v in [&mut w.inactive, &mut w.hovered, &mut w.active] {
+            v.bg_stroke.width = stroke;
+        }
+        // A clearly visible keyboard focus ring.
+        s.visuals.selection.stroke.width = if on { 2.0 } else { 1.0 };
+    });
+}
+
 pub fn install(ctx: &egui::Context) {
     for (theme, p) in [(Theme::Light, &LIGHT), (Theme::Dark, &DARK)] {
+        apply(ctx, theme, p);
+    }
+}
+
+fn apply(ctx: &egui::Context, theme: Theme, p: &Palette) {
+    {
         ctx.style_mut_of(theme, |style| {
             let v = &mut style.visuals;
             v.panel_fill = p.surface;
@@ -72,7 +110,7 @@ pub fn install(ctx: &egui::Context) {
 /// search-highlight backgrounds are not yet verified.
 pub fn syntax(p: &Palette, style: sanain_language::Style) -> Color32 {
     use sanain_language::Style as S;
-    let dark = p.canvas == DARK.canvas;
+    let dark = p.canvas == DARK.canvas || p.canvas == HIGH_CONTRAST.canvas;
     let rgb = |d: [u8; 3], l: [u8; 3]| {
         let c = if dark { d } else { l };
         Color32::from_rgb(c[0], c[1], c[2])

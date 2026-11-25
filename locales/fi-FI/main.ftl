@@ -204,3 +204,4 @@ image-blocked = Vain tämän asiakirjan kansiossa olevat kuvat näytetään.
 image-unsupported = Kuvamuotoa ei tueta.
 image-too-large = Kuva on liian suuri näytettäväksi.
 image-unreadable = Kuvaa ei voitu lukea.
+settings-theme-high-contrast = Suuri kontrasti

@@ -32,6 +32,11 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   shortcuts; restyled in-window menus on Windows and Linux.
 - Cut, Copy and Paste work (system clipboard was not enabled before).
 - macOS app bundle script (`scripts/macos-bundle.sh`).
+- Screen readers: the editor exposes the caret's line as its text value,
+  with the caret and selection, so VoiceOver can read where you are
+  (verified through the macOS accessibility API).
+- High contrast appearance (Settings): black and white with a yellow
+  accent and stronger outlines.
 - Markdown preview shows local images (PNG, JPEG, GIF, WebP) from the
   document's folder, decoded in the background with size and memory
   limits. Remote images are never fetched; images outside the folder are

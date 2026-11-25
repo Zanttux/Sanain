@@ -19,6 +19,7 @@ pub enum ThemeChoice {
     System,
     Light,
     Dark,
+    HighContrast,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -77,6 +78,7 @@ impl Settings {
             ThemeChoice::System => "system",
             ThemeChoice::Light => "light",
             ThemeChoice::Dark => "dark",
+            ThemeChoice::HighContrast => "high-contrast",
         };
         let mut out = format!(
             "{HEADER}\nfont_size={}\ntab_width={}\ninsert_spaces={}\ntheme={theme}\nrestore_session={}\n",
@@ -120,6 +122,7 @@ impl Settings {
                     s.theme = match v {
                         "light" => ThemeChoice::Light,
                         "dark" => ThemeChoice::Dark,
+                        "high-contrast" => ThemeChoice::HighContrast,
                         _ => ThemeChoice::System,
                     }
                 }
@@ -172,6 +175,11 @@ mod tests {
             locale: Some("fi-FI".into()),
         };
         assert_eq!(Settings::decode(&s.encode()), Some(s.clone()));
+        let hc = Settings {
+            theme: ThemeChoice::HighContrast,
+            ..Settings::default()
+        };
+        assert_eq!(Settings::decode(&hc.encode()), Some(hc));
         let dir = tempfile::tempdir().unwrap();
         s.save(dir.path()).unwrap();
         assert_eq!(Settings::load(dir.path()), s);

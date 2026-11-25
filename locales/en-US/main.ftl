@@ -203,3 +203,4 @@ image-blocked = Only images in this document's folder are shown.
 image-unsupported = Unsupported image format.
 image-too-large = Image is too large to show.
 image-unreadable = Image could not be read.
+settings-theme-high-contrast = High contrast
