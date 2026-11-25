@@ -58,10 +58,12 @@ pub enum MenuAction {
     UnfoldAll,
     FindInFolder,
     CheckUpdates,
+    LocalHistory,
+    ClearHistory,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 51] = [
+    pub const ALL: [MenuAction; 53] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -113,6 +115,8 @@ impl MenuAction {
         Self::UnfoldAll,
         Self::FindInFolder,
         Self::CheckUpdates,
+        Self::LocalHistory,
+        Self::ClearHistory,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -169,6 +173,8 @@ impl MenuAction {
             Self::UnfoldAll => "view.unfold-all",
             Self::FindInFolder => "edit.find-in-folder",
             Self::CheckUpdates => "app.check-updates",
+            Self::LocalHistory => "file.local-history",
+            Self::ClearHistory => "file.clear-history",
         }
     }
 
@@ -231,6 +237,8 @@ impl MenuAction {
             Self::UnfoldAll => "view-unfold-all",
             Self::FindInFolder => "edit-find-in-folder",
             Self::CheckUpdates => "app-check-updates",
+            Self::LocalHistory => "file-local-history",
+            Self::ClearHistory => "file-clear-history",
         }
     }
 
@@ -311,7 +319,9 @@ impl MenuAction {
             | Self::Fold
             | Self::Unfold
             | Self::UnfoldAll
-            | Self::CheckUpdates => return None,
+            | Self::CheckUpdates
+            | Self::LocalHistory
+            | Self::ClearHistory => return None,
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -369,6 +379,9 @@ const FILE_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::SaveAs),
     Some(MenuAction::SaveWithEncoding),
     Some(MenuAction::ReopenWithEncoding),
+    None,
+    Some(MenuAction::LocalHistory),
+    Some(MenuAction::ClearHistory),
     None,
     Some(MenuAction::CloseTab),
     Some(MenuAction::ReopenTab),
@@ -624,7 +637,9 @@ mod native {
             | MenuAction::Fold
             | MenuAction::Unfold
             | MenuAction::UnfoldAll
-            | MenuAction::CheckUpdates => return None,
+            | MenuAction::CheckUpdates
+            | MenuAction::LocalHistory
+            | MenuAction::ClearHistory => return None,
         };
         Some(KeyAccelerator::new(m, k))
     }

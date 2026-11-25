@@ -240,3 +240,29 @@ update-open-page = Download-Seite öffnen
 update-later = Später
 settings-check-updates = Einmal täglich nach Updates suchen
 settings-check-updates-detail = Fragt github.com nach der neuesten Version. Sonst wird nichts gesendet.
+file-local-history = Lokaler Verlauf…
+file-clear-history = Lokalen Verlauf löschen…
+history-title = Lokaler Verlauf von { $name }
+history-open = Öffnen
+history-restore = Wiederherstellen
+history-empty = Noch keine gesicherten Versionen. Bei jedem Sichern wird eine Kopie aufbewahrt.
+history-unreadable = Diese Version konnte nicht gelesen werden.
+history-just-now = Gerade eben
+history-minutes-ago = { $count ->
+    [one] vor 1 Minute
+   *[other] vor { $count } Minuten
+    }
+history-hours-ago = { $count ->
+    [one] vor 1 Stunde
+   *[other] vor { $count } Stunden
+    }
+history-days-ago = { $count ->
+    [one] vor 1 Tag
+   *[other] vor { $count } Tagen
+    }
+history-purge-title = Gesamten lokalen Verlauf löschen?
+history-purge-body = Gesicherte Kopien aller Dateien werden von diesem Computer entfernt. Die Dateien selbst werden nicht verändert.
+history-purge-confirm = Verlauf löschen
+history-purged = Lokaler Verlauf gelöscht.
+settings-local-history = Lokalen Verlauf gesicherter Dateien aufbewahren
+settings-local-history-detail = Bewahrt bis zu 50 Versionen pro Datei für 30 Tage auf, nur auf diesem Computer.

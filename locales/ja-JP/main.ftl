@@ -232,3 +232,26 @@ update-open-page = ダウンロードページを開く
 update-later = 後で
 settings-check-updates = 1日に1回アップデートを確認
 settings-check-updates-detail = github.com に最新リリースを問い合わせます。それ以外の情報は送信されません。
+file-local-history = ローカル履歴…
+file-clear-history = ローカル履歴を消去…
+history-title = { $name } のローカル履歴
+history-open = 開く
+history-restore = 復元
+history-empty = 保存されたバージョンはまだありません。保存するたびにコピーが保持されます。
+history-unreadable = このバージョンを読み込めませんでした。
+history-just-now = たった今
+history-minutes-ago = { $count ->
+   *[other] { $count } 分前
+    }
+history-hours-ago = { $count ->
+   *[other] { $count } 時間前
+    }
+history-days-ago = { $count ->
+   *[other] { $count } 日前
+    }
+history-purge-title = ローカル履歴をすべて削除しますか？
+history-purge-body = すべてのファイルの保存済みコピーがこのコンピュータから削除されます。ファイル自体は変更されません。
+history-purge-confirm = 履歴を削除
+history-purged = ローカル履歴を削除しました。
+settings-local-history = 保存したファイルのローカル履歴を保持
+settings-local-history-detail = ファイルごとに最大 50 バージョンを 30 日間、このコンピュータ上にのみ保持します。

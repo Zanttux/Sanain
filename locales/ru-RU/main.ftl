@@ -256,3 +256,35 @@ update-open-page = Открыть страницу загрузки
 update-later = Позже
 settings-check-updates = Проверять обновления раз в день
 settings-check-updates-detail = Запрашивает у github.com последний выпуск. Больше ничего не отправляется.
+file-local-history = Локальная история…
+file-clear-history = Очистить локальную историю…
+history-title = Локальная история файла { $name }
+history-open = Открыть
+history-restore = Восстановить
+history-empty = Сохранённых версий пока нет. При каждом сохранении сохраняется копия.
+history-unreadable = Не удалось прочитать эту версию.
+history-just-now = Только что
+history-minutes-ago = { $count ->
+    [one] { $count } минуту назад
+    [few] { $count } минуты назад
+    [many] { $count } минут назад
+   *[other] { $count } минуты назад
+    }
+history-hours-ago = { $count ->
+    [one] { $count } час назад
+    [few] { $count } часа назад
+    [many] { $count } часов назад
+   *[other] { $count } часа назад
+    }
+history-days-ago = { $count ->
+    [one] { $count } день назад
+    [few] { $count } дня назад
+    [many] { $count } дней назад
+   *[other] { $count } дня назад
+    }
+history-purge-title = Удалить всю локальную историю?
+history-purge-body = Сохранённые копии всех файлов будут удалены с этого компьютера. Сами файлы не изменятся.
+history-purge-confirm = Удалить историю
+history-purged = Локальная история удалена.
+settings-local-history = Хранить локальную историю сохранённых файлов
+settings-local-history-detail = Хранит до 50 версий каждого файла в течение 30 дней, только на этом компьютере.

@@ -256,3 +256,35 @@ update-open-page = Otevřít stránku ke stažení
 update-later = Později
 settings-check-updates = Kontrolovat aktualizace jednou denně
 settings-check-updates-detail = Zjišťuje na github.com nejnovější vydání. Nic dalšího se neodesílá.
+file-local-history = Místní historie…
+file-clear-history = Vymazat místní historii…
+history-title = Místní historie souboru { $name }
+history-open = Otevřít
+history-restore = Obnovit
+history-empty = Zatím nejsou uloženy žádné verze. Při každém uložení se uchová kopie.
+history-unreadable = Tuto verzi nelze přečíst.
+history-just-now = Právě teď
+history-minutes-ago = { $count ->
+    [one] před 1 minutou
+    [few] před { $count } minutami
+    [many] před { $count } minutami
+   *[other] před { $count } minutami
+    }
+history-hours-ago = { $count ->
+    [one] před 1 hodinou
+    [few] před { $count } hodinami
+    [many] před { $count } hodinami
+   *[other] před { $count } hodinami
+    }
+history-days-ago = { $count ->
+    [one] před 1 dnem
+    [few] před { $count } dny
+    [many] před { $count } dny
+   *[other] před { $count } dny
+    }
+history-purge-title = Odstranit celou místní historii?
+history-purge-body = Uložené kopie všech souborů budou z tohoto počítače odstraněny. Samotné soubory se nezmění.
+history-purge-confirm = Odstranit historii
+history-purged = Místní historie byla odstraněna.
+settings-local-history = Uchovávat místní historii uložených souborů
+settings-local-history-detail = Uchovává až 50 verzí každého souboru po dobu 30 dnů, pouze na tomto počítači.

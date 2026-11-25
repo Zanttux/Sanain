@@ -240,3 +240,29 @@ update-open-page = Avaa lataussivu
 update-later = Myöhemmin
 settings-check-updates = Tarkista päivitykset kerran päivässä
 settings-check-updates-detail = Kysyy github.comista uusinta julkaisua. Mitään muuta ei lähetetä.
+file-local-history = Paikallinen historia…
+file-clear-history = Tyhjennä paikallinen historia…
+history-title = Tiedoston { $name } paikallinen historia
+history-open = Avaa
+history-restore = Palauta
+history-empty = Tallennettuja versioita ei vielä ole. Jokaisesta tallennuksesta säilytetään kopio.
+history-unreadable = Tätä versiota ei voitu lukea.
+history-just-now = Juuri nyt
+history-minutes-ago = { $count ->
+    [one] 1 minuutti sitten
+   *[other] { $count } minuuttia sitten
+    }
+history-hours-ago = { $count ->
+    [one] 1 tunti sitten
+   *[other] { $count } tuntia sitten
+    }
+history-days-ago = { $count ->
+    [one] 1 päivä sitten
+   *[other] { $count } päivää sitten
+    }
+history-purge-title = Poistetaanko koko paikallinen historia?
+history-purge-body = Kaikkien tiedostojen tallennetut kopiot poistetaan tältä tietokoneelta. Itse tiedostoihin ei kosketa.
+history-purge-confirm = Poista historia
+history-purged = Paikallinen historia poistettiin.
+settings-local-history = Säilytä tallennettujen tiedostojen paikallinen historia
+settings-local-history-detail = Säilyttää enintään 50 versiota tiedostoa kohden 30 päivän ajan, vain tällä tietokoneella.

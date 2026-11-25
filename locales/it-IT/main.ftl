@@ -240,3 +240,29 @@ update-open-page = Apri pagina di download
 update-later = Più tardi
 settings-check-updates = Verifica aggiornamenti una volta al giorno
 settings-check-updates-detail = Chiede a github.com l’ultima versione pubblicata. Non viene inviato nient’altro.
+file-local-history = Cronologia locale…
+file-clear-history = Cancella cronologia locale…
+history-title = Cronologia locale di { $name }
+history-open = Apri
+history-restore = Ripristina
+history-empty = Nessuna versione salvata. Viene conservata una copia a ogni salvataggio.
+history-unreadable = Impossibile leggere questa versione.
+history-just-now = Proprio ora
+history-minutes-ago = { $count ->
+    [one] 1 minuto fa
+   *[other] { $count } minuti fa
+    }
+history-hours-ago = { $count ->
+    [one] 1 ora fa
+   *[other] { $count } ore fa
+    }
+history-days-ago = { $count ->
+    [one] 1 giorno fa
+   *[other] { $count } giorni fa
+    }
+history-purge-title = Eliminare tutta la cronologia locale?
+history-purge-body = Le copie salvate di tutti i file vengono rimosse da questo computer. I file stessi non vengono modificati.
+history-purge-confirm = Elimina cronologia
+history-purged = Cronologia locale eliminata.
+settings-local-history = Conserva la cronologia locale dei file salvati
+settings-local-history-detail = Conserva fino a 50 versioni per file per 30 giorni, solo su questo computer.

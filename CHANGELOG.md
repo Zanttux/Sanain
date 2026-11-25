@@ -5,6 +5,11 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Local history: each save keeps a copy of the file on this computer (up
+  to 50 versions per file, 30 days, files up to 10 MB). File > Local
+  History lists them; open a version in a new tab or restore it as one
+  undoable edit. It can be turned off in Settings and cleared with File >
+  Clear Local History.
 - Update check: Sanain > Check for Updates (File menu on Windows/Linux)
   asks GitHub for the latest release and links to its download page.
   Settings can turn on a daily check; it is off by default. Sanain never

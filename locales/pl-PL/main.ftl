@@ -256,3 +256,35 @@ update-open-page = Otwórz stronę pobierania
 update-later = Później
 settings-check-updates = Sprawdzaj aktualizacje raz dziennie
 settings-check-updates-detail = Pyta github.com o najnowsze wydanie. Nic więcej nie jest wysyłane.
+file-local-history = Historia lokalna…
+file-clear-history = Wyczyść historię lokalną…
+history-title = Historia lokalna pliku { $name }
+history-open = Otwórz
+history-restore = Przywróć
+history-empty = Brak zapisanych wersji. Przy każdym zapisie zachowywana jest kopia.
+history-unreadable = Nie można odczytać tej wersji.
+history-just-now = Przed chwilą
+history-minutes-ago = { $count ->
+    [one] 1 minutę temu
+    [few] { $count } minuty temu
+    [many] { $count } minut temu
+   *[other] { $count } minuty temu
+    }
+history-hours-ago = { $count ->
+    [one] 1 godzinę temu
+    [few] { $count } godziny temu
+    [many] { $count } godzin temu
+   *[other] { $count } godziny temu
+    }
+history-days-ago = { $count ->
+    [one] 1 dzień temu
+    [few] { $count } dni temu
+    [many] { $count } dni temu
+   *[other] { $count } dnia temu
+    }
+history-purge-title = Usunąć całą historię lokalną?
+history-purge-body = Zapisane kopie wszystkich plików zostaną usunięte z tego komputera. Same pliki nie zostaną zmienione.
+history-purge-confirm = Usuń historię
+history-purged = Usunięto historię lokalną.
+settings-local-history = Zachowuj lokalną historię zapisanych plików
+settings-local-history-detail = Zachowuje do 50 wersji każdego pliku przez 30 dni, tylko na tym komputerze.

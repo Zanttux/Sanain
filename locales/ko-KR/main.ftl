@@ -232,3 +232,26 @@ update-open-page = 다운로드 페이지 열기
 update-later = 나중에
 settings-check-updates = 하루에 한 번 업데이트 확인
 settings-check-updates-detail = github.com에 최신 릴리스를 요청합니다. 그 외에는 아무것도 전송하지 않습니다.
+file-local-history = 로컬 기록…
+file-clear-history = 로컬 기록 지우기…
+history-title = { $name }의 로컬 기록
+history-open = 열기
+history-restore = 복원
+history-empty = 저장된 버전이 아직 없습니다. 저장할 때마다 사본이 보관됩니다.
+history-unreadable = 이 버전을 읽을 수 없습니다.
+history-just-now = 방금
+history-minutes-ago = { $count ->
+   *[other] { $count }분 전
+    }
+history-hours-ago = { $count ->
+   *[other] { $count }시간 전
+    }
+history-days-ago = { $count ->
+   *[other] { $count }일 전
+    }
+history-purge-title = 로컬 기록을 모두 삭제하시겠습니까?
+history-purge-body = 모든 파일의 저장된 사본이 이 컴퓨터에서 제거됩니다. 파일 자체는 변경되지 않습니다.
+history-purge-confirm = 기록 삭제
+history-purged = 로컬 기록을 삭제했습니다.
+settings-local-history = 저장된 파일의 로컬 기록 보관
+settings-local-history-detail = 파일당 최대 50개 버전을 30일 동안 이 컴퓨터에만 보관합니다.

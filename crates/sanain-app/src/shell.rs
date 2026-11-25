@@ -95,6 +95,7 @@ enum Then {
 /// A dialog button's follow-up, run after the dialog closes.
 #[derive(Debug, Clone, Copy)]
 enum Action {
+    PurgeHistory,
     SaveThen(Then),
     Proceed(Then),
     SaveAs,
@@ -111,6 +112,8 @@ enum Dialog {
     OpenLink(String),
     /// A newer release exists: (version, release page).
     Update(String, String),
+    /// Confirm deleting all local history.
+    ConfirmPurge,
 }
 
 pub struct Shell {
@@ -131,6 +134,8 @@ pub struct Shell {
     settings: Settings,
     settings_dir: Option<std::path::PathBuf>,
     settings_open: bool,
+    history: Option<sanain_io::history::HistoryStore>,
+    history_open: bool,
     /// A running update check and whether the user asked for it.
     update: Option<(
         std::sync::mpsc::Receiver<Result<UpdateStatus, UpdateError>>,
@@ -185,6 +190,11 @@ impl Shell {
         false
     }
 
+    /// Where saved versions are kept (`None` disables local history).
+    pub fn set_history(&mut self, store: Option<sanain_io::history::HistoryStore>) {
+        self.history = store;
+    }
+
     pub fn new(
         ws: Workspace,
         l10n: Localizer,
@@ -212,6 +222,8 @@ impl Shell {
             settings,
             settings_dir,
             settings_open: false,
+            history: None,
+            history_open: false,
             update: None,
             recording: None,
             shortcut_moved: Vec::new(),
@@ -340,6 +352,7 @@ impl Shell {
         let name = self.display_name();
         match outcome {
             SaveOutcome::Saved => {
+                self.record_history();
                 self.status = Some((self.t("status-saved", &[("name", name.into())]), false));
                 return true;
             }
@@ -521,6 +534,10 @@ impl Shell {
                         ui.end_row();
                         ui.label("");
                         ui.checkbox(&mut s.restore_session, l("settings-restore-session"));
+                        ui.end_row();
+                        ui.label("");
+                        ui.checkbox(&mut s.local_history, l("settings-local-history"))
+                            .on_hover_text(l("settings-local-history-detail"));
                         ui.end_row();
                         ui.label("");
                         ui.checkbox(&mut s.check_updates, l("settings-check-updates"))
@@ -1011,6 +1028,123 @@ impl Shell {
         }
     }
 
+    /// Copy the just-saved file into local history (background thread).
+    fn record_history(&self) {
+        let (Some(store), true) = (self.history.clone(), self.settings.local_history) else {
+            return;
+        };
+        let Some(path) = self.editor().file().map(|f| f.path.clone()) else {
+            return;
+        };
+        let _ = std::thread::Builder::new()
+            .name("sanain-history".into())
+            .spawn(move || {
+                if let Ok(bytes) = std::fs::read(&path)
+                    && let Err(e) =
+                        store.record(&path, &bytes, sanain_io::history::Retention::default())
+                {
+                    eprintln!("sanain: local history not recorded: {e}");
+                }
+            });
+    }
+
+    fn history_window(&mut self, ctx: &egui::Context) {
+        if !self.history_open {
+            return;
+        }
+        let Some(path) = self.editor().file().map(|f| f.path.clone()) else {
+            self.history_open = false;
+            return;
+        };
+        let versions = self
+            .history
+            .as_ref()
+            .and_then(|h| h.list(&path).ok())
+            .unwrap_or_default();
+        let now = std::time::SystemTime::now();
+        let ago = |t: std::time::SystemTime| -> String {
+            let s = now.duration_since(t).map_or(0, |d| d.as_secs()) as i64;
+            let (id, n) = match s {
+                s if s < 60 => ("history-just-now", 0),
+                s if s < 3600 => ("history-minutes-ago", s / 60),
+                s if s < 86_400 => ("history-hours-ago", s / 3600),
+                s => ("history-days-ago", s / 86_400),
+            };
+            self.t(id, &[("count", n.into())])
+        };
+        let rows: Vec<(String, u64, usize)> = versions
+            .iter()
+            .enumerate()
+            .map(|(i, v)| (ago(v.saved), v.size, i))
+            .collect();
+        let title = self.t("history-title", &[("name", self.display_name().into())]);
+        let (open_l, restore_l, empty_l) = (
+            self.t("history-open", &[]),
+            self.t("history-restore", &[]),
+            self.t("history-empty", &[]),
+        );
+        let mut open = true;
+        let mut action: Option<(usize, bool)> = None;
+        egui::Window::new(title)
+            .id(egui::Id::unique("sanain-history"))
+            .open(&mut open)
+            .collapsible(false)
+            .default_width(420.0)
+            .show(ctx, |ui| {
+                if rows.is_empty() {
+                    ui.weak(empty_l);
+                }
+                egui::ScrollArea::vertical()
+                    .max_height(320.0)
+                    .show(ui, |ui| {
+                        egui::Grid::new("history-grid")
+                            .num_columns(3)
+                            .striped(true)
+                            .show(ui, |ui| {
+                                for (when, size, i) in &rows {
+                                    ui.label(when);
+                                    ui.weak(format!("{size} B"));
+                                    ui.horizontal(|ui| {
+                                        if ui.small_button(&open_l).clicked() {
+                                            action = Some((*i, false));
+                                        }
+                                        if ui.small_button(&restore_l).clicked() {
+                                            action = Some((*i, true));
+                                        }
+                                    });
+                                    ui.end_row();
+                                }
+                            });
+                    });
+            });
+        if !open {
+            self.history_open = false;
+        }
+        let Some((i, restore)) = action else { return };
+        let Some(bytes) = versions.get(i).and_then(|v| v.read().ok()) else {
+            return;
+        };
+        let enc = self.editor().encoding();
+        let text = sanain_io::decode_as(&bytes, enc)
+            .or_else(|_| sanain_io::decode(&bytes).map(|(t, _)| t));
+        let Ok(text) = text else {
+            self.status = Some((self.t("history-unreadable", &[]), true));
+            return;
+        };
+        if restore {
+            // One undoable edit; the user decides whether to save.
+            let len = self.editor().document().len_chars();
+            self.editor_mut().replace_range(0..len, &text);
+            self.editor_mut().select(0..0);
+        } else {
+            self.ws.new_tab();
+            self.editor_mut().execute(Command::Insert(text));
+            self.editor_mut().select(0..0);
+        }
+        self.history_open = false;
+        self.focus_active();
+    }
+
     fn data_kind(ed: &Editor) -> Option<DataKind> {
         let ext = ed.file()?.path.extension()?.to_str()?.to_ascii_lowercase();
         match ext.as_str() {
@@ -1473,6 +1607,10 @@ impl Shell {
                 | MenuAction::MarkdownPreview => Self::is_markdown(self.editor()),
                 MenuAction::StructuredView => Self::data_kind(self.editor()).is_some(),
                 MenuAction::ReopenWithEncoding => self.editor().file().is_some(),
+                MenuAction::LocalHistory => {
+                    self.editor().file().is_some() && self.history.is_some()
+                }
+                MenuAction::ClearHistory => self.history.is_some(),
                 _ => true,
             }
     }
@@ -1593,6 +1731,14 @@ impl Shell {
             }
             MenuAction::CommandPalette => {
                 self.palette.open();
+                return;
+            }
+            MenuAction::LocalHistory => {
+                self.history_open = self.editor().file().is_some();
+                return;
+            }
+            MenuAction::ClearHistory => {
+                self.dialog = Some(Dialog::ConfirmPurge);
                 return;
             }
             MenuAction::CheckUpdates => {
@@ -1881,6 +2027,10 @@ impl Shell {
                 ),
                 Dialog::Error(msg) => (msg.clone(), String::new()),
                 Dialog::OpenLink(url) => (self.t("dialog-open-link-title", &[]), url.clone()),
+                Dialog::ConfirmPurge => (
+                    self.t("history-purge-title", &[]),
+                    self.t("history-purge-body", &[]),
+                ),
                 Dialog::Update(version, _) => (
                     self.t(
                         "update-available-title",
@@ -1932,6 +2082,15 @@ impl Shell {
                             close = true;
                         }
                     }
+                    Dialog::ConfirmPurge => {
+                        if ui.button(self.t("history-purge-confirm", &[])).clicked() {
+                            close = true;
+                            after = Some(Action::PurgeHistory);
+                        }
+                        if ui.button(self.t("button-cancel", &[])).clicked() {
+                            close = true;
+                        }
+                    }
                     Dialog::Update(_, page) => {
                         if ui.button(self.t("update-open-page", &[])).clicked() {
                             ui.ctx().open_url(egui::OpenUrl::new_tab(page));
@@ -1974,6 +2133,19 @@ impl Shell {
                 Some(Action::Proceed(then)) => self.proceed(then, ctx),
                 Some(Action::SaveAs) => {
                     self.save_as();
+                }
+                Some(Action::PurgeHistory) => {
+                    let msg = match self
+                        .history
+                        .as_ref()
+                        .map(sanain_io::history::HistoryStore::purge_all)
+                    {
+                        Some(Ok(())) => (self.t("history-purged", &[]), false),
+                        Some(Err(e)) => (e.to_string(), true),
+                        None => return,
+                    };
+                    self.status = Some(msg);
+                    self.history_open = false;
                 }
                 Some(Action::Overwrite) => {
                     let o = self.editor_mut().save_overwrite();
@@ -2149,6 +2321,7 @@ impl eframe::App for Shell {
         self.dialogs(&ctx);
         self.settings_window(&ctx);
         self.compare_picker(&ctx);
+        self.history_window(&ctx);
         self.encoding_window(&ctx);
         if self.palette.open && self.dialog.is_none() {
             let entries: Vec<Entry> = MenuAction::ALL

@@ -41,6 +41,8 @@ pub struct Settings {
     pub check_updates: bool,
     /// Unix time of the last automatic update check.
     pub last_update_check: u64,
+    /// Keep a local copy of each saved version (docs/PRIVACY).
+    pub local_history: bool,
 }
 
 impl Default for Settings {
@@ -55,6 +57,7 @@ impl Default for Settings {
             keymap: crate::keymap::Keymap::default(),
             check_updates: false,
             last_update_check: 0,
+            local_history: true,
         }
     }
 }
@@ -97,8 +100,8 @@ impl Settings {
             out.push_str(&format!("locale={l}\n"));
         }
         out.push_str(&format!(
-            "check_updates={}\nlast_update_check={}\n",
-            self.check_updates, self.last_update_check
+            "check_updates={}\nlast_update_check={}\nlocal_history={}\n",
+            self.check_updates, self.last_update_check, self.local_history
         ));
         out.push_str(&self.keymap.encode());
         out
@@ -143,6 +146,7 @@ impl Settings {
                 "locale" if !v.is_empty() && v.len() <= 35 => s.locale = Some(v.to_owned()),
                 "check_updates" => s.check_updates = v.parse().unwrap_or(false),
                 "last_update_check" => s.last_update_check = v.parse().unwrap_or(0),
+                "local_history" => s.local_history = v.parse().unwrap_or(true),
                 other => {
                     s.keymap.read_line(other, v);
                 }
@@ -199,6 +203,7 @@ mod tests {
             },
             check_updates: true,
             last_update_check: 1_764_000_000,
+            local_history: false,
         };
         assert_eq!(Settings::decode(&s.encode()), Some(s.clone()));
         let hc = Settings {

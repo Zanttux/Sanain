@@ -239,3 +239,29 @@ update-open-page = Open Download Page
 update-later = Later
 settings-check-updates = Check for updates once a day
 settings-check-updates-detail = Asks github.com for the latest release. Nothing else is sent.
+file-local-history = Local History…
+file-clear-history = Clear Local History…
+history-title = Local history of { $name }
+history-open = Open
+history-restore = Restore
+history-empty = No saved versions yet. A copy is kept each time you save.
+history-unreadable = This version could not be read.
+history-just-now = Just now
+history-minutes-ago = { $count ->
+    [one] 1 minute ago
+   *[other] { $count } minutes ago
+    }
+history-hours-ago = { $count ->
+    [one] 1 hour ago
+   *[other] { $count } hours ago
+    }
+history-days-ago = { $count ->
+    [one] 1 day ago
+   *[other] { $count } days ago
+    }
+history-purge-title = Delete all local history?
+history-purge-body = Saved copies of every file are removed from this computer. Your files themselves are not changed.
+history-purge-confirm = Delete History
+history-purged = Local history deleted.
+settings-local-history = Keep local history of saved files
+settings-local-history-detail = Keeps up to 50 versions per file for 30 days, on this computer only.

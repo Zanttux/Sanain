@@ -240,3 +240,29 @@ update-open-page = Downloadpagina openen
 update-later = Later
 settings-check-updates = Eén keer per dag zoeken naar updates
 settings-check-updates-detail = Vraagt github.com naar de nieuwste release. Er wordt niets anders verzonden.
+file-local-history = Lokale geschiedenis…
+file-clear-history = Wis lokale geschiedenis…
+history-title = Lokale geschiedenis van { $name }
+history-open = Open
+history-restore = Herstel
+history-empty = Nog geen bewaarde versies. Bij elke keer bewaren wordt een kopie behouden.
+history-unreadable = Deze versie kan niet worden gelezen.
+history-just-now = Zojuist
+history-minutes-ago = { $count ->
+    [one] 1 minuut geleden
+   *[other] { $count } minuten geleden
+    }
+history-hours-ago = { $count ->
+    [one] 1 uur geleden
+   *[other] { $count } uur geleden
+    }
+history-days-ago = { $count ->
+    [one] 1 dag geleden
+   *[other] { $count } dagen geleden
+    }
+history-purge-title = Alle lokale geschiedenis verwijderen?
+history-purge-body = Bewaarde kopieën van alle bestanden worden van deze computer verwijderd. Je bestanden zelf worden niet gewijzigd.
+history-purge-confirm = Verwijder geschiedenis
+history-purged = Lokale geschiedenis verwijderd.
+settings-local-history = Lokale geschiedenis van bewaarde bestanden bijhouden
+settings-local-history-detail = Houdt maximaal 50 versies per bestand 30 dagen bij, alleen op deze computer.

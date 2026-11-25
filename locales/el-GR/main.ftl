@@ -240,3 +240,29 @@ update-open-page = Άνοιγμα σελίδας λήψης
 update-later = Αργότερα
 settings-check-updates = Έλεγχος για ενημερώσεις μία φορά την ημέρα
 settings-check-updates-detail = Ζητά από το github.com την τελευταία έκδοση. Δεν αποστέλλεται τίποτε άλλο.
+file-local-history = Τοπικό ιστορικό…
+file-clear-history = Εκκαθάριση τοπικού ιστορικού…
+history-title = Τοπικό ιστορικό του { $name }
+history-open = Άνοιγμα
+history-restore = Επαναφορά
+history-empty = Δεν υπάρχουν ακόμη αποθηκευμένες εκδόσεις. Σε κάθε αποθήκευση διατηρείται ένα αντίγραφο.
+history-unreadable = Δεν ήταν δυνατή η ανάγνωση αυτής της έκδοσης.
+history-just-now = Μόλις τώρα
+history-minutes-ago = { $count ->
+    [one] πριν από 1 λεπτό
+   *[other] πριν από { $count } λεπτά
+    }
+history-hours-ago = { $count ->
+    [one] πριν από 1 ώρα
+   *[other] πριν από { $count } ώρες
+    }
+history-days-ago = { $count ->
+    [one] πριν από 1 ημέρα
+   *[other] πριν από { $count } ημέρες
+    }
+history-purge-title = Διαγραφή όλου του τοπικού ιστορικού;
+history-purge-body = Τα αποθηκευμένα αντίγραφα όλων των αρχείων αφαιρούνται από αυτόν τον υπολογιστή. Τα ίδια τα αρχεία σας δεν αλλάζουν.
+history-purge-confirm = Διαγραφή ιστορικού
+history-purged = Το τοπικό ιστορικό διαγράφηκε.
+settings-local-history = Διατήρηση τοπικού ιστορικού αποθηκευμένων αρχείων
+settings-local-history-detail = Διατηρεί έως 50 εκδόσεις ανά αρχείο για 30 ημέρες, μόνο σε αυτόν τον υπολογιστή.
