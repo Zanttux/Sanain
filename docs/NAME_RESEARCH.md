@@ -1,0 +1,7 @@
+# Sanain name and clearance
+The founder selected Sanain. Technical identifier and CLI: sanain. Finnish sanain is an archaic genitive plural of sana (of words); the embedded AI is a subtle secondary association. Pronunciation approximately SAH-nine (Finnish /ˈsɑ.nɑi̯n/). Previous conversational searches found no obvious exact-name editor, but were preliminary; sanain.com was reported in use. These findings are not independently verified in this handoff.
+
+Before public launch, verify exact and similar marks (SANAIN, SANA AI, phonetic variants) in EUIPO/TMview, PRH, USPTO and WIPO, especially classes 9 and 42. Check actual goods/services, territories and status. Check GitHub, crates.io, package managers, app stores and registrar/RDAP for sanain.org, .dev, .app, .fi, .io and .com. Record dated evidence and links. No domain or account is reserved. Do not reopen naming absent a material blocker; escalate legal ambiguity to owner and qualified counsel. Never imply Notepad++ affiliation.
+
+## Competitor validation
+Review Notepad++, Notepad Next, Birchpad, Notepad Studio, Ferrite, Typora and relevant text utility products using current primary sources. Compare editing, recovery, Markdown, structured views, offline transformations, accessibility, performance and licensing. Verify claims by testing where feasible; do not infer security from nationality. Reuse code only after license, provenance and architecture review. Product focus: excellent file-first editing plus Markdown and deterministic text tools, not IDE expansion.

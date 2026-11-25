@@ -1,0 +1,2 @@
+# Privacy commitments
+Sanain is designed for offline use. No advertising, analytics, mandatory accounts or telemetry. File contents remain local unless a user explicitly invokes a future network feature with informed consent. Disable remote Markdown resources by default; do not execute embedded scripts. Crash reports stay local and require explicit review before sharing. Optional update checks must be documented and configurable. GitHub and sponsor platforms have their own privacy policies. This is a design commitment, not a claim about unimplemented software.

@@ -1,0 +1,2 @@
+# Code of conduct
+Be respectful, constructive and inclusive. Harassment, threats, discrimination, doxxing and spam are not acceptable. Discuss changes on their merits, not the contributor's identity or tools. Maintainers may remove harmful content or restrict participation proportionately. Report concerns privately to the owner via the contact method published before launch. Do not post sensitive reports publicly. Owner reviews enforcement and appeals; AI may summarize evidence but may not autonomously sanction people.

@@ -1,0 +1,4 @@
+# Rename to CODEOWNERS after replacing OWNER with an actual authorized account.
+* @OWNER
+/.github/ @OWNER
+/SECURITY.md @OWNER

@@ -1,0 +1,2 @@
+# Benchmarks
+No measurements yet. See TESTING.md for budgets. Record commit, release profile, toolchain, OS, hardware, dataset generator seed, file size/encoding, run count, cold/warm method, median/p95, peak RSS, failures and raw results path. Workloads: startup empty, 1 MB text, 100 MB log, 100k lines typing, regex search, Markdown preview, 100 tabs restore, 10 GB log P1. Use synthetic data. Report baseline and regression threshold before optimization.

@@ -1,0 +1,2 @@
+# Contributing (draft)
+Human and AI-assisted contributions welcome subject to same quality gates. Open an issue for large changes, link requirement IDs, include tests and disclose AI assistance and third-party provenance. No secrets or real user documents. Follow formatting, linting and test instructions in CLAUDE.md. Maintainer review required; no automatic merges. License and contribution terms must be approved before accepting external contributions. Be respectful; critique code, not authors.

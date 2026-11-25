@@ -1,0 +1,52 @@
+[
+  {
+    "name": "bug",
+    "color": "D73A4A",
+    "description": "Reproducible defect"
+  },
+  {
+    "name": "enhancement",
+    "color": "A2EEEF",
+    "description": "Feature proposal"
+  },
+  {
+    "name": "needs-triage",
+    "color": "FBCA04",
+    "description": "Awaiting classification"
+  },
+  {
+    "name": "good first issue",
+    "color": "7057FF",
+    "description": "Small scoped contribution"
+  },
+  {
+    "name": "help wanted",
+    "color": "008672",
+    "description": "Community help welcome"
+  },
+  {
+    "name": "localization",
+    "color": "0E8A16",
+    "description": "Translation or i18n"
+  },
+  {
+    "name": "security",
+    "color": "B60205",
+    "description": "Public non-sensitive security work"
+  },
+  {
+    "name": "blocked",
+    "color": "D4C5F9",
+    "description": "Blocked by dependency or decision"
+  },
+  {
+    "name": "documentation",
+    "color": "0075CA",
+    "description": "Documentation"
+  },
+  {
+    "name": "performance",
+    "color": "1D76DB",
+    "description": "Measured performance work"
+  }
+]

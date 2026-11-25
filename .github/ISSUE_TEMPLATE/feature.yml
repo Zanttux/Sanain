@@ -1,0 +1,11 @@
+name: Feature request
+description: Propose an improvement
+labels: [enhancement, needs-triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and proposed workflow
+      description: Explain why this belongs in a general text editor.
+    validations:
+      required: true
