@@ -301,3 +301,6 @@ compare-saved-label = 「{ $name }」（磁碟上）
 compare-clipboard-label = 剪貼簿
 compare-saved-failed = 無法讀取已儲存的檔案：{ $reason }
 compare-clipboard-empty = 剪貼簿中沒有可比較的文字。
+error-save-disk-full = 未儲存 { $name }：磁碟已滿。磁碟上的檔案未變更，你的文字仍在這裡。請釋放一些空間，或使用「另存新檔」將其儲存到其他位置。
+error-save-permission = 未儲存 { $name }：你沒有在該位置寫入的權限。磁碟上的檔案未變更。請使用「另存新檔」將其儲存到其他位置。
+error-save-read-only-volume = 未儲存 { $name }：磁碟為唯讀。磁碟上的檔案未變更。請使用「另存新檔」將其儲存到其他位置。

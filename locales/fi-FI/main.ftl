@@ -316,3 +316,6 @@ compare-saved-label = { $name } (levyllä)
 compare-clipboard-label = Leikepöytä
 compare-saved-failed = Tallennettua tiedostoa ei voitu lukea: { $reason }
 compare-clipboard-empty = Leikepöydällä ei ole tekstiä vertailtavaksi.
+error-save-disk-full = Tiedostoa { $name } ei tallennettu: levy on täynnä. Levyllä oleva tiedosto ei muuttunut, ja tekstisi on yhä tallessa. Vapauta tilaa tai tallenna muualle valitsemalla Tallenna nimellä.
+error-save-permission = Tiedostoa { $name } ei tallennettu: sinulla ei ole oikeutta kirjoittaa siihen sijaintiin. Levyllä oleva tiedosto ei muuttunut. Tallenna muualle valitsemalla Tallenna nimellä.
+error-save-read-only-volume = Tiedostoa { $name } ei tallennettu: levy on vain luku -tilassa. Levyllä oleva tiedosto ei muuttunut. Tallenna muualle valitsemalla Tallenna nimellä.

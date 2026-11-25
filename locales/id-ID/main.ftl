@@ -301,3 +301,6 @@ compare-saved-label = { $name } (di disk)
 compare-clipboard-label = Papan Klip
 compare-saved-failed = Tidak dapat membaca berkas tersimpan: { $reason }
 compare-clipboard-empty = Papan klip tidak berisi teks untuk dibandingkan.
+error-save-disk-full = { $name } tidak disimpan: disk penuh. Berkas di disk tidak berubah dan teks Anda masih ada di sini. Kosongkan sebagian ruang, atau gunakan Simpan Sebagai untuk menyimpannya di tempat lain.
+error-save-permission = { $name } tidak disimpan: Anda tidak memiliki izin untuk menulis di lokasi tersebut. Berkas di disk tidak berubah. Gunakan Simpan Sebagai untuk menyimpannya di tempat lain.
+error-save-read-only-volume = { $name } tidak disimpan: disk hanya-baca. Berkas di disk tidak berubah. Gunakan Simpan Sebagai untuk menyimpannya di tempat lain.

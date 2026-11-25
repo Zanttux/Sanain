@@ -346,3 +346,6 @@ compare-saved-label = { $name } (na dysku)
 compare-clipboard-label = Schowek
 compare-saved-failed = Nie można odczytać zapisanego pliku: { $reason }
 compare-clipboard-empty = Schowek nie zawiera tekstu do porównania.
+error-save-disk-full = Nie zapisano pliku { $name }: dysk jest pełny. Plik na dysku nie został zmieniony, a tekst nadal jest dostępny. Zwolnij miejsce lub użyj polecenia Zapisz jako, aby zapisać plik w innym miejscu.
+error-save-permission = Nie zapisano pliku { $name }: brak uprawnień do zapisu w tej lokalizacji. Plik na dysku nie został zmieniony. Użyj polecenia Zapisz jako, aby zapisać plik w innym miejscu.
+error-save-read-only-volume = Nie zapisano pliku { $name }: dysk jest tylko do odczytu. Plik na dysku nie został zmieniony. Użyj polecenia Zapisz jako, aby zapisać plik w innym miejscu.

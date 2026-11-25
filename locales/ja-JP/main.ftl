@@ -301,3 +301,6 @@ compare-saved-label = { $name }（ディスク上）
 compare-clipboard-label = クリップボード
 compare-saved-failed = 保存済みのファイルを読み込めませんでした: { $reason }
 compare-clipboard-empty = クリップボードに比較するテキストがありません。
+error-save-disk-full = { $name } を保存できませんでした: ディスクがいっぱいです。ディスク上のファイルは変更されておらず、テキストはこのまま残っています。空き容量を確保するか、「別名で保存」で別の場所に保存してください。
+error-save-permission = { $name } を保存できませんでした: その場所に書き込む権限がありません。ディスク上のファイルは変更されていません。「別名で保存」で別の場所に保存してください。
+error-save-read-only-volume = { $name } を保存できませんでした: ディスクは読み取り専用です。ディスク上のファイルは変更されていません。「別名で保存」で別の場所に保存してください。

@@ -301,3 +301,6 @@ compare-saved-label = { $name } (trên đĩa)
 compare-clipboard-label = Bảng nhớ tạm
 compare-saved-failed = Không thể đọc tệp đã lưu: { $reason }
 compare-clipboard-empty = Bảng nhớ tạm không có văn bản để so sánh.
+error-save-disk-full = Chưa lưu { $name }: ổ đĩa đã đầy. Tệp trên ổ đĩa không thay đổi và văn bản của bạn vẫn còn ở đây. Hãy giải phóng dung lượng hoặc dùng Lưu thành để lưu vào nơi khác.
+error-save-permission = Chưa lưu { $name }: bạn không có quyền ghi vào vị trí đó. Tệp trên ổ đĩa không thay đổi. Hãy dùng Lưu thành để lưu vào nơi khác.
+error-save-read-only-volume = Chưa lưu { $name }: ổ đĩa ở chế độ chỉ đọc. Tệp trên ổ đĩa không thay đổi. Hãy dùng Lưu thành để lưu vào nơi khác.

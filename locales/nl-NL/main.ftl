@@ -316,3 +316,6 @@ compare-saved-label = { $name } (op schijf)
 compare-clipboard-label = Klembord
 compare-saved-failed = Kan het opgeslagen bestand niet lezen: { $reason }
 compare-clipboard-empty = Het klembord bevat geen tekst om te vergelijken.
+error-save-disk-full = { $name } is niet bewaard: de schijf is vol. Het bestand op schijf is ongewijzigd en je tekst staat er nog. Maak ruimte vrij of gebruik Bewaar als om het ergens anders op te slaan.
+error-save-permission = { $name } is niet bewaard: je hebt geen toestemming om daar te schrijven. Het bestand op schijf is ongewijzigd. Gebruik Bewaar als om het ergens anders op te slaan.
+error-save-read-only-volume = { $name } is niet bewaard: de schijf is alleen-lezen. Het bestand op schijf is ongewijzigd. Gebruik Bewaar als om het ergens anders op te slaan.
