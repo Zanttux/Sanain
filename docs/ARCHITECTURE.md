@@ -3,7 +3,8 @@
 Rust stable, Cargo workspace. GUI: egui/eframe recommended, GPUI alternative (docs/adr/0001-gui-toolkit.md). Ropey or equivalent rope buffer; Tree-sitter incremental parsing; Comrak Markdown AST; encoding_rs plus explicit UTF-16 handling; regex and optional bounded advanced engine; similar diff; notify watcher; serde/TOML settings; SQLite or atomic journal for recovery. Avoid redundant text shaping stack if GUI supplies it. No dependency is approved merely by listing it.
 
 ## Workspace
-Implemented: `sanain-core`, `sanain-io`, `sanain-i18n`, `sanain-app`
+Implemented: `sanain-core`, `sanain-io`, `sanain-i18n`, `sanain-language`
+(Tree-sitter grammars, MIT-licensed), `sanain-app`
 (GUI-independent `Editor` state in the library; egui shell, editor view
 and theme in the `sanain` binary) (see
 docs/adr/0002-workspace-and-first-slice.md). The rest are planned and are

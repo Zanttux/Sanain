@@ -65,3 +65,29 @@ pub fn install(ctx: &egui::Context) {
         });
     }
 }
+
+/// Syntax colours, kept apart from brand colours (docs/BRAND.md). Each
+/// foreground meets WCAG 2.2 AA (>= 4.5:1) on the editor canvas: dark
+/// 5.6-15.2:1, light 5.2-15.1:1 (computed 2026-11-25). Selection and
+/// search-highlight backgrounds are not yet verified.
+pub fn syntax(p: &Palette, style: sanain_language::Style) -> Color32 {
+    use sanain_language::Style as S;
+    let dark = p.canvas == DARK.canvas;
+    let rgb = |d: [u8; 3], l: [u8; 3]| {
+        let c = if dark { d } else { l };
+        Color32::from_rgb(c[0], c[1], c[2])
+    };
+    match style {
+        S::Keyword => rgb([0xE6, 0xA4, 0x6A], [0x9A, 0x4A, 0x0B]),
+        S::String => rgb([0x9D, 0xCC, 0x8F], [0x2F, 0x6F, 0x2A]),
+        S::Escape => rgb([0xE3, 0xD0, 0x8A], [0x7A, 0x5A, 0x00]),
+        S::Comment => rgb([0x84, 0x91, 0x9B], [0x5E, 0x6B, 0x74]),
+        S::Number | S::Constant => rgb([0xD9, 0xA8, 0xD2], [0x8A, 0x3D, 0x7A]),
+        S::Function => rgb([0x8F, 0xC6, 0xE8], [0x1F, 0x5E, 0x8C]),
+        S::Type => rgb([0xE3, 0xD0, 0x8A], [0x7A, 0x5A, 0x00]),
+        S::Tag => rgb([0xE6, 0xA4, 0x6A], [0x9A, 0x4A, 0x0B]),
+        S::Attribute | S::Property => rgb([0xB9, 0xC6, 0xCF], [0x3E, 0x4C, 0x55]),
+        S::Variable => p.text,
+        S::Operator | S::Punctuation => p.muted,
+    }
+}

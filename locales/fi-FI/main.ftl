@@ -93,3 +93,4 @@ status-replaced = { $count ->
     [one] 1 osuma korvattiin
    *[other] { $count } osumaa korvattiin
     }
+language-plain = Pelkkä teksti

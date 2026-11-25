@@ -5,11 +5,14 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use eframe::egui::{self, ViewportCommand};
+use sanain_app::syntax::{CharSpan, SyntaxWorker};
 use sanain_app::workspace::{TabId, Workspace};
 use sanain_app::{Command, Editor, SaveOutcome};
 use sanain_core::LineEnding;
+use sanain_core::Revision;
 use sanain_i18n::{FluentValue, Localizer};
 use sanain_io::{LoadError, TextEncoding};
+use sanain_language::Lang;
 
 use crate::find::{FindBar, FindEvent};
 use crate::menu::{self, MenuAction};
@@ -51,6 +54,10 @@ pub struct Shell {
     title: String,
     allow_close: bool,
     find: FindBar,
+    syntax: SyntaxWorker,
+    /// Latest highlight result and the revision requested last, per tab.
+    spans: HashMap<TabId, (Revision, Vec<CharSpan>)>,
+    requested: HashMap<TabId, Revision>,
     session_file: Option<std::path::PathBuf>,
     /// Set once the session was recorded for the current quit attempt.
     quit_recorded: bool,
@@ -96,6 +103,9 @@ impl Shell {
             title: String::new(),
             allow_close: false,
             find: FindBar::default(),
+            syntax: SyntaxWorker::start(),
+            spans: HashMap::new(),
+            requested: HashMap::new(),
             session_file,
             quit_recorded: false,
             #[cfg(target_os = "macos")]
@@ -257,6 +267,8 @@ impl Shell {
                 if let Some(i) = self.ws.position(id) {
                     self.ws.close(i);
                     self.views.remove(&id);
+                    self.spans.remove(&id);
+                    self.requested.remove(&id);
                 }
             }
             Then::Quit => {
@@ -288,6 +300,37 @@ impl Shell {
                 self.focus_active();
             }
             Err(e) => self.dialog = Some(Dialog::Error(describe_load_error(&self.l10n, path, &e))),
+        }
+    }
+
+    fn language(ed: &Editor) -> Option<Lang> {
+        ed.file().and_then(|f| Lang::from_path(&f.path))
+    }
+
+    /// Ask for highlighting of the active tab if its text changed, and
+    /// collect finished results.
+    fn update_syntax(&mut self, ctx: &egui::Context) {
+        for h in self.syntax.poll() {
+            self.spans.insert(h.tab, (h.revision, h.spans));
+        }
+        let tab = self.ws.active();
+        let rev = tab.editor.document().revision();
+        match Self::language(&tab.editor) {
+            Some(lang) if self.requested.get(&tab.id) != Some(&rev) => {
+                self.syntax
+                    .submit(tab.id, rev, lang, tab.editor.document().text());
+                self.requested.insert(tab.id, rev);
+            }
+            None => {
+                self.spans.remove(&tab.id);
+            }
+            _ => {}
+        }
+        // Results arrive from another thread; check back shortly while
+        // the active tab is waiting for fresh spans.
+        let fresh = self.spans.get(&tab.id).is_some_and(|(r, _)| *r == rev);
+        if Self::language(&tab.editor).is_some() && !fresh {
+            ctx.request_repaint_after(std::time::Duration::from_millis(16));
         }
     }
 
@@ -510,6 +553,11 @@ impl Shell {
                     LineEnding::Lf | LineEnding::None => "line-ending-lf",
                 };
                 ui.colored_label(p.muted, self.t(le, &[]));
+                let lang = match Self::language(editor) {
+                    Some(l) => l.name().to_owned(),
+                    None => self.t("language-plain", &[]),
+                };
+                ui.colored_label(p.muted, lang);
                 let sels = editor.selections();
                 if sels.len() > 1 {
                     let n = sels.len() as i64;
@@ -725,6 +773,7 @@ impl eframe::App for Shell {
                 self.find_event(e);
             }
         }
+        self.update_syntax(&ctx);
         egui::Panel::bottom("status").show(ui, |ui| self.status_bar(ui));
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE.fill(p.canvas))
@@ -734,6 +783,9 @@ impl eframe::App for Shell {
                 let id = self.ws.active().id;
                 let view = self.views.entry(id).or_default();
                 let editor = &mut self.ws.active_mut().editor;
+                // Spans from an older revision are kept until fresh ones
+                // arrive; a frame of slightly shifted colour beats flicker.
+                let syntax: &[CharSpan] = self.spans.get(&id).map_or(&[], |(_, s)| s);
                 let highlights: &[std::ops::Range<usize>] = if self.find.open {
                     &self.find.matches.ranges
                 } else {
@@ -741,7 +793,7 @@ impl eframe::App for Shell {
                 };
                 ui.push_id(id, |ui| {
                     ui.add_enabled_ui(interactive, |ui| {
-                        if view.show(ui, editor, &name, highlights) {
+                        if view.show(ui, editor, &name, highlights, syntax) {
                             self.status = None;
                         }
                     });
