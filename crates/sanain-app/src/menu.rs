@@ -21,10 +21,14 @@ pub enum MenuAction {
     DeleteLine,
     MoveLineUp,
     MoveLineDown,
+    CloseTab,
+    ReopenTab,
+    NextTab,
+    PrevTab,
 }
 
 impl MenuAction {
-    const ALL: [MenuAction; 15] = [
+    const ALL: [MenuAction; 19] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -40,6 +44,10 @@ impl MenuAction {
         Self::DeleteLine,
         Self::MoveLineUp,
         Self::MoveLineDown,
+        Self::CloseTab,
+        Self::ReopenTab,
+        Self::NextTab,
+        Self::PrevTab,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -60,6 +68,10 @@ impl MenuAction {
             Self::DeleteLine => "edit.delete-line",
             Self::MoveLineUp => "edit.move-line-up",
             Self::MoveLineDown => "edit.move-line-down",
+            Self::CloseTab => "file.close-tab",
+            Self::ReopenTab => "file.reopen-tab",
+            Self::NextTab => "window.next-tab",
+            Self::PrevTab => "window.prev-tab",
         }
     }
 
@@ -86,6 +98,10 @@ impl MenuAction {
             Self::DeleteLine => "edit-delete-line",
             Self::MoveLineUp => "edit-move-line-up",
             Self::MoveLineDown => "edit-move-line-down",
+            Self::CloseTab => "file-close-tab",
+            Self::ReopenTab => "file-reopen-tab",
+            Self::NextTab => "window-next-tab",
+            Self::PrevTab => "window-prev-tab",
         }
     }
 
@@ -108,6 +124,10 @@ impl MenuAction {
             Self::DeleteLine => (cmd_shift, Key::K),
             Self::MoveLineUp => (Modifiers::ALT, Key::ArrowUp),
             Self::MoveLineDown => (Modifiers::ALT, Key::ArrowDown),
+            Self::CloseTab => (cmd, Key::W),
+            Self::ReopenTab => (cmd_shift, Key::T),
+            Self::NextTab => (Modifiers::CTRL, Key::Tab),
+            Self::PrevTab => (Modifiers::CTRL.plus(Modifiers::SHIFT), Key::Tab),
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -122,7 +142,11 @@ const FILE_ITEMS: &[Option<MenuAction>] = &[
     None,
     Some(MenuAction::Save),
     Some(MenuAction::SaveAs),
+    None,
+    Some(MenuAction::CloseTab),
+    Some(MenuAction::ReopenTab),
 ];
+const WINDOW_ITEMS: &[Option<MenuAction>] = &[Some(MenuAction::NextTab), Some(MenuAction::PrevTab)];
 const EDIT_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::Undo),
     Some(MenuAction::Redo),
@@ -150,7 +174,11 @@ pub fn in_window(
     egui::MenuBar::new().ui(ui, |ui| {
         let mut file: Vec<Option<MenuAction>> = FILE_ITEMS.to_vec();
         file.extend([None, Some(MenuAction::Quit)]);
-        for (title, items) in [("menu-file", file.as_slice()), ("menu-edit", EDIT_ITEMS)] {
+        for (title, items) in [
+            ("menu-file", file.as_slice()),
+            ("menu-edit", EDIT_ITEMS),
+            ("menu-window", WINDOW_ITEMS),
+        ] {
             ui.menu_button(label(title), |ui| {
                 ui.set_min_width(220.0);
                 for item in items {
@@ -183,7 +211,7 @@ mod native {
     use muda::accelerator::{Accelerator, Code, Modifiers};
     use muda::{Menu, MenuEvent, MenuItem, PredefinedMenuItem, Submenu};
 
-    use super::{EDIT_ITEMS, FILE_ITEMS, Label, MenuAction};
+    use super::{EDIT_ITEMS, FILE_ITEMS, Label, MenuAction, WINDOW_ITEMS};
 
     /// The macOS menu bar. Keep alive for the lifetime of the app.
     pub struct NativeMenu {
@@ -211,6 +239,10 @@ mod native {
             MenuAction::DeleteLine => (cmd_shift, Code::KeyK),
             MenuAction::MoveLineUp => (Modifiers::ALT, Code::ArrowUp),
             MenuAction::MoveLineDown => (Modifiers::ALT, Code::ArrowDown),
+            MenuAction::CloseTab => (cmd, Code::KeyW),
+            MenuAction::ReopenTab => (cmd_shift, Code::KeyT),
+            MenuAction::NextTab => (Modifiers::CONTROL, Code::Tab),
+            MenuAction::PrevTab => (Modifiers::CONTROL | Modifiers::SHIFT, Code::Tab),
         };
         Some(Accelerator::new(m, k))
     }
@@ -268,15 +300,13 @@ mod native {
             let edit = Submenu::with_items(label("menu-edit"), true, &edit_refs).ok()?;
             let minimize = label("window-minimize");
             let zoom = label("window-zoom");
-            let window = Submenu::with_items(
-                label("menu-window"),
-                true,
-                &[
-                    &PredefinedMenuItem::minimize(Some(&minimize)),
-                    &PredefinedMenuItem::maximize(Some(&zoom)),
-                ],
-            )
-            .ok()?;
+            let mut window_items = section(WINDOW_ITEMS, &mut make);
+            window_items.push(Box::new(PredefinedMenuItem::separator()));
+            window_items.push(Box::new(PredefinedMenuItem::minimize(Some(&minimize))));
+            window_items.push(Box::new(PredefinedMenuItem::maximize(Some(&zoom))));
+            let window_refs: Vec<&dyn muda::IsMenuItem> =
+                window_items.iter().map(|b| b.as_ref()).collect();
+            let window = Submenu::with_items(label("menu-window"), true, &window_refs).ok()?;
             let menu = Menu::with_items(&[&app, &file, &edit, &window]).ok()?;
             menu.init_for_nsapp();
             window.set_as_windows_menu_for_nsapp();
