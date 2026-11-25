@@ -154,3 +154,66 @@ fn save_preserves_permissions_and_symlinks() {
         0o750
     );
 }
+
+#[cfg(unix)]
+#[test]
+fn new_files_get_default_mode_not_0600() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("new.txt");
+    let probe = dir.path().join("probe.txt");
+    fs::write(&probe, "").unwrap(); // mode any other program would get
+    save(&path, "x", TextEncoding::Utf8, SaveMode::CreateNew).unwrap();
+    let mode = |p| fs::metadata(p).unwrap().permissions().mode() & 0o777;
+    assert_eq!(mode(&path), mode(&probe));
+}
+
+#[cfg(unix)]
+#[test]
+fn dangling_symlink_creates_target() {
+    use std::os::unix::fs::symlink;
+    let dir = tempfile::tempdir().unwrap();
+    fs::create_dir(dir.path().join("sub")).unwrap();
+    let link = dir.path().join("sub/link.txt");
+    symlink("../target.txt", &link).unwrap();
+    save(&link, "made", TextEncoding::Utf8, SaveMode::CreateNew).unwrap();
+    assert!(
+        fs::symlink_metadata(&link)
+            .unwrap()
+            .file_type()
+            .is_symlink()
+    );
+    assert_eq!(
+        fs::read_to_string(dir.path().join("target.txt")).unwrap(),
+        "made"
+    );
+}
+
+#[test]
+fn read_only_file_is_refused() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("ro.txt");
+    fs::write(&path, "orig").unwrap();
+    let mut perms = fs::metadata(&path).unwrap().permissions();
+    perms.set_readonly(true);
+    fs::set_permissions(&path, perms.clone()).unwrap();
+    let l = load(&path).unwrap();
+    for mode in [SaveMode::Expect(&l.fingerprint), SaveMode::Overwrite] {
+        let err = save(&path, "new", l.encoding, mode).unwrap_err();
+        assert!(matches!(err, SaveError::ReadOnly { .. }));
+    }
+    assert_eq!(fs::read_to_string(&path).unwrap(), "orig");
+    #[allow(clippy::permissions_set_readonly_false)]
+    perms.set_readonly(false);
+    fs::set_permissions(&path, perms).unwrap();
+}
+
+#[test]
+fn fingerprint_from_save_allows_next_save() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("twice.txt");
+    let fp = save(&path, "1", TextEncoding::Utf8, SaveMode::CreateNew).unwrap();
+    let fp = save(&path, "2", TextEncoding::Utf8, SaveMode::Expect(&fp)).unwrap();
+    save(&path, "3", TextEncoding::Utf8, SaveMode::Expect(&fp)).unwrap();
+    assert_eq!(fs::read_to_string(&path).unwrap(), "3");
+}

@@ -22,10 +22,16 @@ pub enum DecodeError {
     OddUtf16Length,
     #[error("unpaired UTF-16 surrogate at byte {offset}")]
     UnpairedSurrogate { offset: usize },
+    #[error("UTF-32 is not supported")]
+    Utf32,
 }
 
 /// Detect the encoding from the BOM and decode strictly.
 pub fn decode(bytes: &[u8]) -> Result<(String, TextEncoding), DecodeError> {
+    // UTF-32 BOMs; the LE one starts with the UTF-16 LE BOM, so check first.
+    if bytes.starts_with(&[0xFF, 0xFE, 0, 0]) || bytes.starts_with(&[0, 0, 0xFE, 0xFF]) {
+        return Err(DecodeError::Utf32);
+    }
     if let Some(rest) = bytes.strip_prefix(BOM_UTF8) {
         return utf8(rest, BOM_UTF8.len()).map(|s| (s, TextEncoding::Utf8Bom));
     }
@@ -125,6 +131,12 @@ mod tests {
             decode(b"\xEF\xBB\xBFx\xC3"),
             Err(DecodeError::InvalidUtf8 { offset: 4 })
         );
+    }
+
+    #[test]
+    fn utf32_is_rejected_not_misread() {
+        assert_eq!(decode(b"\xFF\xFE\0\0a\0\0\0"), Err(DecodeError::Utf32));
+        assert_eq!(decode(b"\0\0\xFE\xFF\0\0\0a"), Err(DecodeError::Utf32));
     }
 
     #[test]

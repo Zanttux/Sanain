@@ -50,6 +50,9 @@ pub enum SaveError {
     /// Nothing was written.
     #[error("{path} changed on disk since it was opened")]
     ExternalChange { path: PathBuf },
+    /// The target is marked read-only. Nothing was written.
+    #[error("{path} is read-only")]
+    ReadOnly { path: PathBuf },
     #[error("could not save {path}: {source}")]
     Io { path: PathBuf, source: io::Error },
 }
@@ -87,6 +90,8 @@ pub fn load(path: &Path) -> Result<Loaded, LoadError> {
 ///
 /// If `path` is a symlink, the link target is replaced and the link kept.
 /// Existing permissions are copied to the new file where the platform allows.
+/// Read-only targets are refused. Known limit: hard links are split (the
+/// other names keep the old content) and Unix owner/group are not copied.
 pub fn save(
     path: &Path,
     text: &str,
@@ -117,34 +122,114 @@ pub fn save(
         });
     }
 
+    if let Some(meta) = existing.as_ref().and(fs::metadata(&target).ok())
+        && meta.permissions().readonly()
+    {
+        return Err(SaveError::ReadOnly {
+            path: path.to_owned(),
+        });
+    }
+
     let bytes = encode(text, encoding);
     let dir = target
         .parent()
         .filter(|p| !p.as_os_str().is_empty())
         .unwrap_or(Path::new("."));
-    let mut tmp = tempfile::Builder::new()
-        .prefix(".sanain-save-")
-        .tempfile_in(dir)
-        .map_err(io_err)?;
-    tmp.write_all(&bytes).map_err(io_err)?;
+    let tmp = TempFile::create_in(dir).map_err(io_err)?;
+    let mut file = &tmp.file;
+    file.write_all(&bytes).map_err(io_err)?;
     if existing.is_some() {
         let perms = fs::metadata(&target).map_err(io_err)?.permissions();
-        fs::set_permissions(tmp.path(), perms).map_err(io_err)?;
+        fs::set_permissions(&tmp.path, perms).map_err(io_err)?;
     }
-    tmp.as_file().sync_all().map_err(io_err)?;
-    // On failure the temp file is removed and the original is untouched.
-    tmp.persist(&target).map_err(|e| io_err(e.error))?;
+    tmp.file.sync_all().map_err(io_err)?;
+    // Read metadata before the rename: renaming keeps the mtime, and nothing
+    // after the rename may fail, or a completed save would look failed.
+    let meta = tmp.file.metadata().map_err(io_err)?;
+    tmp.persist(&target).map_err(io_err)?;
     sync_dir(dir);
-
-    let meta = fs::metadata(&target).map_err(io_err)?;
     Ok(Fingerprint::of(&bytes, &meta))
 }
 
-fn resolve_symlink(path: &Path) -> io::Result<PathBuf> {
-    match fs::symlink_metadata(path) {
-        Ok(m) if m.file_type().is_symlink() => fs::canonicalize(path),
-        _ => Ok(path.to_owned()),
+/// A temporary file next to the target, removed on drop unless persisted.
+/// Created with default permissions (0666 minus umask on Unix) so new files
+/// get the same mode any other program would give them.
+struct TempFile {
+    path: PathBuf,
+    file: fs::File,
+    persisted: bool,
+}
+
+impl TempFile {
+    fn create_in(dir: &Path) -> io::Result<Self> {
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static COUNTER: AtomicU64 = AtomicU64::new(0);
+        let nanos = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .map_or(0, |d| d.subsec_nanos());
+        for _ in 0..16 {
+            let n = COUNTER.fetch_add(1, Ordering::Relaxed);
+            let path = dir.join(format!(
+                ".sanain-save-{}-{n}-{nanos:x}.tmp",
+                std::process::id()
+            ));
+            match fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&path)
+            {
+                Ok(file) => {
+                    return Ok(Self {
+                        path,
+                        file,
+                        persisted: false,
+                    });
+                }
+                Err(e) if e.kind() == io::ErrorKind::AlreadyExists => continue,
+                Err(e) => return Err(e),
+            }
+        }
+        Err(io::Error::new(
+            io::ErrorKind::AlreadyExists,
+            "could not create a unique temporary file",
+        ))
     }
+
+    /// Atomically replace `target`. `std::fs::rename` replaces existing
+    /// files on Unix (rename(2)) and Windows (MoveFileExW with
+    /// MOVEFILE_REPLACE_EXISTING).
+    fn persist(mut self, target: &Path) -> io::Result<()> {
+        fs::rename(&self.path, target)?;
+        self.persisted = true;
+        Ok(())
+    }
+}
+
+impl Drop for TempFile {
+    fn drop(&mut self) {
+        if !self.persisted {
+            let _ = fs::remove_file(&self.path);
+        }
+    }
+}
+
+/// Follow symlinks without requiring the final target to exist, so saving
+/// through a dangling link creates the target. Bounded to avoid loops.
+fn resolve_symlink(path: &Path) -> io::Result<PathBuf> {
+    let mut current = path.to_owned();
+    for _ in 0..40 {
+        match fs::symlink_metadata(&current) {
+            Ok(m) if m.file_type().is_symlink() => {
+                let link = fs::read_link(&current)?;
+                current = match current.parent() {
+                    Some(parent) if link.is_relative() => parent.join(link),
+                    _ => link,
+                };
+            }
+            _ => return Ok(current),
+        }
+    }
+    Err(io::Error::other("too many levels of symbolic links"))
 }
 
 /// Make the rename durable. Best effort: not all platforms or filesystems

@@ -7,10 +7,10 @@ rust-version.workspace = true
 publish.workspace = true
 
 [dependencies]
-tempfile.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
+tempfile.workspace = true
 sanain-core = { path = "../sanain-core" }
 proptest.workspace = true
 

@@ -6,7 +6,10 @@
 //! indices); callers convert to bytes or graphemes explicitly.
 
 mod document;
+pub mod grapheme;
+pub mod selection;
 mod transaction;
 
 pub use document::{Document, LineEnding, Revision};
+pub use selection::{Selection, Selections};
 pub use transaction::{Change, EditError, Transaction};

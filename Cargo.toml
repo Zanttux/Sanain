@@ -14,6 +14,7 @@ publish = false
 ropey = "1.6.1"
 tempfile = "3"
 thiserror = "2"
+unicode-segmentation = "1.12"
 fluent-bundle = "0.16"
 unic-langid = "0.9.6"
 proptest = "1"

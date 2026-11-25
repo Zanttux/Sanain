@@ -12,6 +12,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 - `sanain-io`: strict UTF-8 / UTF-8 BOM / UTF-16 BOM decoding with
   byte-exact re-encoding; atomic save that preserves permissions and
   symlinks and refuses to overwrite files changed on disk.
+- Multi-cursor selections and grapheme-aware insert, Backspace, Delete
+  and arrow movement (combining marks, emoji sequences, flags, CRLF move
+  and delete as one unit).
 - `sanain-i18n`: Fluent localization with en-US and draft fi-FI, locale
   negotiation and resource consistency tests.
 

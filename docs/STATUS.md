@@ -12,7 +12,10 @@ decisions); M1 toolkit-independent work started.
   reopen → bytes verified) passes as an automated test.
 - Checks on this machine: `cargo fmt --check` clean;
   `cargo clippy --workspace --all-targets --locked -D warnings` clean;
-  `cargo test --workspace --locked` 29 passed, 0 failed.
+  `cargo test --workspace --locked` 45 passed, 0 failed.
+- Multi-cursor selections and grapheme-aware editing commands.
+- Fresh-context review of the IO and core crates: no silent data loss
+  found; five gaps fixed (ADR 0002). Hard links still split on save.
 - CI workflow (`.github/workflows/ci.yml`) written with a pinned
   `actions/checkout` SHA. Not yet run: no remote repository.
 - GUI spike (GPUI vs egui) recorded in docs/adr/0001-gui-toolkit.md.
@@ -22,7 +25,8 @@ decisions); M1 toolkit-independent work started.
 | ID | State | Evidence |
 |---|---|---|
 | E01 | Partial | Round-trip and conflict tests in `crates/sanain-io/tests/file_lifecycle.rs` |
-| E03 | Partial | Undo/redo, grouped transactions, property test |
+| E03 | Partial | Undo/redo, grouped transactions, property test, multi-cursor insert/delete |
+| E12 | Partial | Grapheme-cluster navigation and deletion (`crates/sanain-core/src/grapheme.rs`) |
 | E05 | Partial | UTF-8, UTF-8 BOM, UTF-16 LE/BE BOM, line endings preserved; legacy encodings not started |
 | Others | Not started | |
 
@@ -44,6 +48,7 @@ registers (EUIPO, PRH, USPTO, WIPO) not searched: needs owner or counsel.
 4. Brand: approve the single-colour wordmark and the icon concept.
 
 ## Next
-- Cursor, selection and grapheme-aware editing commands in `sanain-core`.
+- Line/column mapping, vertical movement, word movement, line operations.
+- Hard-link-safe save strategy.
 - After decisions 1–3: push, verify CI on all three OSes, then the first
   editor window.
