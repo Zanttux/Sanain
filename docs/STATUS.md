@@ -34,7 +34,7 @@ M1 in progress.
 | ID | State | Evidence |
 |---|---|---|
 | E01 | Partial | Round-trip and conflict tests in `crates/sanain-io/tests/file_lifecycle.rs` |
-| E03 | Partial | Undo/redo, grouped transactions, property test, multi-cursor editing created by Alt+click, Add Cursor Above/Below (keyboard) and Alt+drag rectangular selection; Esc collapses. Not yet: rectangular selection by keyboard, virtual space past line ends, add next occurrence |
+| E03 | Partial | Undo/redo, grouped transactions, property test, multi-cursor editing created by Alt+click, Add Cursor Above/Below (keyboard) and Alt+drag rectangular selection; Esc collapses. Select Next Occurrence (Cmd/Ctrl+D). Not yet: rectangular selection by keyboard, virtual space past line ends, skip occurrence |
 | E12 | Partial | Grapheme-cluster navigation and deletion; editor exposes the caret line, caret and selection to AccessKit (checked via the macOS accessibility API: AXValue and AXSelectedText follow the caret); high-contrast appearance; every command reachable by keyboard (menus, palette). Not yet: tested with VoiceOver speech by a person, NVDA/Orca, IME composition by a person |
 | E04 | Partial | Find/replace in the current tab: literal, regex, case, whole word, highlight, count, replace all as one undo. Not yet: preview before replace-all, cancellation for huge files, search across files |
 | E08 | Partial | Source/split/preview, GFM blocks and inlines, front matter, caret-following preview, raw HTML inert, source bytes unchanged (hash checked). Links: web with confirmation, local files, anchors, unsafe schemes blocked. Local images inside the document folder (limits enforced; remote never fetched). Go to Heading (filterable heading list). Not yet: permission flow for images outside the folder, Mermaid, persistent outline panel, syntax colours in code blocks |
@@ -55,8 +55,7 @@ Known M1 limits: native menus only on macOS (Windows/Linux use in-window
 menus); running the bare binary on macOS shows "sanain" in the menu bar,
 use `scripts/macos-bundle.sh` for the proper app name;
 word wrap only for documents up to 1 M characters (full rebuild per
-edit), Home/End act on the whole line rather than the display row;
-every visible line
+edit); every visible line
 is re-laid out each frame (very long lines will be slow); dialog button
 order follows macOS on all platforms; IME composition and VoiceOver
 reading of document text not yet verified by a person.

@@ -288,3 +288,4 @@ goto-heading-none = 此文件沒有標題。
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = { $format } 無效，位於第 { $line } 行第 { $column } 欄：{ $reason }
+edit-select-next-occurrence = 選取下一個符合項目

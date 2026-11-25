@@ -288,3 +288,4 @@ goto-heading-none = この文書には見出しがありません。
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = 無効な { $format }（{ $line } 行、{ $column } 列）: { $reason }
+edit-select-next-occurrence = 次の出現箇所を選択

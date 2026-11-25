@@ -316,3 +316,4 @@ goto-heading-none = Acest document nu are titluri.
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = { $format } nevalid la linia { $line }, coloana { $column }: { $reason }
+edit-select-next-occurrence = Selectează următoarea apariție

@@ -330,3 +330,4 @@ goto-heading-none = В этом документе нет заголовков.
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = Некорректный { $format } в строке { $line }, столбце { $column }: { $reason }
+edit-select-next-occurrence = Выделить следующее вхождение

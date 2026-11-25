@@ -302,3 +302,4 @@ goto-heading-none = Dit document heeft geen koppen.
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = Ongeldige { $format } op regel { $line }, kolom { $column }: { $reason }
+edit-select-next-occurrence = Selecteer volgende overeenkomst

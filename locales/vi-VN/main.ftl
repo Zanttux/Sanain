@@ -288,3 +288,4 @@ goto-heading-none = Tài liệu này không có tiêu đề.
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = { $format } không hợp lệ tại dòng { $line }, cột { $column }: { $reason }
+edit-select-next-occurrence = Chọn lần xuất hiện tiếp theo

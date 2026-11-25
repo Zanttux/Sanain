@@ -302,3 +302,4 @@ goto-heading-none = Dette dokument har ingen overskrifter.
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = Ugyldig { $format } på linje { $line }, kolonne { $column }: { $reason }
+edit-select-next-occurrence = Marker næste forekomst

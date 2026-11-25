@@ -288,3 +288,4 @@ goto-heading-none = 此文档没有标题。
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = { $format } 无效，位于第 { $line } 行第 { $column } 列：{ $reason }
+edit-select-next-occurrence = 选择下一个匹配项

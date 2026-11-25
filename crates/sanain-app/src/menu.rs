@@ -68,10 +68,11 @@ pub enum MenuAction {
     WordWrap,
     GoToLine,
     GoToHeading,
+    SelectNextOccurrence,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 61] = [
+    pub const ALL: [MenuAction; 62] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -133,6 +134,7 @@ impl MenuAction {
         Self::WordWrap,
         Self::GoToLine,
         Self::GoToHeading,
+        Self::SelectNextOccurrence,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -199,6 +201,7 @@ impl MenuAction {
             Self::WordWrap => "view.word-wrap",
             Self::GoToLine => "edit.go-to-line",
             Self::GoToHeading => "edit.go-to-heading",
+            Self::SelectNextOccurrence => "edit.select-next-occurrence",
         }
     }
 
@@ -271,6 +274,7 @@ impl MenuAction {
             Self::WordWrap => "view-word-wrap",
             Self::GoToLine => "edit-go-to-line",
             Self::GoToHeading => "edit-go-to-heading",
+            Self::SelectNextOccurrence => "edit-select-next-occurrence",
         }
     }
 
@@ -318,6 +322,7 @@ impl MenuAction {
             Self::DeleteLine => (cmd_shift, Key::K),
             Self::GoToLine => (cmd, Key::L),
             Self::GoToHeading => (cmd_shift, Key::O),
+            Self::SelectNextOccurrence => (cmd, Key::D),
             Self::MoveLineUp => (Modifiers::ALT, Key::ArrowUp),
             Self::MoveLineDown => (Modifiers::ALT, Key::ArrowDown),
             Self::CloseTab => (cmd, Key::W),
@@ -495,6 +500,7 @@ const EDIT_ITEMS: &[Option<MenuAction>] = &[
     None,
     Some(MenuAction::AddCursorAbove),
     Some(MenuAction::AddCursorBelow),
+    Some(MenuAction::SelectNextOccurrence),
 ];
 
 /// Draw the in-window menu bar. Returns the chosen action, if any.
@@ -654,6 +660,7 @@ mod native {
             MenuAction::DeleteLine => (cmd_shift, ch("k")),
             MenuAction::GoToLine => (cmd, ch("l")),
             MenuAction::GoToHeading => (cmd_shift, ch("o")),
+            MenuAction::SelectNextOccurrence => (cmd, ch("d")),
             MenuAction::AddCursorAbove => (cmd | Modifiers::ALT, Key::Named(NamedKey::ArrowUp)),
             MenuAction::AddCursorBelow => (cmd | Modifiers::ALT, Key::Named(NamedKey::ArrowDown)),
             MenuAction::MoveLineUp => (Modifiers::ALT, Key::Named(NamedKey::ArrowUp)),

@@ -302,3 +302,4 @@ goto-heading-none = Det här dokumentet har inga rubriker.
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = Ogiltig { $format } på rad { $line }, kolumn { $column }: { $reason }
+edit-select-next-occurrence = Markera nästa förekomst

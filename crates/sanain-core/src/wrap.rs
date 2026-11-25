@@ -119,6 +119,22 @@ impl RowMap {
         self.rows.get(r).copied()
     }
 
+    /// The char index where the display row containing `head` starts or
+    /// (with `to_end`) ends. A wrapped row ends before its wrap point
+    /// (usually the space it broke after).
+    pub fn row_edge(&self, rope: &Rope, head: usize, to_end: bool) -> usize {
+        let line = rope.char_to_line(head.min(rope.len_chars()));
+        let start = rope.line_to_char(line);
+        let Some(row) = self.row(self.row_of(line, head - start)) else {
+            return head;
+        };
+        match (to_end, row.last) {
+            (false, _) => start + row.start,
+            (true, true) => line_content_end(rope, line),
+            (true, false) => (start + row.end).saturating_sub(1).max(start + row.start),
+        }
+    }
+
     /// The row showing column `col` (chars from the line start) of `line`.
     /// A position at a row boundary belongs to the later row, except at
     /// the end of the line.
@@ -139,6 +155,25 @@ impl RowMap {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn row_edges() {
+        // Rows at 10 columns: "aaaa bbbb " | "cccc dddd " | "ee"
+        let rope = Rope::from_str("x\naaaa bbbb cccc dddd ee\n");
+        let m = RowMap::build(&rope, &FoldMap::default(), 10);
+        let at = |c: usize| 2 + c; // line 1 starts at char 2
+        assert_eq!(m.row_edge(&rope, at(12), false), at(10));
+        assert_eq!(m.row_edge(&rope, at(12), true), at(19), "before the space");
+        assert_eq!(m.row_edge(&rope, at(10), false), at(10), "row start stays");
+        assert_eq!(m.row_edge(&rope, at(3), true), at(9));
+        assert_eq!(
+            m.row_edge(&rope, at(21), true),
+            at(22),
+            "last row: line end"
+        );
+        assert_eq!(m.row_edge(&rope, at(21), false), at(20));
+        assert_eq!(m.row_edge(&rope, 0, true), 1, "unwrapped line");
+    }
+
     use super::*;
 
     fn wrap(s: &str, cols: usize) -> Vec<&str> {

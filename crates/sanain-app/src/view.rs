@@ -318,6 +318,44 @@ impl EditorView {
             if response.has_focus() {
                 let events = ui.input(|i| i.events.clone());
                 for event in events {
+                    // With wrapping, Home/End (and Cmd+Left/Right on macOS)
+                    // go to the start/end of the display row.
+                    if let (
+                        Some(_),
+                        Event::Key {
+                            key,
+                            pressed: true,
+                            modifiers: m,
+                            ..
+                        },
+                    ) = (wrap_cols, &event)
+                        && (matches!(key, Key::Home | Key::End)
+                            || (m.mac_cmd && matches!(key, Key::ArrowLeft | Key::ArrowRight)))
+                        && !m.alt
+                        && self.preedit.is_empty()
+                    {
+                        let rows = self.rows(editor, tab, wrap_cols);
+                        let Rows::Wrap(map) = &rows else { continue };
+                        let to_end = matches!(key, Key::End | Key::ArrowRight);
+                        let rope = editor.document().rope();
+                        let sels = editor.selections();
+                        let primary = sels.primary();
+                        let mut list: Vec<_> =
+                            sels.iter().copied().filter(|s| *s != primary).collect();
+                        list.push(primary);
+                        let pairs: Vec<(usize, usize)> = list
+                            .iter()
+                            .map(|s| {
+                                let head = map.row_edge(rope, s.head, to_end);
+                                (if m.shift { s.anchor } else { head }, head)
+                            })
+                            .collect();
+                        editor.execute(Command::SetSelections(pairs));
+                        self.goal_x = None;
+                        changed = true;
+                        moved_by_keyboard = true;
+                        continue;
+                    }
                     // With wrapping, Up/Down move by display row.
                     if let (
                         Some(_),
