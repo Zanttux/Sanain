@@ -330,3 +330,5 @@ replace-preview-confirm = { $count ->
 replace-preview-more = Csak az első 200 módosuló sor látható.
 replace-preview-stale = A dokumentum megváltozott, semmi sem lett lecserélve. Futtassa újra az Összes cseréje parancsot.
 view-split-editor = Szerkesztő felosztása
+encoding-detected = Megnyitva { $encoding } kódolással (a fájl tartalmából felismerve).
+encoding-suggested = A fájl tartalma alapján javasolt: { $encoding }. Megnyitás előtt ellenőrizze az előnézetet.

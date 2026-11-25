@@ -330,3 +330,5 @@ replace-preview-confirm = { $count ->
 replace-preview-more = Nur die ersten 200 geänderten Zeilen werden angezeigt.
 replace-preview-stale = Das Dokument wurde geändert; nichts wurde ersetzt. Führen Sie „Alle ersetzen“ erneut aus.
 view-split-editor = Editor teilen
+encoding-detected = Als { $encoding } geöffnet (aus dem Dateiinhalt erkannt).
+encoding-suggested = Aus dem Dateiinhalt vorgeschlagen: { $encoding }. Prüfen Sie vor dem Öffnen die Vorschau.

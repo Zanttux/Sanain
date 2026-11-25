@@ -5,6 +5,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- UTF-16 files without a byte order mark are recognised and opened
+  directly (and saved without one). For other files that are not UTF-8,
+  Reopen with Encoding suggests an encoding guessed from the contents.
+  The status bar names UTF-16 with a BOM as "UTF-16 LE BOM" / "BE BOM".
 - Split editor (View > Split Editor, Cmd/Ctrl+\): two tabs side by side.
   The pane you work in is the active one (marked with a line on top), so
   menus and shortcuts act on it.

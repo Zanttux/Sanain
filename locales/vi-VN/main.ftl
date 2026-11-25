@@ -313,3 +313,5 @@ replace-preview-confirm = { $count ->
 replace-preview-more = Chỉ hiển thị 200 dòng thay đổi đầu tiên.
 replace-preview-stale = Tài liệu đã thay đổi; không có gì được thay thế. Hãy chạy lại Thay thế tất cả.
 view-split-editor = Chia trình soạn thảo
+encoding-detected = Đã mở dưới dạng { $encoding } (phát hiện từ nội dung tệp).
+encoding-suggested = Đề xuất dựa trên nội dung tệp: { $encoding }. Hãy kiểm tra bản xem trước trước khi mở.

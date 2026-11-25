@@ -313,3 +313,5 @@ replace-preview-confirm = { $count ->
 replace-preview-more = 仅显示前 200 行更改。
 replace-preview-stale = 文档已更改，未替换任何内容。请重新运行“全部替换”。
 view-split-editor = 拆分编辑器
+encoding-detected = 已按 { $encoding } 打开（根据文件内容检测）。
+encoding-suggested = 根据文件内容建议的编码：{ $encoding }。打开前请检查预览。

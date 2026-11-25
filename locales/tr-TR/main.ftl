@@ -330,3 +330,5 @@ replace-preview-confirm = { $count ->
 replace-preview-more = Yalnızca değişen ilk 200 satır gösteriliyor.
 replace-preview-stale = Belge değişti; hiçbir şey değiştirilmedi. Tümünü Değiştir'i yeniden çalıştırın.
 view-split-editor = Düzenleyiciyi Böl
+encoding-detected = { $encoding } olarak açıldı (dosya içeriğinden algılandı).
+encoding-suggested = Dosya içeriğine göre önerilen: { $encoding }. Açmadan önce önizlemeyi kontrol edin.

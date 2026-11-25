@@ -329,3 +329,5 @@ replace-preview-confirm = { $count ->
 replace-preview-more = Only the first 200 changed lines are shown.
 replace-preview-stale = The document changed; nothing was replaced. Run Replace All again.
 view-split-editor = Split Editor
+encoding-detected = Opened as { $encoding } (detected from the file's contents).
+encoding-suggested = Suggested from the file's contents: { $encoding }. Check the preview before opening.
