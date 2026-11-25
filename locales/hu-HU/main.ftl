@@ -281,3 +281,5 @@ log-bad-pattern = Érvénytelen minta
 log-follow = Követés
 log-close = Megjelenítő bezárása
 log-opened-large = A(z) { $name } nagy, ezért csak olvasható módon nyílt meg a naplómegjelenítőben.
+tab-pin = Lap rögzítése
+tab-unpin = Lap rögzítésének feloldása

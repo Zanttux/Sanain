@@ -281,3 +281,5 @@ log-bad-pattern = Geçersiz desen
 log-follow = Takip Et
 log-close = Görüntüleyiciyi Kapat
 log-opened-large = { $name } büyük olduğu için günlük görüntüleyicide salt okunur olarak açıldı.
+tab-pin = Sekmeyi Sabitle
+tab-unpin = Sekmenin Sabitlemesini Kaldır

@@ -45,7 +45,7 @@ M1 in progress.
 | L10n | Partial | 26 UI languages (en-US canonical; fi-FI draft; 24 machine translations by Claude awaiting native review). Every message formats in every locale (test). RTL languages not shipped |
 | E05 | Partial | UTF-8, UTF-8 BOM, UTF-16 LE/BE BOM, 17 legacy encodings by explicit choice (exact round trip enforced), explicit encoding and LF/CRLF conversion. Not yet: UTF-16 without BOM, automatic legacy detection |
 | E09 | Partial | JSON validate/format/minify preserving lexemes; read-only JSON tree; read-only CSV/TSV grid with delimiter detection. Not yet: XML/YAML inspection, editing in structured views |
-| E02 | Partial | Tabs, close/reopen, keyboard switching, dirty markers, per-tab recovery. Not yet: drag reorder in UI (model supports it), pin, split editor |
+| E02 | Partial | Tabs, close/reopen, keyboard switching, dirty markers, per-tab recovery, drag reorder, pin (kept in front, saved in session), tab context menu. Not yet: split editor, keyboard reordering |
 | E07 | Partial | Tree-sitter highlighting for 8 languages, background worker with cancellation, line numbers, indentation folding, keyboard navigation, light/dark/system/high-contrast themes, zoom. Not yet: syntax-aware folding, incremental parsing, more languages |
 | E11 | Done for v1 scope | Menus with standard shortcuts (logical keys on macOS), command palette with fuzzy search, configurable shortcuts with conflict handling, Notepad++ preset. Not yet: importing Notepad++ shortcuts.xml |
 | E06 | Partial | Unsaved-changes prompts; crash recovery per tab (kill -9 → relaunch restores text); session restore of open files and active tab. Not yet: settings opt-out UI, disk-full drill |

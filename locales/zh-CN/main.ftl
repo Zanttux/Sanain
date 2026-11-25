@@ -268,3 +268,5 @@ log-bad-pattern = 无效的模式
 log-follow = 跟随
 log-close = 关闭查看器
 log-opened-large = “{ $name }”较大，因此已在日志查看器中以只读方式打开。
+tab-pin = 固定标签页
+tab-unpin = 取消固定标签页

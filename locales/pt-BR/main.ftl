@@ -294,3 +294,5 @@ log-bad-pattern = Padrão inválido
 log-follow = Acompanhar
 log-close = Fechar visualizador
 log-opened-large = { $name } é grande, então foi aberto como somente leitura no visualizador de logs.
+tab-pin = Fixar aba
+tab-unpin = Desafixar aba

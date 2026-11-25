@@ -268,3 +268,5 @@ log-bad-pattern = Pola tidak valid
 log-follow = Ikuti
 log-close = Tutup Penampil
 log-opened-large = { $name } berukuran besar, jadi dibuka hanya-baca di penampil log.
+tab-pin = Sematkan Tab
+tab-unpin = Lepas Sematan Tab

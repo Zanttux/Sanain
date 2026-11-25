@@ -307,3 +307,5 @@ log-bad-pattern = Nieprawidłowy wzorzec
 log-follow = Śledź
 log-close = Zamknij przeglądarkę
 log-opened-large = Plik { $name } jest duży, więc otwarto go tylko do odczytu w przeglądarce logów.
+tab-pin = Przypnij kartę
+tab-unpin = Odepnij kartę

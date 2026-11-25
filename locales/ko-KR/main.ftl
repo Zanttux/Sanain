@@ -268,3 +268,5 @@ log-bad-pattern = 잘못된 패턴
 log-follow = 따라가기
 log-close = 뷰어 닫기
 log-opened-large = { $name }은(는) 크기가 커서 로그 뷰어에서 읽기 전용으로 열렸습니다.
+tab-pin = 탭 고정
+tab-unpin = 탭 고정 해제

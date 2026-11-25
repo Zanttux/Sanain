@@ -280,3 +280,5 @@ log-bad-pattern = Invalid pattern
 log-follow = Follow
 log-close = Close Viewer
 log-opened-large = { $name } is large, so it opened read-only in the log viewer.
+tab-pin = Pin Tab
+tab-unpin = Unpin Tab

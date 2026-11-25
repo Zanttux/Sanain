@@ -1773,6 +1773,8 @@ impl Shell {
                     self.editor().file().is_some() && self.history.is_some()
                 }
                 MenuAction::ClearHistory => self.history.is_some(),
+                MenuAction::PinTab => !self.ws.active().pinned,
+                MenuAction::UnpinTab => self.ws.active().pinned,
                 _ => true,
             }
     }
@@ -1893,6 +1895,11 @@ impl Shell {
             }
             MenuAction::CommandPalette => {
                 self.palette.open();
+                return;
+            }
+            MenuAction::PinTab | MenuAction::UnpinTab => {
+                let i = self.ws.active_index();
+                self.ws.set_pinned(i, action == MenuAction::PinTab);
                 return;
             }
             MenuAction::OpenLog => {
@@ -2043,6 +2050,15 @@ impl Shell {
         let p = theme::palette(ctx);
         let mut activate = None;
         let mut close = None;
+        let mut pin: Option<(usize, bool)> = None;
+        let mut rects: Vec<egui::Rect> = Vec::new();
+        let mut dragging: Option<usize> = None;
+        let mut dropped: Option<usize> = None;
+        let (pin_l, unpin_l, close_l) = (
+            self.t("tab-pin", &[]),
+            self.t("tab-unpin", &[]),
+            self.t("file-close-tab", &[]),
+        );
         egui::ScrollArea::horizontal()
             .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
             .show(ui, |ui| {
@@ -2075,6 +2091,19 @@ impl Shell {
                                 }
                                 if label.middle_clicked() {
                                     close = Some(tab.id);
+                                }
+                                if tab.pinned && !dirty {
+                                    // Pinned tabs show a pin, not a close
+                                    // button (closing stays in the menus).
+                                    let (r, painter) = ui.allocate_painter(
+                                        egui::vec2(16.0, 16.0),
+                                        egui::Sense::hover(),
+                                    );
+                                    let c = r.rect.center();
+                                    let stroke = egui::Stroke::new(1.5, p.muted);
+                                    painter.circle_filled(c - egui::vec2(0.0, 3.0), 3.0, p.muted);
+                                    painter.line_segment([c, c + egui::vec2(0.0, 6.0)], stroke);
+                                    return;
                                 }
                                 // Unsaved marker doubles as the close button,
                                 // as in most native editors.
@@ -2111,16 +2140,61 @@ impl Shell {
                                 egui::Stroke::new(1.0, p.border),
                             );
                         }
-                        let r = r.response.interact(egui::Sense::click());
+                        rects.push(rect);
+                        let r = r.response.interact(egui::Sense::click_and_drag());
                         if r.clicked() {
                             activate = Some(i);
                         }
                         if r.middle_clicked() {
                             close = Some(tab.id);
                         }
+                        if r.dragged() {
+                            dragging = Some(i);
+                        }
+                        if r.drag_stopped() {
+                            dropped = Some(i);
+                        }
+                        r.context_menu(|ui| {
+                            let (label, on) = if tab.pinned {
+                                (&unpin_l, false)
+                            } else {
+                                (&pin_l, true)
+                            };
+                            if ui.button(label).clicked() {
+                                pin = Some((i, on));
+                                ui.close();
+                            }
+                            if ui.button(&close_l).clicked() {
+                                close = Some(tab.id);
+                                ui.close();
+                            }
+                        });
                     }
                 });
             });
+        // Drag to reorder: the drop position is the gap nearest the pointer.
+        let target = |x: f32| rects.iter().take_while(|r| r.center().x < x).count();
+        if let (Some(from), Some(pos)) = (dragging, ctx.pointer_latest_pos()) {
+            let gap = target(pos.x);
+            if gap != from && gap != from + 1 {
+                let x = rects
+                    .get(gap)
+                    .map_or_else(|| rects.last().map_or(0.0, |r| r.right()), |r| r.left());
+                let y = rects
+                    .first()
+                    .map_or(egui::Rangef::new(0.0, 0.0), |r| r.y_range());
+                ui.painter().vline(x, y, egui::Stroke::new(2.0, p.accent));
+            }
+            ctx.set_cursor_icon(egui::CursorIcon::Grabbing);
+        }
+        if let (Some(from), Some(pos)) = (dropped, ctx.pointer_latest_pos()) {
+            let gap = target(pos.x);
+            let to = if gap > from { gap - 1 } else { gap };
+            self.ws.move_tab(from, to);
+        }
+        if let Some((i, on)) = pin {
+            self.ws.set_pinned(i, on);
+        }
         if let Some(i) = activate {
             self.ws.activate(i);
             self.focus_active();
