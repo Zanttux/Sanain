@@ -586,6 +586,9 @@ impl Shell {
                         ui.checkbox(&mut s.restore_session, l("settings-restore-session"));
                         ui.end_row();
                         ui.label("");
+                        ui.checkbox(&mut s.word_wrap, l("settings-word-wrap"));
+                        ui.end_row();
+                        ui.label("");
                         ui.checkbox(&mut s.local_history, l("settings-local-history"))
                             .on_hover_text(l("settings-local-history-detail"));
                         ui.end_row();
@@ -1602,6 +1605,7 @@ impl Shell {
             font_size: self.settings.font_size,
             indent: self.settings.indent(),
             tab_width: usize::from(self.settings.tab_width),
+            wrap: self.settings.word_wrap,
         };
         let highlights: &[std::ops::Range<usize>] = if self.find.open {
             &self.find.matches.ranges
@@ -2004,6 +2008,17 @@ impl Shell {
             }
             MenuAction::Settings => {
                 self.settings_open = true;
+                return;
+            }
+            MenuAction::WordWrap => {
+                self.settings.word_wrap = !self.settings.word_wrap;
+                self.save_settings();
+                let id = if self.settings.word_wrap {
+                    "status-wrap-on"
+                } else {
+                    "status-wrap-off"
+                };
+                self.status = Some((self.t(id, &[]), false));
                 return;
             }
             MenuAction::ZoomIn | MenuAction::ZoomOut | MenuAction::ZoomReset => {

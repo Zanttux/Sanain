@@ -311,3 +311,7 @@ tab-pin = Закрепить вкладку
 tab-unpin = Открепить вкладку
 edit-add-cursor-above = Добавить курсор выше
 edit-add-cursor-below = Добавить курсор ниже
+view-word-wrap = Перенос по словам
+status-wrap-on = Длинные строки теперь переносятся по ширине окна.
+status-wrap-off = Длинные строки больше не переносятся.
+settings-word-wrap = Переносить длинные строки

@@ -272,3 +272,7 @@ tab-pin = タブを固定
 tab-unpin = タブの固定を解除
 edit-add-cursor-above = 上にカーソルを追加
 edit-add-cursor-below = 下にカーソルを追加
+view-word-wrap = 折り返し
+status-wrap-on = 長い行をウィンドウの幅で折り返すようになりました。
+status-wrap-off = 長い行を折り返さなくなりました。
+settings-word-wrap = 長い行を折り返す

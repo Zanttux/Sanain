@@ -285,3 +285,7 @@ tab-pin = Sekmeyi Sabitle
 tab-unpin = Sekmenin Sabitlemesini Kaldır
 edit-add-cursor-above = Yukarıya İmleç Ekle
 edit-add-cursor-below = Aşağıya İmleç Ekle
+view-word-wrap = Sözcük Kaydırma
+status-wrap-on = Uzun satırlar artık pencere genişliğinde kaydırılıyor.
+status-wrap-off = Uzun satırlar artık kaydırılmıyor.
+settings-word-wrap = Uzun satırları kaydır

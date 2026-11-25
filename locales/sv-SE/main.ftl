@@ -285,3 +285,7 @@ tab-pin = Fäst flik
 tab-unpin = Lossa flik
 edit-add-cursor-above = Lägg till markör ovanför
 edit-add-cursor-below = Lägg till markör nedanför
+view-word-wrap = Radbrytning
+status-wrap-on = Långa rader bryts nu vid fönsterbredden.
+status-wrap-off = Långa rader bryts inte längre.
+settings-word-wrap = Bryt långa rader

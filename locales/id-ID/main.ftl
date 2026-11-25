@@ -272,3 +272,7 @@ tab-pin = Sematkan Tab
 tab-unpin = Lepas Sematan Tab
 edit-add-cursor-above = Tambah Kursor di Atas
 edit-add-cursor-below = Tambah Kursor di Bawah
+view-word-wrap = Bungkus Kata
+status-wrap-on = Baris panjang kini dibungkus sesuai lebar jendela.
+status-wrap-off = Baris panjang tidak lagi dibungkus.
+settings-word-wrap = Bungkus baris panjang

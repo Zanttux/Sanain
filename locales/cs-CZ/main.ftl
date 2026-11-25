@@ -311,3 +311,7 @@ tab-pin = Připnout kartu
 tab-unpin = Odepnout kartu
 edit-add-cursor-above = Přidat kurzor nad
 edit-add-cursor-below = Přidat kurzor pod
+view-word-wrap = Zalamování řádků
+status-wrap-on = Dlouhé řádky se nyní zalamují podle šířky okna.
+status-wrap-off = Dlouhé řádky se již nezalamují.
+settings-word-wrap = Zalamovat dlouhé řádky

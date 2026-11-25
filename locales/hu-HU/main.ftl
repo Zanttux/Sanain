@@ -285,3 +285,7 @@ tab-pin = Lap rögzítése
 tab-unpin = Lap rögzítésének feloldása
 edit-add-cursor-above = Kurzor hozzáadása fölé
 edit-add-cursor-below = Kurzor hozzáadása alá
+view-word-wrap = Automatikus sortörés
+status-wrap-on = A hosszú sorok mostantól az ablak szélességénél törnek.
+status-wrap-off = A hosszú sorok már nem törnek.
+settings-word-wrap = Hosszú sorok tördelése

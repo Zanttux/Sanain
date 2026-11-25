@@ -272,3 +272,7 @@ tab-pin = Ghim thẻ
 tab-unpin = Bỏ ghim thẻ
 edit-add-cursor-above = Thêm con trỏ phía trên
 edit-add-cursor-below = Thêm con trỏ phía dưới
+view-word-wrap = Ngắt dòng tự động
+status-wrap-on = Các dòng dài giờ được ngắt theo chiều rộng cửa sổ.
+status-wrap-off = Các dòng dài không còn được ngắt nữa.
+settings-word-wrap = Ngắt các dòng dài

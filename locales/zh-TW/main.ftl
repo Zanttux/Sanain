@@ -272,3 +272,7 @@ tab-pin = 釘選標籤頁
 tab-unpin = 取消釘選標籤頁
 edit-add-cursor-above = 在上方新增游標
 edit-add-cursor-below = 在下方新增游標
+view-word-wrap = 自動換行
+status-wrap-on = 長行現在會依視窗寬度自動換行。
+status-wrap-off = 長行不再自動換行。
+settings-word-wrap = 長行自動換行

@@ -65,10 +65,11 @@ pub enum MenuAction {
     UnpinTab,
     AddCursorAbove,
     AddCursorBelow,
+    WordWrap,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 58] = [
+    pub const ALL: [MenuAction; 59] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -127,6 +128,7 @@ impl MenuAction {
         Self::UnpinTab,
         Self::AddCursorAbove,
         Self::AddCursorBelow,
+        Self::WordWrap,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -190,6 +192,7 @@ impl MenuAction {
             Self::UnpinTab => "window.unpin-tab",
             Self::AddCursorAbove => "edit.add-cursor-above",
             Self::AddCursorBelow => "edit.add-cursor-below",
+            Self::WordWrap => "view.word-wrap",
         }
     }
 
@@ -259,6 +262,7 @@ impl MenuAction {
             Self::UnpinTab => "tab-unpin",
             Self::AddCursorAbove => "edit-add-cursor-above",
             Self::AddCursorBelow => "edit-add-cursor-below",
+            Self::WordWrap => "view-word-wrap",
         }
     }
 
@@ -346,7 +350,8 @@ impl MenuAction {
             | Self::ClearHistory
             | Self::OpenLog
             | Self::PinTab
-            | Self::UnpinTab => return None,
+            | Self::UnpinTab
+            | Self::WordWrap => return None,
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -448,6 +453,7 @@ const VIEW_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::Fold),
     Some(MenuAction::Unfold),
     Some(MenuAction::UnfoldAll),
+    Some(MenuAction::WordWrap),
     None,
     Some(MenuAction::ZoomIn),
     Some(MenuAction::ZoomOut),
@@ -679,7 +685,8 @@ mod native {
             | MenuAction::ClearHistory
             | MenuAction::OpenLog
             | MenuAction::PinTab
-            | MenuAction::UnpinTab => return None,
+            | MenuAction::UnpinTab
+            | MenuAction::WordWrap => return None,
         };
         Some(KeyAccelerator::new(m, k))
     }

@@ -272,3 +272,7 @@ tab-pin = 固定标签页
 tab-unpin = 取消固定标签页
 edit-add-cursor-above = 在上方添加光标
 edit-add-cursor-below = 在下方添加光标
+view-word-wrap = 自动换行
+status-wrap-on = 长行现在会按窗口宽度自动换行。
+status-wrap-off = 长行不再自动换行。
+settings-word-wrap = 长行自动换行

@@ -285,3 +285,7 @@ tab-pin = Tabblad vastmaken
 tab-unpin = Tabblad losmaken
 edit-add-cursor-above = Cursor erboven toevoegen
 edit-add-cursor-below = Cursor eronder toevoegen
+view-word-wrap = Automatische terugloop
+status-wrap-on = Lange regels lopen nu terug op de vensterbreedte.
+status-wrap-off = Lange regels lopen niet meer terug.
+settings-word-wrap = Lange regels laten teruglopen

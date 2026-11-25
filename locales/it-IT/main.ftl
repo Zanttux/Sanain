@@ -285,3 +285,7 @@ tab-pin = Blocca scheda
 tab-unpin = Sblocca scheda
 edit-add-cursor-above = Aggiungi cursore sopra
 edit-add-cursor-below = Aggiungi cursore sotto
+view-word-wrap = A capo automatico
+status-wrap-on = Le righe lunghe ora vanno a capo alla larghezza della finestra.
+status-wrap-off = Le righe lunghe non vanno più a capo.
+settings-word-wrap = Manda a capo le righe lunghe

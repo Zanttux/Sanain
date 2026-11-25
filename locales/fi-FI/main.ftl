@@ -285,3 +285,7 @@ tab-pin = Kiinnitä välilehti
 tab-unpin = Irrota välilehti
 edit-add-cursor-above = Lisää kohdistin yläpuolelle
 edit-add-cursor-below = Lisää kohdistin alapuolelle
+view-word-wrap = Rivitys
+status-wrap-on = Pitkät rivit rivitetään nyt ikkunan levyiseksi.
+status-wrap-off = Pitkiä rivejä ei enää rivitetä.
+settings-word-wrap = Rivitä pitkät rivit

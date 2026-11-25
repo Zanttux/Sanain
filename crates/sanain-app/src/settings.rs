@@ -43,6 +43,8 @@ pub struct Settings {
     pub last_update_check: u64,
     /// Keep a local copy of each saved version (docs/PRIVACY).
     pub local_history: bool,
+    /// Soft-wrap long lines to the window width.
+    pub word_wrap: bool,
 }
 
 impl Default for Settings {
@@ -58,6 +60,7 @@ impl Default for Settings {
             check_updates: false,
             last_update_check: 0,
             local_history: true,
+            word_wrap: true,
         }
     }
 }
@@ -100,8 +103,8 @@ impl Settings {
             out.push_str(&format!("locale={l}\n"));
         }
         out.push_str(&format!(
-            "check_updates={}\nlast_update_check={}\nlocal_history={}\n",
-            self.check_updates, self.last_update_check, self.local_history
+            "check_updates={}\nlast_update_check={}\nlocal_history={}\nword_wrap={}\n",
+            self.check_updates, self.last_update_check, self.local_history, self.word_wrap
         ));
         out.push_str(&self.keymap.encode());
         out
@@ -147,6 +150,7 @@ impl Settings {
                 "check_updates" => s.check_updates = v.parse().unwrap_or(false),
                 "last_update_check" => s.last_update_check = v.parse().unwrap_or(0),
                 "local_history" => s.local_history = v.parse().unwrap_or(true),
+                "word_wrap" => s.word_wrap = v.parse().unwrap_or(true),
                 other => {
                     s.keymap.read_line(other, v);
                 }
@@ -204,6 +208,7 @@ mod tests {
             check_updates: true,
             last_update_check: 1_764_000_000,
             local_history: false,
+            word_wrap: false,
         };
         assert_eq!(Settings::decode(&s.encode()), Some(s.clone()));
         let hc = Settings {

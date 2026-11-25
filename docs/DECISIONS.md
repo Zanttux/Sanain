@@ -20,6 +20,7 @@
 | D18 | Confirmed | Public repository github.com/Zanttux/Sanain; routine GitHub operations delegated per AUTONOMY (owner approved 2026-11-25) |
 | D19 | Confirmed | Owner standing order (2026-11-25): Claude does not pause to ask questions. It decides, records the decision here or in STATUS, and continues. Owner-only physical tasks are listed in STATUS. |
 | D20 | Confirmed | Owner (2026-11-25): the name is "Sanain" everywhere people see it — app menu, window titles, bundle, repository (github.com/Zanttux/Sanain), docs. Lowercase `sanain` only where tooling requires it: crate names, the CLI executable, config/data directory names on Linux. |
+| D21 | Accepted | Soft wrap on by default (2026-11-25, Claude): Sanain targets everyday text and Markdown as much as code, and Windows Notepad, TextEdit and most prose editors wrap by default. View > Word Wrap and Settings turn it off. Wrapping is computed by `sanain_core::wrap` (word boundaries, monospace columns) so rows, hit testing and carets agree; documents over 1 M characters are not wrapped until wrapping is incremental (a full rebuild takes ~4.5 ms per 1 M chars on Apple M5, release). |
 | D17 | Accepted | Workspace layout and first slice (docs/adr/0002-workspace-and-first-slice.md) |
 
 ADRs live in docs/adr/. Record ADR date, context, alternatives, evidence, consequences and reversal plan. Claude may decide routine implementation details; reserved decisions follow AUTONOMY. Proposed license and external authority require explicit owner approval.

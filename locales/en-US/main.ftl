@@ -284,3 +284,7 @@ tab-pin = Pin Tab
 tab-unpin = Unpin Tab
 edit-add-cursor-above = Add Cursor Above
 edit-add-cursor-below = Add Cursor Below
+view-word-wrap = Word Wrap
+status-wrap-on = Long lines now wrap to the window width.
+status-wrap-off = Long lines no longer wrap.
+settings-word-wrap = Wrap long lines

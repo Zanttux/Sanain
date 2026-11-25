@@ -285,3 +285,7 @@ tab-pin = Tab anheften
 tab-unpin = Tab lösen
 edit-add-cursor-above = Cursor oberhalb hinzufügen
 edit-add-cursor-below = Cursor unterhalb hinzufügen
+view-word-wrap = Zeilenumbruch
+status-wrap-on = Lange Zeilen werden jetzt an der Fensterbreite umbrochen.
+status-wrap-off = Lange Zeilen werden nicht mehr umbrochen.
+settings-word-wrap = Lange Zeilen umbrechen
