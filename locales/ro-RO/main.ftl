@@ -347,3 +347,5 @@ replace-preview-confirm = { $count ->
 replace-preview-more = Sunt afișate doar primele 200 de rânduri modificate.
 replace-preview-stale = Documentul s-a modificat; nu s-a înlocuit nimic. Rulați din nou Înlocuiește tot.
 view-split-editor = Împarte editorul
+encoding-detected = Deschis ca { $encoding } (detectat din conținutul fișierului).
+encoding-suggested = Sugerată pe baza conținutului fișierului: { $encoding }. Verificați previzualizarea înainte de deschidere.

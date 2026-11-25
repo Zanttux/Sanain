@@ -330,3 +330,5 @@ replace-preview-confirm = { $count ->
 replace-preview-more = Solo se muestran las primeras 200 líneas modificadas.
 replace-preview-stale = El documento ha cambiado; no se ha reemplazado nada. Vuelva a ejecutar Reemplazar todo.
 view-split-editor = Dividir editor
+encoding-detected = Abierto como { $encoding } (detectado a partir del contenido del archivo).
+encoding-suggested = Sugerida a partir del contenido del archivo: { $encoding }. Revise la vista previa antes de abrir.

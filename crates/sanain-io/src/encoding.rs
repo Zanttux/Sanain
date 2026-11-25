@@ -5,6 +5,10 @@ pub enum TextEncoding {
     Utf8Bom,
     Utf16LeBom,
     Utf16BeBom,
+    /// UTF-16 without a byte order mark (detected or chosen; saved without
+    /// one, as found).
+    Utf16Le,
+    Utf16Be,
     /// A non-Unicode encoding the user chose explicitly. Only offered for
     /// files whose bytes it reproduces exactly.
     Legacy(&'static encoding_rs::Encoding),
@@ -16,8 +20,10 @@ impl TextEncoding {
         match self {
             TextEncoding::Utf8 => "UTF-8",
             TextEncoding::Utf8Bom => "UTF-8 BOM",
-            TextEncoding::Utf16LeBom => "UTF-16 LE",
-            TextEncoding::Utf16BeBom => "UTF-16 BE",
+            TextEncoding::Utf16LeBom => "UTF-16 LE BOM",
+            TextEncoding::Utf16BeBom => "UTF-16 BE BOM",
+            TextEncoding::Utf16Le => "UTF-16 LE",
+            TextEncoding::Utf16Be => "UTF-16 BE",
             TextEncoding::Legacy(e) => e.name(),
         }
     }
@@ -115,6 +121,8 @@ pub fn decode_as(bytes: &[u8], encoding: TextEncoding) -> Result<String, DecodeE
             bytes.strip_prefix(BOM_UTF16BE).unwrap_or(bytes),
             u16::from_be_bytes,
         ),
+        TextEncoding::Utf16Le => utf16(bytes, u16::from_le_bytes),
+        TextEncoding::Utf16Be => utf16(bytes, u16::from_be_bytes),
         TextEncoding::Legacy(enc) => {
             let mut decoder = enc.new_decoder_without_bom_handling();
             let cap = decoder
@@ -156,6 +164,8 @@ pub fn encode(text: &str, encoding: TextEncoding) -> Result<Vec<u8>, EncodeError
         TextEncoding::Utf8Bom => [BOM_UTF8, text.as_bytes()].concat(),
         TextEncoding::Utf16LeBom => with_units(BOM_UTF16LE, text, u16::to_le_bytes),
         TextEncoding::Utf16BeBom => with_units(BOM_UTF16BE, text, u16::to_be_bytes),
+        TextEncoding::Utf16Le => with_units(&[], text, u16::to_le_bytes),
+        TextEncoding::Utf16Be => with_units(&[], text, u16::to_be_bytes),
         TextEncoding::Legacy(enc) => {
             let mut encoder = enc.new_encoder();
             let mut out = Vec::with_capacity(text.len());
@@ -221,6 +231,48 @@ fn with_units(bom: &[u8], text: &str, write: fn(u16) -> [u8; 2]) -> Vec<u8> {
     out
 }
 
+/// Guess the encoding of bytes that are not valid UTF-8 and have no BOM:
+/// UTF-16 without a BOM (most bytes of one parity are zero, as in mostly
+/// ASCII text) or, failing that, a legacy encoding guessed from byte
+/// statistics. Only encodings that decode `bytes` exactly are returned.
+/// A guess, to be shown to the user, except for UTF-16 (see
+/// [`is_confident`]).
+pub fn guess(bytes: &[u8]) -> Option<TextEncoding> {
+    let sample = &bytes[..bytes.len().min(64 * 1024)];
+    let pairs = sample.len() / 2;
+    if pairs >= 4 && bytes.len().is_multiple_of(2) {
+        let zero_even = sample.iter().step_by(2).filter(|b| **b == 0).count();
+        let zero_odd = sample
+            .iter()
+            .skip(1)
+            .step_by(2)
+            .filter(|b| **b == 0)
+            .count();
+        let candidate = if zero_odd * 10 >= pairs * 4 && zero_even * 20 < pairs {
+            Some(TextEncoding::Utf16Le)
+        } else if zero_even * 10 >= pairs * 4 && zero_odd * 20 < pairs {
+            Some(TextEncoding::Utf16Be)
+        } else {
+            None
+        };
+        if let Some(enc) = candidate.filter(|e| decode_as(bytes, *e).is_ok()) {
+            return Some(enc);
+        }
+    }
+    let mut detector = chardetng::EncodingDetector::new(chardetng::Iso2022JpDetection::Deny);
+    detector.feed(sample, sample.len() == bytes.len());
+    let enc = detector.guess(None, chardetng::Utf8Detection::Deny);
+    let enc = TextEncoding::Legacy(enc);
+    (enc != TextEncoding::Legacy(encoding_rs::UTF_8) && decode_as(bytes, enc).is_ok())
+        .then_some(enc)
+}
+
+/// Whether a [`guess`] is safe to apply without asking: UTF-16 decodes
+/// losslessly and the zero-byte pattern is unambiguous.
+pub fn is_confident(enc: TextEncoding) -> bool {
+    matches!(enc, TextEncoding::Utf16Le | TextEncoding::Utf16Be)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -229,6 +281,39 @@ mod tests {
         let (text, enc) = decode(bytes).expect("decodes");
         assert_eq!(enc, expected);
         assert_eq!(encode(&text, enc).unwrap(), bytes, "bytes must round-trip");
+    }
+
+    #[test]
+    fn guesses_utf16_without_bom_and_legacy_text() {
+        let text = "Hello, Sanain!\r\nUTF-16 without a byte order mark.\r\n";
+        let le = encode(text, TextEncoding::Utf16Le).unwrap();
+        let be = encode(text, TextEncoding::Utf16Be).unwrap();
+        assert!(!le.starts_with(BOM_UTF16LE) && !be.starts_with(BOM_UTF16BE));
+        assert_eq!(guess(&le), Some(TextEncoding::Utf16Le));
+        assert_eq!(guess(&be), Some(TextEncoding::Utf16Be));
+        assert_eq!(decode_as(&le, TextEncoding::Utf16Le).unwrap(), text);
+        assert!(is_confident(TextEncoding::Utf16Le));
+        // Finnish in Windows-1252 / ISO-8859-1 style bytes.
+        let latin = encoding_rs::WINDOWS_1252
+            .encode("Hyvää päivää, äidinkieli ja öljy. Ääkköset ovat tärkeitä.")
+            .0
+            .into_owned();
+        let g = guess(&latin).expect("a legacy guess");
+        assert!(matches!(g, TextEncoding::Legacy(_)), "{g:?}");
+        assert!(!is_confident(g));
+        assert_eq!(
+            decode_as(&latin, g).unwrap(),
+            "Hyvää päivää, äidinkieli ja öljy. Ääkköset ovat tärkeitä."
+        );
+        // Japanese Shift_JIS.
+        let sjis = encoding_rs::SHIFT_JIS
+            .encode("日本語のテキストです。これはテストです。")
+            .0
+            .into_owned();
+        assert_eq!(
+            guess(&sjis),
+            Some(TextEncoding::Legacy(encoding_rs::SHIFT_JIS))
+        );
     }
 
     #[test]

@@ -364,3 +364,5 @@ replace-preview-confirm = { $count ->
 replace-preview-more = Wyświetlane jest tylko pierwsze 200 zmienionych wierszy.
 replace-preview-stale = Dokument się zmienił; nic nie zostało zamienione. Uruchom ponownie Zamień wszystko.
 view-split-editor = Podziel edytor
+encoding-detected = Otwarto w kodowaniu { $encoding } (wykryto na podstawie zawartości pliku).
+encoding-suggested = Zasugerowano na podstawie zawartości pliku: { $encoding }. Przed otwarciem sprawdź podgląd.

@@ -364,3 +364,5 @@ replace-preview-confirm = { $count ->
 replace-preview-more = Показано лише перші 200 змінених рядків.
 replace-preview-stale = Документ змінився; нічого не замінено. Виконайте «Замінити все» ще раз.
 view-split-editor = Розділити редактор
+encoding-detected = Відкрито в кодуванні { $encoding } (визначено за вмістом файлу).
+encoding-suggested = Запропоновано за вмістом файлу: { $encoding }. Перед відкриттям перевірте попередній перегляд.

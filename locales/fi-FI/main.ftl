@@ -330,3 +330,5 @@ replace-preview-confirm = { $count ->
 replace-preview-more = Vain 200 ensimmäistä muuttuvaa riviä näytetään.
 replace-preview-stale = Asiakirja muuttui, joten mitään ei korvattu. Valitse Korvaa kaikki uudelleen.
 view-split-editor = Jaa editori
+encoding-detected = Avattiin merkistöllä { $encoding } (tunnistettu tiedoston sisällöstä).
+encoding-suggested = Tiedoston sisällön perusteella ehdotettu: { $encoding }. Tarkista esikatselu ennen avaamista.

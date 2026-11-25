@@ -15,7 +15,9 @@ pub mod history;
 pub mod logfile;
 pub mod recovery;
 
-pub use encoding::{DecodeError, EncodeError, LEGACY, TextEncoding, decode, decode_as, encode};
+pub use encoding::{
+    DecodeError, EncodeError, LEGACY, TextEncoding, decode, decode_as, encode, guess, is_confident,
+};
 pub use file::{
     Fingerprint, LoadError, Loaded, SaveError, SaveMode, load, load_as, save, write_atomic,
 };

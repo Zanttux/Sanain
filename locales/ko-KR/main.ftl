@@ -313,3 +313,5 @@ replace-preview-confirm = { $count ->
 replace-preview-more = 변경되는 처음 200줄만 표시됩니다.
 replace-preview-stale = 문서가 변경되어 아무것도 바꾸지 않았습니다. 모두 바꾸기를 다시 실행하세요.
 view-split-editor = 편집기 분할
+encoding-detected = { $encoding }(으)로 열었습니다(파일 내용에서 감지됨).
+encoding-suggested = 파일 내용으로 추천된 인코딩: { $encoding }. 열기 전에 미리 보기를 확인하세요.

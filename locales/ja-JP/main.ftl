@@ -313,3 +313,5 @@ replace-preview-confirm = { $count ->
 replace-preview-more = 変更される最初の 200 行のみを表示しています。
 replace-preview-stale = ドキュメントが変更されたため、何も置換されませんでした。もう一度「すべてを置換」を実行してください。
 view-split-editor = エディターを分割
+encoding-detected = { $encoding } で開きました（ファイルの内容から検出）。
+encoding-suggested = ファイルの内容から推定: { $encoding }。開く前にプレビューを確認してください。

@@ -60,6 +60,8 @@ enum EncodingPick {
         head: Vec<u8>,
         selected: usize,
         error: Option<String>,
+        /// The encoding guessed from the file's bytes, if any.
+        suggested: Option<TextEncoding>,
     },
     /// Save the active document with the chosen encoding.
     Save {
@@ -78,6 +80,7 @@ fn encoding_choices(reopen: bool) -> Vec<TextEncoding> {
             TextEncoding::Utf16BeBom,
         ]);
     }
+    v.extend([TextEncoding::Utf16Le, TextEncoding::Utf16Be]);
     v.extend(sanain_io::LEGACY.iter().map(|e| TextEncoding::Legacy(e)));
     v
 }
@@ -915,21 +918,46 @@ impl Shell {
         }
     }
 
+    /// A file that is not UTF-8: open UTF-16 without a BOM directly (it
+    /// round-trips exactly), otherwise ask, suggesting a guessed encoding.
     fn start_reopen(&mut self, path: &std::path::Path) {
         use std::io::Read;
-        let mut head = Vec::new();
-        let read = std::fs::File::open(path).and_then(|f| f.take(64 * 1024).read_to_end(&mut head));
-        match read {
-            Ok(_) => {
-                self.encoding_pick = Some(EncodingPick::Reopen {
-                    path: path.to_owned(),
-                    head,
-                    selected: 1, // Windows-1252, the most common legacy case
-                    error: None,
-                })
-            }
-            Err(e) => self.dialog = Some(Dialog::Error(e.to_string())),
+        const GUESS_LIMIT: u64 = 16 * 1024 * 1024;
+        let mut bytes = Vec::new();
+        let read =
+            std::fs::File::open(path).and_then(|f| f.take(GUESS_LIMIT + 1).read_to_end(&mut bytes));
+        if let Err(e) = read {
+            self.dialog = Some(Dialog::Error(e.to_string()));
+            return;
         }
+        let suggested = (bytes.len() as u64 <= GUESS_LIMIT)
+            .then(|| sanain_io::guess(&bytes))
+            .flatten();
+        if let Some(enc) = suggested.filter(|e| sanain_io::is_confident(*e))
+            && self.ws.open_as(path, enc).is_ok()
+        {
+            let msg = self.t("encoding-detected", &[("encoding", enc.name().into())]);
+            self.status = Some((msg, false));
+            self.focus_active();
+            return;
+        }
+        let choices = encoding_choices(true);
+        // Windows-1252, the most common legacy case, unless guessed.
+        let default = choices
+            .iter()
+            .position(|e| *e == TextEncoding::Legacy(sanain_io::LEGACY[0]))
+            .unwrap_or(0);
+        let selected = suggested
+            .and_then(|s| choices.iter().position(|e| *e == s))
+            .unwrap_or(default);
+        bytes.truncate(64 * 1024);
+        self.encoding_pick = Some(EncodingPick::Reopen {
+            path: path.to_owned(),
+            head: bytes,
+            selected,
+            error: None,
+            suggested,
+        });
     }
 
     fn encoding_label(&self, e: TextEncoding) -> String {
@@ -973,11 +1001,36 @@ impl Shell {
                     .unwrap_or(TextEncoding::Utf8);
                 let text = match enc {
                     TextEncoding::Legacy(e) => e.decode_without_bom_handling(head).0.into_owned(),
+                    TextEncoding::Utf16Le | TextEncoding::Utf16Be => {
+                        let le = enc == TextEncoding::Utf16Le;
+                        let units: Vec<u16> = head
+                            .as_chunks::<2>()
+                            .0
+                            .iter()
+                            .map(|c| {
+                                if le {
+                                    u16::from_le_bytes(*c)
+                                } else {
+                                    u16::from_be_bytes(*c)
+                                }
+                            })
+                            .collect();
+                        String::from_utf16_lossy(&units)
+                    }
                     _ => String::from_utf8_lossy(head).into_owned(),
                 };
                 Some(text.chars().take(1200).collect::<String>())
             }
             EncodingPick::Save { .. } => None,
+        };
+        let suggestion = match pick {
+            EncodingPick::Reopen {
+                suggested: Some(e), ..
+            } => Some(self.t(
+                "encoding-suggested",
+                &[("encoding", self.encoding_label(*e).into())],
+            )),
+            _ => None,
         };
         let (selected, error) = match &mut self.encoding_pick {
             Some(
@@ -994,6 +1047,10 @@ impl Shell {
             .collapsible(false)
             .default_width(520.0)
             .show(ctx, |ui| {
+                if let Some(s) = &suggestion {
+                    ui.colored_label(p.muted, s);
+                    ui.add_space(4.0);
+                }
                 egui::ComboBox::from_id_salt("encoding-choice")
                     .width(360.0)
                     .selected_text(labels.get(*selected).cloned().unwrap_or_default())
@@ -1047,6 +1104,7 @@ impl Shell {
                 path,
                 head,
                 selected,
+                suggested,
                 ..
             } => {
                 let enc = choices.get(selected).copied().unwrap_or(TextEncoding::Utf8);
@@ -1062,6 +1120,7 @@ impl Shell {
                             head,
                             selected,
                             error: Some(msg),
+                            suggested,
                         });
                     }
                     Err(e) => {

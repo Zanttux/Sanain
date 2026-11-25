@@ -330,3 +330,5 @@ replace-preview-confirm = { $count ->
 replace-preview-more = Alleen de eerste 200 gewijzigde regels worden getoond.
 replace-preview-stale = Het document is gewijzigd; er is niets vervangen. Voer Vervang alles opnieuw uit.
 view-split-editor = Editor splitsen
+encoding-detected = Geopend als { $encoding } (gedetecteerd uit de inhoud van het bestand).
+encoding-suggested = Voorgesteld op basis van de inhoud van het bestand: { $encoding }. Controleer het voorbeeld voordat u opent.
