@@ -281,3 +281,5 @@ log-bad-pattern = Virheellinen haku
 log-follow = Seuraa
 log-close = Sulje katselu
 log-opened-large = { $name } on suuri, joten se avattiin vain luettavaksi lokikatseluun.
+tab-pin = Kiinnitä välilehti
+tab-unpin = Irrota välilehti

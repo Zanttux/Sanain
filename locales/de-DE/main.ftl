@@ -281,3 +281,5 @@ log-bad-pattern = Ungültiges Muster
 log-follow = Folgen
 log-close = Anzeige schließen
 log-opened-large = { $name } ist groß und wurde daher schreibgeschützt in der Protokollanzeige geöffnet.
+tab-pin = Tab anheften
+tab-unpin = Tab lösen

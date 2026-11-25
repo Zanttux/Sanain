@@ -281,3 +281,5 @@ log-bad-pattern = Schema non valido
 log-follow = Segui
 log-close = Chiudi visualizzatore
 log-opened-large = { $name } è grande, quindi è stato aperto in sola lettura nel visualizzatore di log.
+tab-pin = Blocca scheda
+tab-unpin = Sblocca scheda

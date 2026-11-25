@@ -17,6 +17,8 @@ pub type TabId = u64;
 pub struct Tab {
     pub id: TabId,
     pub editor: Editor,
+    /// Pinned tabs stay together at the front of the tab bar.
+    pub pinned: bool,
     recovery: Option<Recovery>,
 }
 
@@ -82,6 +84,7 @@ impl Workspace {
         self.tabs.push(Tab {
             id,
             editor,
+            pinned: false,
             recovery,
         });
         self.tabs.len() - 1
@@ -218,9 +221,44 @@ impl Workspace {
         };
     }
 
+    /// Number of pinned tabs (always the first ones).
+    pub fn pinned_count(&self) -> usize {
+        self.tabs.iter().take_while(|t| t.pinned).count()
+    }
+
+    /// Pin or unpin tab `i`, moving it to the end of the pinned group or
+    /// the start of the others.
+    pub fn set_pinned(&mut self, i: usize, pinned: bool) {
+        let Some(tab) = self.tabs.get(i) else { return };
+        if tab.pinned == pinned {
+            return;
+        }
+        let others = self
+            .tabs
+            .iter()
+            .enumerate()
+            .filter(|(j, t)| *j != i && t.pinned)
+            .count();
+        let active_id = self.tabs[self.active].id;
+        let mut tab = self.tabs.remove(i);
+        tab.pinned = pinned;
+        self.tabs.insert(others, tab);
+        self.active = self.position(active_id).unwrap_or(0);
+    }
+
     /// Move tab `from` to position `to`, keeping the same tab active.
+    /// Tabs stay within their group: pinned ones before all others.
     pub fn move_tab(&mut self, from: usize, to: usize) {
-        if from >= self.tabs.len() || to >= self.tabs.len() || from == to {
+        if from >= self.tabs.len() || to >= self.tabs.len() {
+            return;
+        }
+        let pc = self.pinned_count();
+        let to = if self.tabs[from].pinned {
+            to.min(pc.saturating_sub(1))
+        } else {
+            to.max(pc)
+        };
+        if from == to {
             return;
         }
         let active_id = self.tabs[self.active].id;
@@ -258,30 +296,47 @@ impl Workspace {
     /// Files open in this window, in tab order, for session restore.
     pub fn session(&self) -> crate::session::Session {
         let mut paths = Vec::new();
+        let mut pinned = Vec::new();
         let mut active = 0;
         for (i, t) in self.tabs.iter().enumerate() {
             if let Some(f) = t.editor.file() {
                 if i == self.active {
                     active = paths.len();
                 }
+                if t.pinned {
+                    pinned.push(paths.len());
+                }
                 paths.push(f.path.clone());
             }
         }
-        crate::session::Session { paths, active }
+        crate::session::Session {
+            paths,
+            active,
+            pinned,
+        }
     }
 
     /// Reopen a saved session: missing files are skipped silently, files
     /// already open (e.g. restored from recovery) are not duplicated.
     pub fn restore_session(&mut self, s: &crate::session::Session) {
         let mut active = None;
+        let mut pin = Vec::new();
         for (i, p) in s.paths.iter().enumerate() {
-            if let Ok(idx) = self.open(p)
-                && i == s.active
-            {
-                active = Some(idx);
+            if let Ok(idx) = self.open(p) {
+                if i == s.active {
+                    active = Some(self.tabs[idx].id);
+                }
+                if s.pinned.contains(&i) {
+                    pin.push(self.tabs[idx].id);
+                }
             }
         }
-        if let Some(a) = active {
+        for id in pin {
+            if let Some(i) = self.position(id) {
+                self.set_pinned(i, true);
+            }
+        }
+        if let Some(a) = active.and_then(|id| self.position(id)) {
             self.active = a;
         }
     }
@@ -407,5 +462,30 @@ mod tests {
             .collect();
         texts.sort();
         assert_eq!(texts, ["first", "second"]);
+    }
+
+    #[test]
+    fn pinned_tabs_stay_in_front() {
+        let mut ws = Workspace::new(None);
+        for _ in 0..3 {
+            ws.new_tab();
+        }
+        // Four tabs: ids 0..=3, last one active.
+        let base = ws.tabs()[0].id;
+        let ids = |ws: &Workspace| ws.tabs().iter().map(|t| t.id - base).collect::<Vec<_>>();
+        assert_eq!(ids(&ws), vec![0, 1, 2, 3]);
+        ws.set_pinned(2, true);
+        assert_eq!(ids(&ws), vec![2, 0, 1, 3]);
+        ws.set_pinned(3, true);
+        assert_eq!(ids(&ws), vec![2, 3, 0, 1]);
+        assert_eq!(ws.pinned_count(), 2);
+        assert_eq!(ws.active().id - base, 3, "active tab follows its move");
+        ws.move_tab(3, 0);
+        assert_eq!(ids(&ws), vec![2, 3, 1, 0], "unpinned stays after pinned");
+        ws.move_tab(0, 3);
+        assert_eq!(ids(&ws), vec![3, 2, 1, 0], "pinned stays in its group");
+        ws.set_pinned(0, false);
+        assert_eq!(ids(&ws), vec![2, 3, 1, 0]);
+        assert_eq!(ws.pinned_count(), 1);
     }
 }

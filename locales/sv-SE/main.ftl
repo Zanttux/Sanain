@@ -281,3 +281,5 @@ log-bad-pattern = Ogiltigt mönster
 log-follow = Följ
 log-close = Stäng visaren
 log-opened-large = { $name } är stor och öppnades därför skrivskyddad i loggvisaren.
+tab-pin = Fäst flik
+tab-unpin = Lossa flik

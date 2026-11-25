@@ -294,3 +294,5 @@ log-bad-pattern = Padrão inválido
 log-follow = Acompanhar
 log-close = Fechar visualizador
 log-opened-large = { $name } é grande, por isso foi aberto só de leitura no visualizador de registos.
+tab-pin = Afixar separador
+tab-unpin = Desafixar separador

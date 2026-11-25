@@ -281,3 +281,5 @@ log-bad-pattern = Ugyldig mønster
 log-follow = Følg
 log-close = Lukk viser
 log-opened-large = { $name } er stor, så den ble åpnet skrivebeskyttet i loggviseren.
+tab-pin = Fest fane
+tab-unpin = Løsne fane

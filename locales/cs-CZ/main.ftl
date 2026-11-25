@@ -307,3 +307,5 @@ log-bad-pattern = Neplatný vzor
 log-follow = Sledovat
 log-close = Zavřít prohlížeč
 log-opened-large = Soubor { $name } je velký, proto byl otevřen jen pro čtení v prohlížeči protokolů.
+tab-pin = Připnout kartu
+tab-unpin = Odepnout kartu

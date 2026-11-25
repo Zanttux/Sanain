@@ -294,3 +294,5 @@ log-bad-pattern = Motif non valide
 log-follow = Suivre
 log-close = Fermer la visionneuse
 log-opened-large = { $name } est volumineux et a donc été ouvert en lecture seule dans la visionneuse de journaux.
+tab-pin = Épingler l’onglet
+tab-unpin = Détacher l’onglet

@@ -5,6 +5,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Tabs can be reordered by dragging and pinned (right-click a tab, or
+  Window > Pin Tab). Pinned tabs stay at the front, show a pin instead of
+  a close button, and are remembered in the session.
 - Log viewer for large and growing files: File > Open in Log Viewer, and
   files of 256 MB or more open there automatically. Read-only; lines are
   read from disk as they scroll into view. Filter lines by text or

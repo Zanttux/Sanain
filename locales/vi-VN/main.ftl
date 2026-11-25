@@ -268,3 +268,5 @@ log-bad-pattern = Mẫu không hợp lệ
 log-follow = Theo dõi
 log-close = Đóng trình xem
 log-opened-large = { $name } quá lớn nên đã được mở ở chế độ chỉ đọc trong trình xem nhật ký.
+tab-pin = Ghim thẻ
+tab-unpin = Bỏ ghim thẻ

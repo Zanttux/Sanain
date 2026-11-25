@@ -61,10 +61,12 @@ pub enum MenuAction {
     LocalHistory,
     ClearHistory,
     OpenLog,
+    PinTab,
+    UnpinTab,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 54] = [
+    pub const ALL: [MenuAction; 56] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -119,6 +121,8 @@ impl MenuAction {
         Self::LocalHistory,
         Self::ClearHistory,
         Self::OpenLog,
+        Self::PinTab,
+        Self::UnpinTab,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -178,6 +182,8 @@ impl MenuAction {
             Self::LocalHistory => "file.local-history",
             Self::ClearHistory => "file.clear-history",
             Self::OpenLog => "file.open-log",
+            Self::PinTab => "window.pin-tab",
+            Self::UnpinTab => "window.unpin-tab",
         }
     }
 
@@ -243,6 +249,8 @@ impl MenuAction {
             Self::LocalHistory => "file-local-history",
             Self::ClearHistory => "file-clear-history",
             Self::OpenLog => "file-open-log",
+            Self::PinTab => "tab-pin",
+            Self::UnpinTab => "tab-unpin",
         }
     }
 
@@ -326,7 +334,9 @@ impl MenuAction {
             | Self::CheckUpdates
             | Self::LocalHistory
             | Self::ClearHistory
-            | Self::OpenLog => return None,
+            | Self::OpenLog
+            | Self::PinTab
+            | Self::UnpinTab => return None,
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -392,7 +402,13 @@ const FILE_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::CloseTab),
     Some(MenuAction::ReopenTab),
 ];
-const WINDOW_ITEMS: &[Option<MenuAction>] = &[Some(MenuAction::NextTab), Some(MenuAction::PrevTab)];
+const WINDOW_ITEMS: &[Option<MenuAction>] = &[
+    Some(MenuAction::NextTab),
+    Some(MenuAction::PrevTab),
+    None,
+    Some(MenuAction::PinTab),
+    Some(MenuAction::UnpinTab),
+];
 const TOOLS_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::CompareTabs),
     None,
@@ -646,7 +662,9 @@ mod native {
             | MenuAction::CheckUpdates
             | MenuAction::LocalHistory
             | MenuAction::ClearHistory
-            | MenuAction::OpenLog => return None,
+            | MenuAction::OpenLog
+            | MenuAction::PinTab
+            | MenuAction::UnpinTab => return None,
         };
         Some(KeyAccelerator::new(m, k))
     }

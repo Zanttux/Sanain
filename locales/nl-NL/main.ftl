@@ -281,3 +281,5 @@ log-bad-pattern = Ongeldig patroon
 log-follow = Volgen
 log-close = Viewer sluiten
 log-opened-large = { $name } is groot en is daarom alleen-lezen geopend in de logviewer.
+tab-pin = Tabblad vastmaken
+tab-unpin = Tabblad losmaken

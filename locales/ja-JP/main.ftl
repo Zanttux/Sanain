@@ -268,3 +268,5 @@ log-bad-pattern = 無効なパターン
 log-follow = 追従
 log-close = ビューアを閉じる
 log-opened-large = { $name } は大きいため、ログビューアで読み出し専用で開きました。
+tab-pin = タブを固定
+tab-unpin = タブの固定を解除
