@@ -310,3 +310,9 @@ macro-recorded = { $count ->
     [one] Makro inspelat: 1 steg.
    *[other] Makro inspelat: { $count } steg.
     }
+tools-compare-saved = Jämför med sparad version
+tools-compare-clipboard = Jämför med urklipp
+compare-saved-label = { $name } (på disk)
+compare-clipboard-label = Urklipp
+compare-saved-failed = Det gick inte att läsa den sparade filen: { $reason }
+compare-clipboard-empty = Urklipp innehåller ingen text att jämföra.

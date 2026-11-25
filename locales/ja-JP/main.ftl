@@ -295,3 +295,9 @@ macro-recording = マクロを記録中
 macro-recorded = { $count ->
    *[other] マクロを記録しました: { $count } ステップ。
     }
+tools-compare-saved = 保存済みのバージョンと比較
+tools-compare-clipboard = クリップボードと比較
+compare-saved-label = { $name }（ディスク上）
+compare-clipboard-label = クリップボード
+compare-saved-failed = 保存済みのファイルを読み込めませんでした: { $reason }
+compare-clipboard-empty = クリップボードに比較するテキストがありません。

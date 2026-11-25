@@ -18,7 +18,8 @@ pub enum ApplyDir {
 
 pub struct Labels {
     pub to_left: String,
-    pub to_right: String,
+    /// `None` when the right side is read-only (saved file, clipboard).
+    pub to_right: Option<String>,
 }
 
 /// Draw the comparison. Returns a hunk to apply, if one was clicked.
@@ -135,10 +136,11 @@ pub fn show(
                     {
                         action = Some(ApplyDir::ToLeft(h));
                     }
-                    if ui
-                        .put(half_m2, egui::Button::new("›").frame(false).small())
-                        .on_hover_text(&labels.to_right)
-                        .clicked()
+                    if let Some(tip) = &labels.to_right
+                        && ui
+                            .put(half_m2, egui::Button::new("›").frame(false).small())
+                            .on_hover_text(tip)
+                            .clicked()
                     {
                         action = Some(ApplyDir::ToRight(h));
                     }

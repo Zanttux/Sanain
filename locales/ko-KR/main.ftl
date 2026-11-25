@@ -295,3 +295,9 @@ macro-recording = 매크로 기록 중
 macro-recorded = { $count ->
    *[other] 매크로 기록됨: { $count }단계.
     }
+tools-compare-saved = 저장된 버전과 비교
+tools-compare-clipboard = 클립보드와 비교
+compare-saved-label = { $name } (디스크)
+compare-clipboard-label = 클립보드
+compare-saved-failed = 저장된 파일을 읽을 수 없습니다: { $reason }
+compare-clipboard-empty = 클립보드에 비교할 텍스트가 없습니다.

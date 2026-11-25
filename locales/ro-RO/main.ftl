@@ -325,3 +325,9 @@ macro-recorded = { $count ->
     [few] Macro înregistrat: { $count } pași.
    *[other] Macro înregistrat: { $count } de pași.
     }
+tools-compare-saved = Compară cu versiunea salvată
+tools-compare-clipboard = Compară cu clipboardul
+compare-saved-label = { $name } (pe disc)
+compare-clipboard-label = Clipboard
+compare-saved-failed = Fișierul salvat nu a putut fi citit: { $reason }
+compare-clipboard-empty = Clipboardul nu conține text de comparat.

@@ -340,3 +340,9 @@ macro-recorded = { $count ->
     [many] Makro zaznamenáno: { $count } kroku.
    *[other] Makro zaznamenáno: { $count } kroků.
     }
+tools-compare-saved = Porovnat s uloženou verzí
+tools-compare-clipboard = Porovnat se schránkou
+compare-saved-label = { $name } (na disku)
+compare-clipboard-label = Schránka
+compare-saved-failed = Uložený soubor nelze přečíst: { $reason }
+compare-clipboard-empty = Schránka neobsahuje žádný text k porovnání.

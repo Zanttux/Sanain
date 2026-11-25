@@ -310,3 +310,9 @@ macro-recorded = { $count ->
     [one] Macro grabada: 1 paso.
    *[other] Macro grabada: { $count } pasos.
     }
+tools-compare-saved = Comparar con la versión guardada
+tools-compare-clipboard = Comparar con el portapapeles
+compare-saved-label = { $name } (en disco)
+compare-clipboard-label = Portapapeles
+compare-saved-failed = No se ha podido leer el archivo guardado: { $reason }
+compare-clipboard-empty = El portapapeles no contiene texto para comparar.

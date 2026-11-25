@@ -295,3 +295,9 @@ macro-recording = 正在录制宏
 macro-recorded = { $count ->
    *[other] 宏已录制：{ $count } 步。
     }
+tools-compare-saved = 与已存储的版本比较
+tools-compare-clipboard = 与剪贴板比较
+compare-saved-label = “{ $name }”（磁盘上）
+compare-clipboard-label = 剪贴板
+compare-saved-failed = 无法读取已存储的文件：{ $reason }
+compare-clipboard-empty = 剪贴板中没有可比较的文本。

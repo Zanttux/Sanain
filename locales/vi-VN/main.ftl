@@ -295,3 +295,9 @@ macro-recording = Đang ghi macro
 macro-recorded = { $count ->
    *[other] Đã ghi macro: { $count } bước.
     }
+tools-compare-saved = So sánh với phiên bản đã lưu
+tools-compare-clipboard = So sánh với bảng nhớ tạm
+compare-saved-label = { $name } (trên đĩa)
+compare-clipboard-label = Bảng nhớ tạm
+compare-saved-failed = Không thể đọc tệp đã lưu: { $reason }
+compare-clipboard-empty = Bảng nhớ tạm không có văn bản để so sánh.

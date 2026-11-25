@@ -325,3 +325,9 @@ macro-recorded = { $count ->
     [many] Macro gravada: { $count } de passos.
    *[other] Macro gravada: { $count } passos.
     }
+tools-compare-saved = Comparar com a versão guardada
+tools-compare-clipboard = Comparar com a área de transferência
+compare-saved-label = { $name } (no disco)
+compare-clipboard-label = Área de transferência
+compare-saved-failed = Não foi possível ler o ficheiro guardado: { $reason }
+compare-clipboard-empty = A área de transferência não contém texto para comparar.

@@ -310,3 +310,9 @@ macro-recorded = { $count ->
     [one] Makro tallennettu: 1 vaihe.
    *[other] Makro tallennettu: { $count } vaihetta.
     }
+tools-compare-saved = Vertaa tallennettuun versioon
+tools-compare-clipboard = Vertaa leikepöytään
+compare-saved-label = { $name } (levyllä)
+compare-clipboard-label = Leikepöytä
+compare-saved-failed = Tallennettua tiedostoa ei voitu lukea: { $reason }
+compare-clipboard-empty = Leikepöydällä ei ole tekstiä vertailtavaksi.

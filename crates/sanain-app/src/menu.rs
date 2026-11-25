@@ -71,10 +71,12 @@ pub enum MenuAction {
     SelectNextOccurrence,
     RecordMacro,
     PlayMacro,
+    CompareSaved,
+    CompareClipboard,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 64] = [
+    pub const ALL: [MenuAction; 66] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -139,6 +141,8 @@ impl MenuAction {
         Self::SelectNextOccurrence,
         Self::RecordMacro,
         Self::PlayMacro,
+        Self::CompareSaved,
+        Self::CompareClipboard,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -208,6 +212,8 @@ impl MenuAction {
             Self::SelectNextOccurrence => "edit.select-next-occurrence",
             Self::RecordMacro => "tools.record-macro",
             Self::PlayMacro => "tools.play-macro",
+            Self::CompareSaved => "tools.compare-saved",
+            Self::CompareClipboard => "tools.compare-clipboard",
         }
     }
 
@@ -283,6 +289,8 @@ impl MenuAction {
             Self::SelectNextOccurrence => "edit-select-next-occurrence",
             Self::RecordMacro => "tools-record-macro",
             Self::PlayMacro => "tools-play-macro",
+            Self::CompareSaved => "tools-compare-saved",
+            Self::CompareClipboard => "tools-compare-clipboard",
         }
     }
 
@@ -376,7 +384,9 @@ impl MenuAction {
             | Self::OpenLog
             | Self::PinTab
             | Self::UnpinTab
-            | Self::WordWrap => return None,
+            | Self::WordWrap
+            | Self::CompareSaved
+            | Self::CompareClipboard => return None,
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -451,6 +461,8 @@ const WINDOW_ITEMS: &[Option<MenuAction>] = &[
 ];
 const TOOLS_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::CompareTabs),
+    Some(MenuAction::CompareSaved),
+    Some(MenuAction::CompareClipboard),
     None,
     Some(MenuAction::RecordMacro),
     Some(MenuAction::PlayMacro),
@@ -723,7 +735,9 @@ mod native {
             | MenuAction::OpenLog
             | MenuAction::PinTab
             | MenuAction::UnpinTab
-            | MenuAction::WordWrap => return None,
+            | MenuAction::WordWrap
+            | MenuAction::CompareSaved
+            | MenuAction::CompareClipboard => return None,
         };
         Some(KeyAccelerator::new(m, k))
     }

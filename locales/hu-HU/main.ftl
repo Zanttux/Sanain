@@ -310,3 +310,9 @@ macro-recorded = { $count ->
     [one] Makró rögzítve: 1 lépés.
    *[other] Makró rögzítve: { $count } lépés.
     }
+tools-compare-saved = Összehasonlítás a mentett verzióval
+tools-compare-clipboard = Összehasonlítás a vágólappal
+compare-saved-label = { $name } (lemezen)
+compare-clipboard-label = Vágólap
+compare-saved-failed = A mentett fájl nem olvasható: { $reason }
+compare-clipboard-empty = A vágólapon nincs összehasonlítható szöveg.

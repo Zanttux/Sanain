@@ -310,3 +310,9 @@ macro-recorded = { $count ->
     [one] Macro opgenomen: 1 stap.
    *[other] Macro opgenomen: { $count } stappen.
     }
+tools-compare-saved = Vergelijk met opgeslagen versie
+tools-compare-clipboard = Vergelijk met klembord
+compare-saved-label = { $name } (op schijf)
+compare-clipboard-label = Klembord
+compare-saved-failed = Kan het opgeslagen bestand niet lezen: { $reason }
+compare-clipboard-empty = Het klembord bevat geen tekst om te vergelijken.

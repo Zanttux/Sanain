@@ -310,3 +310,9 @@ macro-recorded = { $count ->
     [one] Macro registrata: 1 passaggio.
    *[other] Macro registrata: { $count } passaggi.
     }
+tools-compare-saved = Confronta con la versione salvata
+tools-compare-clipboard = Confronta con gli appunti
+compare-saved-label = { $name } (su disco)
+compare-clipboard-label = Appunti
+compare-saved-failed = Impossibile leggere il file salvato: { $reason }
+compare-clipboard-empty = Gli appunti non contengono testo da confrontare.

@@ -309,3 +309,9 @@ macro-recorded = { $count ->
     [one] Macro recorded: 1 step.
    *[other] Macro recorded: { $count } steps.
     }
+tools-compare-saved = Compare with Saved Version
+tools-compare-clipboard = Compare with Clipboard
+compare-saved-label = { $name } (on disk)
+compare-clipboard-label = Clipboard
+compare-saved-failed = Could not read the saved file: { $reason }
+compare-clipboard-empty = The clipboard has no text to compare.
