@@ -255,3 +255,16 @@ history-purge-confirm = Xóa lịch sử
 history-purged = Đã xóa lịch sử cục bộ.
 settings-local-history = Giữ lịch sử cục bộ của các tệp đã lưu
 settings-local-history-detail = Giữ tối đa 50 phiên bản cho mỗi tệp trong 30 ngày, chỉ trên máy tính này.
+file-open-log = Mở trong trình xem nhật ký…
+log-lines = { $count ->
+   *[other] { $count } dòng
+    }
+log-indexing = Đang đọc… { $percent }%
+log-matches = { $count ->
+   *[other] { $count } dòng khớp
+    }
+log-filter-hint = Lọc dòng
+log-bad-pattern = Mẫu không hợp lệ
+log-follow = Theo dõi
+log-close = Đóng trình xem
+log-opened-large = { $name } quá lớn nên đã được mở ở chế độ chỉ đọc trong trình xem nhật ký.

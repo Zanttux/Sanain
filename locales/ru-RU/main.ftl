@@ -288,3 +288,22 @@ history-purge-confirm = Удалить историю
 history-purged = Локальная история удалена.
 settings-local-history = Хранить локальную историю сохранённых файлов
 settings-local-history-detail = Хранит до 50 версий каждого файла в течение 30 дней, только на этом компьютере.
+file-open-log = Открыть в просмотрщике журналов…
+log-lines = { $count ->
+    [one] { $count } строка
+    [few] { $count } строки
+    [many] { $count } строк
+   *[other] { $count } строки
+    }
+log-indexing = Чтение… { $percent } %
+log-matches = { $count ->
+    [one] { $count } совпадающая строка
+    [few] { $count } совпадающие строки
+    [many] { $count } совпадающих строк
+   *[other] { $count } совпадающей строки
+    }
+log-filter-hint = Фильтр строк
+log-bad-pattern = Недопустимый шаблон
+log-follow = Следить
+log-close = Закрыть просмотр
+log-opened-large = Файл { $name } слишком большой, поэтому он открыт только для чтения в просмотрщике журналов.

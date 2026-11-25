@@ -266,3 +266,18 @@ history-purge-confirm = Elimina cronologia
 history-purged = Cronologia locale eliminata.
 settings-local-history = Conserva la cronologia locale dei file salvati
 settings-local-history-detail = Conserva fino a 50 versioni per file per 30 giorni, solo su questo computer.
+file-open-log = Apri nel visualizzatore di log…
+log-lines = { $count ->
+    [one] 1 riga
+   *[other] { $count } righe
+    }
+log-indexing = Lettura… { $percent }%
+log-matches = { $count ->
+    [one] 1 riga corrispondente
+   *[other] { $count } righe corrispondenti
+    }
+log-filter-hint = Filtra righe
+log-bad-pattern = Schema non valido
+log-follow = Segui
+log-close = Chiudi visualizzatore
+log-opened-large = { $name } è grande, quindi è stato aperto in sola lettura nel visualizzatore di log.

@@ -255,3 +255,16 @@ history-purge-confirm = 刪除歷史記錄
 history-purged = 已刪除本機歷史記錄。
 settings-local-history = 保留已儲存檔案的本機歷史記錄
 settings-local-history-detail = 每個檔案最多保留 50 個版本，保留 30 天，僅存於這部電腦。
+file-open-log = 在記錄檢視器中開啟…
+log-lines = { $count ->
+   *[other] { $count } 行
+    }
+log-indexing = 正在讀取… { $percent }%
+log-matches = { $count ->
+   *[other] { $count } 行符合
+    }
+log-filter-hint = 篩選行
+log-bad-pattern = 無效的模式
+log-follow = 跟隨
+log-close = 關閉檢視器
+log-opened-large = 「{ $name }」較大，因此已在記錄檢視器中以唯讀方式開啟。

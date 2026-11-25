@@ -266,3 +266,18 @@ history-purge-confirm = Radera historik
 history-purged = Lokal historik har raderats.
 settings-local-history = Behåll lokal historik för sparade filer
 settings-local-history-detail = Behåller upp till 50 versioner per fil i 30 dagar, endast på den här datorn.
+file-open-log = Öppna i loggvisaren…
+log-lines = { $count ->
+    [one] 1 rad
+   *[other] { $count } rader
+    }
+log-indexing = Läser… { $percent } %
+log-matches = { $count ->
+    [one] 1 matchande rad
+   *[other] { $count } matchande rader
+    }
+log-filter-hint = Filtrera rader
+log-bad-pattern = Ogiltigt mönster
+log-follow = Följ
+log-close = Stäng visaren
+log-opened-large = { $name } är stor och öppnades därför skrivskyddad i loggvisaren.

@@ -277,3 +277,20 @@ history-purge-confirm = Șterge istoricul
 history-purged = Istoricul local a fost șters.
 settings-local-history = Păstrează istoricul local al fișierelor salvate
 settings-local-history-detail = Păstrează până la 50 de versiuni per fișier timp de 30 de zile, doar pe acest computer.
+file-open-log = Deschide în vizualizatorul de jurnale…
+log-lines = { $count ->
+    [one] 1 linie
+    [few] { $count } linii
+   *[other] { $count } de linii
+    }
+log-indexing = Se citește… { $percent } %
+log-matches = { $count ->
+    [one] 1 linie potrivită
+    [few] { $count } linii potrivite
+   *[other] { $count } de linii potrivite
+    }
+log-filter-hint = Filtrează liniile
+log-bad-pattern = Model nevalid
+log-follow = Urmărește
+log-close = Închide vizualizatorul
+log-opened-large = { $name } este mare, așa că a fost deschis doar în citire în vizualizatorul de jurnale.

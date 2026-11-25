@@ -288,3 +288,22 @@ history-purge-confirm = Odstranit historii
 history-purged = Místní historie byla odstraněna.
 settings-local-history = Uchovávat místní historii uložených souborů
 settings-local-history-detail = Uchovává až 50 verzí každého souboru po dobu 30 dnů, pouze na tomto počítači.
+file-open-log = Otevřít v prohlížeči protokolů…
+log-lines = { $count ->
+    [one] 1 řádek
+    [few] { $count } řádky
+    [many] { $count } řádku
+   *[other] { $count } řádků
+    }
+log-indexing = Načítání… { $percent } %
+log-matches = { $count ->
+    [one] 1 odpovídající řádek
+    [few] { $count } odpovídající řádky
+    [many] { $count } odpovídajícího řádku
+   *[other] { $count } odpovídajících řádků
+    }
+log-filter-hint = Filtrovat řádky
+log-bad-pattern = Neplatný vzor
+log-follow = Sledovat
+log-close = Zavřít prohlížeč
+log-opened-large = Soubor { $name } je velký, proto byl otevřen jen pro čtení v prohlížeči protokolů.

@@ -40,6 +40,7 @@ M1 in progress.
 | E08 | Partial | Source/split/preview, GFM blocks and inlines, front matter, caret-following preview, raw HTML inert, source bytes unchanged (hash checked). Links: web with confirmation, local files, anchors, unsafe schemes blocked. Local images inside the document folder (limits enforced; remote never fetched). Not yet: permission flow for images outside the folder, Mermaid, outline panel, syntax colours in code blocks |
 | E10 | Partial | Two-tab side-by-side line diff (time-bounded), apply hunk in either direction as one undo, stale-revision check. Not yet: intraline highlight, whitespace options, files/clipboard as sources |
 | E15 | Partial | Search across a folder (background, cancellable, bounded), results open at the match. Not yet: replace across files, macros |
+| E13 | Partial | Log viewer: background indexing and filtering (cancellable), follow/tail, truncation detection, auto-open at 256 MB. UTF-8 only (lossy display); tested on macOS with a 302 MB file |
 | E14 | Done | Local history: copy per save (50 versions / 30 days / 10 MB cap, owner-only files), list, open, restore as one undo step, disable, purge. Tested on macOS |
 | L10n | Partial | 26 UI languages (en-US canonical; fi-FI draft; 24 machine translations by Claude awaiting native review). Every message formats in every locale (test). RTL languages not shipped |
 | E05 | Partial | UTF-8, UTF-8 BOM, UTF-16 LE/BE BOM, 17 legacy encodings by explicit choice (exact round trip enforced), explicit encoding and LF/CRLF conversion. Not yet: UTF-16 without BOM, automatic legacy detection |
@@ -92,6 +93,6 @@ because nobody independent exists; no fake approvals.
 ## Next
 - Line/column mapping, vertical movement, word movement, line operations.
 - Hard-link-safe save strategy.
-- Local history with retention and purge (E14), then a large-file/log viewer (E13).
+- Log viewer next steps (E13): jump to line, level highlighting, encodings other than UTF-8, very long files beyond ~16 M lines (f32 scroll precision).
 - Manual IME and screen-reader pass on macOS; Windows and Linux GUI smoke
   test (needs hardware or VM access).

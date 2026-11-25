@@ -266,3 +266,18 @@ history-purge-confirm = Verwijder geschiedenis
 history-purged = Lokale geschiedenis verwijderd.
 settings-local-history = Lokale geschiedenis van bewaarde bestanden bijhouden
 settings-local-history-detail = Houdt maximaal 50 versies per bestand 30 dagen bij, alleen op deze computer.
+file-open-log = Openen in logviewer…
+log-lines = { $count ->
+    [one] 1 regel
+   *[other] { $count } regels
+    }
+log-indexing = Lezen… { $percent }%
+log-matches = { $count ->
+    [one] 1 overeenkomende regel
+   *[other] { $count } overeenkomende regels
+    }
+log-filter-hint = Regels filteren
+log-bad-pattern = Ongeldig patroon
+log-follow = Volgen
+log-close = Viewer sluiten
+log-opened-large = { $name } is groot en is daarom alleen-lezen geopend in de logviewer.

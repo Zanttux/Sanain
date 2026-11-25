@@ -266,3 +266,18 @@ history-purge-confirm = Poista historia
 history-purged = Paikallinen historia poistettiin.
 settings-local-history = Säilytä tallennettujen tiedostojen paikallinen historia
 settings-local-history-detail = Säilyttää enintään 50 versiota tiedostoa kohden 30 päivän ajan, vain tällä tietokoneella.
+file-open-log = Avaa lokikatseluun…
+log-lines = { $count ->
+    [one] 1 rivi
+   *[other] { $count } riviä
+    }
+log-indexing = Luetaan… { $percent } %
+log-matches = { $count ->
+    [one] 1 osuva rivi
+   *[other] { $count } osuvaa riviä
+    }
+log-filter-hint = Suodata rivejä
+log-bad-pattern = Virheellinen haku
+log-follow = Seuraa
+log-close = Sulje katselu
+log-opened-large = { $name } on suuri, joten se avattiin vain luettavaksi lokikatseluun.

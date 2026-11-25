@@ -288,3 +288,22 @@ history-purge-confirm = Usuń historię
 history-purged = Usunięto historię lokalną.
 settings-local-history = Zachowuj lokalną historię zapisanych plików
 settings-local-history-detail = Zachowuje do 50 wersji każdego pliku przez 30 dni, tylko na tym komputerze.
+file-open-log = Otwórz w przeglądarce logów…
+log-lines = { $count ->
+    [one] 1 wiersz
+    [few] { $count } wiersze
+    [many] { $count } wierszy
+   *[other] { $count } wiersza
+    }
+log-indexing = Wczytywanie… { $percent }%
+log-matches = { $count ->
+    [one] 1 pasujący wiersz
+    [few] { $count } pasujące wiersze
+    [many] { $count } pasujących wierszy
+   *[other] { $count } pasującego wiersza
+    }
+log-filter-hint = Filtruj wiersze
+log-bad-pattern = Nieprawidłowy wzorzec
+log-follow = Śledź
+log-close = Zamknij przeglądarkę
+log-opened-large = Plik { $name } jest duży, więc otwarto go tylko do odczytu w przeglądarce logów.

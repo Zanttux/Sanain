@@ -255,3 +255,16 @@ history-purge-confirm = Hapus Riwayat
 history-purged = Riwayat lokal dihapus.
 settings-local-history = Simpan riwayat lokal berkas yang disimpan
 settings-local-history-detail = Menyimpan hingga 50 versi per berkas selama 30 hari, hanya di komputer ini.
+file-open-log = Buka di Penampil Log…
+log-lines = { $count ->
+   *[other] { $count } baris
+    }
+log-indexing = Membaca… { $percent }%
+log-matches = { $count ->
+   *[other] { $count } baris yang cocok
+    }
+log-filter-hint = Saring baris
+log-bad-pattern = Pola tidak valid
+log-follow = Ikuti
+log-close = Tutup Penampil
+log-opened-large = { $name } berukuran besar, jadi dibuka hanya-baca di penampil log.

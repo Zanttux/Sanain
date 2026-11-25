@@ -265,3 +265,18 @@ history-purge-confirm = Delete History
 history-purged = Local history deleted.
 settings-local-history = Keep local history of saved files
 settings-local-history-detail = Keeps up to 50 versions per file for 30 days, on this computer only.
+file-open-log = Open in Log Viewer…
+log-lines = { $count ->
+    [one] 1 line
+   *[other] { $count } lines
+    }
+log-indexing = Reading… { $percent } %
+log-matches = { $count ->
+    [one] 1 matching line
+   *[other] { $count } matching lines
+    }
+log-filter-hint = Filter lines
+log-bad-pattern = Invalid pattern
+log-follow = Follow
+log-close = Close Viewer
+log-opened-large = { $name } is large, so it opened read-only in the log viewer.

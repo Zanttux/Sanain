@@ -136,6 +136,9 @@ pub struct Shell {
     settings_open: bool,
     history: Option<sanain_io::history::HistoryStore>,
     history_open: bool,
+    log: Option<crate::logview::LogView>,
+    /// For work started outside a frame (e.g. opening a file).
+    ctx: egui::Context,
     /// A running update check and whether the user asked for it.
     update: Option<(
         std::sync::mpsc::Receiver<Result<UpdateStatus, UpdateError>>,
@@ -224,6 +227,8 @@ impl Shell {
             settings_open: false,
             history: None,
             history_open: false,
+            log: None,
+            ctx: egui::Context::default(),
             update: None,
             recording: None,
             shortcut_moved: Vec::new(),
@@ -445,7 +450,52 @@ impl Shell {
         }
     }
 
+    /// Files at least this large open in the log viewer instead of an
+    /// editor tab (editing loads the whole file into memory).
+    const LARGE_FILE: u64 = 256 * 1024 * 1024;
+
+    fn open_log(&mut self, path: &Path, ctx: &egui::Context) {
+        match crate::logview::LogView::open(path, ctx) {
+            Ok(v) => {
+                self.log = Some(v);
+                self.status = None;
+            }
+            Err(e) => {
+                self.dialog = Some(Dialog::Error(describe_load_error(
+                    &self.l10n,
+                    path,
+                    &LoadError::Io {
+                        path: path.to_owned(),
+                        source: e,
+                    },
+                )))
+            }
+        }
+    }
+
+    /// Whether `path` is big enough to open in the log viewer.
+    pub fn is_large(path: &Path) -> bool {
+        std::fs::metadata(path).is_ok_and(|m| m.is_file() && m.len() >= Self::LARGE_FILE)
+    }
+
+    /// Open a large file in the log viewer and say why.
+    pub fn open_large(&mut self, path: &Path, ctx: &egui::Context) {
+        self.open_log(path, ctx);
+        if self.log.is_some() {
+            let name = path
+                .file_name()
+                .map(|n| n.to_string_lossy().into_owned())
+                .unwrap_or_default();
+            self.status = Some((self.t("log-opened-large", &[("name", name.into())]), false));
+        }
+    }
+
     fn open(&mut self, path: &Path) {
+        if Self::is_large(path) {
+            let ctx = self.ctx.clone();
+            self.open_large(path, &ctx);
+            return;
+        }
         match self.ws.open(path) {
             Ok(_) => {
                 self.status = None;
@@ -1156,6 +1206,117 @@ impl Shell {
     }
 
     /// Draw the structured view if enabled for the active tab.
+    /// The log viewer, when open, replaces the editor area.
+    fn log_area(&mut self, ui: &mut egui::Ui) -> bool {
+        let Some(log) = &mut self.log else {
+            return false;
+        };
+        log.tick();
+        let p = theme::palette(ui.ctx());
+        let name = log
+            .path
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let lines = log.line_count() as i64;
+        let tr_ = |id: &str, args: &[(&str, FluentValue<'static>)]| tr(&self.l10n, id, args);
+        let count = tr_("log-lines", &[("count", lines.into())]);
+        let progress = log
+            .progress()
+            .map(|pc| tr_("log-indexing", &[("percent", i64::from(pc).into())]));
+        let matches = log.matches().map(|(n, running)| {
+            let t = tr_("log-matches", &[("count", (n as i64).into())]);
+            if running { format!("{t} …") } else { t }
+        });
+        let (hint, regex_l, follow_l, close_l, bad_l) = (
+            tr_("log-filter-hint", &[]),
+            tr_("find-regex", &[]),
+            tr_("log-follow", &[]),
+            tr_("log-close", &[]),
+            tr_("log-bad-pattern", &[]),
+        );
+        let mut close = false;
+        let mut changed = false;
+        egui::Frame::NONE
+            .fill(p.surface)
+            .inner_margin(egui::Margin::symmetric(8, 6))
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label(&name);
+                    ui.colored_label(p.muted, &count);
+                    if let Some(pr) = &progress {
+                        ui.colored_label(p.muted, pr);
+                    }
+                    ui.separator();
+                    let r = ui.add(
+                        egui::TextEdit::singleline(&mut log.query)
+                            .hint_text(hint)
+                            .desired_width(220.0),
+                    );
+                    changed |= r.changed();
+                    changed |= ui.checkbox(&mut log.regex, regex_l).changed();
+                    if log.bad_pattern {
+                        ui.colored_label(p.error, bad_l);
+                    } else if let Some(m) = &matches {
+                        ui.colored_label(p.muted, m);
+                    }
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button(close_l).clicked() {
+                            close = true;
+                        }
+                        ui.checkbox(&mut log.follow, follow_l);
+                    });
+                });
+            });
+        if changed {
+            log.set_query();
+        }
+        if let Some(e) = log.error.take() {
+            self.status = Some((e, true));
+        }
+        let font = egui::FontId::monospace(self.settings.font_size);
+        let row_h = ui.fonts_mut(|f| f.row_height(&font));
+        let rows = log.rows();
+        let digits = log.line_count().max(1).to_string().len();
+        let follow = log.follow;
+        // Rows are exactly `row_h` apart, so offsets are simple products.
+        ui.spacing_mut().item_spacing.y = 0.0;
+        let mut area = egui::ScrollArea::both().auto_shrink(false);
+        if follow {
+            // Like `tail -f`: stay at the end; turn Follow off to scroll.
+            let end = rows as f32 * row_h - ui.available_height() + row_h;
+            area = area.vertical_scroll_offset(end.max(0.0));
+        }
+        area.show_rows(ui, row_h, rows, |ui, range| {
+            // Every row exactly `row_h` tall (egui's minimum is larger).
+            ui.spacing_mut().interact_size.y = row_h;
+            for (line, text, cut) in log.row_lines(range) {
+                ui.horizontal(|ui| {
+                    ui.add_space(6.0);
+                    ui.label(
+                        egui::RichText::new(format!("{:>digits$}", line + 1))
+                            .font(font.clone())
+                            .color(p.muted),
+                    );
+                    ui.add_space(10.0);
+                    let shown = if cut { format!("{text}…") } else { text };
+                    ui.add(
+                        egui::Label::new(
+                            egui::RichText::new(shown).font(font.clone()).color(p.text),
+                        )
+                        .wrap_mode(egui::TextWrapMode::Extend)
+                        .selectable(true),
+                    );
+                });
+            }
+        });
+        if close {
+            self.log = None;
+            self.focus_active();
+        }
+        true
+    }
+
     fn structured_area(&mut self, ui: &mut egui::Ui) -> bool {
         let id = self.ws.active().id;
         let Some(kind) = Self::data_kind(self.editor()).filter(|_| self.structured.contains(&id))
@@ -1489,6 +1650,7 @@ impl Shell {
             .file()
             .and_then(|f| f.path.parent().map(std::path::Path::to_path_buf));
         let ctx = ui.ctx().clone();
+        self.ctx = ctx.clone();
         let images = &self.images;
         let image = |url: &str| {
             use crate::imagecache::ImageView;
@@ -1731,6 +1893,12 @@ impl Shell {
             }
             MenuAction::CommandPalette => {
                 self.palette.open();
+                return;
+            }
+            MenuAction::OpenLog => {
+                if let Some(p) = rfd::FileDialog::new().pick_file() {
+                    self.open_log(&p, ctx);
+                }
                 return;
             }
             MenuAction::LocalHistory => {
@@ -2302,7 +2470,7 @@ impl eframe::App for Shell {
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE.fill(p.canvas))
             .show(ui, |ui| {
-                if self.compare_area(ui) || self.structured_area(ui) {
+                if self.log_area(ui) || self.compare_area(ui) || self.structured_area(ui) {
                     return;
                 }
                 match self.md_mode() {

@@ -266,3 +266,18 @@ history-purge-confirm = Slet historik
 history-purged = Lokal historik er slettet.
 settings-local-history = Behold lokal historik for gemte filer
 settings-local-history-detail = Beholder op til 50 versioner pr. fil i 30 dage, kun på denne computer.
+file-open-log = Åbn i logfremviser…
+log-lines = { $count ->
+    [one] 1 linje
+   *[other] { $count } linjer
+    }
+log-indexing = Læser… { $percent } %
+log-matches = { $count ->
+    [one] 1 matchende linje
+   *[other] { $count } matchende linjer
+    }
+log-filter-hint = Filtrer linjer
+log-bad-pattern = Ugyldigt mønster
+log-follow = Følg
+log-close = Luk fremviser
+log-opened-large = { $name } er stor, så den blev åbnet skrivebeskyttet i logfremviseren.

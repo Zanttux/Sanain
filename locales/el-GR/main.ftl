@@ -266,3 +266,18 @@ history-purge-confirm = Διαγραφή ιστορικού
 history-purged = Το τοπικό ιστορικό διαγράφηκε.
 settings-local-history = Διατήρηση τοπικού ιστορικού αποθηκευμένων αρχείων
 settings-local-history-detail = Διατηρεί έως 50 εκδόσεις ανά αρχείο για 30 ημέρες, μόνο σε αυτόν τον υπολογιστή.
+file-open-log = Άνοιγμα στην προβολή αρχείων καταγραφής…
+log-lines = { $count ->
+    [one] 1 γραμμή
+   *[other] { $count } γραμμές
+    }
+log-indexing = Ανάγνωση… { $percent }%
+log-matches = { $count ->
+    [one] 1 γραμμή που ταιριάζει
+   *[other] { $count } γραμμές που ταιριάζουν
+    }
+log-filter-hint = Φιλτράρισμα γραμμών
+log-bad-pattern = Μη έγκυρο μοτίβο
+log-follow = Παρακολούθηση
+log-close = Κλείσιμο προβολής
+log-opened-large = Το { $name } είναι μεγάλο, οπότε άνοιξε μόνο για ανάγνωση στην προβολή αρχείων καταγραφής.

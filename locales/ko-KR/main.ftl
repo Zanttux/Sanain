@@ -255,3 +255,16 @@ history-purge-confirm = 기록 삭제
 history-purged = 로컬 기록을 삭제했습니다.
 settings-local-history = 저장된 파일의 로컬 기록 보관
 settings-local-history-detail = 파일당 최대 50개 버전을 30일 동안 이 컴퓨터에만 보관합니다.
+file-open-log = 로그 뷰어에서 열기…
+log-lines = { $count ->
+   *[other] { $count }줄
+    }
+log-indexing = 읽는 중… { $percent }%
+log-matches = { $count ->
+   *[other] 일치하는 줄 { $count }개
+    }
+log-filter-hint = 줄 필터
+log-bad-pattern = 잘못된 패턴
+log-follow = 따라가기
+log-close = 뷰어 닫기
+log-opened-large = { $name }은(는) 크기가 커서 로그 뷰어에서 읽기 전용으로 열렸습니다.
