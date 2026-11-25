@@ -340,3 +340,9 @@ macro-recorded = { $count ->
     [many] Макрос записано: { $count } кроків.
    *[other] Макрос записано: { $count } кроку.
     }
+tools-compare-saved = Порівняти зі збереженою версією
+tools-compare-clipboard = Порівняти з буфером обміну
+compare-saved-label = { $name } (на диску)
+compare-clipboard-label = Буфер обміну
+compare-saved-failed = Не вдалося прочитати збережений файл: { $reason }
+compare-clipboard-empty = У буфері обміну немає тексту для порівняння.

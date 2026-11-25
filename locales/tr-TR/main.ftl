@@ -310,3 +310,9 @@ macro-recorded = { $count ->
     [one] Makro kaydedildi: 1 adım.
    *[other] Makro kaydedildi: { $count } adım.
     }
+tools-compare-saved = Kaydedilmiş Sürümle Karşılaştır
+tools-compare-clipboard = Panoyla Karşılaştır
+compare-saved-label = { $name } (diskte)
+compare-clipboard-label = Pano
+compare-saved-failed = Kaydedilmiş dosya okunamadı: { $reason }
+compare-clipboard-empty = Panoda karşılaştırılacak metin yok.

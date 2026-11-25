@@ -325,3 +325,9 @@ macro-recorded = { $count ->
     [many] Macro enregistrée : { $count } d’étapes.
    *[other] Macro enregistrée : { $count } étapes.
     }
+tools-compare-saved = Comparer avec la version enregistrée
+tools-compare-clipboard = Comparer avec le presse-papiers
+compare-saved-label = { $name } (sur le disque)
+compare-clipboard-label = Presse-papiers
+compare-saved-failed = Impossible de lire le fichier enregistré : { $reason }
+compare-clipboard-empty = Le presse-papiers ne contient aucun texte à comparer.

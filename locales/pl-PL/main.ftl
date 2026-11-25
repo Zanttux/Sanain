@@ -340,3 +340,9 @@ macro-recorded = { $count ->
     [many] Nagrano makro: { $count } kroków.
    *[other] Nagrano makro: { $count } kroku.
     }
+tools-compare-saved = Porównaj z zapisaną wersją
+tools-compare-clipboard = Porównaj ze schowkiem
+compare-saved-label = { $name } (na dysku)
+compare-clipboard-label = Schowek
+compare-saved-failed = Nie można odczytać zapisanego pliku: { $reason }
+compare-clipboard-empty = Schowek nie zawiera tekstu do porównania.

@@ -295,3 +295,9 @@ macro-recording = Merekam makro
 macro-recorded = { $count ->
    *[other] Makro direkam: { $count } langkah.
     }
+tools-compare-saved = Bandingkan dengan Versi Tersimpan
+tools-compare-clipboard = Bandingkan dengan Papan Klip
+compare-saved-label = { $name } (di disk)
+compare-clipboard-label = Papan Klip
+compare-saved-failed = Tidak dapat membaca berkas tersimpan: { $reason }
+compare-clipboard-empty = Papan klip tidak berisi teks untuk dibandingkan.

@@ -310,3 +310,9 @@ macro-recorded = { $count ->
     [one] Makro aufgezeichnet: 1 Schritt.
    *[other] Makro aufgezeichnet: { $count } Schritte.
     }
+tools-compare-saved = Mit gespeicherter Version vergleichen
+tools-compare-clipboard = Mit Zwischenablage vergleichen
+compare-saved-label = { $name } (auf dem Datenträger)
+compare-clipboard-label = Zwischenablage
+compare-saved-failed = Die gespeicherte Datei konnte nicht gelesen werden: { $reason }
+compare-clipboard-empty = Die Zwischenablage enthält keinen Text zum Vergleichen.

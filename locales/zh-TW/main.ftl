@@ -295,3 +295,9 @@ macro-recording = 正在錄製巨集
 macro-recorded = { $count ->
    *[other] 巨集已錄製：{ $count } 個步驟。
     }
+tools-compare-saved = 與已儲存的版本比較
+tools-compare-clipboard = 與剪貼簿比較
+compare-saved-label = 「{ $name }」（磁碟上）
+compare-clipboard-label = 剪貼簿
+compare-saved-failed = 無法讀取已儲存的檔案：{ $reason }
+compare-clipboard-empty = 剪貼簿中沒有可比較的文字。

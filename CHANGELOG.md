@@ -5,6 +5,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Tools > Compare with Saved Version and Compare with Clipboard show the
+  current document side by side with the file on disk or the clipboard
+  text; changes can be copied into the document one at a time.
 - Macros: Tools > Start or Stop Macro Recording (Cmd/Ctrl+Shift+R)
   records typing, deleting, cursor keys and editing commands; Play Macro
   (Cmd/Ctrl+Shift+M) replays them at the current cursor, and each run

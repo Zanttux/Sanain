@@ -310,3 +310,9 @@ macro-recorded = { $count ->
     [one] Η μακροεντολή καταγράφηκε: 1 βήμα.
    *[other] Η μακροεντολή καταγράφηκε: { $count } βήματα.
     }
+tools-compare-saved = Σύγκριση με την αποθηκευμένη έκδοση
+tools-compare-clipboard = Σύγκριση με το πρόχειρο
+compare-saved-label = { $name } (στον δίσκο)
+compare-clipboard-label = Πρόχειρο
+compare-saved-failed = Δεν ήταν δυνατή η ανάγνωση του αποθηκευμένου αρχείου: { $reason }
+compare-clipboard-empty = Το πρόχειρο δεν περιέχει κείμενο για σύγκριση.

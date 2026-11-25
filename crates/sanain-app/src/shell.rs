@@ -23,10 +23,17 @@ use crate::view::{EditorView, ViewOptions};
 use sanain_app::settings::{FONT_SIZE_DEFAULT, Settings, ThemeChoice};
 use sanain_app::update::{Status as UpdateStatus, UpdateError};
 
-/// An open side-by-side comparison of two tabs.
+/// The right side of a comparison: another tab, or fixed text such as
+/// the saved file or the clipboard (read-only).
+enum Side {
+    Tab(TabId),
+    Text { label: String, text: String },
+}
+
+/// An open side-by-side comparison of the active tab with another side.
 struct Compare {
     left: TabId,
-    right: TabId,
+    right: Side,
     revs: (Revision, Revision),
     diff: sanain_tools::diff::Diff,
 }
@@ -1499,7 +1506,7 @@ impl Shell {
         true
     }
 
-    fn start_compare(&mut self, right: TabId) {
+    fn start_compare(&mut self, right: Side) {
         self.compare = Some(Compare {
             left: self.ws.active().id,
             right,
@@ -1544,7 +1551,7 @@ impl Shell {
             }
         });
         if let Some(id) = chosen {
-            self.start_compare(id);
+            self.start_compare(Side::Tab(id));
             self.compare_pick = false;
         } else if !open {
             self.compare_pick = false;
@@ -1558,10 +1565,12 @@ impl Shell {
         if c.left != self.ws.active().id {
             return false;
         }
-        let (left, right) = (c.left, c.right);
-        let (Some((lrev, ltext)), Some((rrev, rtext))) =
-            (self.tab_text(left), self.tab_text(right))
-        else {
+        let left = c.left;
+        let right_side = match &c.right {
+            Side::Tab(id) => self.tab_text(*id),
+            Side::Text { text, .. } => Some((Revision(0), text.clone())),
+        };
+        let (Some((lrev, ltext)), Some((rrev, rtext))) = (self.tab_text(left), right_side) else {
             self.compare = None;
             return false;
         };
@@ -1574,7 +1583,13 @@ impl Shell {
         let Some(c) = &self.compare else { return false };
         let p = theme::palette(ui.ctx());
         let lname = self.name_of(&self.ws.tabs()[self.ws.position(left).unwrap_or(0)].editor);
-        let rname = self.name_of(&self.ws.tabs()[self.ws.position(right).unwrap_or(0)].editor);
+        let rname = match &c.right {
+            Side::Tab(id) => {
+                self.name_of(&self.ws.tabs()[self.ws.position(*id).unwrap_or(0)].editor)
+            }
+            Side::Text { label, .. } => label.clone(),
+        };
+        let right_editable = matches!(c.right, Side::Tab(_));
         let changes = c.diff.hunks.len() as i64;
         let mut close = false;
         egui::Frame::NONE
@@ -1596,7 +1611,7 @@ impl Shell {
             });
         let labels = crate::diffview::Labels {
             to_left: self.t("compare-to-left", &[]),
-            to_right: self.t("compare-to-right", &[]),
+            to_right: right_editable.then(|| self.t("compare-to-right", &[])),
         };
         let action = crate::diffview::show(
             ui,
@@ -1622,10 +1637,17 @@ impl Shell {
     fn apply_hunk(&mut self, a: crate::diffview::ApplyDir, ltext: &str, rtext: &str) {
         use crate::diffview::ApplyDir;
         let Some(c) = &self.compare else { return };
-        let (left, right) = (c.left, c.right);
+        let left = c.left;
+        let right = match &c.right {
+            Side::Tab(id) => Some(*id),
+            Side::Text { .. } => None,
+        };
         let now = (
             self.tab_text(left).map(|t| t.0),
-            self.tab_text(right).map(|t| t.0),
+            match right {
+                Some(id) => self.tab_text(id).map(|t| t.0),
+                None => Some(Revision(0)),
+            },
         );
         if now != (Some(c.revs.0), Some(c.revs.1)) {
             self.status = Some((self.t("compare-stale", &[]), true));
@@ -1643,6 +1665,7 @@ impl Shell {
             }
             ApplyDir::ToRight(h) => {
                 let Some(h) = c.diff.hunks.get(h) else { return };
+                let Some(right) = right else { return };
                 (
                     right,
                     h.right_bytes.clone(),
@@ -1871,6 +1894,7 @@ impl Shell {
                 }
                 MenuAction::ClearHistory => self.history.is_some(),
                 MenuAction::GoToHeading => Self::is_markdown(self.editor()),
+                MenuAction::CompareSaved => self.editor().file().is_some(),
                 MenuAction::PlayMacro => {
                     !self.macro_cmds.is_empty() && !self.editor().is_recording()
                 }
@@ -2082,7 +2106,7 @@ impl Shell {
                         0 | 1 => self.status = Some((self.t("compare-need-two", &[]), false)),
                         2 => {
                             let other = self.ws.tabs()[1 - self.ws.active_index()].id;
-                            self.start_compare(other);
+                            self.start_compare(Side::Tab(other));
                         }
                         _ => self.compare_pick = true,
                     }
@@ -2105,6 +2129,41 @@ impl Shell {
             }
             MenuAction::Settings => {
                 self.settings_open = true;
+                return;
+            }
+            MenuAction::CompareSaved => {
+                let Some(path) = self.editor().file().map(|f| f.path.clone()) else {
+                    return;
+                };
+                let enc = self.editor().encoding();
+                let text = std::fs::read(&path)
+                    .map_err(|e| e.to_string())
+                    .and_then(|b| sanain_io::decode_as(&b, enc).map_err(|e| e.to_string()));
+                match text {
+                    Ok(text) => {
+                        let label = self.t(
+                            "compare-saved-label",
+                            &[("name", self.display_name().into())],
+                        );
+                        self.start_compare(Side::Text { label, text });
+                    }
+                    Err(reason) => {
+                        self.status = Some((
+                            self.t("compare-saved-failed", &[("reason", reason.into())]),
+                            true,
+                        ));
+                    }
+                }
+                return;
+            }
+            MenuAction::CompareClipboard => {
+                match arboard::Clipboard::new().and_then(|mut c| c.get_text()) {
+                    Ok(text) => {
+                        let label = self.t("compare-clipboard-label", &[]);
+                        self.start_compare(Side::Text { label, text });
+                    }
+                    Err(_) => self.status = Some((self.t("compare-clipboard-empty", &[]), true)),
+                }
                 return;
             }
             MenuAction::RecordMacro => {

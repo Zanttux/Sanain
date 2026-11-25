@@ -310,3 +310,9 @@ macro-recorded = { $count ->
     [one] Makro optaget: 1 trin.
    *[other] Makro optaget: { $count } trin.
     }
+tools-compare-saved = Sammenlign med gemt version
+tools-compare-clipboard = Sammenlign med udklipsholder
+compare-saved-label = { $name } (på disk)
+compare-clipboard-label = Udklipsholder
+compare-saved-failed = Den gemte fil kunne ikke læses: { $reason }
+compare-clipboard-empty = Udklipsholderen indeholder ingen tekst at sammenligne.
