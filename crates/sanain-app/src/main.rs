@@ -55,6 +55,10 @@ fn main() -> eframe::Result {
         .as_ref()
         .and_then(|d| d.parent())
         .map(|d| d.join("session"));
+    let history = recovery_dir
+        .as_ref()
+        .and_then(|d| d.parent())
+        .and_then(|d| sanain_io::history::HistoryStore::open(d.join("History")).ok());
     let store = recovery_dir.and_then(|dir| match RecoveryStore::open(&dir) {
         Ok(s) => Some(s),
         Err(e) => {
@@ -98,6 +102,7 @@ fn main() -> eframe::Result {
                 settings,
                 settings_dir,
             );
+            shell.set_history(history);
             shell.install_menu(&cc.egui_ctx);
             shell.auto_update_check(&cc.egui_ctx);
             Ok(Box::new(shell))

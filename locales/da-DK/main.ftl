@@ -240,3 +240,29 @@ update-open-page = Åbn downloadside
 update-later = Senere
 settings-check-updates = Søg efter opdateringer én gang om dagen
 settings-check-updates-detail = Spørger github.com om den seneste udgivelse. Der sendes intet andet.
+file-local-history = Lokal historik…
+file-clear-history = Ryd lokal historik…
+history-title = Lokal historik for { $name }
+history-open = Åbn
+history-restore = Gendan
+history-empty = Ingen gemte versioner endnu. Der gemmes en kopi, hver gang du gemmer.
+history-unreadable = Denne version kunne ikke læses.
+history-just-now = Lige nu
+history-minutes-ago = { $count ->
+    [one] for 1 minut siden
+   *[other] for { $count } minutter siden
+    }
+history-hours-ago = { $count ->
+    [one] for 1 time siden
+   *[other] for { $count } timer siden
+    }
+history-days-ago = { $count ->
+    [one] for 1 dag siden
+   *[other] for { $count } dage siden
+    }
+history-purge-title = Slet al lokal historik?
+history-purge-body = Gemte kopier af alle filer fjernes fra denne computer. Selve filerne ændres ikke.
+history-purge-confirm = Slet historik
+history-purged = Lokal historik er slettet.
+settings-local-history = Behold lokal historik for gemte filer
+settings-local-history-detail = Beholder op til 50 versioner pr. fil i 30 dage, kun på denne computer.

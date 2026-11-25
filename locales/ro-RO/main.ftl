@@ -248,3 +248,32 @@ update-open-page = Deschide pagina de descărcare
 update-later = Mai târziu
 settings-check-updates = Caută actualizări o dată pe zi
 settings-check-updates-detail = Interoghează github.com pentru cea mai recentă versiune. Nu se trimite nimic altceva.
+file-local-history = Istoric local…
+file-clear-history = Golește istoricul local…
+history-title = Istoricul local al { $name }
+history-open = Deschide
+history-restore = Restaurează
+history-empty = Încă nu există versiuni salvate. La fiecare salvare se păstrează o copie.
+history-unreadable = Această versiune nu a putut fi citită.
+history-just-now = Chiar acum
+history-minutes-ago = { $count ->
+    [one] acum 1 minut
+    [few] acum { $count } minute
+   *[other] acum { $count } de minute
+    }
+history-hours-ago = { $count ->
+    [one] acum 1 oră
+    [few] acum { $count } ore
+   *[other] acum { $count } de ore
+    }
+history-days-ago = { $count ->
+    [one] acum 1 zi
+    [few] acum { $count } zile
+   *[other] acum { $count } de zile
+    }
+history-purge-title = Ștergeți tot istoricul local?
+history-purge-body = Copiile salvate ale tuturor fișierelor sunt eliminate de pe acest computer. Fișierele în sine nu sunt modificate.
+history-purge-confirm = Șterge istoricul
+history-purged = Istoricul local a fost șters.
+settings-local-history = Păstrează istoricul local al fișierelor salvate
+settings-local-history-detail = Păstrează până la 50 de versiuni per fișier timp de 30 de zile, doar pe acest computer.

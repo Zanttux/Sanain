@@ -232,3 +232,26 @@ update-open-page = 打开下载页面
 update-later = 稍后
 settings-check-updates = 每天检查一次更新
 settings-check-updates-detail = 向 github.com 查询最新版本。不会发送其他任何信息。
+file-local-history = 本地历史记录…
+file-clear-history = 清除本地历史记录…
+history-title = { $name } 的本地历史记录
+history-open = 打开
+history-restore = 恢复
+history-empty = 尚无已存储的版本。每次存储时都会保留一份副本。
+history-unreadable = 无法读取此版本。
+history-just-now = 刚刚
+history-minutes-ago = { $count ->
+   *[other] { $count } 分钟前
+    }
+history-hours-ago = { $count ->
+   *[other] { $count } 小时前
+    }
+history-days-ago = { $count ->
+   *[other] { $count } 天前
+    }
+history-purge-title = 要删除全部本地历史记录吗？
+history-purge-body = 所有文件的已存储副本将从此电脑中移除。文件本身不会被更改。
+history-purge-confirm = 删除历史记录
+history-purged = 已删除本地历史记录。
+settings-local-history = 保留已存储文件的本地历史记录
+settings-local-history-detail = 每个文件最多保留 50 个版本，保留 30 天，仅存于此电脑。

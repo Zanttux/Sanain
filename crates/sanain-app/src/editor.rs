@@ -609,6 +609,18 @@ mod tests {
     use std::fs;
 
     #[test]
+    fn replacing_whole_text_is_one_undo_step() {
+        let mut ed = Editor::new();
+        ed.execute(Command::Insert("version one two three\n".into()));
+        let len = ed.document().len_chars();
+        ed.replace_range(0..len, "version one two\n");
+        ed.select(0..0);
+        assert_eq!(ed.document().text(), "version one two\n");
+        ed.execute(Command::Undo);
+        assert_eq!(ed.document().text(), "version one two three\n");
+    }
+
+    #[test]
     fn typing_newline_follows_file_convention() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("crlf.txt");

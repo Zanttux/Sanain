@@ -11,6 +11,7 @@
 
 mod encoding;
 mod file;
+pub mod history;
 pub mod recovery;
 
 pub use encoding::{DecodeError, EncodeError, LEGACY, TextEncoding, decode, decode_as, encode};

@@ -240,3 +240,29 @@ update-open-page = Öppna nedladdningssidan
 update-later = Senare
 settings-check-updates = Sök efter uppdateringar en gång om dagen
 settings-check-updates-detail = Frågar github.com efter den senaste versionen. Inget annat skickas.
+file-local-history = Lokal historik…
+file-clear-history = Rensa lokal historik…
+history-title = Lokal historik för { $name }
+history-open = Öppna
+history-restore = Återställ
+history-empty = Inga sparade versioner ännu. En kopia behålls varje gång du sparar.
+history-unreadable = Den här versionen kunde inte läsas.
+history-just-now = Nyss
+history-minutes-ago = { $count ->
+    [one] för 1 minut sedan
+   *[other] för { $count } minuter sedan
+    }
+history-hours-ago = { $count ->
+    [one] för 1 timme sedan
+   *[other] för { $count } timmar sedan
+    }
+history-days-ago = { $count ->
+    [one] för 1 dag sedan
+   *[other] för { $count } dagar sedan
+    }
+history-purge-title = Radera all lokal historik?
+history-purge-body = Sparade kopior av alla filer tas bort från den här datorn. Själva filerna ändras inte.
+history-purge-confirm = Radera historik
+history-purged = Lokal historik har raderats.
+settings-local-history = Behåll lokal historik för sparade filer
+settings-local-history-detail = Behåller upp till 50 versioner per fil i 30 dagar, endast på den här datorn.

@@ -240,3 +240,29 @@ update-open-page = İndirme Sayfasını Aç
 update-later = Daha Sonra
 settings-check-updates = Güncellemeleri günde bir kez denetle
 settings-check-updates-detail = En son sürümü github.com'a sorar. Başka hiçbir şey gönderilmez.
+file-local-history = Yerel Geçmiş…
+file-clear-history = Yerel Geçmişi Temizle…
+history-title = { $name } dosyasının yerel geçmişi
+history-open = Aç
+history-restore = Geri Yükle
+history-empty = Henüz kaydedilmiş sürüm yok. Her kaydedişinizde bir kopya saklanır.
+history-unreadable = Bu sürüm okunamadı.
+history-just-now = Az önce
+history-minutes-ago = { $count ->
+    [one] 1 dakika önce
+   *[other] { $count } dakika önce
+    }
+history-hours-ago = { $count ->
+    [one] 1 saat önce
+   *[other] { $count } saat önce
+    }
+history-days-ago = { $count ->
+    [one] 1 gün önce
+   *[other] { $count } gün önce
+    }
+history-purge-title = Tüm yerel geçmiş silinsin mi?
+history-purge-body = Tüm dosyaların kaydedilmiş kopyaları bu bilgisayardan kaldırılır. Dosyalarınızın kendisi değiştirilmez.
+history-purge-confirm = Geçmişi Sil
+history-purged = Yerel geçmiş silindi.
+settings-local-history = Kaydedilen dosyaların yerel geçmişini sakla
+settings-local-history-detail = Dosya başına en fazla 50 sürümü 30 gün boyunca yalnızca bu bilgisayarda saklar.

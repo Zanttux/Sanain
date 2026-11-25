@@ -240,3 +240,29 @@ update-open-page = Abrir página de descarga
 update-later = Más tarde
 settings-check-updates = Buscar actualizaciones una vez al día
 settings-check-updates-detail = Consulta a github.com la última versión publicada. No se envía nada más.
+file-local-history = Historial local…
+file-clear-history = Borrar historial local…
+history-title = Historial local de { $name }
+history-open = Abrir
+history-restore = Restaurar
+history-empty = Aún no hay versiones guardadas. Se conserva una copia cada vez que guardas.
+history-unreadable = No se ha podido leer esta versión.
+history-just-now = Ahora mismo
+history-minutes-ago = { $count ->
+    [one] hace 1 minuto
+   *[other] hace { $count } minutos
+    }
+history-hours-ago = { $count ->
+    [one] hace 1 hora
+   *[other] hace { $count } horas
+    }
+history-days-ago = { $count ->
+    [one] hace 1 día
+   *[other] hace { $count } días
+    }
+history-purge-title = ¿Eliminar todo el historial local?
+history-purge-body = Las copias guardadas de todos los archivos se eliminan de este ordenador. Tus archivos no se modifican.
+history-purge-confirm = Eliminar historial
+history-purged = Historial local eliminado.
+settings-local-history = Conservar el historial local de los archivos guardados
+settings-local-history-detail = Conserva hasta 50 versiones por archivo durante 30 días, solo en este ordenador.

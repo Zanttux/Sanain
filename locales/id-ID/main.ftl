@@ -232,3 +232,26 @@ update-open-page = Buka Halaman Unduhan
 update-later = Nanti
 settings-check-updates = Periksa pembaruan sekali sehari
 settings-check-updates-detail = Menanyakan rilis terbaru ke github.com. Tidak ada data lain yang dikirim.
+file-local-history = Riwayat Lokal…
+file-clear-history = Hapus Riwayat Lokal…
+history-title = Riwayat lokal { $name }
+history-open = Buka
+history-restore = Pulihkan
+history-empty = Belum ada versi tersimpan. Salinan disimpan setiap kali Anda menyimpan.
+history-unreadable = Versi ini tidak dapat dibaca.
+history-just-now = Baru saja
+history-minutes-ago = { $count ->
+   *[other] { $count } menit yang lalu
+    }
+history-hours-ago = { $count ->
+   *[other] { $count } jam yang lalu
+    }
+history-days-ago = { $count ->
+   *[other] { $count } hari yang lalu
+    }
+history-purge-title = Hapus semua riwayat lokal?
+history-purge-body = Salinan tersimpan dari semua berkas dihapus dari komputer ini. Berkas Anda sendiri tidak diubah.
+history-purge-confirm = Hapus Riwayat
+history-purged = Riwayat lokal dihapus.
+settings-local-history = Simpan riwayat lokal berkas yang disimpan
+settings-local-history-detail = Menyimpan hingga 50 versi per berkas selama 30 hari, hanya di komputer ini.

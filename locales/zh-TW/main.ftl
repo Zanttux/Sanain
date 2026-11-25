@@ -232,3 +232,26 @@ update-open-page = 開啟下載頁面
 update-later = 稍後
 settings-check-updates = 每天檢查一次更新項目
 settings-check-updates-detail = 向 github.com 查詢最新版本。不會傳送其他任何資訊。
+file-local-history = 本機歷史記錄…
+file-clear-history = 清除本機歷史記錄…
+history-title = { $name } 的本機歷史記錄
+history-open = 打開
+history-restore = 回復
+history-empty = 尚無已儲存的版本。每次儲存時都會保留一份副本。
+history-unreadable = 無法讀取此版本。
+history-just-now = 剛剛
+history-minutes-ago = { $count ->
+   *[other] { $count } 分鐘前
+    }
+history-hours-ago = { $count ->
+   *[other] { $count } 小時前
+    }
+history-days-ago = { $count ->
+   *[other] { $count } 天前
+    }
+history-purge-title = 要刪除全部本機歷史記錄嗎？
+history-purge-body = 所有檔案的已儲存副本將從這部電腦中移除。檔案本身不會變更。
+history-purge-confirm = 刪除歷史記錄
+history-purged = 已刪除本機歷史記錄。
+settings-local-history = 保留已儲存檔案的本機歷史記錄
+settings-local-history-detail = 每個檔案最多保留 50 個版本，保留 30 天，僅存於這部電腦。

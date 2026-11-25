@@ -240,3 +240,29 @@ update-open-page = Åpne nedlastingsside
 update-later = Senere
 settings-check-updates = Se etter oppdateringer én gang om dagen
 settings-check-updates-detail = Spør github.com om den nyeste utgivelsen. Ingenting annet sendes.
+file-local-history = Lokal historikk…
+file-clear-history = Tøm lokal historikk…
+history-title = Lokal historikk for { $name }
+history-open = Åpne
+history-restore = Gjenopprett
+history-empty = Ingen lagrede versjoner ennå. En kopi beholdes hver gang du lagrer.
+history-unreadable = Denne versjonen kunne ikke leses.
+history-just-now = Akkurat nå
+history-minutes-ago = { $count ->
+    [one] for 1 minutt siden
+   *[other] for { $count } minutter siden
+    }
+history-hours-ago = { $count ->
+    [one] for 1 time siden
+   *[other] for { $count } timer siden
+    }
+history-days-ago = { $count ->
+    [one] for 1 dag siden
+   *[other] for { $count } dager siden
+    }
+history-purge-title = Slette all lokal historikk?
+history-purge-body = Lagrede kopier av alle filer fjernes fra denne datamaskinen. Selve filene endres ikke.
+history-purge-confirm = Slett historikk
+history-purged = Lokal historikk er slettet.
+settings-local-history = Behold lokal historikk for lagrede filer
+settings-local-history-detail = Beholder opptil 50 versjoner per fil i 30 dager, kun på denne datamaskinen.

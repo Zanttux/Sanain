@@ -240,3 +240,29 @@ update-open-page = Letöltési oldal megnyitása
 update-later = Később
 settings-check-updates = Frissítések keresése naponta egyszer
 settings-check-updates-detail = A legújabb kiadást kérdezi le a github.com-tól. Semmi mást nem küld.
+file-local-history = Helyi előzmények…
+file-clear-history = Helyi előzmények törlése…
+history-title = { $name } helyi előzményei
+history-open = Megnyitás
+history-restore = Visszaállítás
+history-empty = Még nincsenek mentett verziók. Minden mentéskor megmarad egy másolat.
+history-unreadable = Ez a verzió nem olvasható.
+history-just-now = Épp most
+history-minutes-ago = { $count ->
+    [one] 1 perce
+   *[other] { $count } perce
+    }
+history-hours-ago = { $count ->
+    [one] 1 órája
+   *[other] { $count } órája
+    }
+history-days-ago = { $count ->
+    [one] 1 napja
+   *[other] { $count } napja
+    }
+history-purge-title = Törli a teljes helyi előzményt?
+history-purge-body = Az összes fájl mentett másolatai törlődnek erről a számítógépről. Maguk a fájlok nem változnak.
+history-purge-confirm = Előzmények törlése
+history-purged = A helyi előzmények törölve.
+settings-local-history = Mentett fájlok helyi előzményeinek megőrzése
+settings-local-history-detail = Fájlonként legfeljebb 50 verziót őriz meg 30 napig, csak ezen a számítógépen.

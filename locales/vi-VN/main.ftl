@@ -232,3 +232,26 @@ update-open-page = Mở trang tải xuống
 update-later = Để sau
 settings-check-updates = Kiểm tra bản cập nhật mỗi ngày một lần
 settings-check-updates-detail = Hỏi github.com về bản phát hành mới nhất. Không gửi gì khác.
+file-local-history = Lịch sử cục bộ…
+file-clear-history = Xóa lịch sử cục bộ…
+history-title = Lịch sử cục bộ của { $name }
+history-open = Mở
+history-restore = Khôi phục
+history-empty = Chưa có phiên bản nào được lưu. Mỗi lần bạn lưu, một bản sao sẽ được giữ lại.
+history-unreadable = Không thể đọc phiên bản này.
+history-just-now = Vừa xong
+history-minutes-ago = { $count ->
+   *[other] { $count } phút trước
+    }
+history-hours-ago = { $count ->
+   *[other] { $count } giờ trước
+    }
+history-days-ago = { $count ->
+   *[other] { $count } ngày trước
+    }
+history-purge-title = Xóa toàn bộ lịch sử cục bộ?
+history-purge-body = Các bản sao đã lưu của mọi tệp sẽ bị xóa khỏi máy tính này. Bản thân các tệp của bạn không bị thay đổi.
+history-purge-confirm = Xóa lịch sử
+history-purged = Đã xóa lịch sử cục bộ.
+settings-local-history = Giữ lịch sử cục bộ của các tệp đã lưu
+settings-local-history-detail = Giữ tối đa 50 phiên bản cho mỗi tệp trong 30 ngày, chỉ trên máy tính này.
