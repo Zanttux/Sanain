@@ -15,24 +15,44 @@ use tree_sitter_highlight::{HighlightConfiguration, HighlightEvent};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Lang {
     Bash,
+    C,
+    CSharp,
+    Cpp,
     Css,
+    Go,
+    Html,
+    Java,
     JavaScript,
     Json,
     Python,
+    Ruby,
     Rust,
     Toml,
+    Tsx,
+    TypeScript,
+    Xml,
     Yaml,
 }
 
 impl Lang {
-    pub const ALL: [Lang; 8] = [
+    pub const ALL: [Lang; 18] = [
         Lang::Bash,
+        Lang::C,
+        Lang::CSharp,
+        Lang::Cpp,
         Lang::Css,
+        Lang::Go,
+        Lang::Html,
+        Lang::Java,
         Lang::JavaScript,
         Lang::Json,
         Lang::Python,
+        Lang::Ruby,
         Lang::Rust,
         Lang::Toml,
+        Lang::Tsx,
+        Lang::TypeScript,
+        Lang::Xml,
         Lang::Yaml,
     ];
 
@@ -42,11 +62,23 @@ impl Lang {
         match name.as_str() {
             ".bashrc" | ".bash_profile" | ".zshrc" | ".profile" => return Some(Lang::Bash),
             "cargo.lock" => return Some(Lang::Toml),
+            "gemfile" | "rakefile" | "podfile" | "vagrantfile" => return Some(Lang::Ruby),
             _ => {}
         }
         let ext = name.rsplit_once('.')?.1;
         Some(match ext {
             "sh" | "bash" | "zsh" => Lang::Bash,
+            "c" | "h" => Lang::C,
+            "cc" | "cpp" | "cxx" | "c++" | "hh" | "hpp" | "hxx" | "h++" | "ino" => Lang::Cpp,
+            "cs" | "csx" => Lang::CSharp,
+            "go" => Lang::Go,
+            "html" | "htm" | "xhtml" => Lang::Html,
+            "java" => Lang::Java,
+            "rb" | "rake" | "gemspec" => Lang::Ruby,
+            "ts" | "mts" | "cts" => Lang::TypeScript,
+            "tsx" => Lang::Tsx,
+            "xml" | "xsd" | "xsl" | "xslt" | "svg" | "plist" | "xaml" | "csproj" | "fsproj"
+            | "vbproj" | "props" | "targets" | "resx" | "rss" | "atom" | "gpx" | "kml" => Lang::Xml,
             "css" => Lang::Css,
             "js" | "mjs" | "cjs" | "jsx" => Lang::JavaScript,
             "json" | "jsonc" | "geojson" => Lang::Json,
@@ -62,6 +94,16 @@ impl Lang {
     pub fn name(self) -> &'static str {
         match self {
             Lang::Bash => "Shell",
+            Lang::C => "C",
+            Lang::CSharp => "C#",
+            Lang::Cpp => "C++",
+            Lang::Go => "Go",
+            Lang::Html => "HTML",
+            Lang::Java => "Java",
+            Lang::Ruby => "Ruby",
+            Lang::Tsx => "TSX",
+            Lang::TypeScript => "TypeScript",
+            Lang::Xml => "XML",
             Lang::Css => "CSS",
             Lang::JavaScript => "JavaScript",
             Lang::Json => "JSON",
@@ -72,8 +114,59 @@ impl Lang {
         }
     }
 
-    fn grammar(self) -> (tree_sitter::Language, &'static str) {
-        match self {
+    /// The grammar and its highlight query. Some queries build on another
+    /// language's (C++ on C, TypeScript on JavaScript).
+    fn grammar(self) -> (tree_sitter::Language, std::borrow::Cow<'static, str>) {
+        let (l, q): (tree_sitter::Language, &'static str) = match self {
+            Lang::C => (
+                tree_sitter_c::LANGUAGE.into(),
+                tree_sitter_c::HIGHLIGHT_QUERY,
+            ),
+            Lang::Cpp => {
+                let q = format!(
+                    "{}\n{}",
+                    tree_sitter_cpp::HIGHLIGHT_QUERY,
+                    tree_sitter_c::HIGHLIGHT_QUERY
+                );
+                return (tree_sitter_cpp::LANGUAGE.into(), q.into());
+            }
+            Lang::CSharp => (
+                tree_sitter_c_sharp::LANGUAGE.into(),
+                tree_sitter_c_sharp::HIGHLIGHTS_QUERY,
+            ),
+            Lang::Go => (
+                tree_sitter_go::LANGUAGE.into(),
+                tree_sitter_go::HIGHLIGHTS_QUERY,
+            ),
+            Lang::Html => (
+                tree_sitter_html::LANGUAGE.into(),
+                tree_sitter_html::HIGHLIGHTS_QUERY,
+            ),
+            Lang::Java => (
+                tree_sitter_java::LANGUAGE.into(),
+                tree_sitter_java::HIGHLIGHTS_QUERY,
+            ),
+            Lang::Ruby => (
+                tree_sitter_ruby::LANGUAGE.into(),
+                tree_sitter_ruby::HIGHLIGHTS_QUERY,
+            ),
+            Lang::TypeScript | Lang::Tsx => {
+                let q = format!(
+                    "{}\n{}",
+                    tree_sitter_typescript::HIGHLIGHTS_QUERY,
+                    tree_sitter_javascript::HIGHLIGHT_QUERY
+                );
+                let l = if self == Lang::Tsx {
+                    tree_sitter_typescript::LANGUAGE_TSX
+                } else {
+                    tree_sitter_typescript::LANGUAGE_TYPESCRIPT
+                };
+                return (l.into(), q.into());
+            }
+            Lang::Xml => (
+                tree_sitter_xml::LANGUAGE_XML.into(),
+                tree_sitter_xml::XML_HIGHLIGHT_QUERY,
+            ),
             Lang::Bash => (
                 tree_sitter_bash::LANGUAGE.into(),
                 tree_sitter_bash::HIGHLIGHT_QUERY,
@@ -106,7 +199,8 @@ impl Lang {
                 tree_sitter_yaml::LANGUAGE.into(),
                 tree_sitter_yaml::HIGHLIGHTS_QUERY,
             ),
-        }
+        };
+        (l, q.into())
     }
 }
 
@@ -226,7 +320,7 @@ impl Highlighter {
             .or_insert_with(|| {
                 let (language, query) = lang.grammar();
                 let mut c =
-                    HighlightConfiguration::new(language, lang.name(), query, "", "").ok()?;
+                    HighlightConfiguration::new(language, lang.name(), &query, "", "").ok()?;
                 c.configure(&NAMES);
                 Some(c)
             })
@@ -327,6 +421,9 @@ mod tests {
         assert_eq!(Lang::from_path(Path::new("Cargo.lock")), Some(Lang::Toml));
         assert_eq!(Lang::from_path(Path::new("notes.txt")), None);
         assert_eq!(Lang::from_path(Path::new("Makefile")), None);
+        assert_eq!(Lang::from_path(Path::new("x.hpp")), Some(Lang::Cpp));
+        assert_eq!(Lang::from_path(Path::new("App.tsx")), Some(Lang::Tsx));
+        assert_eq!(Lang::from_path(Path::new("Gemfile")), Some(Lang::Ruby));
     }
 
     #[test]
@@ -348,6 +445,16 @@ mod tests {
             (Lang::Rust, "fn f() {}"),
             (Lang::Toml, "key = \"v\""),
             (Lang::Yaml, "key: value # c"),
+            (Lang::C, "int main(void) { return 0; } /* c */"),
+            (Lang::Cpp, "class A { public: int x = 1; };"),
+            (Lang::CSharp, "class A { string s = \"x\"; }"),
+            (Lang::Go, "package main\nfunc main() { _ = \"x\" }"),
+            (Lang::Html, "<p class=\"a\">hi</p><!-- c -->"),
+            (Lang::Java, "class A { String s = \"x\"; }"),
+            (Lang::Ruby, "def f\n  'x'\nend"),
+            (Lang::TypeScript, "const x: number = 1;"),
+            (Lang::Tsx, "const a = <div className=\"x\">hi</div>;"),
+            (Lang::Xml, "<?xml version=\"1.0\"?><a b=\"c\">t</a>"),
         ];
         for (lang, src) in samples {
             assert!(!styles_of(lang, src).is_empty(), "{lang:?}");

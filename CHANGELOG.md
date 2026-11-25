@@ -5,6 +5,8 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Syntax highlighting for C, C++, C#, Go, HTML, Java, Ruby, TypeScript,
+  TSX and XML (18 languages in total).
 - Saving to a full disk, a read-only disk or a location without write
   permission now explains what happened in plain words and that the file
   on disk is unchanged.
