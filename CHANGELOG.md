@@ -32,6 +32,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   shortcuts; restyled in-window menus on Windows and Linux.
 - Cut, Copy and Paste work (system clipboard was not enabled before).
 - macOS app bundle script (`scripts/macos-bundle.sh`).
+- Markdown preview links: web links open in the browser after a
+  confirmation, links to local files open in a tab, `#anchors` scroll to
+  the heading, and javascript:, data:, file: and unknown schemes are never
+  opened. Hovering a link shows its target.
 - Structured View for CSV, TSV and JSON files (View menu, palette),
   read-only so the source stays authoritative: a CSV grid with delimiter
   detection and override, quoted fields with line breaks, and a warning
