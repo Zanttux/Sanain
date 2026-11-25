@@ -28,7 +28,9 @@ M1 in progress.
 - GUI spike (GPUI vs egui) recorded in docs/adr/0001-gui-toolkit.md.
 - Runtime dependency licenses (2026-11-25): 405 crates, none copyleft-only;
   two are dual-licensed with a GPL/LGPL option and are used under their
-  permissive option. Automated checking (cargo-deny) not yet in CI.
+  permissive option. Since 2026-11-26 CI runs cargo-deny (licenses
+  allow-list, RustSec advisories, sources; deny.toml) and generates the
+  third-party notices (479 crates, all with license text).
 
 ## Requirement evidence
 | ID | State | Evidence |

@@ -1,0 +1,44 @@
+# Supply-chain policy, checked in CI with cargo-deny (docs/RELEASE.md).
+# Changing the allowed licenses is a policy decision: record it in
+# docs/DECISIONS.md.
+
+[graph]
+all-features = false
+
+[advisories]
+# RustSec advisories: vulnerabilities fail the check; unmaintained and
+# yanked crates are reported for review.
+unmaintained = "workspace"
+yanked = "warn"
+
+[licenses]
+# Permissive licenses compatible with distributing Sanain under MPL-2.0.
+allow = [
+    "MPL-2.0",
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "0BSD",
+    "ISC",
+    "Zlib",
+    "BSL-1.0",
+    "Unlicense",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "CDLA-Permissive-2.0",
+    # Fonts bundled by egui (Ubuntu-Light, emoji icon font).
+    "OFL-1.1",
+    "Ubuntu-font-1.0",
+]
+confidence-threshold = 0.9
+
+[bans]
+multiple-versions = "allow"
+wildcards = "deny"
+allow-wildcard-paths = true
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
