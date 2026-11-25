@@ -288,3 +288,4 @@ goto-heading-none = 이 문서에는 제목이 없습니다.
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = 잘못된 { $format }, { $line }줄 { $column }열: { $reason }
+edit-select-next-occurrence = 다음 항목 선택

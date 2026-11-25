@@ -302,3 +302,4 @@ goto-heading-none = Ebben a dokumentumban nincsenek címsorok.
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = Érvénytelen { $format } a(z) { $line }. sor { $column }. oszlopában: { $reason }
+edit-select-next-occurrence = Következő előfordulás kijelölése

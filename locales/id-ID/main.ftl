@@ -288,3 +288,4 @@ goto-heading-none = Dokumen ini tidak memiliki judul.
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = { $format } tidak valid pada baris { $line }, kolom { $column }: { $reason }
+edit-select-next-occurrence = Pilih Kemunculan Berikutnya

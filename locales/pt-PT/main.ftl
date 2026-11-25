@@ -316,3 +316,4 @@ goto-heading-none = Este documento não tem títulos.
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = { $format } inválido na linha { $line }, coluna { $column }: { $reason }
+edit-select-next-occurrence = Selecionar ocorrência seguinte

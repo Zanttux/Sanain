@@ -301,3 +301,4 @@ goto-heading-none = This document has no headings.
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = Not valid { $format } at line { $line }, column { $column }: { $reason }
+edit-select-next-occurrence = Select Next Occurrence

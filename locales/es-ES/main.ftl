@@ -302,3 +302,4 @@ goto-heading-none = Este documento no tiene encabezados.
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = { $format } no válido en la línea { $line }, columna { $column }: { $reason }
+edit-select-next-occurrence = Seleccionar siguiente coincidencia

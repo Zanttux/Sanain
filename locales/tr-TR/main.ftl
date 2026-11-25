@@ -302,3 +302,4 @@ goto-heading-none = Bu belgede başlık yok.
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = Satır { $line }, sütun { $column } konumunda geçersiz { $format }: { $reason }
+edit-select-next-occurrence = Sonraki Eşleşmeyi Seç

@@ -2133,6 +2133,7 @@ impl Shell {
             MenuAction::Redo => editor_cmd(Command::Redo),
             MenuAction::SelectAll => editor_cmd(Command::SelectAll),
             MenuAction::DuplicateLine => editor_cmd(Command::DuplicateLine),
+            MenuAction::SelectNextOccurrence => editor_cmd(Command::SelectNextOccurrence),
             MenuAction::AddCursorAbove => editor_cmd(Command::AddCaretVertical { down: false }),
             MenuAction::AddCursorBelow => editor_cmd(Command::AddCaretVertical { down: true }),
             MenuAction::DeleteLine => editor_cmd(Command::DeleteLine),

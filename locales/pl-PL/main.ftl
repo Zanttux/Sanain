@@ -330,3 +330,4 @@ goto-heading-none = Ten dokument nie ma nagłówków.
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = Niepoprawny { $format } w wierszu { $line }, kolumnie { $column }: { $reason }
+edit-select-next-occurrence = Zaznacz następne wystąpienie

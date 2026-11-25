@@ -5,6 +5,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Select Next Occurrence (Cmd/Ctrl+D): selects the word at the caret,
+  then adds the next occurrence of the selection as another cursor.
+- With word wrap on, Home and End (Cmd+Left/Right on macOS) go to the
+  start and end of the display row.
 - Structured view for XML and YAML (View > Structured View): a read-only
   tree of elements, attributes and text, or of mappings and sequences,
   with the error position for invalid files. Nothing is expanded or

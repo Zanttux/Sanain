@@ -330,3 +330,4 @@ goto-heading-none = Tento dokument nemá žádné nadpisy.
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = Neplatný { $format } na řádku { $line }, sloupci { $column }: { $reason }
+edit-select-next-occurrence = Vybrat další výskyt

@@ -62,6 +62,9 @@ pub enum Command {
     SetSelections(Vec<(usize, usize)>),
     /// Keep only the primary selection.
     SingleSelection,
+    /// With an empty selection, select the word at the caret; otherwise
+    /// add the next occurrence of the selected text (wrapping around).
+    SelectNextOccurrence,
     PlaceCaret {
         at: usize,
         extend: bool,
@@ -375,6 +378,51 @@ impl Editor {
                 (None, Selections::new(items, p, len))
             }
             Command::SingleSelection => (None, Selections::single(self.sels.primary())),
+            Command::SelectNextOccurrence => {
+                let primary = self.sels.primary();
+                let len = rope.len_chars();
+                let is_word = |c: char| c.is_alphanumeric() || c == '_';
+                if primary.range().is_empty() {
+                    let at = primary.head;
+                    let mut a = at;
+                    while a > 0 && is_word(rope.char(a - 1)) {
+                        a -= 1;
+                    }
+                    let mut b = at;
+                    while b < len && is_word(rope.char(b)) {
+                        b += 1;
+                    }
+                    if a == b {
+                        return None;
+                    }
+                    let mut items: Vec<Selection> = self.sels.iter().copied().collect();
+                    let p = items.iter().position(|s| *s == primary).unwrap_or(0);
+                    items[p] = Selection::new(a, b);
+                    (None, Selections::new(items, p, len))
+                } else {
+                    let needle: Vec<char> = rope.slice(primary.range()).chars().collect();
+                    let n = needle.len();
+                    let last_end = self.sels.iter().map(|s| s.range().end).max().unwrap_or(0);
+                    let taken = |start: usize| self.sels.iter().any(|s| s.range().start == start);
+                    let matches_at = |start: usize| {
+                        start + n <= len
+                            && rope.char(start) == needle[0]
+                            && rope
+                                .slice(start..start + n)
+                                .chars()
+                                .eq(needle.iter().copied())
+                    };
+                    // Search forward from the last selection, then wrap.
+                    let found = (last_end..len)
+                        .chain(0..last_end)
+                        .find(|&s| matches_at(s) && !taken(s));
+                    let start = found?;
+                    let mut items: Vec<Selection> = self.sels.iter().copied().collect();
+                    items.push(Selection::new(start, start + n));
+                    let p = items.len() - 1;
+                    (None, Selections::new(items, p, len))
+                }
+            }
             Command::Undo | Command::Redo => {
                 let carets = if cmd == Command::Undo {
                     self.doc.undo_carets()
@@ -706,6 +754,42 @@ fn preferred_newline(text: &str) -> &'static str {
 mod tests {
     use super::*;
     use std::fs;
+
+    #[test]
+    fn select_next_occurrence() {
+        let mut ed = Editor::new();
+        ed.execute(Command::Insert("foo bar foo_x foo\nfoo".into()));
+        ed.execute(Command::PlaceCaret {
+            at: 1,
+            extend: false,
+        });
+        ed.execute(Command::SelectNextOccurrence);
+        assert_eq!(ed.copy().as_deref(), Some("foo"), "word at caret");
+        ed.execute(Command::SelectNextOccurrence);
+        ed.execute(Command::SelectNextOccurrence);
+        ed.execute(Command::SelectNextOccurrence);
+        let starts: Vec<usize> = ed.selections().iter().map(|s| s.range().start).collect();
+        assert_eq!(
+            starts,
+            vec![0, 8, 14, 18],
+            "substring matches too, in order"
+        );
+        ed.execute(Command::SelectNextOccurrence);
+        assert_eq!(ed.selections().len(), 4, "all taken: no-op");
+        ed.execute(Command::Insert("baz".into()));
+        assert_eq!(ed.document().text(), "baz bar baz_x baz\nbaz");
+        // Wraps around to occurrences before the selection.
+        ed.execute(Command::PlaceCaret {
+            at: 19,
+            extend: false,
+        });
+        ed.execute(Command::SelectNextOccurrence);
+        ed.execute(Command::SelectNextOccurrence);
+        assert_eq!(
+            ed.selections().iter().next().map(|s| s.range().start),
+            Some(0)
+        );
+    }
 
     #[test]
     fn go_to_line_targets() {

@@ -302,3 +302,4 @@ goto-heading-none = Tässä asiakirjassa ei ole otsikoita.
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = Virheellinen { $format } rivillä { $line }, sarakkeessa { $column }: { $reason }
+edit-select-next-occurrence = Valitse seuraava esiintymä

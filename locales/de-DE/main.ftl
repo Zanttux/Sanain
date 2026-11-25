@@ -302,3 +302,4 @@ goto-heading-none = Dieses Dokument hat keine Überschriften.
 format-xml = XML
 format-yaml = YAML
 tools-tree-error = Ungültiges { $format } in Zeile { $line }, Spalte { $column }: { $reason }
+edit-select-next-occurrence = Nächstes Vorkommen auswählen
