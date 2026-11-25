@@ -157,7 +157,7 @@ compare-close = Đóng so sánh
 compare-to-left = Sao chép thay đổi này sang trái
 compare-to-right = Sao chép thay đổi này sang phải
 compare-stale = Một tài liệu đã thay đổi trong khi so sánh. Kết quả so sánh đã được làm mới; hãy thử lại.
-view-structured = Chế độ xem có cấu trúc (CSV, JSON)
+view-structured = Chế độ xem có cấu trúc (CSV, JSON, XML, YAML)
 csv-delimiter = Dấu phân cách
 csv-rows = { $count ->
    *[other] { $count } hàng
@@ -285,3 +285,6 @@ goto-line-note = { $count ->
 goto-line-invalid = Nhập số dòng, có thể kèm theo :cột.
 goto-heading-hint = Nhập để lọc tiêu đề
 goto-heading-none = Tài liệu này không có tiêu đề.
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = { $format } không hợp lệ tại dòng { $line }, cột { $column }: { $reason }

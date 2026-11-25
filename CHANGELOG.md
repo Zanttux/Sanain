@@ -5,6 +5,11 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Structured view for XML and YAML (View > Structured View): a read-only
+  tree of elements, attributes and text, or of mappings and sequences,
+  with the error position for invalid files. Nothing is expanded or
+  fetched: XML entities other than the predefined ones and YAML aliases
+  are shown as written, so entity-expansion attacks do nothing.
 - Go to Line (Cmd/Ctrl+L, accepts `line` or `line:column`) and, in
   Markdown, Go to Heading (Cmd/Ctrl+Shift+O) with a filterable list of
   headings. The command palette list now scrolls through every command.

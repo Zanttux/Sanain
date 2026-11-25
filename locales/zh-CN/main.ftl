@@ -157,7 +157,7 @@ compare-close = 关闭比较
 compare-to-left = 将此更改拷贝到左侧
 compare-to-right = 将此更改拷贝到右侧
 compare-stale = 比较期间文稿已更改。比较已刷新；请重试。
-view-structured = 结构化视图 (CSV, JSON)
+view-structured = 结构化视图 (CSV, JSON, XML, YAML)
 csv-delimiter = 分隔符
 csv-rows = { $count ->
    *[other] { $count } 行
@@ -285,3 +285,6 @@ goto-line-note = { $count ->
 goto-line-invalid = 请输入行号，可选择在后面加上 :列。
 goto-heading-hint = 输入以筛选标题
 goto-heading-none = 此文档没有标题。
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = { $format } 无效，位于第 { $line } 行第 { $column } 列：{ $reason }

@@ -162,7 +162,7 @@ compare-close = Κλείσιμο σύγκρισης
 compare-to-left = Αντιγραφή αυτής της αλλαγής αριστερά
 compare-to-right = Αντιγραφή αυτής της αλλαγής δεξιά
 compare-stale = Ένα έγγραφο άλλαξε κατά τη σύγκριση. Η σύγκριση ανανεώθηκε· δοκιμάστε ξανά.
-view-structured = Δομημένη προβολή (CSV, JSON)
+view-structured = Δομημένη προβολή (CSV, JSON, XML, YAML)
 csv-delimiter = Διαχωριστικό
 csv-rows = { $count ->
     [one] 1 γραμμή
@@ -299,3 +299,6 @@ goto-line-note = { $count ->
 goto-line-invalid = Εισαγάγετε αριθμό γραμμής, προαιρετικά ακολουθούμενο από :στήλη.
 goto-heading-hint = Πληκτρολογήστε για φιλτράρισμα επικεφαλίδων
 goto-heading-none = Αυτό το έγγραφο δεν έχει επικεφαλίδες.
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = Μη έγκυρο { $format } στη γραμμή { $line }, στήλη { $column }: { $reason }

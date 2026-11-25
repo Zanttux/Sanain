@@ -162,7 +162,7 @@ compare-close = Összehasonlítás bezárása
 compare-to-left = Módosítás másolása balra
 compare-to-right = Módosítás másolása jobbra
 compare-stale = Egy dokumentum megváltozott az összehasonlítás közben. Az összehasonlítás frissült; próbálja újra.
-view-structured = Strukturált nézet (CSV, JSON)
+view-structured = Strukturált nézet (CSV, JSON, XML, YAML)
 csv-delimiter = Elválasztó
 csv-rows = { $count ->
     [one] 1 sor
@@ -299,3 +299,6 @@ goto-line-note = { $count ->
 goto-line-invalid = Adjon meg egy sorszámot, opcionálisan :oszlop utótaggal.
 goto-heading-hint = Gépeljen a címsorok szűréséhez
 goto-heading-none = Ebben a dokumentumban nincsenek címsorok.
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = Érvénytelen { $format } a(z) { $line }. sor { $column }. oszlopában: { $reason }

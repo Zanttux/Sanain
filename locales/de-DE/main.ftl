@@ -162,7 +162,7 @@ compare-close = Vergleich schließen
 compare-to-left = Diese Änderung nach links kopieren
 compare-to-right = Diese Änderung nach rechts kopieren
 compare-stale = Ein Dokument wurde während des Vergleichs geändert. Der Vergleich wurde aktualisiert; versuchen Sie es erneut.
-view-structured = Strukturierte Ansicht (CSV, JSON)
+view-structured = Strukturierte Ansicht (CSV, JSON, XML, YAML)
 csv-delimiter = Trennzeichen
 csv-rows = { $count ->
     [one] 1 Zeile
@@ -299,3 +299,6 @@ goto-line-note = { $count ->
 goto-line-invalid = Geben Sie eine Zeilennummer ein, optional gefolgt von :Spalte.
 goto-heading-hint = Tippen, um Überschriften zu filtern
 goto-heading-none = Dieses Dokument hat keine Überschriften.
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = Ungültiges { $format } in Zeile { $line }, Spalte { $column }: { $reason }

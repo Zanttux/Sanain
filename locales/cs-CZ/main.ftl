@@ -172,7 +172,7 @@ compare-close = Zavřít porovnání
 compare-to-left = Zkopírovat tuto změnu doleva
 compare-to-right = Zkopírovat tuto změnu doprava
 compare-stale = Během porovnání se dokument změnil. Porovnání bylo obnoveno; zkuste to znovu.
-view-structured = Strukturované zobrazení (CSV, JSON)
+view-structured = Strukturované zobrazení (CSV, JSON, XML, YAML)
 csv-delimiter = Oddělovač
 csv-rows = { $count ->
     [one] 1 řádek
@@ -327,3 +327,6 @@ goto-line-note = { $count ->
 goto-line-invalid = Zadejte číslo řádku, případně následované :sloupec.
 goto-heading-hint = Psaním filtrujte nadpisy
 goto-heading-none = Tento dokument nemá žádné nadpisy.
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = Neplatný { $format } na řádku { $line }, sloupci { $column }: { $reason }

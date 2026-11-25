@@ -157,7 +157,7 @@ compare-close = Tutup Perbandingan
 compare-to-left = Salin perubahan ini ke kiri
 compare-to-right = Salin perubahan ini ke kanan
 compare-stale = Sebuah dokumen berubah selama perbandingan. Perbandingan telah diperbarui; coba lagi.
-view-structured = Tampilan Terstruktur (CSV, JSON)
+view-structured = Tampilan Terstruktur (CSV, JSON, XML, YAML)
 csv-delimiter = Pemisah
 csv-rows = { $count ->
    *[other] { $count } baris
@@ -285,3 +285,6 @@ goto-line-note = { $count ->
 goto-line-invalid = Masukkan nomor baris, opsional diikuti :kolom.
 goto-heading-hint = Ketik untuk menyaring judul
 goto-heading-none = Dokumen ini tidak memiliki judul.
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = { $format } tidak valid pada baris { $line }, kolom { $column }: { $reason }

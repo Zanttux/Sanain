@@ -172,7 +172,7 @@ compare-close = Zamknij porównanie
 compare-to-left = Skopiuj tę zmianę na lewą stronę
 compare-to-right = Skopiuj tę zmianę na prawą stronę
 compare-stale = Dokument zmienił się podczas porównywania. Porównanie zostało odświeżone; spróbuj ponownie.
-view-structured = Widok strukturalny (CSV, JSON)
+view-structured = Widok strukturalny (CSV, JSON, XML, YAML)
 csv-delimiter = Separator
 csv-rows = { $count ->
     [one] 1 wiersz
@@ -327,3 +327,6 @@ goto-line-note = { $count ->
 goto-line-invalid = Wpisz numer wiersza, opcjonalnie z dopiskiem :kolumna.
 goto-heading-hint = Pisz, aby filtrować nagłówki
 goto-heading-none = Ten dokument nie ma nagłówków.
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = Niepoprawny { $format } w wierszu { $line }, kolumnie { $column }: { $reason }

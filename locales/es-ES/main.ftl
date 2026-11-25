@@ -162,7 +162,7 @@ compare-close = Cerrar comparación
 compare-to-left = Copiar este cambio a la izquierda
 compare-to-right = Copiar este cambio a la derecha
 compare-stale = Un documento ha cambiado durante la comparación. Se ha actualizado la comparación; inténtelo de nuevo.
-view-structured = Vista estructurada (CSV, JSON)
+view-structured = Vista estructurada (CSV, JSON, XML, YAML)
 csv-delimiter = Delimitador
 csv-rows = { $count ->
     [one] 1 fila
@@ -299,3 +299,6 @@ goto-line-note = { $count ->
 goto-line-invalid = Introduce un número de línea, seguido opcionalmente de :columna.
 goto-heading-hint = Escribe para filtrar los encabezados
 goto-heading-none = Este documento no tiene encabezados.
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = { $format } no válido en la línea { $line }, columna { $column }: { $reason }

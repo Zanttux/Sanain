@@ -162,7 +162,7 @@ compare-close = Lukk sammenligning
 compare-to-left = Kopier denne endringen til venstre
 compare-to-right = Kopier denne endringen til høyre
 compare-stale = Et dokument ble endret under sammenligningen. Sammenligningen er oppdatert; prøv igjen.
-view-structured = Strukturert visning (CSV, JSON)
+view-structured = Strukturert visning (CSV, JSON, XML, YAML)
 csv-delimiter = Skilletegn
 csv-rows = { $count ->
     [one] 1 rad
@@ -299,3 +299,6 @@ goto-line-note = { $count ->
 goto-line-invalid = Skriv inn et linjenummer, eventuelt etterfulgt av :kolonne.
 goto-heading-hint = Skriv for å filtrere overskrifter
 goto-heading-none = Dette dokumentet har ingen overskrifter.
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = Ugyldig { $format } på linje { $line }, kolonne { $column }: { $reason }

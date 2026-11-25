@@ -162,7 +162,7 @@ compare-close = Sluit vergelijking
 compare-to-left = Kopieer deze wijziging naar links
 compare-to-right = Kopieer deze wijziging naar rechts
 compare-stale = Een document is tijdens de vergelijking gewijzigd. De vergelijking is vernieuwd; probeer het opnieuw.
-view-structured = Gestructureerde weergave (CSV, JSON)
+view-structured = Gestructureerde weergave (CSV, JSON, XML, YAML)
 csv-delimiter = Scheidingsteken
 csv-rows = { $count ->
     [one] 1 rij
@@ -299,3 +299,6 @@ goto-line-note = { $count ->
 goto-line-invalid = Voer een regelnummer in, eventueel gevolgd door :kolom.
 goto-heading-hint = Typ om koppen te filteren
 goto-heading-none = Dit document heeft geen koppen.
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = Ongeldige { $format } op regel { $line }, kolom { $column }: { $reason }

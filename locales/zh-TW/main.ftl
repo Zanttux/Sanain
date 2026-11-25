@@ -157,7 +157,7 @@ compare-close = 關閉比較
 compare-to-left = 將此變更拷貝到左側
 compare-to-right = 將此變更拷貝到右側
 compare-stale = 比較期間文件已變更。比較已重新整理；請再試一次。
-view-structured = 結構化顯示方式 (CSV, JSON)
+view-structured = 結構化顯示方式 (CSV, JSON, XML, YAML)
 csv-delimiter = 分隔字元
 csv-rows = { $count ->
    *[other] { $count } 列
@@ -285,3 +285,6 @@ goto-line-note = { $count ->
 goto-line-invalid = 請輸入行號，可選擇在後面加上 :欄。
 goto-heading-hint = 輸入以篩選標題
 goto-heading-none = 此文件沒有標題。
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = { $format } 無效，位於第 { $line } 行第 { $column } 欄：{ $reason }

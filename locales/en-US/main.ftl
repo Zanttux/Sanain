@@ -161,7 +161,7 @@ compare-close = Close Comparison
 compare-to-left = Copy this change to the left
 compare-to-right = Copy this change to the right
 compare-stale = A document changed during the comparison. The comparison was refreshed; try again.
-view-structured = Structured View (CSV, JSON)
+view-structured = Structured View (CSV, JSON, XML, YAML)
 csv-delimiter = Delimiter
 csv-rows = { $count ->
     [one] 1 row
@@ -298,3 +298,6 @@ goto-line-note = { $count ->
 goto-line-invalid = Enter a line number, optionally followed by :column.
 goto-heading-hint = Type to filter headings
 goto-heading-none = This document has no headings.
+format-xml = XML
+format-yaml = YAML
+tools-tree-error = Not valid { $format } at line { $line }, column { $column }: { $reason }
