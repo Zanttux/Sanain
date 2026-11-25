@@ -1,5 +1,5 @@
 # Privacy commitments
-Sanain is designed for offline use. No advertising, analytics, mandatory accounts or telemetry. File contents remain local unless a user explicitly invokes a future network feature with informed consent. Disable remote Markdown resources by default; do not execute embedded scripts. Unsaved text is checkpointed locally for crash recovery: macOS
+Sanain is designed for offline use. No advertising, analytics, mandatory accounts or telemetry. File contents remain local unless a user explicitly invokes a future network feature with informed consent. Remote Markdown resources are never loaded (images from the web are shown as a note; local images only from the document's folder); do not execute embedded scripts. Unsaved text is checkpointed locally for crash recovery: macOS
 `~/Library/Application Support/Sanain/Recovery`, Windows
 `%LOCALAPPDATA%\Sanain\Recovery`, Linux `$XDG_DATA_HOME/sanain/recovery`
 (set `SANAIN_RECOVERY_DIR` to change it). Files are plain text, readable

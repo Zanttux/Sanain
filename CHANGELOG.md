@@ -32,6 +32,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   shortcuts; restyled in-window menus on Windows and Linux.
 - Cut, Copy and Paste work (system clipboard was not enabled before).
 - macOS app bundle script (`scripts/macos-bundle.sh`).
+- Markdown preview shows local images (PNG, JPEG, GIF, WebP) from the
+  document's folder, decoded in the background with size and memory
+  limits. Remote images are never fetched; images outside the folder are
+  not shown; each case gets a short note.
 - Legacy encodings: files that are not UTF-8/UTF-16 open an encoding
   picker with a live preview (Windows-125x, ISO-8859-2/15, KOI8-R,
   Shift_JIS, EUC-JP, GB18030, Big5, EUC-KR). A file opens only if the
