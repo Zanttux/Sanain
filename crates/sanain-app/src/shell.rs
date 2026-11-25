@@ -169,6 +169,7 @@ pub struct Shell {
     /// The last recorded macro.
     macro_cmds: Vec<Command>,
     replace_preview: Option<ReplacePreview>,
+    about_open: bool,
     /// Split editor: the tabs shown in the left and right panes, and which
     /// pane has focus (its tab is the active tab).
     split: Option<([TabId; 2], usize)>,
@@ -267,6 +268,7 @@ impl Shell {
             history_open: false,
             macro_cmds: Vec::new(),
             replace_preview: None,
+            about_open: false,
             split: None,
             right_views: HashMap::new(),
             log: None,
@@ -1402,6 +1404,65 @@ impl Shell {
         }
     }
 
+    fn about_window(&mut self, ctx: &egui::Context) {
+        if !self.about_open {
+            return;
+        }
+        const REPO: &str = "https://github.com/Zanttux/Sanain";
+        let p = theme::palette(ctx);
+        let version = self.t(
+            "about-version",
+            &[("version", env!("CARGO_PKG_VERSION").into())],
+        );
+        let (tagline, license, ai, notices, repo_l) = (
+            self.t("about-tagline", &[]),
+            self.t("about-license", &[]),
+            self.t("about-ai", &[]),
+            self.t("about-notices", &[]),
+            self.t("about-source", &[]),
+        );
+        let mut open = true;
+        let mut link = false;
+        egui::Window::new(self.t("app-about", &[]).trim_end_matches('…').to_owned())
+            .id(egui::Id::unique("sanain-about"))
+            .open(&mut open)
+            .collapsible(false)
+            .resizable(false)
+            .default_width(380.0)
+            .show(ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.add_space(6.0);
+                    ui.label(
+                        egui::RichText::new("Sanain")
+                            .size(28.0)
+                            .strong()
+                            .color(p.text),
+                    );
+                    ui.label(egui::RichText::new(tagline).italics().color(p.muted));
+                    ui.add_space(6.0);
+                    ui.label(version);
+                    ui.add_space(10.0);
+                    ui.label(license);
+                    ui.add_space(4.0);
+                    ui.label(egui::RichText::new(ai).color(p.muted));
+                    ui.add_space(4.0);
+                    ui.label(egui::RichText::new(notices).color(p.muted));
+                    ui.add_space(8.0);
+                    if ui.link(repo_l).clicked() {
+                        link = true;
+                    }
+                    ui.add_space(6.0);
+                });
+            });
+        if !open || ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+            self.about_open = false;
+        }
+        if link {
+            // The usual confirmation before leaving the app.
+            self.dialog = Some(Dialog::OpenLink(REPO.to_owned()));
+        }
+    }
+
     fn replace_preview_window(&mut self, ctx: &egui::Context) {
         let Some(pv) = &self.replace_preview else {
             return;
@@ -2449,6 +2510,10 @@ impl Shell {
                 self.settings_open = true;
                 return;
             }
+            MenuAction::About => {
+                self.about_open = true;
+                return;
+            }
             MenuAction::SplitEditor => {
                 if self.split.take().is_none() {
                     let active = self.ws.active().id;
@@ -3108,6 +3173,7 @@ impl eframe::App for Shell {
         self.compare_picker(&ctx);
         self.history_window(&ctx);
         self.replace_preview_window(&ctx);
+        self.about_window(&ctx);
         self.encoding_window(&ctx);
         if self.palette.open
             && self.dialog.is_none()
