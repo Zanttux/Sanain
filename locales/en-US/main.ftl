@@ -318,3 +318,13 @@ compare-clipboard-empty = The clipboard has no text to compare.
 error-save-disk-full = { $name } was not saved: the disk is full. The file on disk is unchanged and your text is still here. Free some space, or use Save As to save it elsewhere.
 error-save-permission = { $name } was not saved: you do not have permission to write it there. The file on disk is unchanged. Use Save As to save it elsewhere.
 error-save-read-only-volume = { $name } was not saved: the disk is read-only. The file on disk is unchanged. Use Save As to save it elsewhere.
+replace-preview-title = { $count ->
+    [one] Replace 1 match?
+   *[other] Replace { $count } matches?
+    }
+replace-preview-confirm = { $count ->
+    [one] Replace 1
+   *[other] Replace { $count }
+    }
+replace-preview-more = Only the first 200 changed lines are shown.
+replace-preview-stale = The document changed; nothing was replaced. Run Replace All again.

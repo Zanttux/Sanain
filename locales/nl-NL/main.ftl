@@ -319,3 +319,13 @@ compare-clipboard-empty = Het klembord bevat geen tekst om te vergelijken.
 error-save-disk-full = { $name } is niet bewaard: de schijf is vol. Het bestand op schijf is ongewijzigd en je tekst staat er nog. Maak ruimte vrij of gebruik Bewaar als om het ergens anders op te slaan.
 error-save-permission = { $name } is niet bewaard: je hebt geen toestemming om daar te schrijven. Het bestand op schijf is ongewijzigd. Gebruik Bewaar als om het ergens anders op te slaan.
 error-save-read-only-volume = { $name } is niet bewaard: de schijf is alleen-lezen. Het bestand op schijf is ongewijzigd. Gebruik Bewaar als om het ergens anders op te slaan.
+replace-preview-title = { $count ->
+    [one] 1 overeenkomst vervangen?
+   *[other] { $count } overeenkomsten vervangen?
+    }
+replace-preview-confirm = { $count ->
+    [one] 1 vervangen
+   *[other] { $count } vervangen
+    }
+replace-preview-more = Alleen de eerste 200 gewijzigde regels worden getoond.
+replace-preview-stale = Het document is gewijzigd; er is niets vervangen. Voer Vervang alles opnieuw uit.

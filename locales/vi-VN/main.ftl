@@ -304,3 +304,11 @@ compare-clipboard-empty = Bảng nhớ tạm không có văn bản để so sán
 error-save-disk-full = Chưa lưu { $name }: ổ đĩa đã đầy. Tệp trên ổ đĩa không thay đổi và văn bản của bạn vẫn còn ở đây. Hãy giải phóng dung lượng hoặc dùng Lưu thành để lưu vào nơi khác.
 error-save-permission = Chưa lưu { $name }: bạn không có quyền ghi vào vị trí đó. Tệp trên ổ đĩa không thay đổi. Hãy dùng Lưu thành để lưu vào nơi khác.
 error-save-read-only-volume = Chưa lưu { $name }: ổ đĩa ở chế độ chỉ đọc. Tệp trên ổ đĩa không thay đổi. Hãy dùng Lưu thành để lưu vào nơi khác.
+replace-preview-title = { $count ->
+   *[other] Thay thế { $count } kết quả khớp?
+    }
+replace-preview-confirm = { $count ->
+   *[other] Thay thế { $count }
+    }
+replace-preview-more = Chỉ hiển thị 200 dòng thay đổi đầu tiên.
+replace-preview-stale = Tài liệu đã thay đổi; không có gì được thay thế. Hãy chạy lại Thay thế tất cả.

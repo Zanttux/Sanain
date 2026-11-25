@@ -319,3 +319,13 @@ compare-clipboard-empty = Utklippstavlen inneholder ingen tekst å sammenligne.
 error-save-disk-full = { $name } ble ikke lagret: disken er full. Filen på disken er uendret, og teksten din er fortsatt her. Frigjør plass, eller bruk Lagre som for å lagre den et annet sted.
 error-save-permission = { $name } ble ikke lagret: du har ikke tillatelse til å skrive der. Filen på disken er uendret. Bruk Lagre som for å lagre den et annet sted.
 error-save-read-only-volume = { $name } ble ikke lagret: disken er skrivebeskyttet. Filen på disken er uendret. Bruk Lagre som for å lagre den et annet sted.
+replace-preview-title = { $count ->
+    [one] Erstatte 1 treff?
+   *[other] Erstatte { $count } treff?
+    }
+replace-preview-confirm = { $count ->
+    [one] Erstatt 1
+   *[other] Erstatt { $count }
+    }
+replace-preview-more = Bare de første 200 endrede linjene vises.
+replace-preview-stale = Dokumentet er endret; ingenting ble erstattet. Kjør Erstatt alle på nytt.

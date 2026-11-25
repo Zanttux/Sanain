@@ -304,3 +304,11 @@ compare-clipboard-empty = 剪贴板中没有可比较的文本。
 error-save-disk-full = 未保存 { $name }：磁盘已满。磁盘上的文件未被更改，你的文本仍在这里。请释放一些空间，或使用“存储为”将其保存到其他位置。
 error-save-permission = 未保存 { $name }：你没有在该位置写入的权限。磁盘上的文件未被更改。请使用“存储为”将其保存到其他位置。
 error-save-read-only-volume = 未保存 { $name }：磁盘为只读。磁盘上的文件未被更改。请使用“存储为”将其保存到其他位置。
+replace-preview-title = { $count ->
+   *[other] 替换 { $count } 个匹配项？
+    }
+replace-preview-confirm = { $count ->
+   *[other] 替换 { $count } 个
+    }
+replace-preview-more = 仅显示前 200 行更改。
+replace-preview-stale = 文档已更改，未替换任何内容。请重新运行“全部替换”。

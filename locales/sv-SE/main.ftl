@@ -319,3 +319,13 @@ compare-clipboard-empty = Urklipp innehåller ingen text att jämföra.
 error-save-disk-full = { $name } sparades inte: disken är full. Filen på disken är oförändrad och din text finns kvar här. Frigör utrymme eller använd Spara som för att spara den någon annanstans.
 error-save-permission = { $name } sparades inte: du har inte behörighet att skriva där. Filen på disken är oförändrad. Använd Spara som för att spara den någon annanstans.
 error-save-read-only-volume = { $name } sparades inte: disken är skrivskyddad. Filen på disken är oförändrad. Använd Spara som för att spara den någon annanstans.
+replace-preview-title = { $count ->
+    [one] Ersätta 1 träff?
+   *[other] Ersätta { $count } träffar?
+    }
+replace-preview-confirm = { $count ->
+    [one] Ersätt 1
+   *[other] Ersätt { $count }
+    }
+replace-preview-more = Endast de första 200 ändrade raderna visas.
+replace-preview-stale = Dokumentet har ändrats; inget ersattes. Kör Ersätt alla igen.

@@ -304,3 +304,11 @@ compare-clipboard-empty = クリップボードに比較するテキストがあ
 error-save-disk-full = { $name } を保存できませんでした: ディスクがいっぱいです。ディスク上のファイルは変更されておらず、テキストはこのまま残っています。空き容量を確保するか、「別名で保存」で別の場所に保存してください。
 error-save-permission = { $name } を保存できませんでした: その場所に書き込む権限がありません。ディスク上のファイルは変更されていません。「別名で保存」で別の場所に保存してください。
 error-save-read-only-volume = { $name } を保存できませんでした: ディスクは読み取り専用です。ディスク上のファイルは変更されていません。「別名で保存」で別の場所に保存してください。
+replace-preview-title = { $count ->
+   *[other] { $count } 件を置換しますか？
+    }
+replace-preview-confirm = { $count ->
+   *[other] { $count } 件を置換
+    }
+replace-preview-more = 変更される最初の 200 行のみを表示しています。
+replace-preview-stale = ドキュメントが変更されたため、何も置換されませんでした。もう一度「すべてを置換」を実行してください。

@@ -349,3 +349,17 @@ compare-clipboard-empty = Schránka neobsahuje žádný text k porovnání.
 error-save-disk-full = Soubor { $name } nebyl uložen: disk je plný. Soubor na disku se nezměnil a váš text je stále zde. Uvolněte místo nebo jej pomocí Uložit jako uložte jinam.
 error-save-permission = Soubor { $name } nebyl uložen: nemáte oprávnění do tohoto umístění zapisovat. Soubor na disku se nezměnil. Pomocí Uložit jako jej uložte jinam.
 error-save-read-only-volume = Soubor { $name } nebyl uložen: disk je pouze pro čtení. Soubor na disku se nezměnil. Pomocí Uložit jako jej uložte jinam.
+replace-preview-title = { $count ->
+    [one] Nahradit 1 shodu?
+    [few] Nahradit { $count } shody?
+    [many] Nahradit { $count } shody?
+   *[other] Nahradit { $count } shod?
+    }
+replace-preview-confirm = { $count ->
+    [one] Nahradit 1
+    [few] Nahradit { $count }
+    [many] Nahradit { $count }
+   *[other] Nahradit { $count }
+    }
+replace-preview-more = Zobrazeno je pouze prvních 200 změněných řádků.
+replace-preview-stale = Dokument se změnil, nic nebylo nahrazeno. Spusťte znovu Nahradit vše.

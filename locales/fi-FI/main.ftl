@@ -319,3 +319,13 @@ compare-clipboard-empty = Leikepöydällä ei ole tekstiä vertailtavaksi.
 error-save-disk-full = Tiedostoa { $name } ei tallennettu: levy on täynnä. Levyllä oleva tiedosto ei muuttunut, ja tekstisi on yhä tallessa. Vapauta tilaa tai tallenna muualle valitsemalla Tallenna nimellä.
 error-save-permission = Tiedostoa { $name } ei tallennettu: sinulla ei ole oikeutta kirjoittaa siihen sijaintiin. Levyllä oleva tiedosto ei muuttunut. Tallenna muualle valitsemalla Tallenna nimellä.
 error-save-read-only-volume = Tiedostoa { $name } ei tallennettu: levy on vain luku -tilassa. Levyllä oleva tiedosto ei muuttunut. Tallenna muualle valitsemalla Tallenna nimellä.
+replace-preview-title = { $count ->
+    [one] Korvataanko 1 osuma?
+   *[other] Korvataanko { $count } osumaa?
+    }
+replace-preview-confirm = { $count ->
+    [one] Korvaa 1
+   *[other] Korvaa { $count }
+    }
+replace-preview-more = Vain 200 ensimmäistä muuttuvaa riviä näytetään.
+replace-preview-stale = Asiakirja muuttui, joten mitään ei korvattu. Valitse Korvaa kaikki uudelleen.

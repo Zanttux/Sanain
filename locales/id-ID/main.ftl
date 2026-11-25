@@ -304,3 +304,11 @@ compare-clipboard-empty = Papan klip tidak berisi teks untuk dibandingkan.
 error-save-disk-full = { $name } tidak disimpan: disk penuh. Berkas di disk tidak berubah dan teks Anda masih ada di sini. Kosongkan sebagian ruang, atau gunakan Simpan Sebagai untuk menyimpannya di tempat lain.
 error-save-permission = { $name } tidak disimpan: Anda tidak memiliki izin untuk menulis di lokasi tersebut. Berkas di disk tidak berubah. Gunakan Simpan Sebagai untuk menyimpannya di tempat lain.
 error-save-read-only-volume = { $name } tidak disimpan: disk hanya-baca. Berkas di disk tidak berubah. Gunakan Simpan Sebagai untuk menyimpannya di tempat lain.
+replace-preview-title = { $count ->
+   *[other] Ganti { $count } kecocokan?
+    }
+replace-preview-confirm = { $count ->
+   *[other] Ganti { $count }
+    }
+replace-preview-more = Hanya 200 baris pertama yang berubah yang ditampilkan.
+replace-preview-stale = Dokumen telah berubah; tidak ada yang diganti. Jalankan Ganti Semua lagi.

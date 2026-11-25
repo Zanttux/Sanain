@@ -334,3 +334,15 @@ compare-clipboard-empty = A área de transferência não contém texto para comp
 error-save-disk-full = { $name } não foi guardado: o disco está cheio. O ficheiro no disco não foi alterado e o texto continua aqui. Liberte espaço ou utilize Guardar como para o guardar noutro local.
 error-save-permission = { $name } não foi guardado: não tem permissão para escrever nesse local. O ficheiro no disco não foi alterado. Utilize Guardar como para o guardar noutro local.
 error-save-read-only-volume = { $name } não foi guardado: o disco é só de leitura. O ficheiro no disco não foi alterado. Utilize Guardar como para o guardar noutro local.
+replace-preview-title = { $count ->
+    [one] Substituir 1 correspondência?
+    [many] Substituir { $count } correspondências?
+   *[other] Substituir { $count } correspondências?
+    }
+replace-preview-confirm = { $count ->
+    [one] Substituir 1
+    [many] Substituir { $count }
+   *[other] Substituir { $count }
+    }
+replace-preview-more = Só são mostradas as primeiras 200 linhas alteradas.
+replace-preview-stale = O documento foi alterado; nada foi substituído. Execute novamente Substituir tudo.
