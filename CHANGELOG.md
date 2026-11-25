@@ -116,6 +116,11 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   edit and restored on the next launch; checkpoints are deleted on save
   or when changes are discarded.
 
+### Fixed
+- Esc now closes the find bar after searching with Enter.
+
 ### Changed
+- README describes what works today and shows screenshots from a real
+  build.
 - Repository renamed to github.com/Zanttux/Sanain.
 - Wordmark set in a single colour.
