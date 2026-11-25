@@ -38,6 +38,7 @@ M1 in progress.
 | E12 | Partial | Grapheme-cluster navigation and deletion (`crates/sanain-core/src/grapheme.rs`) |
 | E04 | Partial | Find/replace in the current tab: literal, regex, case, whole word, highlight, count, replace all as one undo. Not yet: preview before replace-all, cancellation for huge files, search across files |
 | E08 | Partial | Source/split/preview, GFM blocks and inlines, front matter, caret-following preview, raw HTML inert, source bytes unchanged (hash checked). Not yet: images, link opening with confirmation, Mermaid, outline panel, syntax colours in code blocks |
+| E10 | Partial | Two-tab side-by-side line diff (time-bounded), apply hunk in either direction as one undo, stale-revision check. Not yet: intraline highlight, whitespace options, files/clipboard as sources |
 | E05 | Partial | UTF-8, UTF-8 BOM, UTF-16 LE/BE BOM, line endings preserved, explicit LF/CRLF conversion; legacy encodings not started |
 | E09 | Partial | JSON validate/format/minify preserving lexemes, error position. Not yet: JSON tree view, XML/YAML inspection, CSV grid |
 | E02 | Partial | Tabs, close/reopen, keyboard switching, dirty markers, per-tab recovery. Not yet: drag reorder in UI (model supports it), pin, split editor |
@@ -85,6 +86,6 @@ because nobody independent exists; no fake approvals.
 ## Next
 - Line/column mapping, vertical movement, word movement, line operations.
 - Hard-link-safe save strategy.
-- Side-by-side diff with apply-hunk (E10), then CSV grid and JSON tree (E09).
+- CSV grid and JSON tree views (E09), then image and link handling in the Markdown preview.
 - Manual IME and screen-reader pass on macOS; Windows and Linux GUI smoke
   test (needs hardware or VM access).

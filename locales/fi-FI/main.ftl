@@ -150,3 +150,15 @@ json-reason-expected-a-value = odotettiin arvoa
 json-reason-empty-document = tyhjä asiakirja
 json-reason-unexpected-end-of-input = syöte loppui kesken
 json-reason-too-deeply-nested-to-format = liian syvä sisäkkäisyys muotoiltavaksi
+tools-compare = Vertaa…
+compare-need-two = Avaa toinen välilehti vertailua varten.
+compare-pick-title = Vertaa tiedostoa { $name } tiedostoon
+compare-count = { $count ->
+    [0] Ei eroja
+    [one] 1 muutos
+   *[other] { $count } muutosta
+    }
+compare-close = Sulje vertailu
+compare-to-left = Kopioi tämä muutos vasemmalle
+compare-to-right = Kopioi tämä muutos oikealle
+compare-stale = Asiakirja muuttui vertailun aikana. Vertailu päivitettiin; yritä uudelleen.

@@ -32,6 +32,11 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   shortcuts; restyled in-window menus on Windows and Linux.
 - Cut, Copy and Paste work (system clipboard was not enabled before).
 - macOS app bundle script (`scripts/macos-bundle.sh`).
+- Compare two tabs side by side (Tools > Compare With…, also in the
+  command palette): changed, added and removed lines marked with −/+ and
+  colour, a change count, and per-change buttons to copy a change to the
+  left or right as one undoable edit. Applying is refused if either
+  document changed since the comparison was computed.
 - Tools menu (also in the command palette), acting on the selection or
   the whole document as one undoable edit: Validate / Format / Minify
   JSON (keeps duplicate keys, number spellings and escapes exactly; errors

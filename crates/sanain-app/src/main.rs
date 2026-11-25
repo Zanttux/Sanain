@@ -1,5 +1,6 @@
 //! Sanain desktop entry point.
 
+mod diffview;
 mod find;
 mod menu;
 mod palette;

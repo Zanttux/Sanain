@@ -2,6 +2,7 @@
 //! returns new text (or an error); the app applies the result as one
 //! undoable edit. Nothing here touches the network or the filesystem.
 
+pub mod diff;
 pub mod json;
 
 /// Which line ending to convert to.

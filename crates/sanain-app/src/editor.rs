@@ -334,6 +334,12 @@ impl Editor {
         Ok(true)
     }
 
+    /// Replace a char range with `text` as one undoable edit.
+    pub fn replace_range(&mut self, range: std::ops::Range<usize>, text: &str) {
+        self.select(range);
+        self.execute(Command::Insert(text.to_owned()));
+    }
+
     /// Select `range` as the only selection (e.g. a search match).
     pub fn select(&mut self, range: std::ops::Range<usize>) {
         let len = self.doc.len_chars();

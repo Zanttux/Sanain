@@ -48,10 +48,11 @@ pub enum MenuAction {
     LowerCase,
     ToLf,
     ToCrLf,
+    CompareTabs,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 42] = [
+    pub const ALL: [MenuAction; 43] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -94,6 +95,7 @@ impl MenuAction {
         Self::LowerCase,
         Self::ToLf,
         Self::ToCrLf,
+        Self::CompareTabs,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -141,6 +143,7 @@ impl MenuAction {
             Self::LowerCase => "tools.lower-case",
             Self::ToLf => "tools.to-lf",
             Self::ToCrLf => "tools.to-crlf",
+            Self::CompareTabs => "tools.compare",
         }
     }
 
@@ -194,6 +197,7 @@ impl MenuAction {
             Self::LowerCase => "tools-lower-case",
             Self::ToLf => "tools-to-lf",
             Self::ToCrLf => "tools-to-crlf",
+            Self::CompareTabs => "tools-compare",
         }
     }
 
@@ -242,7 +246,8 @@ impl MenuAction {
             | Self::UpperCase
             | Self::LowerCase
             | Self::ToLf
-            | Self::ToCrLf => return None,
+            | Self::ToCrLf
+            | Self::CompareTabs => return None,
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -263,6 +268,8 @@ const FILE_ITEMS: &[Option<MenuAction>] = &[
 ];
 const WINDOW_ITEMS: &[Option<MenuAction>] = &[Some(MenuAction::NextTab), Some(MenuAction::PrevTab)];
 const TOOLS_ITEMS: &[Option<MenuAction>] = &[
+    Some(MenuAction::CompareTabs),
+    None,
     Some(MenuAction::JsonValidate),
     Some(MenuAction::JsonFormat),
     Some(MenuAction::JsonMinify),
@@ -428,7 +435,8 @@ mod native {
             | MenuAction::UpperCase
             | MenuAction::LowerCase
             | MenuAction::ToLf
-            | MenuAction::ToCrLf => return None,
+            | MenuAction::ToCrLf
+            | MenuAction::CompareTabs => return None,
         };
         Some(KeyAccelerator::new(m, k))
     }
