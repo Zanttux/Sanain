@@ -374,3 +374,6 @@ about-license = Wolne i otwarte oprogramowanie na licencji Mozilla Public Licens
 about-ai = Zbudowany przez AI. Prowadzony przez ludzi. Rozwijany przez społeczność.
 about-notices = Komponenty innych firm i ich licencje wymieniono w pliku THIRD_PARTY_NOTICES dołączonym do każdego wydania.
 about-source = Kod źródłowy i zgłoszenia w serwisie GitHub
+tools-xml-validate = Sprawdź poprawność XML
+tools-yaml-validate = Sprawdź poprawność YAML
+tools-markup-valid = { $format } jest poprawny

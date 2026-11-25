@@ -323,3 +323,6 @@ about-license = Phần mềm tự do và mã nguồn mở theo Mozilla Public Li
 about-ai = AI xây dựng. Con người dẫn dắt. Cộng đồng phát triển.
 about-notices = Các thành phần của bên thứ ba và giấy phép của chúng được liệt kê trong THIRD_PARTY_NOTICES, đi kèm mỗi bản phát hành.
 about-source = Mã nguồn và báo lỗi trên GitHub
+tools-xml-validate = Kiểm tra XML
+tools-yaml-validate = Kiểm tra YAML
+tools-markup-valid = { $format } hợp lệ

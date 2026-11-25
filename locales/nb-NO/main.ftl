@@ -340,3 +340,6 @@ about-license = Fri og åpen kildekode under Mozilla Public License 2.0.
 about-ai = Bygget av KI. Ledet av mennesker. Drevet av fellesskapet.
 about-notices = Tredjepartskomponenter og lisensene deres er oppført i THIRD_PARTY_NOTICES, som følger med hver utgivelse.
 about-source = Kildekode og feilrapporter på GitHub
+tools-xml-validate = Valider XML
+tools-yaml-validate = Valider YAML
+tools-markup-valid = { $format } er gyldig

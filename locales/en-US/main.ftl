@@ -339,3 +339,6 @@ about-license = Free and open source under the Mozilla Public License 2.0.
 about-ai = AI-built. Human-led. Community-driven.
 about-notices = Third-party components and their licenses are listed in THIRD_PARTY_NOTICES, included with every release.
 about-source = Source code and issues on GitHub
+tools-xml-validate = Validate XML
+tools-yaml-validate = Validate YAML
+tools-markup-valid = Valid { $format }.

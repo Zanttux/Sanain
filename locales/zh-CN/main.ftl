@@ -323,3 +323,6 @@ about-license = 基于 Mozilla Public License 2.0 的自由开源软件。
 about-ai = AI 构建，人类主导，社区驱动。
 about-notices = 第三方组件及其许可证列于 THIRD_PARTY_NOTICES 中，每个版本均附带该文件。
 about-source = GitHub 上的源代码和问题
+tools-xml-validate = 验证 XML
+tools-yaml-validate = 验证 YAML
+tools-markup-valid = { $format } 有效

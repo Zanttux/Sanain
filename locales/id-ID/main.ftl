@@ -323,3 +323,6 @@ about-license = Bebas dan sumber terbuka di bawah Mozilla Public License 2.0.
 about-ai = Dibangun oleh AI. Dipimpin manusia. Digerakkan komunitas.
 about-notices = Komponen pihak ketiga beserta lisensinya tercantum dalam THIRD_PARTY_NOTICES, yang disertakan di setiap rilis.
 about-source = Kode sumber dan laporan masalah di GitHub
+tools-xml-validate = Validasi XML
+tools-yaml-validate = Validasi YAML
+tools-markup-valid = { $format } valid

@@ -2510,6 +2510,45 @@ impl Shell {
                 self.settings_open = true;
                 return;
             }
+            MenuAction::XmlValidate | MenuAction::YamlValidate => {
+                let text = self.editor().document().text();
+                let (format, result) = if action == MenuAction::XmlValidate {
+                    (
+                        "format-xml",
+                        sanain_tools::markup::xml_tree(&text).map(drop),
+                    )
+                } else {
+                    (
+                        "format-yaml",
+                        sanain_tools::markup::yaml_tree(&text).map(drop),
+                    )
+                };
+                let format = self.t(format, &[]);
+                match result {
+                    Ok(()) => {
+                        let msg = self.t("tools-markup-valid", &[("format", format.into())]);
+                        self.status = Some((msg, false));
+                    }
+                    Err(e) => {
+                        // Put the caret on the problem.
+                        self.editor_mut()
+                            .go_to(e.line.saturating_sub(1), e.column.saturating_sub(1));
+                        let id = self.ws.active().id;
+                        self.active_view(id).reveal();
+                        let msg = self.t(
+                            "tools-tree-error",
+                            &[
+                                ("format", format.into()),
+                                ("line", (e.line as i64).into()),
+                                ("column", (e.column as i64).into()),
+                                ("reason", e.message.into()),
+                            ],
+                        );
+                        self.status = Some((msg, true));
+                    }
+                }
+                return;
+            }
             MenuAction::About => {
                 self.about_open = true;
                 return;

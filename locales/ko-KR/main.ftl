@@ -323,3 +323,6 @@ about-license = Mozilla Public License 2.0에 따른 자유 오픈 소스 소프
 about-ai = AI가 만들고, 사람이 이끌고, 커뮤니티가 키웁니다.
 about-notices = 타사 구성 요소와 해당 라이선스는 모든 릴리스에 포함된 THIRD_PARTY_NOTICES에 나와 있습니다.
 about-source = GitHub의 소스 코드 및 이슈
+tools-xml-validate = XML 검사
+tools-yaml-validate = YAML 검사
+tools-markup-valid = 유효한 { $format }입니다
