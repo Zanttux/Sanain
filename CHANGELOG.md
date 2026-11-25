@@ -5,6 +5,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Multiple cursors from the UI: Option/Alt+click adds or removes a
+  cursor, Option/Alt+drag makes a rectangular (column) selection, Edit >
+  Add Cursor Above/Below (Cmd+Option+Up/Down on macOS, Ctrl+Alt+Up/Down
+  elsewhere) adds one at the same column, and Esc returns to one cursor.
 - Tabs can be reordered by dragging and pinned (right-click a tab, or
   Window > Pin Tab). Pinned tabs stay at the front, show a pin instead of
   a close button, and are remembered in the session.

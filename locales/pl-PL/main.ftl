@@ -309,3 +309,5 @@ log-close = Zamknij przeglądarkę
 log-opened-large = Plik { $name } jest duży, więc otwarto go tylko do odczytu w przeglądarce logów.
 tab-pin = Przypnij kartę
 tab-unpin = Odepnij kartę
+edit-add-cursor-above = Dodaj kursor powyżej
+edit-add-cursor-below = Dodaj kursor poniżej

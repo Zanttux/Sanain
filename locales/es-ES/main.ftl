@@ -283,3 +283,5 @@ log-close = Cerrar visor
 log-opened-large = { $name } es grande, así que se abrió en solo lectura en el visor de registros.
 tab-pin = Fijar pestaña
 tab-unpin = Desfijar pestaña
+edit-add-cursor-above = Agregar cursor arriba
+edit-add-cursor-below = Agregar cursor abajo

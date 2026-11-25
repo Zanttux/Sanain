@@ -283,3 +283,5 @@ log-close = Lukk viser
 log-opened-large = { $name } er stor, så den ble åpnet skrivebeskyttet i loggviseren.
 tab-pin = Fest fane
 tab-unpin = Løsne fane
+edit-add-cursor-above = Legg til markør over
+edit-add-cursor-below = Legg til markør under

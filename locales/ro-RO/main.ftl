@@ -296,3 +296,5 @@ log-close = Închide vizualizatorul
 log-opened-large = { $name } este mare, așa că a fost deschis doar în citire în vizualizatorul de jurnale.
 tab-pin = Fixează fila
 tab-unpin = Anulează fixarea filei
+edit-add-cursor-above = Adaugă cursor deasupra
+edit-add-cursor-below = Adaugă cursor dedesubt

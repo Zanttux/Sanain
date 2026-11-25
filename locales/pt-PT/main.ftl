@@ -296,3 +296,5 @@ log-close = Fechar visualizador
 log-opened-large = { $name } é grande, por isso foi aberto só de leitura no visualizador de registos.
 tab-pin = Afixar separador
 tab-unpin = Desafixar separador
+edit-add-cursor-above = Adicionar cursor acima
+edit-add-cursor-below = Adicionar cursor abaixo

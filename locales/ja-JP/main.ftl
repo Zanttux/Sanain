@@ -270,3 +270,5 @@ log-close = ビューアを閉じる
 log-opened-large = { $name } は大きいため、ログビューアで読み出し専用で開きました。
 tab-pin = タブを固定
 tab-unpin = タブの固定を解除
+edit-add-cursor-above = 上にカーソルを追加
+edit-add-cursor-below = 下にカーソルを追加

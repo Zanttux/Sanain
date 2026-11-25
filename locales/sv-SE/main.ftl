@@ -283,3 +283,5 @@ log-close = Stäng visaren
 log-opened-large = { $name } är stor och öppnades därför skrivskyddad i loggvisaren.
 tab-pin = Fäst flik
 tab-unpin = Lossa flik
+edit-add-cursor-above = Lägg till markör ovanför
+edit-add-cursor-below = Lägg till markör nedanför

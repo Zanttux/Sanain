@@ -283,3 +283,5 @@ log-close = Viewer sluiten
 log-opened-large = { $name } is groot en is daarom alleen-lezen geopend in de logviewer.
 tab-pin = Tabblad vastmaken
 tab-unpin = Tabblad losmaken
+edit-add-cursor-above = Cursor erboven toevoegen
+edit-add-cursor-below = Cursor eronder toevoegen

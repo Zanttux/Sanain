@@ -270,3 +270,5 @@ log-close = 关闭查看器
 log-opened-large = “{ $name }”较大，因此已在日志查看器中以只读方式打开。
 tab-pin = 固定标签页
 tab-unpin = 取消固定标签页
+edit-add-cursor-above = 在上方添加光标
+edit-add-cursor-below = 在下方添加光标

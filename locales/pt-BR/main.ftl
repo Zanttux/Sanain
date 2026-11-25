@@ -296,3 +296,5 @@ log-close = Fechar visualizador
 log-opened-large = { $name } é grande, então foi aberto como somente leitura no visualizador de logs.
 tab-pin = Fixar aba
 tab-unpin = Desafixar aba
+edit-add-cursor-above = Adicionar cursor acima
+edit-add-cursor-below = Adicionar cursor abaixo

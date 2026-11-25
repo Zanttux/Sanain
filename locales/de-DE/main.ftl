@@ -283,3 +283,5 @@ log-close = Anzeige schließen
 log-opened-large = { $name } ist groß und wurde daher schreibgeschützt in der Protokollanzeige geöffnet.
 tab-pin = Tab anheften
 tab-unpin = Tab lösen
+edit-add-cursor-above = Cursor oberhalb hinzufügen
+edit-add-cursor-below = Cursor unterhalb hinzufügen

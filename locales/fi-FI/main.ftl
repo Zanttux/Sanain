@@ -283,3 +283,5 @@ log-close = Sulje katselu
 log-opened-large = { $name } on suuri, joten se avattiin vain luettavaksi lokikatseluun.
 tab-pin = Kiinnitä välilehti
 tab-unpin = Irrota välilehti
+edit-add-cursor-above = Lisää kohdistin yläpuolelle
+edit-add-cursor-below = Lisää kohdistin alapuolelle

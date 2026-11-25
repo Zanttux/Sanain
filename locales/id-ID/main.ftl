@@ -270,3 +270,5 @@ log-close = Tutup Penampil
 log-opened-large = { $name } berukuran besar, jadi dibuka hanya-baca di penampil log.
 tab-pin = Sematkan Tab
 tab-unpin = Lepas Sematan Tab
+edit-add-cursor-above = Tambah Kursor di Atas
+edit-add-cursor-below = Tambah Kursor di Bawah

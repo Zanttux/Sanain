@@ -270,3 +270,5 @@ log-close = 關閉檢視器
 log-opened-large = 「{ $name }」較大，因此已在記錄檢視器中以唯讀方式開啟。
 tab-pin = 釘選標籤頁
 tab-unpin = 取消釘選標籤頁
+edit-add-cursor-above = 在上方新增游標
+edit-add-cursor-below = 在下方新增游標

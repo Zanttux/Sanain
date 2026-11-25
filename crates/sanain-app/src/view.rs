@@ -30,6 +30,9 @@ pub struct EditorView {
     max_width: f32,
     focus_requested: bool,
     reveal_requested: bool,
+    /// Where an Alt+drag block selection started (relative to the text
+    /// area's origin).
+    block_from: Option<Vec2>,
     /// The editor widget's id, to tell it apart from other focused fields.
     pub widget_id: Option<egui::Id>,
 }
@@ -98,7 +101,8 @@ impl EditorView {
                                 tab: true,
                                 horizontal_arrows: true,
                                 vertical_arrows: true,
-                                escape: false,
+                                // Esc collapses multiple cursors.
+                                escape: editor.selections().len() > 1,
                             },
                         );
                     });
@@ -117,12 +121,13 @@ impl EditorView {
                     let row = ((pos.y - origin.y) / row_h).floor().max(0.0) as usize;
                     folds.line_of_row(row).min(line_count.saturating_sub(1))
                 };
-                let hit = |ui: &Ui, pos: Pos2, editor: &Editor| -> usize {
-                    let rope = editor.document().rope();
-                    let line = line_at(pos);
+                let hit_in = |ui: &Ui, line: usize, x: f32, editor: &Editor| -> usize {
                     let galley = layout(ui, line, editor);
-                    let c = galley.cursor_from_pos(vec2(pos.x - text_x, row_h / 2.0));
-                    rope.line_to_char(line) + c.index.0
+                    let c = galley.cursor_from_pos(vec2(x - text_x, row_h / 2.0));
+                    editor.document().rope().line_to_char(line) + c.index.0
+                };
+                let hit = |ui: &Ui, pos: Pos2, editor: &Editor| -> usize {
+                    hit_in(ui, line_at(pos), pos.x, editor)
                 };
                 // A click on the fold marker column toggles the fold.
                 let marker_x = (text_x - 1.6 * char_w)..(text_x - 0.2 * char_w);
@@ -136,7 +141,38 @@ impl EditorView {
                 }
                 if let Some(pos) = response.interact_pointer_pos().filter(|_| !toggled) {
                     let shift = ui.input(|i| i.modifiers.shift);
-                    if response.drag_started() || response.clicked() {
+                    let alt = ui.input(|i| i.modifiers.alt);
+                    if alt && response.drag_started() {
+                        self.block_from = Some(pos - origin);
+                    }
+                    if alt && response.clicked() {
+                        // Alt+click adds (or removes) a caret.
+                        response.request_focus();
+                        let at = hit(ui, pos, editor);
+                        editor.execute(Command::AddCaret { at });
+                        changed = true;
+                    } else if let Some(from) = self.block_from.filter(|_| response.dragged()) {
+                        // Alt+drag: one selection per visible line, between
+                        // the start and current x positions.
+                        response.request_focus();
+                        let from = origin + from;
+                        let (r0, r1) = (
+                            folds.row_of_line(line_at(from)),
+                            folds.row_of_line(line_at(pos)),
+                        );
+                        let rows: Vec<usize> = if r0 <= r1 {
+                            (r0..=r1).collect()
+                        } else {
+                            (r1..=r0).rev().collect()
+                        };
+                        let pairs = rows
+                            .into_iter()
+                            .map(|r| folds.line_of_row(r).min(line_count.saturating_sub(1)))
+                            .map(|l| (hit_in(ui, l, from.x, editor), hit_in(ui, l, pos.x, editor)))
+                            .collect();
+                        editor.execute(Command::SetSelections(pairs));
+                        changed = true;
+                    } else if response.drag_started() || response.clicked() {
                         response.request_focus();
                         let at = hit(ui, pos, editor);
                         editor.execute(Command::PlaceCaret { at, extend: shift });
@@ -146,6 +182,10 @@ impl EditorView {
                         editor.execute(Command::PlaceCaret { at, extend: true });
                         changed = true;
                     }
+                }
+
+                if !response.dragged() {
+                    self.block_from = None;
                 }
 
                 // Keyboard and text input.
@@ -408,11 +448,12 @@ impl EditorView {
                 };
                 match key {
                     Key::Enter if !m.command => Command::NewLine,
+                    Key::Escape if editor.selections().len() > 1 => Command::SingleSelection,
                     Key::Tab if !m.command && !m.shift => Command::Insert(indent.to_owned()),
                     Key::ArrowUp if m.alt && m.shift => Command::DuplicateLine,
                     Key::ArrowDown if m.alt && m.shift => Command::DuplicateLine,
-                    Key::ArrowUp if m.alt => Command::MoveLineUp,
-                    Key::ArrowDown if m.alt => Command::MoveLineDown,
+                    Key::ArrowUp if m.alt && !m.command => Command::MoveLineUp,
+                    Key::ArrowDown if m.alt && !m.command => Command::MoveLineDown,
                     Key::K if m.command && m.shift => Command::DeleteLine,
                     Key::Backspace if word => Command::DeleteWordBackward,
                     Key::Delete if word => Command::DeleteWordForward,
