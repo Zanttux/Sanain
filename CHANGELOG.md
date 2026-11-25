@@ -32,8 +32,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   shortcuts; restyled in-window menus on Windows and Linux.
 - Cut, Copy and Paste work (system clipboard was not enabled before).
 - macOS app bundle script (`scripts/macos-bundle.sh`).
-- Crash-recovery snapshot store with versioned, checksummed files
-  (not yet used by the app).
+- Crash recovery: unsaved text is checkpointed within 2 seconds of an
+  edit and restored on the next launch; checkpoints are deleted on save
+  or when changes are discarded.
 
 ### Changed
 - Repository renamed to github.com/Zanttux/Sanain.

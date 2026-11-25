@@ -68,6 +68,8 @@ pub struct Editor {
     doc: Document,
     sels: Selections,
     file: Option<FileBinding>,
+    /// Encoding used when saving a buffer that has no file yet.
+    untitled_encoding: TextEncoding,
     newline: &'static str,
 }
 
@@ -83,8 +85,32 @@ impl Editor {
             doc: Document::new(),
             sels: Selections::single(Selection::cursor(0)),
             file: None,
+            untitled_encoding: TextEncoding::Utf8,
             newline: platform_newline(),
         }
+    }
+
+    /// Rebuild a buffer from a recovery snapshot. If its file still loads,
+    /// the recovered text is applied as one undoable edit on top of the disk
+    /// version, so conflict detection and Undo both work. Otherwise the text
+    /// becomes an untitled buffer.
+    pub fn restore(snapshot: &sanain_io::recovery::Snapshot) -> Self {
+        let mut ed = snapshot
+            .path
+            .as_deref()
+            .and_then(|p| Self::open(p).ok())
+            .unwrap_or_default();
+        ed.untitled_encoding = snapshot.encoding;
+        if ed.document().text() != snapshot.text {
+            ed.execute(Command::SelectAll);
+            ed.execute(Command::Insert(snapshot.text.clone()));
+            ed.newline = preferred_newline(&snapshot.text);
+        }
+        ed.execute(Command::PlaceCaret {
+            at: 0,
+            extend: false,
+        });
+        ed
     }
 
     pub fn open(path: &Path) -> Result<Self, LoadError> {
@@ -93,6 +119,7 @@ impl Editor {
             newline: preferred_newline(&loaded.text),
             doc: Document::from_saved_text(&loaded.text),
             sels: Selections::single(Selection::cursor(0)),
+            untitled_encoding: loaded.encoding,
             file: Some(FileBinding {
                 path: path.to_owned(),
                 encoding: loaded.encoding,
@@ -116,7 +143,7 @@ impl Editor {
     pub fn encoding(&self) -> TextEncoding {
         self.file
             .as_ref()
-            .map_or(TextEncoding::Utf8, |f| f.encoding)
+            .map_or(self.untitled_encoding, |f| f.encoding)
     }
 
     pub fn line_ending(&self) -> LineEnding {

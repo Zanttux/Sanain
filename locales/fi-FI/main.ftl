@@ -58,3 +58,5 @@ app-hide-others = Kätke muut
 app-show-all = Näytä kaikki
 window-minimize = Pienennä
 window-zoom = Zoomaa
+status-recovered = Edellisen istunnon tallentamattomat muutokset palautettiin
+status-recovery-failed = Palautuskopiota ei voitu tallentaa: { $reason }

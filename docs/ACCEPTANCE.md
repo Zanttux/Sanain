@@ -9,4 +9,10 @@
 - E12: navigate all primary actions without mouse; test IME composition and emoji graphemes on each supported OS.
 - Funding: free download exposes all features; no account or network needed; no purchase prompts during editing.
 
-Evidence per scenario: commit, OS, fixture, expected/actual, test command, pass/fail/blocked, reviewer. No scenario executed yet.
+Evidence per scenario: commit, OS, fixture, expected/actual, test command, pass/fail/blocked, reviewer.
+
+## Results
+| Scenario | Date | OS | Result | Evidence |
+|---|---|---|---|---|
+| E06 recovery after kill | 2026-11-25 | macOS 27.2.1 | Pass | Typed into untitled buffer, waited 3 s, `kill -9`, relaunched: text restored, marked unsaved, status shown. Don't Save removed the checkpoint. Disk-full part not run. |
+| E01 external change | 2026-11-25 | macOS, CI all OS | Pass (automated) | `crates/sanain-io/tests/file_lifecycle.rs`, `crates/sanain-app/src/editor.rs` tests |

@@ -8,7 +8,9 @@ mod view;
 use std::path::PathBuf;
 
 use sanain_app::Editor;
+use sanain_app::recovery::{self, Recovery};
 use sanain_i18n::Localizer;
+use sanain_io::recovery::RecoveryStore;
 
 fn main() -> eframe::Result {
     let path = std::env::args_os().nth(1).map(PathBuf::from);
@@ -28,16 +30,44 @@ fn main() -> eframe::Result {
         }
     };
 
-    let (editor, startup_error) = match &path {
-        Some(p) => match Editor::open(p) {
-            Ok(ed) => (ed, None),
+    // Crash recovery. SANAIN_RECOVERY_DIR overrides the location.
+    let store = std::env::var_os("SANAIN_RECOVERY_DIR")
+        .map(PathBuf::from)
+        .or_else(RecoveryStore::default_dir)
+        .and_then(|dir| match RecoveryStore::open(&dir) {
+            Ok(s) => Some(s),
+            Err(e) => {
+                eprintln!("sanain: recovery disabled ({}): {e}", dir.display());
+                None
+            }
+        });
+    let restored = store.as_ref().and_then(|s| {
+        let entries = s.list().ok()?.into_iter().filter_map(Result::ok).collect();
+        recovery::pick(entries, path.as_deref())
+    });
+
+    let mut recovered = false;
+    let (editor, startup_error, recovery_id) = match (&restored, &path) {
+        (Some(entry), _) => {
+            let ed = Editor::restore(&entry.snapshot);
+            recovered = ed.document().is_dirty();
+            (ed, None, Some(entry.id.clone()))
+        }
+        (None, Some(p)) => match Editor::open(p) {
+            Ok(ed) => (ed, None, None),
             Err(e) => (
                 Editor::new(),
                 Some(shell::describe_load_error(&l10n, p, &e)),
+                None,
             ),
         },
-        None => (Editor::new(), None),
+        (None, None) => (Editor::new(), None, None),
     };
+    // A restored snapshot identical to disk is stale: drop it.
+    if let (Some(s), Some(id), false) = (&store, &recovery_id, recovered) {
+        let _ = s.remove(id);
+    }
+    let recovery = store.map(|s| Recovery::start(s, recovery_id.filter(|_| recovered)));
 
     let options = eframe::NativeOptions {
         viewport: eframe::egui::ViewportBuilder::default()
@@ -52,7 +82,7 @@ fn main() -> eframe::Result {
         options,
         Box::new(move |cc| {
             theme::install(&cc.egui_ctx);
-            let mut shell = shell::Shell::new(editor, l10n, startup_error);
+            let mut shell = shell::Shell::new(editor, l10n, startup_error, recovery, recovered);
             shell.install_menu(&cc.egui_ctx);
             Ok(Box::new(shell))
         }),

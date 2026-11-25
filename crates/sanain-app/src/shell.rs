@@ -8,6 +8,8 @@ use sanain_core::LineEnding;
 use sanain_i18n::{FluentValue, Localizer};
 use sanain_io::{LoadError, TextEncoding};
 
+use sanain_app::recovery::Recovery;
+
 use crate::menu::{self, MenuAction};
 use crate::theme;
 use crate::view::EditorView;
@@ -45,6 +47,7 @@ pub struct Shell {
     status: Option<(String, bool)>,
     title: String,
     allow_close: bool,
+    recovery: Option<Recovery>,
     #[cfg(target_os = "macos")]
     native_menu: Option<menu::NativeMenu>,
 }
@@ -70,15 +73,23 @@ impl Shell {
         false
     }
 
-    pub fn new(editor: Editor, l10n: Localizer, startup_error: Option<String>) -> Self {
+    pub fn new(
+        editor: Editor,
+        l10n: Localizer,
+        startup_error: Option<String>,
+        recovery: Option<Recovery>,
+        recovered: bool,
+    ) -> Self {
         let mut view = EditorView::default();
         view.request_focus();
+        let status = recovered.then(|| (l10n.get("status-recovered"), false));
         Self {
             editor,
             l10n,
             view,
             dialog: startup_error.map(Dialog::Error),
-            status: None,
+            status,
+            recovery,
             title: String::new(),
             allow_close: false,
             #[cfg(target_os = "macos")]
@@ -153,8 +164,16 @@ impl Shell {
     }
 
     fn proceed(&mut self, then: Then, ctx: &egui::Context) {
+        // The document is either saved or its changes were declined: the
+        // checkpoint for it is no longer needed.
+        if let Some(r) = &mut self.recovery {
+            r.discard();
+        }
         match then {
             Then::Close => {
+                if let Some(r) = &self.recovery {
+                    r.flush(std::time::Duration::from_secs(2));
+                }
                 self.allow_close = true;
                 ctx.send_viewport_cmd(ViewportCommand::Close);
             }
@@ -453,6 +472,23 @@ impl eframe::App for Shell {
             });
 
         self.dialogs(&ctx);
+
+        let mut recovery_error = None;
+        if let Some(r) = &mut self.recovery {
+            if let Some(wait) = r.tick(&self.editor, std::time::Instant::now()) {
+                ctx.request_repaint_after(wait);
+            }
+            recovery_error = r.take_error();
+            // A clean window closing without a dialog: let pending
+            // removals reach disk before the process exits.
+            if ctx.input(|i| i.viewport().close_requested()) && !self.editor.document().is_dirty() {
+                r.flush(std::time::Duration::from_secs(2));
+            }
+        }
+        if let Some(reason) = recovery_error {
+            let msg = self.t("status-recovery-failed", &[("reason", reason.into())]);
+            self.status = Some((msg, true));
+        }
 
         let dirty = if self.editor.document().is_dirty() {
             "yes"
