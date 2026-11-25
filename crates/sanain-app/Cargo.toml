@@ -17,6 +17,7 @@ sanain-core = { path = "../sanain-core" }
 sanain-io = { path = "../sanain-io" }
 sanain-i18n = { path = "../sanain-i18n" }
 sanain-language = { path = "../sanain-language" }
+sanain-markdown = { path = "../sanain-markdown" }
 ropey.workspace = true
 eframe = { version = "0.37", default-features = false, features = ["accesskit", "clipboard", "default_fonts", "system_fonts", "wgpu", "wayland", "x11"] }
 rfd = "0.18"

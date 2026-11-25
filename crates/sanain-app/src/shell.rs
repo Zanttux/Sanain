@@ -17,9 +17,18 @@ use sanain_language::Lang;
 use crate::find::{FindBar, FindEvent};
 use crate::menu::{self, MenuAction};
 use crate::palette::{Entry, Palette};
+use crate::preview;
 use crate::theme;
 use crate::view::{EditorView, ViewOptions};
 use sanain_app::settings::{FONT_SIZE_DEFAULT, Settings, ThemeChoice};
+
+/// How a Markdown tab is shown.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum MdMode {
+    Source,
+    Split,
+    Preview,
+}
 
 /// What to do once a tab's unsaved changes are resolved.
 #[derive(Debug, Clone, Copy)]
@@ -65,6 +74,10 @@ pub struct Shell {
     settings_dir: Option<std::path::PathBuf>,
     settings_open: bool,
     palette: Palette,
+    md_modes: HashMap<TabId, MdMode>,
+    md_cache: HashMap<TabId, (Revision, std::sync::Arc<Vec<sanain_markdown::Block>>)>,
+    /// Caret line the preview was last scrolled to, per tab.
+    md_synced: HashMap<TabId, usize>,
     applied_theme: Option<ThemeChoice>,
     /// Set once the session was recorded for the current quit attempt.
     quit_recorded: bool,
@@ -120,6 +133,9 @@ impl Shell {
             settings_dir,
             settings_open: false,
             palette: Palette::default(),
+            md_modes: HashMap::new(),
+            md_cache: HashMap::new(),
+            md_synced: HashMap::new(),
             applied_theme: None,
             quit_recorded: false,
             #[cfg(target_os = "macos")]
@@ -283,6 +299,9 @@ impl Shell {
                     self.views.remove(&id);
                     self.spans.remove(&id);
                     self.requested.remove(&id);
+                    self.md_cache.remove(&id);
+                    self.md_modes.remove(&id);
+                    self.md_synced.remove(&id);
                 }
             }
             Then::Quit => {
@@ -421,6 +440,100 @@ impl Shell {
         }
     }
 
+    fn is_markdown(ed: &Editor) -> bool {
+        ed.file()
+            .and_then(|f| f.path.extension())
+            .and_then(|e| e.to_str())
+            .is_some_and(|e| {
+                matches!(
+                    e.to_ascii_lowercase().as_str(),
+                    "md" | "markdown" | "mdown" | "mkd"
+                )
+            })
+    }
+
+    fn md_mode(&self) -> MdMode {
+        if Self::is_markdown(self.editor()) {
+            self.md_modes
+                .get(&self.ws.active().id)
+                .copied()
+                .unwrap_or(MdMode::Source)
+        } else {
+            MdMode::Source
+        }
+    }
+
+    fn editor_area(&mut self, ui: &mut egui::Ui) {
+        let name = self.t("editor-accessible-name", &[]);
+        let interactive = self.dialog.is_none();
+        let id = self.ws.active().id;
+        let view = self.views.entry(id).or_default();
+        let editor = &mut self.ws.active_mut().editor;
+        // Spans from an older revision are kept until fresh ones arrive;
+        // a frame of slightly shifted colour beats flicker.
+        let syntax: &[CharSpan] = self.spans.get(&id).map_or(&[], |(_, s)| s);
+        let opts = ViewOptions {
+            font_size: self.settings.font_size,
+            indent: self.settings.indent(),
+        };
+        let highlights: &[std::ops::Range<usize>] = if self.find.open {
+            &self.find.matches.ranges
+        } else {
+            &[]
+        };
+        ui.push_id(id, |ui| {
+            ui.add_enabled_ui(interactive, |ui| {
+                if view.show(ui, editor, &name, highlights, syntax, &opts) {
+                    self.status = None;
+                }
+            });
+        });
+    }
+
+    fn preview_area(&mut self, ui: &mut egui::Ui) {
+        let tab = self.ws.active();
+        let (id, rev) = (tab.id, tab.editor.document().revision());
+        let doc = tab.editor.document();
+        let p = theme::palette(ui.ctx());
+        if doc.rope().len_bytes() > preview::MAX_PREVIEW_BYTES {
+            ui.colored_label(p.muted, self.t("preview-too-large", &[]));
+            return;
+        }
+        let fresh = self.md_cache.get(&id).is_some_and(|(r, _)| *r == rev);
+        if !fresh {
+            let blocks = sanain_markdown::parse(&doc.text());
+            self.md_cache.insert(id, (rev, std::sync::Arc::new(blocks)));
+        }
+        let Some((_, blocks)) = self.md_cache.get(&id) else {
+            return;
+        };
+        let blocks = blocks.clone();
+        let head = self.editor().selections().primary().head;
+        let caret_line =
+            sanain_core::selection::line_col(self.editor().document().rope(), head).0 + 1;
+        let scroll = self.md_synced.get(&id) != Some(&caret_line);
+        self.md_synced.insert(id, caret_line);
+        let l10n = &self.l10n;
+        let untranslated = |key: &str| tr(l10n, key, &[]);
+        let style = preview::Style {
+            p,
+            size: self.settings.font_size + 1.0,
+            untranslated: &untranslated,
+        };
+        egui::Frame::NONE
+            .fill(p.canvas)
+            .inner_margin(egui::Margin::symmetric(24, 16))
+            .show(ui, |ui| {
+                egui::ScrollArea::vertical()
+                    .id_salt(("md-preview", id))
+                    .auto_shrink(false)
+                    .show(ui, |ui| {
+                        ui.set_max_width(760.0_f32.min(ui.available_width()));
+                        preview::show(ui, &blocks, &style, caret_line, scroll);
+                    });
+            });
+    }
+
     fn language(ed: &Editor) -> Option<Lang> {
         ed.file().and_then(|f| Lang::from_path(&f.path))
     }
@@ -460,6 +573,9 @@ impl Shell {
                 MenuAction::Redo => doc.can_redo(),
                 MenuAction::Cut | MenuAction::Copy => self.editor().copy().is_some(),
                 MenuAction::NextTab | MenuAction::PrevTab => self.ws.len() > 1,
+                MenuAction::MarkdownSource
+                | MenuAction::MarkdownSplit
+                | MenuAction::MarkdownPreview => Self::is_markdown(self.editor()),
                 _ => true,
             }
     }
@@ -526,6 +642,19 @@ impl Shell {
                 }
                 self.find_step(action == MenuAction::FindNext);
                 return;
+            }
+            MenuAction::MarkdownSource
+            | MenuAction::MarkdownSplit
+            | MenuAction::MarkdownPreview => {
+                if Self::is_markdown(self.editor()) {
+                    let mode = match action {
+                        MenuAction::MarkdownSplit => MdMode::Split,
+                        MenuAction::MarkdownPreview => MdMode::Preview,
+                        _ => MdMode::Source,
+                    };
+                    self.md_modes.insert(self.ws.active().id, mode);
+                }
+                None
             }
             MenuAction::CommandPalette => {
                 self.palette.open();
@@ -690,6 +819,7 @@ impl Shell {
                 ui.colored_label(p.muted, self.t(le, &[]));
                 let lang = match Self::language(editor) {
                     Some(l) => l.name().to_owned(),
+                    None if Self::is_markdown(editor) => "Markdown".to_owned(),
                     None => self.t("language-plain", &[]),
                 };
                 ui.colored_label(p.muted, lang);
@@ -852,6 +982,7 @@ impl eframe::App for Shell {
                 MenuAction::NextTab,
                 MenuAction::Replace,
                 MenuAction::CommandPalette,
+                MenuAction::MarkdownSplit,
                 MenuAction::Settings,
                 MenuAction::ZoomIn,
                 MenuAction::ZoomOut,
@@ -925,31 +1056,15 @@ impl eframe::App for Shell {
         egui::Panel::bottom("status").show(ui, |ui| self.status_bar(ui));
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE.fill(p.canvas))
-            .show(ui, |ui| {
-                let name = self.t("editor-accessible-name", &[]);
-                let interactive = self.dialog.is_none();
-                let id = self.ws.active().id;
-                let view = self.views.entry(id).or_default();
-                let editor = &mut self.ws.active_mut().editor;
-                // Spans from an older revision are kept until fresh ones
-                // arrive; a frame of slightly shifted colour beats flicker.
-                let syntax: &[CharSpan] = self.spans.get(&id).map_or(&[], |(_, s)| s);
-                let opts = ViewOptions {
-                    font_size: self.settings.font_size,
-                    indent: self.settings.indent(),
-                };
-                let highlights: &[std::ops::Range<usize>] = if self.find.open {
-                    &self.find.matches.ranges
-                } else {
-                    &[]
-                };
-                ui.push_id(id, |ui| {
-                    ui.add_enabled_ui(interactive, |ui| {
-                        if view.show(ui, editor, &name, highlights, syntax, &opts) {
-                            self.status = None;
-                        }
+            .show(ui, |ui| match self.md_mode() {
+                MdMode::Source => self.editor_area(ui),
+                MdMode::Preview => self.preview_area(ui),
+                MdMode::Split => {
+                    ui.columns(2, |cols| {
+                        self.editor_area(&mut cols[0]);
+                        self.preview_area(&mut cols[1]);
                     });
-                });
+                }
             });
 
         self.dialogs(&ctx);

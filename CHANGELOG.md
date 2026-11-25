@@ -32,6 +32,13 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   shortcuts; restyled in-window menus on Windows and Linux.
 - Cut, Copy and Paste work (system clipboard was not enabled before).
 - macOS app bundle script (`scripts/macos-bundle.sh`).
+- Markdown source, split and preview modes for .md files (View menu,
+  command palette, Cmd/Ctrl+Shift+V for split). CommonMark and GFM:
+  headings, emphasis, strikethrough, inline code, links, task lists,
+  nested lists, tables with alignment, quotes, code blocks, front matter.
+  The preview follows the caret. Raw HTML is shown as text and never
+  run; links are not opened yet; images show their alt text; Mermaid
+  blocks show their source.
 - Command palette (Cmd/Ctrl+Shift+P): fuzzy search over every menu
   command with its shortcut; arrow keys, Enter and Esc.
 - Settings window (Cmd+, on macOS, File > Settings elsewhere): font size,
