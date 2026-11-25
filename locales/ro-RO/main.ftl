@@ -331,3 +331,6 @@ compare-saved-label = { $name } (pe disc)
 compare-clipboard-label = Clipboard
 compare-saved-failed = Fișierul salvat nu a putut fi citit: { $reason }
 compare-clipboard-empty = Clipboardul nu conține text de comparat.
+error-save-disk-full = { $name } nu a fost salvat: discul este plin. Fișierul de pe disc nu s-a modificat, iar textul dvs. este încă aici. Eliberați spațiu sau folosiți Salvează ca pentru a-l salva în altă parte.
+error-save-permission = { $name } nu a fost salvat: nu aveți permisiunea de a scrie în acea locație. Fișierul de pe disc nu s-a modificat. Folosiți Salvează ca pentru a-l salva în altă parte.
+error-save-read-only-volume = { $name } nu a fost salvat: discul este doar în citire. Fișierul de pe disc nu s-a modificat. Folosiți Salvează ca pentru a-l salva în altă parte.

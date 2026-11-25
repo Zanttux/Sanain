@@ -316,3 +316,6 @@ compare-saved-label = { $name } (auf dem Datenträger)
 compare-clipboard-label = Zwischenablage
 compare-saved-failed = Die gespeicherte Datei konnte nicht gelesen werden: { $reason }
 compare-clipboard-empty = Die Zwischenablage enthält keinen Text zum Vergleichen.
+error-save-disk-full = { $name } wurde nicht gesichert: Der Datenträger ist voll. Die Datei auf dem Datenträger ist unverändert, und Ihr Text ist noch hier. Geben Sie Speicherplatz frei, oder verwenden Sie „Sichern unter“, um sie an einem anderen Ort zu sichern.
+error-save-permission = { $name } wurde nicht gesichert: Sie haben keine Berechtigung, an diesem Ort zu schreiben. Die Datei auf dem Datenträger ist unverändert. Verwenden Sie „Sichern unter“, um sie an einem anderen Ort zu sichern.
+error-save-read-only-volume = { $name } wurde nicht gesichert: Der Datenträger ist schreibgeschützt. Die Datei auf dem Datenträger ist unverändert. Verwenden Sie „Sichern unter“, um sie an einem anderen Ort zu sichern.

@@ -48,7 +48,7 @@ M1 in progress.
 | E02 | Partial | Tabs, close/reopen, keyboard switching, dirty markers, per-tab recovery, drag reorder, pin (kept in front, saved in session), tab context menu. Not yet: split editor, keyboard reordering |
 | E07 | Partial | Tree-sitter highlighting for 8 languages, background worker with cancellation, line numbers, indentation folding, keyboard navigation, light/dark/system/high-contrast themes, zoom. Not yet: syntax-aware folding, incremental parsing, more languages |
 | E11 | Done for v1 scope | Menus with standard shortcuts (logical keys on macOS), command palette with fuzzy search, configurable shortcuts with conflict handling, Notepad++ preset. Not yet: importing Notepad++ shortcuts.xml |
-| E06 | Partial | Unsaved-changes prompts; crash recovery per tab (kill -9 → relaunch restores text); session restore of open files and active tab. Not yet: settings opt-out UI, disk-full drill |
+| E06 | Partial | Unsaved-changes prompts; crash recovery per tab (kill -9 → relaunch restores text); session restore of open files and active tab. Disk-full and permission-denied saves verified on macOS (file unchanged, text kept, plain error; see ACCEPTANCE). Session restore can be turned off in Settings. Not yet: disk-full drill on Windows/Linux |
 | Others | Not started | |
 
 Known M1 limits: native menus only on macOS (Windows/Linux use in-window

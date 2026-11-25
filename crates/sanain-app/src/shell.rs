@@ -382,10 +382,33 @@ impl Shell {
             SaveOutcome::Conflict => self.dialog = Some(Dialog::Conflict),
             SaveOutcome::ReadOnly => self.dialog = Some(Dialog::ReadOnly),
             SaveOutcome::Failed(e) => {
-                let msg = self.t(
-                    "error-save",
-                    &[("name", name.into()), ("reason", e.to_string().into())],
-                );
+                // Common causes get a plain explanation; the rest keep the
+                // system's message. Either way nothing was overwritten.
+                let kind = match &e {
+                    sanain_io::SaveError::Io { source, .. } => Some(source.kind()),
+                    _ => None,
+                };
+                let msg = match kind {
+                    Some(std::io::ErrorKind::StorageFull | std::io::ErrorKind::QuotaExceeded) => {
+                        self.t("error-save-disk-full", &[("name", name.into())])
+                    }
+                    Some(std::io::ErrorKind::PermissionDenied) => {
+                        self.t("error-save-permission", &[("name", name.into())])
+                    }
+                    Some(std::io::ErrorKind::ReadOnlyFilesystem) => {
+                        self.t("error-save-read-only-volume", &[("name", name.into())])
+                    }
+                    _ => {
+                        let reason = match &e {
+                            sanain_io::SaveError::Io { source, .. } => source.to_string(),
+                            other => other.to_string(),
+                        };
+                        self.t(
+                            "error-save",
+                            &[("name", name.into()), ("reason", reason.into())],
+                        )
+                    }
+                };
                 self.dialog = Some(Dialog::Error(msg));
             }
         }

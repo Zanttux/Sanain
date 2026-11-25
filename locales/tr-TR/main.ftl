@@ -316,3 +316,6 @@ compare-saved-label = { $name } (diskte)
 compare-clipboard-label = Pano
 compare-saved-failed = Kaydedilmiş dosya okunamadı: { $reason }
 compare-clipboard-empty = Panoda karşılaştırılacak metin yok.
+error-save-disk-full = { $name } kaydedilmedi: disk dolu. Diskteki dosya değişmedi ve metniniz hâlâ burada. Biraz yer açın veya başka bir yere kaydetmek için Farklı Kaydet'i kullanın.
+error-save-permission = { $name } kaydedilmedi: oraya yazma izniniz yok. Diskteki dosya değişmedi. Başka bir yere kaydetmek için Farklı Kaydet'i kullanın.
+error-save-read-only-volume = { $name } kaydedilmedi: disk salt okunur. Diskteki dosya değişmedi. Başka bir yere kaydetmek için Farklı Kaydet'i kullanın.

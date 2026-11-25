@@ -316,3 +316,6 @@ compare-saved-label = { $name } (lemezen)
 compare-clipboard-label = Vágólap
 compare-saved-failed = A mentett fájl nem olvasható: { $reason }
 compare-clipboard-empty = A vágólapon nincs összehasonlítható szöveg.
+error-save-disk-full = A(z) { $name } nem lett mentve: a lemez megtelt. A lemezen lévő fájl nem változott, és a szöveg továbbra is itt van. Szabadítson fel helyet, vagy a Mentés másként paranccsal mentse máshová.
+error-save-permission = A(z) { $name } nem lett mentve: nincs engedélye arra, hogy ide írjon. A lemezen lévő fájl nem változott. A Mentés másként paranccsal mentse máshová.
+error-save-read-only-volume = A(z) { $name } nem lett mentve: a lemez csak olvasható. A lemezen lévő fájl nem változott. A Mentés másként paranccsal mentse máshová.

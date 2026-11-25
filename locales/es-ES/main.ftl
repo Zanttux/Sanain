@@ -316,3 +316,6 @@ compare-saved-label = { $name } (en disco)
 compare-clipboard-label = Portapapeles
 compare-saved-failed = No se ha podido leer el archivo guardado: { $reason }
 compare-clipboard-empty = El portapapeles no contiene texto para comparar.
+error-save-disk-full = No se ha guardado { $name }: el disco está lleno. El archivo del disco no ha cambiado y su texto sigue aquí. Libere espacio o use Guardar como para guardarlo en otro lugar.
+error-save-permission = No se ha guardado { $name }: no tiene permiso para escribir en esa ubicación. El archivo del disco no ha cambiado. Use Guardar como para guardarlo en otro lugar.
+error-save-read-only-volume = No se ha guardado { $name }: el disco es de solo lectura. El archivo del disco no ha cambiado. Use Guardar como para guardarlo en otro lugar.

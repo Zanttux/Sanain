@@ -331,3 +331,6 @@ compare-saved-label = { $name } (no disco)
 compare-clipboard-label = Área de transferência
 compare-saved-failed = Não foi possível ler o ficheiro guardado: { $reason }
 compare-clipboard-empty = A área de transferência não contém texto para comparar.
+error-save-disk-full = { $name } não foi guardado: o disco está cheio. O ficheiro no disco não foi alterado e o texto continua aqui. Liberte espaço ou utilize Guardar como para o guardar noutro local.
+error-save-permission = { $name } não foi guardado: não tem permissão para escrever nesse local. O ficheiro no disco não foi alterado. Utilize Guardar como para o guardar noutro local.
+error-save-read-only-volume = { $name } não foi guardado: o disco é só de leitura. O ficheiro no disco não foi alterado. Utilize Guardar como para o guardar noutro local.

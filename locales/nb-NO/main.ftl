@@ -316,3 +316,6 @@ compare-saved-label = { $name } (på disk)
 compare-clipboard-label = Utklippstavle
 compare-saved-failed = Kunne ikke lese den lagrede filen: { $reason }
 compare-clipboard-empty = Utklippstavlen inneholder ingen tekst å sammenligne.
+error-save-disk-full = { $name } ble ikke lagret: disken er full. Filen på disken er uendret, og teksten din er fortsatt her. Frigjør plass, eller bruk Lagre som for å lagre den et annet sted.
+error-save-permission = { $name } ble ikke lagret: du har ikke tillatelse til å skrive der. Filen på disken er uendret. Bruk Lagre som for å lagre den et annet sted.
+error-save-read-only-volume = { $name } ble ikke lagret: disken er skrivebeskyttet. Filen på disken er uendret. Bruk Lagre som for å lagre den et annet sted.

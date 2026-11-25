@@ -5,6 +5,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Saving to a full disk, a read-only disk or a location without write
+  permission now explains what happened in plain words and that the file
+  on disk is unchanged.
 - Tools > Compare with Saved Version and Compare with Clipboard show the
   current document side by side with the file on disk or the clipboard
   text; changes can be copied into the document one at a time.

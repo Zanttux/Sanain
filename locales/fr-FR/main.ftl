@@ -331,3 +331,6 @@ compare-saved-label = { $name } (sur le disque)
 compare-clipboard-label = Presse-papiers
 compare-saved-failed = Impossible de lire le fichier enregistré : { $reason }
 compare-clipboard-empty = Le presse-papiers ne contient aucun texte à comparer.
+error-save-disk-full = { $name } n’a pas été enregistré : le disque est plein. Le fichier sur le disque n’a pas changé et votre texte est toujours là. Libérez de l’espace ou utilisez Enregistrer sous pour l’enregistrer ailleurs.
+error-save-permission = { $name } n’a pas été enregistré : vous n’avez pas l’autorisation d’écrire à cet emplacement. Le fichier sur le disque n’a pas changé. Utilisez Enregistrer sous pour l’enregistrer ailleurs.
+error-save-read-only-volume = { $name } n’a pas été enregistré : le disque est en lecture seule. Le fichier sur le disque n’a pas changé. Utilisez Enregistrer sous pour l’enregistrer ailleurs.

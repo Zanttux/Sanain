@@ -301,3 +301,6 @@ compare-saved-label = { $name } (디스크)
 compare-clipboard-label = 클립보드
 compare-saved-failed = 저장된 파일을 읽을 수 없습니다: { $reason }
 compare-clipboard-empty = 클립보드에 비교할 텍스트가 없습니다.
+error-save-disk-full = { $name }을(를) 저장하지 못했습니다: 디스크가 가득 찼습니다. 디스크의 파일은 변경되지 않았으며 텍스트는 그대로 남아 있습니다. 공간을 확보하거나 다른 이름으로 저장을 사용해 다른 위치에 저장하세요.
+error-save-permission = { $name }을(를) 저장하지 못했습니다: 해당 위치에 쓸 권한이 없습니다. 디스크의 파일은 변경되지 않았습니다. 다른 이름으로 저장을 사용해 다른 위치에 저장하세요.
+error-save-read-only-volume = { $name }을(를) 저장하지 못했습니다: 디스크가 읽기 전용입니다. 디스크의 파일은 변경되지 않았습니다. 다른 이름으로 저장을 사용해 다른 위치에 저장하세요.

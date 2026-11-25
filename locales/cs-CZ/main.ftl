@@ -346,3 +346,6 @@ compare-saved-label = { $name } (na disku)
 compare-clipboard-label = Schránka
 compare-saved-failed = Uložený soubor nelze přečíst: { $reason }
 compare-clipboard-empty = Schránka neobsahuje žádný text k porovnání.
+error-save-disk-full = Soubor { $name } nebyl uložen: disk je plný. Soubor na disku se nezměnil a váš text je stále zde. Uvolněte místo nebo jej pomocí Uložit jako uložte jinam.
+error-save-permission = Soubor { $name } nebyl uložen: nemáte oprávnění do tohoto umístění zapisovat. Soubor na disku se nezměnil. Pomocí Uložit jako jej uložte jinam.
+error-save-read-only-volume = Soubor { $name } nebyl uložen: disk je pouze pro čtení. Soubor na disku se nezměnil. Pomocí Uložit jako jej uložte jinam.

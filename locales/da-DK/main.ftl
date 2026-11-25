@@ -316,3 +316,6 @@ compare-saved-label = { $name } (på disk)
 compare-clipboard-label = Udklipsholder
 compare-saved-failed = Den gemte fil kunne ikke læses: { $reason }
 compare-clipboard-empty = Udklipsholderen indeholder ingen tekst at sammenligne.
+error-save-disk-full = { $name } blev ikke gemt: disken er fuld. Filen på disken er uændret, og din tekst er her stadig. Frigør noget plads, eller brug Gem som for at gemme den et andet sted.
+error-save-permission = { $name } blev ikke gemt: du har ikke tilladelse til at skrive den der. Filen på disken er uændret. Brug Gem som for at gemme den et andet sted.
+error-save-read-only-volume = { $name } blev ikke gemt: disken er skrivebeskyttet. Filen på disken er uændret. Brug Gem som for at gemme den et andet sted.

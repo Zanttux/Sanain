@@ -316,3 +316,6 @@ compare-saved-label = { $name } (su disco)
 compare-clipboard-label = Appunti
 compare-saved-failed = Impossibile leggere il file salvato: { $reason }
 compare-clipboard-empty = Gli appunti non contengono testo da confrontare.
+error-save-disk-full = { $name } non è stato salvato: il disco è pieno. Il file sul disco non è cambiato e il tuo testo è ancora qui. Libera spazio oppure usa Salva con nome per salvarlo altrove.
+error-save-permission = { $name } non è stato salvato: non hai l’autorizzazione per scrivere in quella posizione. Il file sul disco non è cambiato. Usa Salva con nome per salvarlo altrove.
+error-save-read-only-volume = { $name } non è stato salvato: il disco è di sola lettura. Il file sul disco non è cambiato. Usa Salva con nome per salvarlo altrove.
