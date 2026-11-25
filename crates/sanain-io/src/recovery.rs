@@ -174,6 +174,7 @@ fn encoding_name(e: TextEncoding) -> &'static str {
         TextEncoding::Utf8Bom => "utf-8-bom",
         TextEncoding::Utf16LeBom => "utf-16le-bom",
         TextEncoding::Utf16BeBom => "utf-16be-bom",
+        TextEncoding::Legacy(e) => e.name(),
     }
 }
 
@@ -230,7 +231,10 @@ fn decode(bytes: &[u8]) -> Result<(SystemTime, Snapshot), &'static str> {
                     "utf-8-bom" => TextEncoding::Utf8Bom,
                     "utf-16le-bom" => TextEncoding::Utf16LeBom,
                     "utf-16be-bom" => TextEncoding::Utf16BeBom,
-                    _ => return Err("unknown encoding"),
+                    other => match encoding_rs::Encoding::for_label(other.as_bytes()) {
+                        Some(e) => TextEncoding::Legacy(e),
+                        None => return Err("unknown encoding"),
+                    },
                 });
             }
             Some(("path", v)) => path = Some(PathBuf::from(v)),

@@ -1,11 +1,57 @@
-/// Encodings supported by the first slice. Legacy single-byte and CJK
-/// encodings arrive with explicit user selection in a later slice.
+/// How a document's text maps to bytes on disk.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TextEncoding {
     Utf8,
     Utf8Bom,
     Utf16LeBom,
     Utf16BeBom,
+    /// A non-Unicode encoding the user chose explicitly. Only offered for
+    /// files whose bytes it reproduces exactly.
+    Legacy(&'static encoding_rs::Encoding),
+}
+
+impl TextEncoding {
+    /// Name for the status bar (encoding names are not translated).
+    pub fn name(self) -> &'static str {
+        match self {
+            TextEncoding::Utf8 => "UTF-8",
+            TextEncoding::Utf8Bom => "UTF-8 BOM",
+            TextEncoding::Utf16LeBom => "UTF-16 LE",
+            TextEncoding::Utf16BeBom => "UTF-16 BE",
+            TextEncoding::Legacy(e) => e.name(),
+        }
+    }
+}
+
+/// Legacy encodings offered for "Reopen with Encoding", most common first.
+pub const LEGACY: &[&encoding_rs::Encoding] = &[
+    encoding_rs::WINDOWS_1252,
+    encoding_rs::ISO_8859_15,
+    encoding_rs::WINDOWS_1250,
+    encoding_rs::ISO_8859_2,
+    encoding_rs::WINDOWS_1251,
+    encoding_rs::KOI8_R,
+    encoding_rs::WINDOWS_1253,
+    encoding_rs::WINDOWS_1254,
+    encoding_rs::WINDOWS_1255,
+    encoding_rs::WINDOWS_1256,
+    encoding_rs::WINDOWS_1257,
+    encoding_rs::WINDOWS_874,
+    encoding_rs::SHIFT_JIS,
+    encoding_rs::EUC_JP,
+    encoding_rs::GB18030,
+    encoding_rs::BIG5,
+    encoding_rs::EUC_KR,
+];
+
+/// A character that the target encoding cannot represent.
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+#[error("{character:?} (character {index}) cannot be saved as {encoding}")]
+pub struct EncodeError {
+    pub character: char,
+    /// Char index in the text.
+    pub index: usize,
+    pub encoding: &'static str,
 }
 
 const BOM_UTF8: &[u8] = &[0xEF, 0xBB, 0xBF];
@@ -24,6 +70,14 @@ pub enum DecodeError {
     UnpairedSurrogate { offset: usize },
     #[error("UTF-32 is not supported")]
     Utf32,
+    #[error("byte {offset} is not valid in {encoding}")]
+    Malformed {
+        offset: usize,
+        encoding: &'static str,
+    },
+    /// Decoding works but saving would not reproduce the same bytes.
+    #[error("{encoding} cannot reproduce this file exactly")]
+    NotReversible { encoding: &'static str },
 }
 
 /// Detect the encoding from the BOM and decode strictly.
@@ -44,14 +98,92 @@ pub fn decode(bytes: &[u8]) -> Result<(String, TextEncoding), DecodeError> {
     utf8(bytes, 0).map(|s| (s, TextEncoding::Utf8))
 }
 
-/// Encode `text`, including the BOM where the encoding has one.
-pub fn encode(text: &str, encoding: TextEncoding) -> Vec<u8> {
+/// Decode with an encoding the user chose. Never replaces bytes; a legacy
+/// encoding is accepted only if encoding the result gives back `bytes`.
+pub fn decode_as(bytes: &[u8], encoding: TextEncoding) -> Result<String, DecodeError> {
     match encoding {
+        TextEncoding::Utf8 => utf8(bytes, 0),
+        TextEncoding::Utf8Bom => utf8(
+            bytes.strip_prefix(BOM_UTF8).unwrap_or(bytes),
+            BOM_UTF8.len(),
+        ),
+        TextEncoding::Utf16LeBom => utf16(
+            bytes.strip_prefix(BOM_UTF16LE).unwrap_or(bytes),
+            u16::from_le_bytes,
+        ),
+        TextEncoding::Utf16BeBom => utf16(
+            bytes.strip_prefix(BOM_UTF16BE).unwrap_or(bytes),
+            u16::from_be_bytes,
+        ),
+        TextEncoding::Legacy(enc) => {
+            let mut decoder = enc.new_decoder_without_bom_handling();
+            let cap = decoder
+                .max_utf8_buffer_length_without_replacement(bytes.len())
+                .unwrap_or(bytes.len().saturating_mul(3));
+            let mut out = String::with_capacity(cap);
+            let (result, read) =
+                decoder.decode_to_string_without_replacement(bytes, &mut out, true);
+            match result {
+                encoding_rs::DecoderResult::InputEmpty => {}
+                encoding_rs::DecoderResult::Malformed(bad, _) => {
+                    return Err(DecodeError::Malformed {
+                        offset: read.saturating_sub(usize::from(bad)),
+                        encoding: enc.name(),
+                    });
+                }
+                encoding_rs::DecoderResult::OutputFull => {
+                    return Err(DecodeError::Malformed {
+                        offset: read,
+                        encoding: enc.name(),
+                    });
+                }
+            }
+            if encode(&out, encoding).ok().as_deref() != Some(bytes) {
+                return Err(DecodeError::NotReversible {
+                    encoding: enc.name(),
+                });
+            }
+            Ok(out)
+        }
+    }
+}
+
+/// Encode `text`, including the BOM where the encoding has one. Fails if a
+/// character cannot be represented: nothing is ever substituted.
+pub fn encode(text: &str, encoding: TextEncoding) -> Result<Vec<u8>, EncodeError> {
+    Ok(match encoding {
         TextEncoding::Utf8 => text.as_bytes().to_vec(),
         TextEncoding::Utf8Bom => [BOM_UTF8, text.as_bytes()].concat(),
         TextEncoding::Utf16LeBom => with_units(BOM_UTF16LE, text, u16::to_le_bytes),
         TextEncoding::Utf16BeBom => with_units(BOM_UTF16BE, text, u16::to_be_bytes),
-    }
+        TextEncoding::Legacy(enc) => {
+            let mut encoder = enc.new_encoder();
+            let mut out = Vec::with_capacity(text.len());
+            let mut rest = text;
+            let mut chars_done = 0;
+            loop {
+                out.reserve(rest.len() * 4 + 16);
+                let (result, read) =
+                    encoder.encode_from_utf8_to_vec_without_replacement(rest, &mut out, true);
+                match result {
+                    encoding_rs::EncoderResult::InputEmpty => break,
+                    encoding_rs::EncoderResult::OutputFull => {
+                        chars_done += rest[..read].chars().count();
+                        rest = &rest[read..];
+                    }
+                    encoding_rs::EncoderResult::Unmappable(c) => {
+                        let index = chars_done + rest[..read].chars().count() - 1;
+                        return Err(EncodeError {
+                            character: c,
+                            index,
+                            encoding: enc.name(),
+                        });
+                    }
+                }
+            }
+            out
+        }
+    })
 }
 
 fn utf8(bytes: &[u8], base: usize) -> Result<String, DecodeError> {
@@ -96,7 +228,7 @@ mod tests {
     fn round_trip(bytes: &[u8], expected: TextEncoding) {
         let (text, enc) = decode(bytes).expect("decodes");
         assert_eq!(enc, expected);
-        assert_eq!(encode(&text, enc), bytes, "bytes must round-trip");
+        assert_eq!(encode(&text, enc).unwrap(), bytes, "bytes must round-trip");
     }
 
     #[test]
@@ -106,13 +238,34 @@ mod tests {
         round_trip(b"\xEF\xBB\xBFhi\r\n", TextEncoding::Utf8Bom);
         round_trip(b"\xEF\xBB\xBF", TextEncoding::Utf8Bom);
         round_trip(
-            &encode("a\r\n🙂", TextEncoding::Utf16LeBom),
+            &encode("a\r\n🙂", TextEncoding::Utf16LeBom).unwrap(),
             TextEncoding::Utf16LeBom,
         );
         round_trip(
-            &encode("a\n漢", TextEncoding::Utf16BeBom),
+            &encode("a\n漢", TextEncoding::Utf16BeBom).unwrap(),
             TextEncoding::Utf16BeBom,
         );
+    }
+
+    #[test]
+    fn legacy_round_trip_and_refusals() {
+        use encoding_rs::{SHIFT_JIS, WINDOWS_1252};
+        let w = TextEncoding::Legacy(WINDOWS_1252);
+        // "café €" in Windows-1252, plus every byte value.
+        let mut bytes = b"caf\xE9 \x80\r\n".to_vec();
+        bytes.extend(0u8..=255);
+        let text = decode_as(&bytes, w).unwrap();
+        assert!(text.starts_with("café €\r\n"));
+        assert_eq!(encode(&text, w).unwrap(), bytes);
+        let err = encode("ok 漢", w).unwrap_err();
+        assert_eq!((err.character, err.index), ('漢', 3));
+        let sj = TextEncoding::Legacy(SHIFT_JIS);
+        let jp = encode("日本語テキスト", sj).unwrap();
+        assert_eq!(decode_as(&jp, sj).unwrap(), "日本語テキスト");
+        assert!(matches!(
+            decode_as(b"\x82", sj),
+            Err(DecodeError::Malformed { .. })
+        ));
     }
 
     #[test]
