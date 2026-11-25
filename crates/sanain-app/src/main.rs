@@ -2,6 +2,7 @@
 
 mod find;
 mod menu;
+mod palette;
 mod shell;
 mod theme;
 mod view;

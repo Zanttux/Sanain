@@ -16,6 +16,7 @@ use sanain_language::Lang;
 
 use crate::find::{FindBar, FindEvent};
 use crate::menu::{self, MenuAction};
+use crate::palette::{Entry, Palette};
 use crate::theme;
 use crate::view::{EditorView, ViewOptions};
 use sanain_app::settings::{FONT_SIZE_DEFAULT, Settings, ThemeChoice};
@@ -63,6 +64,7 @@ pub struct Shell {
     settings: Settings,
     settings_dir: Option<std::path::PathBuf>,
     settings_open: bool,
+    palette: Palette,
     applied_theme: Option<ThemeChoice>,
     /// Set once the session was recorded for the current quit attempt.
     quit_recorded: bool,
@@ -117,6 +119,7 @@ impl Shell {
             settings,
             settings_dir,
             settings_open: false,
+            palette: Palette::default(),
             applied_theme: None,
             quit_recorded: false,
             #[cfg(target_os = "macos")]
@@ -524,6 +527,10 @@ impl Shell {
                 self.find_step(action == MenuAction::FindNext);
                 return;
             }
+            MenuAction::CommandPalette => {
+                self.palette.open();
+                return;
+            }
             MenuAction::Settings => {
                 self.settings_open = true;
                 return;
@@ -844,6 +851,7 @@ impl eframe::App for Shell {
                 MenuAction::PrevTab,
                 MenuAction::NextTab,
                 MenuAction::Replace,
+                MenuAction::CommandPalette,
                 MenuAction::Settings,
                 MenuAction::ZoomIn,
                 MenuAction::ZoomOut,
@@ -946,6 +954,27 @@ impl eframe::App for Shell {
 
         self.dialogs(&ctx);
         self.settings_window(&ctx);
+        if self.palette.open && self.dialog.is_none() {
+            let entries: Vec<Entry> = MenuAction::ALL
+                .into_iter()
+                .filter(|a| *a != MenuAction::CommandPalette)
+                .map(|a| Entry {
+                    action: a,
+                    label: self.t(a.label_id(), &[]).trim_end_matches('…').to_owned(),
+                    shortcut: a
+                        .shortcut()
+                        .map(|s| ctx.format_shortcut(&s))
+                        .unwrap_or_default(),
+                    enabled: self.enabled(a),
+                })
+                .collect();
+            let hint = self.t("palette-placeholder", &[]);
+            if let Some(a) = self.palette.show(&ctx, &entries, &hint) {
+                self.dispatch(a, &ctx);
+            } else if !self.palette.open {
+                self.focus_active();
+            }
+        }
         self.apply_theme(&ctx);
 
         let (wait, error) = self.ws.tick(std::time::Instant::now());

@@ -32,6 +32,8 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   shortcuts; restyled in-window menus on Windows and Linux.
 - Cut, Copy and Paste work (system clipboard was not enabled before).
 - macOS app bundle script (`scripts/macos-bundle.sh`).
+- Command palette (Cmd/Ctrl+Shift+P): fuzzy search over every menu
+  command with its shortcut; arrow keys, Enter and Esc.
 - Settings window (Cmd+, on macOS, File > Settings elsewhere): font size,
   tab width, spaces for Tab, light/dark/system appearance, session
   restore, UI language. Saved immediately to a versioned settings file.
