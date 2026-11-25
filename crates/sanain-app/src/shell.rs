@@ -17,7 +17,8 @@ use sanain_language::Lang;
 use crate::find::{FindBar, FindEvent};
 use crate::menu::{self, MenuAction};
 use crate::theme;
-use crate::view::EditorView;
+use crate::view::{EditorView, ViewOptions};
+use sanain_app::settings::{FONT_SIZE_DEFAULT, Settings, ThemeChoice};
 
 /// What to do once a tab's unsaved changes are resolved.
 #[derive(Debug, Clone, Copy)]
@@ -59,6 +60,10 @@ pub struct Shell {
     spans: HashMap<TabId, (Revision, Vec<CharSpan>)>,
     requested: HashMap<TabId, Revision>,
     session_file: Option<std::path::PathBuf>,
+    settings: Settings,
+    settings_dir: Option<std::path::PathBuf>,
+    settings_open: bool,
+    applied_theme: Option<ThemeChoice>,
     /// Set once the session was recorded for the current quit attempt.
     quit_recorded: bool,
     #[cfg(target_os = "macos")]
@@ -92,6 +97,8 @@ impl Shell {
         startup_errors: Vec<String>,
         restored: usize,
         session_file: Option<std::path::PathBuf>,
+        settings: Settings,
+        settings_dir: Option<std::path::PathBuf>,
     ) -> Self {
         let status = (restored > 0).then(|| (l10n.get("status-recovered"), false));
         let mut shell = Self {
@@ -107,6 +114,10 @@ impl Shell {
             spans: HashMap::new(),
             requested: HashMap::new(),
             session_file,
+            settings,
+            settings_dir,
+            settings_open: false,
+            applied_theme: None,
             quit_recorded: false,
             #[cfg(target_os = "macos")]
             native_menu: None,
@@ -303,6 +314,110 @@ impl Shell {
         }
     }
 
+    fn save_settings(&mut self) {
+        if let Some(dir) = &self.settings_dir
+            && let Err(e) = self.settings.save(dir)
+        {
+            let msg = self.t("settings-save-failed", &[("reason", e.to_string().into())]);
+            self.status = Some((msg, true));
+        }
+    }
+
+    fn apply_theme(&mut self, ctx: &egui::Context) {
+        if self.applied_theme == Some(self.settings.theme) {
+            return;
+        }
+        ctx.set_theme(match self.settings.theme {
+            ThemeChoice::System => egui::ThemePreference::System,
+            ThemeChoice::Light => egui::ThemePreference::Light,
+            ThemeChoice::Dark => egui::ThemePreference::Dark,
+        });
+        self.applied_theme = Some(self.settings.theme);
+    }
+
+    fn settings_window(&mut self, ctx: &egui::Context) {
+        if !self.settings_open {
+            return;
+        }
+        let before = self.settings.clone();
+        let mut open = true;
+        let title = self.t("settings-title", &[]);
+        let l = |id: &str| tr(&self.l10n, id, &[]);
+        let s = &mut self.settings;
+        egui::Window::new(title)
+            .id(egui::Id::unique("sanain-settings"))
+            .open(&mut open)
+            .collapsible(false)
+            .resizable(false)
+            .default_width(380.0)
+            .show(ctx, |ui| {
+                egui::Grid::new("settings-grid")
+                    .num_columns(2)
+                    .spacing([16.0, 10.0])
+                    .show(ui, |ui| {
+                        ui.label(l("settings-font-size"));
+                        ui.add(
+                            egui::DragValue::new(&mut s.font_size)
+                                .range(
+                                    sanain_app::settings::FONT_SIZE_MIN
+                                        ..=sanain_app::settings::FONT_SIZE_MAX,
+                                )
+                                .speed(0.25)
+                                .suffix(" pt"),
+                        );
+                        ui.end_row();
+                        ui.label(l("settings-tab-width"));
+                        ui.add(egui::DragValue::new(&mut s.tab_width).range(1..=16));
+                        ui.end_row();
+                        ui.label("");
+                        ui.checkbox(&mut s.insert_spaces, l("settings-insert-spaces"));
+                        ui.end_row();
+                        ui.label(l("settings-theme"));
+                        ui.horizontal(|ui| {
+                            for (v, id) in [
+                                (ThemeChoice::System, "settings-theme-system"),
+                                (ThemeChoice::Light, "settings-theme-light"),
+                                (ThemeChoice::Dark, "settings-theme-dark"),
+                            ] {
+                                ui.radio_value(&mut s.theme, v, l(id));
+                            }
+                        });
+                        ui.end_row();
+                        ui.label("");
+                        ui.checkbox(&mut s.restore_session, l("settings-restore-session"));
+                        ui.end_row();
+                        ui.label(l("settings-language"));
+                        let current = match s.locale.as_deref() {
+                            Some("fi-FI") => "Suomi".to_owned(),
+                            Some("en-US") => "English".to_owned(),
+                            _ => l("settings-language-system"),
+                        };
+                        egui::ComboBox::from_id_salt("settings-language")
+                            .selected_text(current)
+                            .show_ui(ui, |ui| {
+                                ui.selectable_value(
+                                    &mut s.locale,
+                                    None,
+                                    l("settings-language-system"),
+                                );
+                                // Language names in their own language.
+                                ui.selectable_value(&mut s.locale, Some("en-US".into()), "English");
+                                ui.selectable_value(&mut s.locale, Some("fi-FI".into()), "Suomi");
+                            });
+                        ui.end_row();
+                    });
+                ui.add_space(4.0);
+                ui.weak(l("settings-language-note"));
+            });
+        if self.settings != before {
+            self.save_settings();
+        }
+        if !open {
+            self.settings_open = false;
+            self.focus_active();
+        }
+    }
+
     fn language(ed: &Editor) -> Option<Lang> {
         ed.file().and_then(|f| Lang::from_path(&f.path))
     }
@@ -407,6 +522,19 @@ impl Shell {
                     self.find.open(false, None);
                 }
                 self.find_step(action == MenuAction::FindNext);
+                return;
+            }
+            MenuAction::Settings => {
+                self.settings_open = true;
+                return;
+            }
+            MenuAction::ZoomIn | MenuAction::ZoomOut | MenuAction::ZoomReset => {
+                match action {
+                    MenuAction::ZoomIn => self.settings.zoom(1.0),
+                    MenuAction::ZoomOut => self.settings.zoom(-1.0),
+                    _ => self.settings.font_size = FONT_SIZE_DEFAULT,
+                }
+                self.save_settings();
                 return;
             }
             MenuAction::Undo => editor_cmd(Command::Undo),
@@ -691,6 +819,14 @@ impl eframe::App for Shell {
         }
 
         let mut actions = Vec::new();
+        // Cmd/Ctrl+= also zooms in (US layouts), whatever the menu shows.
+        if self.dialog.is_none() {
+            let eq = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Equals);
+            let plus = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::Plus);
+            if ctx.input_mut(|i| i.consume_shortcut(&eq) || i.consume_shortcut(&plus)) {
+                actions.push(MenuAction::ZoomIn);
+            }
+        }
         #[cfg(target_os = "macos")]
         if let Some(m) = &self.native_menu {
             actions.extend(m.poll());
@@ -708,6 +844,10 @@ impl eframe::App for Shell {
                 MenuAction::PrevTab,
                 MenuAction::NextTab,
                 MenuAction::Replace,
+                MenuAction::Settings,
+                MenuAction::ZoomIn,
+                MenuAction::ZoomOut,
+                MenuAction::ZoomReset,
                 MenuAction::Find,
                 MenuAction::FindPrev,
                 MenuAction::FindNext,
@@ -786,6 +926,10 @@ impl eframe::App for Shell {
                 // Spans from an older revision are kept until fresh ones
                 // arrive; a frame of slightly shifted colour beats flicker.
                 let syntax: &[CharSpan] = self.spans.get(&id).map_or(&[], |(_, s)| s);
+                let opts = ViewOptions {
+                    font_size: self.settings.font_size,
+                    indent: self.settings.indent(),
+                };
                 let highlights: &[std::ops::Range<usize>] = if self.find.open {
                     &self.find.matches.ranges
                 } else {
@@ -793,7 +937,7 @@ impl eframe::App for Shell {
                 };
                 ui.push_id(id, |ui| {
                     ui.add_enabled_ui(interactive, |ui| {
-                        if view.show(ui, editor, &name, highlights, syntax) {
+                        if view.show(ui, editor, &name, highlights, syntax, &opts) {
                             self.status = None;
                         }
                     });
@@ -801,6 +945,8 @@ impl eframe::App for Shell {
             });
 
         self.dialogs(&ctx);
+        self.settings_window(&ctx);
+        self.apply_theme(&ctx);
 
         let (wait, error) = self.ws.tick(std::time::Instant::now());
         if let Some(wait) = wait {

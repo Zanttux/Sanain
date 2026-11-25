@@ -93,3 +93,21 @@ status-replaced = { $count ->
    *[other] Replaced { $count } matches
     }
 language-plain = Plain Text
+menu-view = View
+app-settings = Settings…
+view-zoom-in = Zoom In
+view-zoom-out = Zoom Out
+view-zoom-reset = Actual Size
+settings-title = Settings
+settings-font-size = Font size
+settings-tab-width = Tab width
+settings-insert-spaces = Insert spaces when pressing Tab
+settings-theme = Appearance
+settings-theme-system = Match system
+settings-theme-light = Light
+settings-theme-dark = Dark
+settings-restore-session = Reopen files from the last session
+settings-language = Language
+settings-language-system = Match system
+settings-language-note = Language changes apply after restarting Sanain.
+settings-save-failed = Could not save settings: { $reason }

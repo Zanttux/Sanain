@@ -94,3 +94,21 @@ status-replaced = { $count ->
    *[other] { $count } osumaa korvattiin
     }
 language-plain = Pelkkä teksti
+menu-view = Näytä
+app-settings = Asetukset…
+view-zoom-in = Lähennä
+view-zoom-out = Loitonna
+view-zoom-reset = Todellinen koko
+settings-title = Asetukset
+settings-font-size = Fonttikoko
+settings-tab-width = Sarkaimen leveys
+settings-insert-spaces = Lisää välilyöntejä sarkainnäppäimellä
+settings-theme = Ulkoasu
+settings-theme-system = Järjestelmän mukaan
+settings-theme-light = Vaalea
+settings-theme-dark = Tumma
+settings-restore-session = Avaa edellisen istunnon tiedostot
+settings-language = Kieli
+settings-language-system = Järjestelmän mukaan
+settings-language-note = Kielen vaihto tulee voimaan, kun Sanain käynnistetään uudelleen.
+settings-save-failed = Asetuksia ei voitu tallentaa: { $reason }

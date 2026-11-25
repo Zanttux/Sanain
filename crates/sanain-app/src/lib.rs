@@ -3,6 +3,7 @@
 pub mod editor;
 pub mod recovery;
 pub mod session;
+pub mod settings;
 pub mod syntax;
 pub mod workspace;
 
