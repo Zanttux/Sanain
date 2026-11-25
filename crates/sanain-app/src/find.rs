@@ -109,7 +109,9 @@ impl FindBar {
                 });
                 r.request_focus();
             }
-            if r.has_focus() && ui.input(|i| i.key_pressed(Key::Escape)) {
+            // egui's text field gives up focus on Escape before we see it,
+            // so accept either state.
+            if (r.has_focus() || r.lost_focus()) && ui.input(|i| i.key_pressed(Key::Escape)) {
                 event = Some(FindEvent::Close);
             }
             for (on, label, tip) in [
