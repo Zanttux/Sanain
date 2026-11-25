@@ -18,5 +18,8 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 - `sanain-i18n`: Fluent localization with en-US and draft fi-FI, locale
   negotiation and resource consistency tests.
 
+- MPL-2.0 license, security policy with private reporting, CODEOWNERS,
+  Dependabot.
+
 ### Changed
 - Wordmark set in a single colour.
