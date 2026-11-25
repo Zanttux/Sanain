@@ -12,7 +12,13 @@ use std::sync::Arc;
 
 use crate::theme;
 
-const FONT_SIZE: f32 = 14.0;
+/// Per-frame options from user settings.
+#[derive(Debug, Clone)]
+pub struct ViewOptions {
+    pub font_size: f32,
+    /// Text inserted by the Tab key.
+    pub indent: String,
+}
 
 #[derive(Debug, Default)]
 pub struct EditorView {
@@ -44,8 +50,9 @@ impl EditorView {
         accessible_name: &str,
         highlights: &[std::ops::Range<usize>],
         syntax: &[CharSpan],
+        opts: &ViewOptions,
     ) -> bool {
-        let font = FontId::monospace(FONT_SIZE);
+        let font = FontId::monospace(opts.font_size);
         let (row_h, char_w) = ui.fonts_mut(|f| (f.row_height(&font), f.glyph_width(&font, '0')));
         let palette = theme::palette(ui.ctx());
         let id = ui.make_persistent_id("sanain-editor");
@@ -124,7 +131,7 @@ impl EditorView {
                 if response.has_focus() {
                     let events = ui.input(|i| i.events.clone());
                     for event in events {
-                        if let Some(done) = self.handle_event(ui, editor, &event) {
+                        if let Some(done) = self.handle_event(ui, editor, &event, &opts.indent) {
                             changed = true;
                             moved_by_keyboard |= done;
                         }
@@ -254,7 +261,13 @@ impl EditorView {
 
     /// Handle one input event. Returns `Some(scroll)` if it changed state,
     /// where `scroll` asks to bring the caret into view.
-    fn handle_event(&mut self, ui: &Ui, editor: &mut Editor, event: &Event) -> Option<bool> {
+    fn handle_event(
+        &mut self,
+        ui: &Ui,
+        editor: &mut Editor,
+        event: &Event,
+        indent: &str,
+    ) -> Option<bool> {
         let cmd = match event {
             Event::Text(t) if !t.is_empty() => Command::Insert(t.clone()),
             Event::Paste(t) if !t.is_empty() => Command::Insert(t.clone()),
@@ -315,7 +328,7 @@ impl EditorView {
                 };
                 match key {
                     Key::Enter if !m.command => Command::NewLine,
-                    Key::Tab if !m.command && !m.shift => Command::Insert("\t".into()),
+                    Key::Tab if !m.command && !m.shift => Command::Insert(indent.to_owned()),
                     Key::ArrowUp if m.alt && m.shift => Command::DuplicateLine,
                     Key::ArrowDown if m.alt && m.shift => Command::DuplicateLine,
                     Key::ArrowUp if m.alt => Command::MoveLineUp,

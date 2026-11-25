@@ -32,6 +32,13 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   shortcuts; restyled in-window menus on Windows and Linux.
 - Cut, Copy and Paste work (system clipboard was not enabled before).
 - macOS app bundle script (`scripts/macos-bundle.sh`).
+- Settings window (Cmd+, on macOS, File > Settings elsewhere): font size,
+  tab width, spaces for Tab, light/dark/system appearance, session
+  restore, UI language. Saved immediately to a versioned settings file.
+- Zoom In/Out/Actual Size (Cmd/Ctrl + "+", "-", "0"; Cmd/Ctrl+= also
+  zooms in), new View menu.
+- macOS menu shortcuts use logical keys, so punctuation shortcuts work on
+  non-US keyboard layouts.
 - Syntax highlighting with Tree-sitter for Rust, Python, JavaScript,
   JSON, TOML, YAML, CSS and shell scripts, chosen by file extension and
   shown in the status bar. Highlighting runs on a background thread and

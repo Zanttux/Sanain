@@ -29,10 +29,14 @@ pub enum MenuAction {
     FindNext,
     FindPrev,
     Replace,
+    Settings,
+    ZoomIn,
+    ZoomOut,
+    ZoomReset,
 }
 
 impl MenuAction {
-    const ALL: [MenuAction; 23] = [
+    const ALL: [MenuAction; 27] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -56,6 +60,10 @@ impl MenuAction {
         Self::FindNext,
         Self::FindPrev,
         Self::Replace,
+        Self::Settings,
+        Self::ZoomIn,
+        Self::ZoomOut,
+        Self::ZoomReset,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -84,6 +92,10 @@ impl MenuAction {
             Self::FindNext => "edit.find-next",
             Self::FindPrev => "edit.find-prev",
             Self::Replace => "edit.replace",
+            Self::Settings => "app.settings",
+            Self::ZoomIn => "view.zoom-in",
+            Self::ZoomOut => "view.zoom-out",
+            Self::ZoomReset => "view.zoom-reset",
         }
     }
 
@@ -118,6 +130,10 @@ impl MenuAction {
             Self::FindNext => "edit-find-next",
             Self::FindPrev => "edit-find-prev",
             Self::Replace => "edit-replace",
+            Self::Settings => "app-settings",
+            Self::ZoomIn => "view-zoom-in",
+            Self::ZoomOut => "view-zoom-out",
+            Self::ZoomReset => "view-zoom-reset",
         }
     }
 
@@ -149,6 +165,10 @@ impl MenuAction {
             Self::FindPrev => (cmd_shift, Key::G),
             Self::Replace if cfg!(target_os = "macos") => (cmd.plus(Modifiers::ALT), Key::F),
             Self::Replace => (cmd, Key::H),
+            Self::Settings => (cmd, Key::Comma),
+            Self::ZoomIn => (cmd, Key::Plus),
+            Self::ZoomOut => (cmd, Key::Minus),
+            Self::ZoomReset => (cmd, Key::Num0),
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -168,6 +188,11 @@ const FILE_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::ReopenTab),
 ];
 const WINDOW_ITEMS: &[Option<MenuAction>] = &[Some(MenuAction::NextTab), Some(MenuAction::PrevTab)];
+const VIEW_ITEMS: &[Option<MenuAction>] = &[
+    Some(MenuAction::ZoomIn),
+    Some(MenuAction::ZoomOut),
+    Some(MenuAction::ZoomReset),
+];
 const EDIT_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::Undo),
     Some(MenuAction::Redo),
@@ -199,10 +224,16 @@ pub fn in_window(
     let ctx = ui.ctx().clone();
     egui::MenuBar::new().ui(ui, |ui| {
         let mut file: Vec<Option<MenuAction>> = FILE_ITEMS.to_vec();
-        file.extend([None, Some(MenuAction::Quit)]);
+        file.extend([
+            None,
+            Some(MenuAction::Settings),
+            None,
+            Some(MenuAction::Quit),
+        ]);
         for (title, items) in [
             ("menu-file", file.as_slice()),
             ("menu-edit", EDIT_ITEMS),
+            ("menu-view", VIEW_ITEMS),
             ("menu-window", WINDOW_ITEMS),
         ] {
             ui.menu_button(label(title), |ui| {
@@ -234,10 +265,10 @@ pub use native::NativeMenu;
 mod native {
     use std::sync::mpsc::{Receiver, channel};
 
-    use muda::accelerator::{Accelerator, Code, Modifiers};
+    use muda::accelerator::{Key, KeyAccelerator, Modifiers, NamedKey};
     use muda::{Menu, MenuEvent, MenuItem, PredefinedMenuItem, Submenu};
 
-    use super::{EDIT_ITEMS, FILE_ITEMS, Label, MenuAction, WINDOW_ITEMS};
+    use super::{EDIT_ITEMS, FILE_ITEMS, Label, MenuAction, VIEW_ITEMS, WINDOW_ITEMS};
 
     /// The macOS menu bar. Keep alive for the lifetime of the app.
     pub struct NativeMenu {
@@ -246,35 +277,49 @@ mod native {
         rx: Receiver<MenuAction>,
     }
 
-    fn accelerator(action: MenuAction) -> Option<Accelerator> {
+    /// Shortcuts as logical keys (the character a key produces), as macOS
+    /// expects: physical key codes break punctuation shortcuts on non-US
+    /// layouts (e.g. "=" is Shift+0 on Finnish keyboards).
+    fn accelerator(action: MenuAction) -> KeyAccelerator {
         let cmd = Modifiers::META;
         let cmd_shift = Modifiers::META | Modifiers::SHIFT;
+        let ch = |c: &str| Key::Character(c.into());
         let (m, k) = match action {
-            MenuAction::New => (cmd, Code::KeyN),
-            MenuAction::Open => (cmd, Code::KeyO),
-            MenuAction::Save => (cmd, Code::KeyS),
-            MenuAction::SaveAs => (cmd_shift, Code::KeyS),
-            MenuAction::Quit => (cmd, Code::KeyQ),
-            MenuAction::Undo => (cmd, Code::KeyZ),
-            MenuAction::Redo => (cmd_shift, Code::KeyZ),
-            MenuAction::Cut => (cmd, Code::KeyX),
-            MenuAction::Copy => (cmd, Code::KeyC),
-            MenuAction::Paste => (cmd, Code::KeyV),
-            MenuAction::SelectAll => (cmd, Code::KeyA),
-            MenuAction::DuplicateLine => (Modifiers::ALT | Modifiers::SHIFT, Code::ArrowDown),
-            MenuAction::DeleteLine => (cmd_shift, Code::KeyK),
-            MenuAction::MoveLineUp => (Modifiers::ALT, Code::ArrowUp),
-            MenuAction::MoveLineDown => (Modifiers::ALT, Code::ArrowDown),
-            MenuAction::CloseTab => (cmd, Code::KeyW),
-            MenuAction::ReopenTab => (cmd_shift, Code::KeyT),
-            MenuAction::NextTab => (Modifiers::CONTROL, Code::Tab),
-            MenuAction::PrevTab => (Modifiers::CONTROL | Modifiers::SHIFT, Code::Tab),
-            MenuAction::Find => (cmd, Code::KeyF),
-            MenuAction::FindNext => (cmd, Code::KeyG),
-            MenuAction::FindPrev => (cmd_shift, Code::KeyG),
-            MenuAction::Replace => (cmd | Modifiers::ALT, Code::KeyF),
+            MenuAction::New => (cmd, ch("n")),
+            MenuAction::Open => (cmd, ch("o")),
+            MenuAction::Save => (cmd, ch("s")),
+            MenuAction::SaveAs => (cmd_shift, ch("s")),
+            MenuAction::Quit => (cmd, ch("q")),
+            MenuAction::Undo => (cmd, ch("z")),
+            MenuAction::Redo => (cmd_shift, ch("z")),
+            MenuAction::Cut => (cmd, ch("x")),
+            MenuAction::Copy => (cmd, ch("c")),
+            MenuAction::Paste => (cmd, ch("v")),
+            MenuAction::SelectAll => (cmd, ch("a")),
+            MenuAction::DuplicateLine => (
+                Modifiers::ALT | Modifiers::SHIFT,
+                Key::Named(NamedKey::ArrowDown),
+            ),
+            MenuAction::DeleteLine => (cmd_shift, ch("k")),
+            MenuAction::MoveLineUp => (Modifiers::ALT, Key::Named(NamedKey::ArrowUp)),
+            MenuAction::MoveLineDown => (Modifiers::ALT, Key::Named(NamedKey::ArrowDown)),
+            MenuAction::CloseTab => (cmd, ch("w")),
+            MenuAction::ReopenTab => (cmd_shift, ch("t")),
+            MenuAction::NextTab => (Modifiers::CONTROL, Key::Named(NamedKey::Tab)),
+            MenuAction::PrevTab => (
+                Modifiers::CONTROL | Modifiers::SHIFT,
+                Key::Named(NamedKey::Tab),
+            ),
+            MenuAction::Find => (cmd, ch("f")),
+            MenuAction::FindNext => (cmd, ch("g")),
+            MenuAction::FindPrev => (cmd_shift, ch("g")),
+            MenuAction::Replace => (cmd | Modifiers::ALT, ch("f")),
+            MenuAction::Settings => (cmd, ch(",")),
+            MenuAction::ZoomIn => (cmd, ch("+")),
+            MenuAction::ZoomOut => (cmd, ch("-")),
+            MenuAction::ZoomReset => (cmd, ch("0")),
         };
-        Some(Accelerator::new(m, k))
+        KeyAccelerator::new(m, k)
     }
 
     impl NativeMenu {
@@ -283,12 +328,8 @@ mod native {
         pub fn install(label: Label<'_>, wake: impl Fn() + Send + Sync + 'static) -> Option<Self> {
             let mut items = Vec::new();
             let mut make = |action: MenuAction| {
-                let item = MenuItem::with_id(
-                    action.id(),
-                    label(action.label_id()),
-                    true,
-                    accelerator(action),
-                );
+                let item = MenuItem::with_id(action.id(), label(action.label_id()), true, None);
+                let _ = item.set_key_accelerator(Some(accelerator(action)));
                 items.push((action, item.clone()));
                 item
             };
@@ -308,10 +349,13 @@ mod native {
             let hide_others = label("app-hide-others");
             let show_all = label("app-show-all");
             let quit = make(MenuAction::Quit);
+            let settings = make(MenuAction::Settings);
             let app = Submenu::with_items(
                 "Sanain",
                 true,
                 &[
+                    &settings,
+                    &PredefinedMenuItem::separator(),
                     &PredefinedMenuItem::hide(Some(&hide)),
                     &PredefinedMenuItem::hide_others(Some(&hide_others)),
                     &PredefinedMenuItem::show_all(Some(&show_all)),
@@ -328,6 +372,10 @@ mod native {
             let edit_refs: Vec<&dyn muda::IsMenuItem> =
                 edit_items.iter().map(|b| b.as_ref()).collect();
             let edit = Submenu::with_items(label("menu-edit"), true, &edit_refs).ok()?;
+            let view_items = section(VIEW_ITEMS, &mut make);
+            let view_refs: Vec<&dyn muda::IsMenuItem> =
+                view_items.iter().map(|b| b.as_ref()).collect();
+            let view = Submenu::with_items(label("menu-view"), true, &view_refs).ok()?;
             let minimize = label("window-minimize");
             let zoom = label("window-zoom");
             let mut window_items = section(WINDOW_ITEMS, &mut make);
@@ -337,7 +385,7 @@ mod native {
             let window_refs: Vec<&dyn muda::IsMenuItem> =
                 window_items.iter().map(|b| b.as_ref()).collect();
             let window = Submenu::with_items(label("menu-window"), true, &window_refs).ok()?;
-            let menu = Menu::with_items(&[&app, &file, &edit, &window]).ok()?;
+            let menu = Menu::with_items(&[&app, &file, &edit, &view, &window]).ok()?;
             menu.init_for_nsapp();
             window.set_as_windows_menu_for_nsapp();
 

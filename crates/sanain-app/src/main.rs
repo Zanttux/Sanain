@@ -9,6 +9,7 @@ mod view;
 use std::path::PathBuf;
 
 use sanain_app::session::Session;
+use sanain_app::settings::Settings;
 use sanain_app::workspace::Workspace;
 use sanain_i18n::Localizer;
 use sanain_io::recovery::RecoveryStore;
@@ -16,9 +17,17 @@ use sanain_io::recovery::RecoveryStore;
 fn main() -> eframe::Result {
     let paths: Vec<PathBuf> = std::env::args_os().skip(1).map(PathBuf::from).collect();
 
+    let settings_dir = Settings::default_dir();
+    let settings = settings_dir
+        .as_deref()
+        .map(Settings::load)
+        .unwrap_or_default();
+
+    // Language: SANAIN_LOCALE, then the user's choice, then the system.
     let requested: Vec<String> = std::env::var("SANAIN_LOCALE")
         .ok()
         .into_iter()
+        .chain(settings.locale.clone())
         .chain(sys_locale::get_locales())
         .collect();
     let refs: Vec<&str> = requested.iter().map(String::as_str).collect();
@@ -54,6 +63,7 @@ fn main() -> eframe::Result {
         .unwrap_or_default();
     let (mut workspace, load_errors, restored) = Workspace::startup(store, snapshots, &paths);
     if paths.is_empty()
+        && settings.restore_session
         && std::env::var_os("SANAIN_NO_SESSION").is_none()
         && let Some(session) = session_file.as_deref().and_then(Session::load)
     {
@@ -77,8 +87,15 @@ fn main() -> eframe::Result {
         options,
         Box::new(move |cc| {
             theme::install(&cc.egui_ctx);
-            let mut shell =
-                shell::Shell::new(workspace, l10n, startup_errors, restored, session_file);
+            let mut shell = shell::Shell::new(
+                workspace,
+                l10n,
+                startup_errors,
+                restored,
+                session_file,
+                settings,
+                settings_dir,
+            );
             shell.install_menu(&cc.egui_ctx);
             Ok(Box::new(shell))
         }),
