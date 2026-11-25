@@ -438,10 +438,11 @@ impl Shell {
         if self.applied_theme == Some(self.settings.theme) {
             return;
         }
+        theme::set_high_contrast(ctx, self.settings.theme == ThemeChoice::HighContrast);
         ctx.set_theme(match self.settings.theme {
             ThemeChoice::System => egui::ThemePreference::System,
             ThemeChoice::Light => egui::ThemePreference::Light,
-            ThemeChoice::Dark => egui::ThemePreference::Dark,
+            ThemeChoice::Dark | ThemeChoice::HighContrast => egui::ThemePreference::Dark,
         });
         self.applied_theme = Some(self.settings.theme);
     }
@@ -489,6 +490,7 @@ impl Shell {
                                 (ThemeChoice::System, "settings-theme-system"),
                                 (ThemeChoice::Light, "settings-theme-light"),
                                 (ThemeChoice::Dark, "settings-theme-dark"),
+                                (ThemeChoice::HighContrast, "settings-theme-high-contrast"),
                             ] {
                                 ui.radio_value(&mut s.theme, v, l(id));
                             }
