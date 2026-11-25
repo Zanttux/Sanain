@@ -9,6 +9,7 @@ pub mod recovery;
 pub mod session;
 pub mod settings;
 pub mod syntax;
+pub mod update;
 pub mod workspace;
 
 pub use editor::{Command, Editor, SaveOutcome};

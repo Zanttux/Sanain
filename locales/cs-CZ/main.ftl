@@ -244,3 +244,15 @@ folder-search-summary = { $count ->
     [many] { $files } souboru
    *[other] { $files } souborech
     }
+app-check-updates = Zkontrolovat aktualizace…
+update-checking = Kontrolují se aktualizace…
+update-up-to-date = Sanain { $version } je nejnovější verze.
+update-no-releases = Zatím nebyla zveřejněna žádná vydání aplikace Sanain.
+update-failed = Aktualizace nelze zkontrolovat: { $reason }
+update-invalid = neočekávaná odpověď
+update-available-title = Je k dispozici Sanain { $version }
+update-available-body = Otevřete stránku ke stažení a získejte jej. Sanain sám nic nestahuje ani neinstaluje.
+update-open-page = Otevřít stránku ke stažení
+update-later = Později
+settings-check-updates = Kontrolovat aktualizace jednou denně
+settings-check-updates-detail = Zjišťuje na github.com nejnovější vydání. Nic dalšího se neodesílá.

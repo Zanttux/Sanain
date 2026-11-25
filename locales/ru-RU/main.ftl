@@ -244,3 +244,15 @@ folder-search-summary = { $count ->
     [many] { $files } файлах
    *[other] { $files } файла
     }
+app-check-updates = Проверить обновления…
+update-checking = Проверка обновлений…
+update-up-to-date = Sanain { $version } — новейшая версия.
+update-no-releases = Выпуски Sanain ещё не опубликованы.
+update-failed = Не удалось проверить обновления: { $reason }
+update-invalid = неожиданный ответ
+update-available-title = Доступна версия Sanain { $version }
+update-available-body = Откройте страницу загрузки, чтобы получить её. Sanain ничего не загружает и не устанавливает самостоятельно.
+update-open-page = Открыть страницу загрузки
+update-later = Позже
+settings-check-updates = Проверять обновления раз в день
+settings-check-updates-detail = Запрашивает у github.com последний выпуск. Больше ничего не отправляется.

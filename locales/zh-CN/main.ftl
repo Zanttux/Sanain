@@ -220,3 +220,15 @@ folder-search-summary = { $files ->
     }共 { $count ->
    *[other] { $count } 个匹配项
     }
+app-check-updates = 检查更新…
+update-checking = 正在检查更新…
+update-up-to-date = Sanain { $version } 是最新版本。
+update-no-releases = Sanain 尚未发布任何版本。
+update-failed = 无法检查更新：{ $reason }
+update-invalid = 意外的响应
+update-available-title = Sanain { $version } 现已推出
+update-available-body = 请打开下载页面获取。Sanain 不会自行下载或安装任何内容。
+update-open-page = 打开下载页面
+update-later = 稍后
+settings-check-updates = 每天检查一次更新
+settings-check-updates-detail = 向 github.com 查询最新版本。不会发送其他任何信息。

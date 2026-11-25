@@ -228,3 +228,15 @@ folder-search-summary = { $count ->
     [one] 1 tiedostossa
    *[other] { $files } tiedostossa
     }
+app-check-updates = Tarkista päivitykset…
+update-checking = Tarkistetaan päivityksiä…
+update-up-to-date = Sanain { $version } on uusin versio.
+update-no-releases = Sanainista ei ole vielä julkaistu versioita.
+update-failed = Päivityksiä ei voitu tarkistaa: { $reason }
+update-invalid = odottamaton vastaus
+update-available-title = Sanain { $version } on saatavilla
+update-available-body = Avaa lataussivu hakeaksesi sen. Sanain ei lataa eikä asenna mitään itse.
+update-open-page = Avaa lataussivu
+update-later = Myöhemmin
+settings-check-updates = Tarkista päivitykset kerran päivässä
+settings-check-updates-detail = Kysyy github.comista uusinta julkaisua. Mitään muuta ei lähetetä.

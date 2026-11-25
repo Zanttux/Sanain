@@ -72,6 +72,9 @@ GitHub operations, single-colour wordmark and icon as working assets.
 Standing order: no questions to the owner (D19).
 
 ## Owner-only items (never block work)
+- Automatic installation of updates needs code-signing certificates
+  (Apple Developer ID, Windows Authenticode) and a key for signing update
+  manifests. Only the check-and-notify part is implemented.
 - Trademark search for "Sanain" (EUIPO, PRH, USPTO, WIPO) before any
   launch announcement.
 

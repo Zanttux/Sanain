@@ -228,3 +228,15 @@ folder-search-summary = { $count ->
     [one] 1 fil
    *[other] { $files } filer
     }
+app-check-updates = Søg efter opdateringer…
+update-checking = Søger efter opdateringer…
+update-up-to-date = Sanain { $version } er den nyeste version.
+update-no-releases = Der er endnu ikke udgivet nogen versioner af Sanain.
+update-failed = Kunne ikke søge efter opdateringer: { $reason }
+update-invalid = uventet svar
+update-available-title = Sanain { $version } er tilgængelig
+update-available-body = Åbn downloadsiden for at hente den. Sanain downloader eller installerer ikke noget af sig selv.
+update-open-page = Åbn downloadside
+update-later = Senere
+settings-check-updates = Søg efter opdateringer én gang om dagen
+settings-check-updates-detail = Spørger github.com om den seneste udgivelse. Der sendes intet andet.

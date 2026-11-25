@@ -99,6 +99,7 @@ fn main() -> eframe::Result {
                 settings_dir,
             );
             shell.install_menu(&cc.egui_ctx);
+            shell.auto_update_check(&cc.egui_ctx);
             Ok(Box::new(shell))
         }),
     )

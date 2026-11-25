@@ -23,7 +23,11 @@ BSD-3-Clause and MIT dependencies require it); generate it in CI (e.g. cargo-abo
 
 CI builds releases from tagged commits with the lockfile and produces
 checksums, SBOM, notices and release notes. The owner approves publishing.
-No auto-updater until a signed manifest, rollback and threat model exist.
+Updates: Sanain can check GitHub for a newer release (manual, or once a
+day if the user opts in) and links to the release page. It never
+downloads or installs anything itself. Automatic installation waits for
+signed releases, a signed update manifest, rollback and a threat model;
+those need signing keys and owner approval (docs/AUTONOMY.md).
 
 CLI (proposed): `sanain <path>`, `sanain --diff a b`, `sanain --new`;
 `--tail` later. No shell interpolation of paths. Importing Notepad++

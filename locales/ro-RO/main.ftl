@@ -236,3 +236,15 @@ folder-search-summary = { $count ->
     [few] { $files } fișiere
    *[other] { $files } de fișiere
     }
+app-check-updates = Caută actualizări…
+update-checking = Se caută actualizări…
+update-up-to-date = Sanain { $version } este cea mai nouă versiune.
+update-no-releases = Nu a fost publicată încă nicio versiune Sanain.
+update-failed = Nu s-a putut căuta actualizări: { $reason }
+update-invalid = răspuns neașteptat
+update-available-title = Sanain { $version } este disponibil
+update-available-body = Deschide pagina de descărcare pentru a-l obține. Sanain nu descarcă și nu instalează nimic de la sine.
+update-open-page = Deschide pagina de descărcare
+update-later = Mai târziu
+settings-check-updates = Caută actualizări o dată pe zi
+settings-check-updates-detail = Interoghează github.com pentru cea mai recentă versiune. Nu se trimite nimic altceva.

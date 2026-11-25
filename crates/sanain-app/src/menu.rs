@@ -57,10 +57,11 @@ pub enum MenuAction {
     Unfold,
     UnfoldAll,
     FindInFolder,
+    CheckUpdates,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 50] = [
+    pub const ALL: [MenuAction; 51] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -111,6 +112,7 @@ impl MenuAction {
         Self::Unfold,
         Self::UnfoldAll,
         Self::FindInFolder,
+        Self::CheckUpdates,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -166,6 +168,7 @@ impl MenuAction {
             Self::Unfold => "view.unfold",
             Self::UnfoldAll => "view.unfold-all",
             Self::FindInFolder => "edit.find-in-folder",
+            Self::CheckUpdates => "app.check-updates",
         }
     }
 
@@ -227,6 +230,7 @@ impl MenuAction {
             Self::Unfold => "view-unfold",
             Self::UnfoldAll => "view-unfold-all",
             Self::FindInFolder => "edit-find-in-folder",
+            Self::CheckUpdates => "app-check-updates",
         }
     }
 
@@ -306,7 +310,8 @@ impl MenuAction {
             | Self::SaveWithEncoding
             | Self::Fold
             | Self::Unfold
-            | Self::UnfoldAll => return None,
+            | Self::UnfoldAll
+            | Self::CheckUpdates => return None,
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -439,6 +444,7 @@ pub fn in_window(
         file.extend([
             None,
             Some(MenuAction::Settings),
+            Some(MenuAction::CheckUpdates),
             None,
             Some(MenuAction::Quit),
         ]);
@@ -617,7 +623,8 @@ mod native {
             | MenuAction::SaveWithEncoding
             | MenuAction::Fold
             | MenuAction::Unfold
-            | MenuAction::UnfoldAll => return None,
+            | MenuAction::UnfoldAll
+            | MenuAction::CheckUpdates => return None,
         };
         Some(KeyAccelerator::new(m, k))
     }
@@ -654,11 +661,13 @@ mod native {
             let show_all = label("app-show-all");
             let quit = make(MenuAction::Quit);
             let settings = make(MenuAction::Settings);
+            let updates = make(MenuAction::CheckUpdates);
             let app = Submenu::with_items(
                 "Sanain",
                 true,
                 &[
                     &settings,
+                    &updates,
                     &PredefinedMenuItem::separator(),
                     &PredefinedMenuItem::hide(Some(&hide)),
                     &PredefinedMenuItem::hide_others(Some(&hide_others)),

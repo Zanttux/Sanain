@@ -21,6 +21,7 @@ use crate::preview;
 use crate::theme;
 use crate::view::{EditorView, ViewOptions};
 use sanain_app::settings::{FONT_SIZE_DEFAULT, Settings, ThemeChoice};
+use sanain_app::update::{Status as UpdateStatus, UpdateError};
 
 /// An open side-by-side comparison of two tabs.
 struct Compare {
@@ -108,6 +109,8 @@ enum Dialog {
     Error(String),
     /// Confirm opening a web link in the system browser.
     OpenLink(String),
+    /// A newer release exists: (version, release page).
+    Update(String, String),
 }
 
 pub struct Shell {
@@ -128,6 +131,11 @@ pub struct Shell {
     settings: Settings,
     settings_dir: Option<std::path::PathBuf>,
     settings_open: bool,
+    /// A running update check and whether the user asked for it.
+    update: Option<(
+        std::sync::mpsc::Receiver<Result<UpdateStatus, UpdateError>>,
+        bool,
+    )>,
     /// Command whose new shortcut is being recorded in Settings.
     recording: Option<MenuAction>,
     /// Commands that lost their shortcut to the last recorded one.
@@ -204,6 +212,7 @@ impl Shell {
             settings,
             settings_dir,
             settings_open: false,
+            update: None,
             recording: None,
             shortcut_moved: Vec::new(),
             palette: Palette::default(),
@@ -512,6 +521,10 @@ impl Shell {
                         ui.end_row();
                         ui.label("");
                         ui.checkbox(&mut s.restore_session, l("settings-restore-session"));
+                        ui.end_row();
+                        ui.label("");
+                        ui.checkbox(&mut s.check_updates, l("settings-check-updates"))
+                            .on_hover_text(l("settings-check-updates-detail"));
                         ui.end_row();
                         ui.label(l("settings-language"));
                         let current = s
@@ -923,6 +936,78 @@ impl Shell {
                     }
                 }
             }
+        }
+    }
+
+    /// Ask GitHub for the latest release in the background. `manual`
+    /// checks report every outcome; automatic ones only a new version.
+    fn start_update_check(&mut self, ctx: &egui::Context, manual: bool) {
+        if self.update.is_some() {
+            return;
+        }
+        let (tx, rx) = std::sync::mpsc::channel();
+        let ctx = ctx.clone();
+        let spawned = std::thread::Builder::new()
+            .name("sanain-update".into())
+            .spawn(move || {
+                let _ = tx.send(sanain_app::update::check(env!("CARGO_PKG_VERSION")));
+                ctx.request_repaint();
+            });
+        if spawned.is_ok() {
+            self.update = Some((rx, manual));
+            if manual {
+                self.status = Some((self.t("update-checking", &[]), false));
+            }
+        }
+    }
+
+    fn poll_update(&mut self) {
+        let Some((rx, manual)) = &self.update else {
+            return;
+        };
+        let Ok(result) = rx.try_recv() else { return };
+        let manual = *manual;
+        self.update = None;
+        match result {
+            Ok(UpdateStatus::Available(r)) => {
+                let version = format!(
+                    "{}.{}.{}",
+                    r.version.major, r.version.minor, r.version.patch
+                );
+                self.dialog = Some(Dialog::Update(version, r.page));
+            }
+            Ok(UpdateStatus::UpToDate) if manual => {
+                let msg = self.t(
+                    "update-up-to-date",
+                    &[("version", env!("CARGO_PKG_VERSION").into())],
+                );
+                self.status = Some((msg, false));
+            }
+            Ok(UpdateStatus::NoReleases) if manual => {
+                self.status = Some((self.t("update-no-releases", &[]), false));
+            }
+            Err(e) if manual => {
+                let reason = match e {
+                    UpdateError::Network(m) => m,
+                    UpdateError::Invalid => self.t("update-invalid", &[]),
+                };
+                self.status = Some((self.t("update-failed", &[("reason", reason.into())]), true));
+            }
+            _ => {}
+        }
+    }
+
+    /// Run the daily automatic check if the user enabled it.
+    pub fn auto_update_check(&mut self, ctx: &egui::Context) {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |d| d.as_secs());
+        if self.settings.check_updates
+            && now.saturating_sub(self.settings.last_update_check) >= 24 * 3600
+        {
+            self.settings.last_update_check = now;
+            self.save_settings();
+            self.start_update_check(ctx, false);
         }
     }
 
@@ -1510,6 +1595,10 @@ impl Shell {
                 self.palette.open();
                 return;
             }
+            MenuAction::CheckUpdates => {
+                self.start_update_check(ctx, true);
+                return;
+            }
             MenuAction::FindInFolder => {
                 let dir = self
                     .editor()
@@ -1792,6 +1881,13 @@ impl Shell {
                 ),
                 Dialog::Error(msg) => (msg.clone(), String::new()),
                 Dialog::OpenLink(url) => (self.t("dialog-open-link-title", &[]), url.clone()),
+                Dialog::Update(version, _) => (
+                    self.t(
+                        "update-available-title",
+                        &[("version", version.clone().into())],
+                    ),
+                    self.t("update-available-body", &[]),
+                ),
             };
             ui.strong(title);
             if !body.is_empty() {
@@ -1833,6 +1929,15 @@ impl Shell {
                             after = Some(Action::SaveAs);
                         }
                         if ui.button(self.t("button-cancel", &[])).clicked() {
+                            close = true;
+                        }
+                    }
+                    Dialog::Update(_, page) => {
+                        if ui.button(self.t("update-open-page", &[])).clicked() {
+                            ui.ctx().open_url(egui::OpenUrl::new_tab(page));
+                            close = true;
+                        }
+                        if ui.button(self.t("update-later", &[])).clicked() {
                             close = true;
                         }
                     }
@@ -2040,6 +2145,7 @@ impl eframe::App for Shell {
                 }
             });
 
+        self.poll_update();
         self.dialogs(&ctx);
         self.settings_window(&ctx);
         self.compare_picker(&ctx);
