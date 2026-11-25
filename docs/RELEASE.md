@@ -18,8 +18,8 @@ Advertise only tested targets. Windows installer and portable build; macOS
 signed and notarized bundle; Linux archive or AppImage first. Verify signing
 costs, store requirements and licenses before committing to a channel.
 
-Binary releases must ship a third-party licence notices file (BSD-2-Clause
-and MIT dependencies require it); generate it in CI (e.g. cargo-about).
+Binary releases must ship a third-party licence notices file (BSD-2-Clause,
+BSD-3-Clause and MIT dependencies require it); generate it in CI (e.g. cargo-about).
 
 CI builds releases from tagged commits with the lockfile and produces
 checksums, SBOM, notices and release notes. The owner approves publishing.

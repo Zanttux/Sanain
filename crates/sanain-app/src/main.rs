@@ -73,10 +73,6 @@ fn main() -> eframe::Result {
     {
         workspace.restore_session(&session);
     }
-    let startup_errors: Vec<String> = load_errors
-        .iter()
-        .map(|(p, e)| shell::describe_load_error(&l10n, p, e))
-        .collect();
 
     let options = eframe::NativeOptions {
         viewport: eframe::egui::ViewportBuilder::default()
@@ -94,7 +90,7 @@ fn main() -> eframe::Result {
             let mut shell = shell::Shell::new(
                 workspace,
                 l10n,
-                startup_errors,
+                load_errors,
                 restored,
                 session_file,
                 settings,

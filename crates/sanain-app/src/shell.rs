@@ -30,6 +30,37 @@ struct Compare {
     diff: sanain_tools::diff::Diff,
 }
 
+/// The encoding picker's purpose.
+enum EncodingPick {
+    /// Reopen this file with the chosen encoding.
+    Reopen {
+        path: std::path::PathBuf,
+        /// First bytes of the file, for the preview.
+        head: Vec<u8>,
+        selected: usize,
+        error: Option<String>,
+    },
+    /// Save the active document with the chosen encoding.
+    Save {
+        selected: usize,
+        error: Option<String>,
+    },
+}
+
+/// Encodings offered: Unicode first, then legacy ones.
+fn encoding_choices(reopen: bool) -> Vec<TextEncoding> {
+    let mut v = vec![TextEncoding::Utf8];
+    if !reopen {
+        v.extend([
+            TextEncoding::Utf8Bom,
+            TextEncoding::Utf16LeBom,
+            TextEncoding::Utf16BeBom,
+        ]);
+    }
+    v.extend(sanain_io::LEGACY.iter().map(|e| TextEncoding::Legacy(e)));
+    v
+}
+
 /// Parsed data behind a structured view, for one document revision.
 enum Structured {
     Csv(sanain_tools::csv::Table),
@@ -98,6 +129,7 @@ pub struct Shell {
     settings_open: bool,
     palette: Palette,
     compare: Option<Compare>,
+    encoding_pick: Option<EncodingPick>,
     structured: std::collections::HashSet<TabId>,
     structured_cache: HashMap<TabId, (Revision, Option<char>, Structured)>,
     csv_delimiter: HashMap<TabId, char>,
@@ -139,7 +171,7 @@ impl Shell {
     pub fn new(
         ws: Workspace,
         l10n: Localizer,
-        startup_errors: Vec<String>,
+        load_errors: Vec<(std::path::PathBuf, LoadError)>,
         restored: usize,
         session_file: Option<std::path::PathBuf>,
         settings: Settings,
@@ -164,6 +196,7 @@ impl Shell {
             settings_open: false,
             palette: Palette::default(),
             compare: None,
+            encoding_pick: None,
             structured: Default::default(),
             structured_cache: HashMap::new(),
             csv_delimiter: HashMap::new(),
@@ -177,8 +210,19 @@ impl Shell {
             #[cfg(target_os = "macos")]
             native_menu: None,
         };
-        if !startup_errors.is_empty() {
-            shell.dialog = Some(Dialog::Error(startup_errors.join("\n")));
+        // Files that are not UTF-8/UTF-16 go to the encoding picker; other
+        // failures are reported together.
+        let mut messages = Vec::new();
+        for (path, e) in &load_errors {
+            match e {
+                LoadError::Decode { .. } if shell.encoding_pick.is_none() => {
+                    shell.start_reopen(path)
+                }
+                _ => messages.push(describe_load_error(&shell.l10n, path, e)),
+            }
+        }
+        if !messages.is_empty() {
+            shell.dialog = Some(Dialog::Error(messages.join("\n")));
         }
         shell.focus_active();
         shell
@@ -372,6 +416,9 @@ impl Shell {
                 self.status = None;
                 self.focus_active();
             }
+            // Not valid UTF-8/UTF-16: let the user pick an encoding instead
+            // of failing.
+            Err(LoadError::Decode { .. }) => self.start_reopen(path),
             Err(e) => self.dialog = Some(Dialog::Error(describe_load_error(&self.l10n, path, &e))),
         }
     }
@@ -552,6 +599,187 @@ impl Shell {
                     ],
                 );
                 self.status = Some((msg, true));
+            }
+        }
+    }
+
+    fn start_reopen(&mut self, path: &std::path::Path) {
+        use std::io::Read;
+        let mut head = Vec::new();
+        let read = std::fs::File::open(path).and_then(|f| f.take(64 * 1024).read_to_end(&mut head));
+        match read {
+            Ok(_) => {
+                self.encoding_pick = Some(EncodingPick::Reopen {
+                    path: path.to_owned(),
+                    head,
+                    selected: 1, // Windows-1252, the most common legacy case
+                    error: None,
+                })
+            }
+            Err(e) => self.dialog = Some(Dialog::Error(e.to_string())),
+        }
+    }
+
+    fn encoding_label(&self, e: TextEncoding) -> String {
+        match e {
+            TextEncoding::Legacy(enc) => {
+                let id = format!("enc-{}", enc.name().to_ascii_lowercase());
+                format!("{} ({})", self.t(&id, &[]), enc.name())
+            }
+            other => other.name().to_owned(),
+        }
+    }
+
+    fn encoding_window(&mut self, ctx: &egui::Context) {
+        let Some(pick) = &self.encoding_pick else {
+            return;
+        };
+        let reopen = matches!(pick, EncodingPick::Reopen { .. });
+        let choices = encoding_choices(reopen);
+        let labels: Vec<String> = choices.iter().map(|e| self.encoding_label(*e)).collect();
+        let title = if reopen {
+            self.t("encoding-reopen-title", &[])
+        } else {
+            self.t("encoding-save-title", &[])
+        };
+        let (ok_label, cancel_label) = (
+            self.t(if reopen { "button-open" } else { "button-save" }, &[]),
+            self.t("button-cancel", &[]),
+        );
+        let p = theme::palette(ctx);
+        let mut open = true;
+        let mut confirm = false;
+        let mut cancel = false;
+        let Some(pick) = &self.encoding_pick else {
+            return;
+        };
+        let preview = match pick {
+            EncodingPick::Reopen { head, selected, .. } => {
+                let enc = choices
+                    .get(*selected)
+                    .copied()
+                    .unwrap_or(TextEncoding::Utf8);
+                let text = match enc {
+                    TextEncoding::Legacy(e) => e.decode_without_bom_handling(head).0.into_owned(),
+                    _ => String::from_utf8_lossy(head).into_owned(),
+                };
+                Some(text.chars().take(1200).collect::<String>())
+            }
+            EncodingPick::Save { .. } => None,
+        };
+        let (selected, error) = match &mut self.encoding_pick {
+            Some(
+                EncodingPick::Reopen {
+                    selected, error, ..
+                }
+                | EncodingPick::Save { selected, error },
+            ) => (selected, error),
+            None => return,
+        };
+        egui::Window::new(title)
+            .id(egui::Id::unique("sanain-encoding"))
+            .open(&mut open)
+            .collapsible(false)
+            .default_width(520.0)
+            .show(ctx, |ui| {
+                egui::ComboBox::from_id_salt("encoding-choice")
+                    .width(360.0)
+                    .selected_text(labels.get(*selected).cloned().unwrap_or_default())
+                    .show_ui(ui, |ui| {
+                        for (i, l) in labels.iter().enumerate() {
+                            if ui.selectable_value(selected, i, l).changed() {
+                                *error = None;
+                            }
+                        }
+                    });
+                if let Some(text) = &preview {
+                    ui.add_space(6.0);
+                    egui::Frame::NONE
+                        .fill(p.canvas)
+                        .stroke(egui::Stroke::new(1.0, p.border))
+                        .inner_margin(egui::Margin::same(8))
+                        .show(ui, |ui| {
+                            egui::ScrollArea::vertical()
+                                .max_height(220.0)
+                                .show(ui, |ui| {
+                                    ui.set_width(ui.available_width());
+                                    ui.label(egui::RichText::new(text).monospace());
+                                });
+                        });
+                }
+                if let Some(err) = error.as_ref() {
+                    ui.colored_label(p.error, err);
+                }
+                ui.add_space(6.0);
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.button(&ok_label).clicked() {
+                        confirm = true;
+                    }
+                    if ui.button(&cancel_label).clicked() {
+                        cancel = true;
+                    }
+                });
+            });
+        if !open || cancel {
+            self.encoding_pick = None;
+            return;
+        }
+        if !confirm {
+            return;
+        }
+        let Some(pick) = self.encoding_pick.take() else {
+            return;
+        };
+        match pick {
+            EncodingPick::Reopen {
+                path,
+                head,
+                selected,
+                ..
+            } => {
+                let enc = choices.get(selected).copied().unwrap_or(TextEncoding::Utf8);
+                match self.ws.open_as(&path, enc) {
+                    Ok(_) => self.focus_active(),
+                    Err(LoadError::Decode { source, .. }) => {
+                        let msg = self.t(
+                            "encoding-not-exact",
+                            &[("reason", source.to_string().into())],
+                        );
+                        self.encoding_pick = Some(EncodingPick::Reopen {
+                            path,
+                            head,
+                            selected,
+                            error: Some(msg),
+                        });
+                    }
+                    Err(e) => {
+                        self.dialog =
+                            Some(Dialog::Error(describe_load_error(&self.l10n, &path, &e)))
+                    }
+                }
+            }
+            EncodingPick::Save { selected, .. } => {
+                let enc = choices.get(selected).copied().unwrap_or(TextEncoding::Utf8);
+                match self.editor_mut().save_with_encoding(enc) {
+                    SaveOutcome::Failed(sanain_io::SaveError::Unencodable { source, .. }) => {
+                        let msg = self.t(
+                            "encoding-unencodable",
+                            &[
+                                ("character", source.character.to_string().into()),
+                                ("encoding", source.encoding.into()),
+                            ],
+                        );
+                        // Show where the problem is.
+                        self.editor_mut().select(source.index..source.index + 1);
+                        self.encoding_pick = Some(EncodingPick::Save {
+                            selected,
+                            error: Some(msg),
+                        });
+                    }
+                    outcome => {
+                        self.handle_save(outcome);
+                    }
+                }
             }
         }
     }
@@ -999,6 +1227,7 @@ impl Shell {
                 | MenuAction::MarkdownSplit
                 | MenuAction::MarkdownPreview => Self::is_markdown(self.editor()),
                 MenuAction::StructuredView => Self::data_kind(self.editor()).is_some(),
+                MenuAction::ReopenWithEncoding => self.editor().file().is_some(),
                 _ => true,
             }
     }
@@ -1082,6 +1311,28 @@ impl Shell {
             MenuAction::CommandPalette => {
                 self.palette.open();
                 return;
+            }
+            MenuAction::ReopenWithEncoding => {
+                match self.editor().file().map(|f| f.path.clone()) {
+                    Some(_) if self.editor().document().is_dirty() => {
+                        self.status = Some((self.t("encoding-save-first", &[]), true));
+                    }
+                    Some(path) => self.start_reopen(&path),
+                    None => {}
+                }
+                None
+            }
+            MenuAction::SaveWithEncoding => {
+                let current = self.editor().encoding();
+                let selected = encoding_choices(false)
+                    .iter()
+                    .position(|e| *e == current)
+                    .unwrap_or(0);
+                self.encoding_pick = Some(EncodingPick::Save {
+                    selected,
+                    error: None,
+                });
+                None
             }
             MenuAction::StructuredView => {
                 if Self::data_kind(self.editor()).is_some() {
@@ -1262,13 +1513,7 @@ impl Shell {
                 ui.colored_label(if *is_error { p.error } else { p.muted }, msg);
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let enc = match editor.encoding() {
-                    TextEncoding::Utf8 => "encoding-utf8",
-                    TextEncoding::Utf8Bom => "encoding-utf8-bom",
-                    TextEncoding::Utf16LeBom => "encoding-utf16le",
-                    TextEncoding::Utf16BeBom => "encoding-utf16be",
-                };
-                ui.colored_label(p.muted, self.t(enc, &[]));
+                ui.colored_label(p.muted, editor.encoding().name());
                 let le = match editor.line_ending() {
                     LineEnding::CrLf => "line-ending-crlf",
                     LineEnding::Cr => "line-ending-cr",
@@ -1544,6 +1789,7 @@ impl eframe::App for Shell {
         self.dialogs(&ctx);
         self.settings_window(&ctx);
         self.compare_picker(&ctx);
+        self.encoding_window(&ctx);
         if self.palette.open && self.dialog.is_none() {
             let entries: Vec<Entry> = MenuAction::ALL
                 .into_iter()

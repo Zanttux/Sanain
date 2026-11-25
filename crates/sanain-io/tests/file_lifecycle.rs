@@ -50,8 +50,11 @@ fn unmodified_save_round_trips_every_encoding() {
     let samples: [(&str, Vec<u8>); 4] = [
         ("utf8.txt", "mixed\r\nends\nand\r é".as_bytes().to_vec()),
         ("bom.txt", b"\xEF\xBB\xBFbom\r\n".to_vec()),
-        ("le.txt", encode("le\r\n漢🙂", TextEncoding::Utf16LeBom)),
-        ("be.txt", encode("be\n", TextEncoding::Utf16BeBom)),
+        (
+            "le.txt",
+            encode("le\r\n漢🙂", TextEncoding::Utf16LeBom).unwrap(),
+        ),
+        ("be.txt", encode("be\n", TextEncoding::Utf16BeBom).unwrap()),
     ];
     for (name, bytes) in samples {
         let path = dir.path().join(name);
@@ -216,4 +219,31 @@ fn fingerprint_from_save_allows_next_save() {
     let fp = save(&path, "2", TextEncoding::Utf8, SaveMode::Expect(&fp)).unwrap();
     save(&path, "3", TextEncoding::Utf8, SaveMode::Expect(&fp)).unwrap();
     assert_eq!(fs::read_to_string(&path).unwrap(), "3");
+}
+
+#[test]
+fn legacy_file_reopens_edits_and_refuses_unencodable() {
+    use sanain_io::{SaveError, load_as};
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("latin.txt");
+    fs::write(&path, b"caf\xE9\r\n").unwrap();
+    assert!(load(&path).is_err(), "not UTF-8: auto-detection refuses");
+    let enc = TextEncoding::Legacy(encoding_rs::WINDOWS_1252);
+    let l = load_as(&path, enc).unwrap();
+    assert_eq!(l.text, "café\r\n");
+    let fp = save(
+        &path,
+        "café crème\r\n",
+        enc,
+        SaveMode::Expect(&l.fingerprint),
+    )
+    .unwrap();
+    assert_eq!(fs::read(&path).unwrap(), b"caf\xE9 cr\xE8me\r\n");
+    let err = save(&path, "漢", enc, SaveMode::Expect(&fp)).unwrap_err();
+    assert!(matches!(err, SaveError::Unencodable { .. }));
+    assert_eq!(
+        fs::read(&path).unwrap(),
+        b"caf\xE9 cr\xE8me\r\n",
+        "untouched"
+    );
 }

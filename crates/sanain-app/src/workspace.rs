@@ -117,6 +117,25 @@ impl Workspace {
         Ok(self.add(ed, None))
     }
 
+    /// (Re)open `path` with a chosen encoding. An existing tab for the
+    /// file is replaced in place (the caller ensures it has no unsaved
+    /// changes); otherwise a new tab is added.
+    pub fn open_as(
+        &mut self,
+        path: &Path,
+        encoding: sanain_io::TextEncoding,
+    ) -> Result<usize, LoadError> {
+        let ed = Editor::open_as(path, encoding)?;
+        match self.find(path) {
+            Some(i) => {
+                self.tabs[i].editor = ed;
+                self.active = i;
+                Ok(i)
+            }
+            None => Ok(self.add(ed, None)),
+        }
+    }
+
     fn find(&self, path: &Path) -> Option<usize> {
         let same = |a: &Path| match (a.canonicalize(), path.canonicalize()) {
             (Ok(x), Ok(y)) => x == y,

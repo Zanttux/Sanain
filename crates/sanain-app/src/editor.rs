@@ -130,7 +130,15 @@ impl Editor {
     }
 
     pub fn open(path: &Path) -> Result<Self, LoadError> {
-        let loaded = sanain_io::load(path)?;
+        Self::from_loaded(path, sanain_io::load(path)?)
+    }
+
+    /// Open with an encoding the user chose.
+    pub fn open_as(path: &Path, encoding: TextEncoding) -> Result<Self, LoadError> {
+        Self::from_loaded(path, sanain_io::load_as(path, encoding)?)
+    }
+
+    fn from_loaded(path: &Path, loaded: sanain_io::Loaded) -> Result<Self, LoadError> {
         Ok(Self {
             newline: preferred_newline(&loaded.text),
             goal: None,
@@ -401,6 +409,17 @@ impl Editor {
         self.write(&path, enc, SaveMode::Expect(&fp))
     }
 
+    /// Save the file in a different encoding (explicit conversion). Fails
+    /// without writing if a character cannot be represented.
+    pub fn save_with_encoding(&mut self, encoding: TextEncoding) -> SaveOutcome {
+        let Some(file) = &self.file else {
+            self.untitled_encoding = encoding;
+            return SaveOutcome::NeedsPath;
+        };
+        let (path, fp) = (file.path.clone(), file.fingerprint.clone());
+        self.write(&path, encoding, SaveMode::Expect(&fp))
+    }
+
     /// Save after the user confirmed overwriting an external change.
     pub fn save_overwrite(&mut self) -> SaveOutcome {
         let Some(file) = &self.file else {
@@ -637,6 +656,24 @@ mod tests {
         assert_eq!(ed.transform(|_| Err::<String, _>("bad")), Err("bad"));
         ed.execute(Command::Undo);
         assert_eq!(ed.document().text(), "a\nb\nc");
+    }
+
+    #[test]
+    fn reopen_as_legacy_and_convert_to_utf8() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("w.txt");
+        fs::write(&path, b"na\xEFve\n").unwrap();
+        assert!(Editor::open(&path).is_err());
+        let enc = TextEncoding::Legacy(encoding_rs::WINDOWS_1252);
+        let mut ed = Editor::open_as(&path, enc).unwrap();
+        assert_eq!(ed.document().text(), "naïve\n");
+        assert_eq!(ed.encoding(), enc);
+        assert!(ed.save_with_encoding(TextEncoding::Utf8).is_saved());
+        assert_eq!(fs::read(&path).unwrap(), "naïve\n".as_bytes());
+        assert_eq!(ed.encoding(), TextEncoding::Utf8);
+        ed.execute(Command::Insert("漢".into()));
+        assert!(matches!(ed.save_with_encoding(enc), SaveOutcome::Failed(_)));
+        assert_eq!(fs::read(&path).unwrap(), "naïve\n".as_bytes(), "unchanged");
     }
 
     #[test]

@@ -32,6 +32,12 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   shortcuts; restyled in-window menus on Windows and Linux.
 - Cut, Copy and Paste work (system clipboard was not enabled before).
 - macOS app bundle script (`scripts/macos-bundle.sh`).
+- Legacy encodings: files that are not UTF-8/UTF-16 open an encoding
+  picker with a live preview (Windows-125x, ISO-8859-2/15, KOI8-R,
+  Shift_JIS, EUC-JP, GB18030, Big5, EUC-KR). A file opens only if the
+  chosen encoding reproduces its bytes exactly. File > Reopen with
+  Encoding and Save with Encoding convert explicitly; saving refuses
+  characters the encoding cannot hold and selects the first one.
 - Markdown preview links: web links open in the browser after a
   confirmation, links to local files open in a tab, `#anchors` scroll to
   the heading, and javascript:, data:, file: and unknown schemes are never

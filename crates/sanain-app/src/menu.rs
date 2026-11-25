@@ -50,10 +50,12 @@ pub enum MenuAction {
     ToCrLf,
     CompareTabs,
     StructuredView,
+    ReopenWithEncoding,
+    SaveWithEncoding,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 44] = [
+    pub const ALL: [MenuAction; 46] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -98,6 +100,8 @@ impl MenuAction {
         Self::ToCrLf,
         Self::CompareTabs,
         Self::StructuredView,
+        Self::ReopenWithEncoding,
+        Self::SaveWithEncoding,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -147,6 +151,8 @@ impl MenuAction {
             Self::ToCrLf => "tools.to-crlf",
             Self::CompareTabs => "tools.compare",
             Self::StructuredView => "view.structured",
+            Self::ReopenWithEncoding => "file.reopen-encoding",
+            Self::SaveWithEncoding => "file.save-encoding",
         }
     }
 
@@ -202,6 +208,8 @@ impl MenuAction {
             Self::ToCrLf => "tools-to-crlf",
             Self::CompareTabs => "tools-compare",
             Self::StructuredView => "view-structured",
+            Self::ReopenWithEncoding => "file-reopen-encoding",
+            Self::SaveWithEncoding => "file-save-encoding",
         }
     }
 
@@ -252,7 +260,9 @@ impl MenuAction {
             | Self::ToLf
             | Self::ToCrLf
             | Self::CompareTabs
-            | Self::StructuredView => return None,
+            | Self::StructuredView
+            | Self::ReopenWithEncoding
+            | Self::SaveWithEncoding => return None,
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -267,6 +277,8 @@ const FILE_ITEMS: &[Option<MenuAction>] = &[
     None,
     Some(MenuAction::Save),
     Some(MenuAction::SaveAs),
+    Some(MenuAction::SaveWithEncoding),
+    Some(MenuAction::ReopenWithEncoding),
     None,
     Some(MenuAction::CloseTab),
     Some(MenuAction::ReopenTab),
@@ -443,7 +455,9 @@ mod native {
             | MenuAction::ToLf
             | MenuAction::ToCrLf
             | MenuAction::CompareTabs
-            | MenuAction::StructuredView => return None,
+            | MenuAction::StructuredView
+            | MenuAction::ReopenWithEncoding
+            | MenuAction::SaveWithEncoding => return None,
         };
         Some(KeyAccelerator::new(m, k))
     }

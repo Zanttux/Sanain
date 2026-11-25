@@ -4,7 +4,7 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-use crate::encoding::{DecodeError, TextEncoding, decode, encode};
+use crate::encoding::{DecodeError, EncodeError, TextEncoding, decode, decode_as, encode};
 
 /// What the editor knew about a file's on-disk state.
 ///
@@ -50,6 +50,10 @@ pub enum SaveError {
     /// Nothing was written.
     #[error("{path} changed on disk since it was opened")]
     ExternalChange { path: PathBuf },
+    /// A character cannot be represented in the file's encoding. Nothing
+    /// was written.
+    #[error("{source}")]
+    Unencodable { path: PathBuf, source: EncodeError },
     /// The target is marked read-only. Nothing was written.
     #[error("{path} is read-only")]
     ReadOnly { path: PathBuf },
@@ -66,6 +70,25 @@ pub enum SaveMode<'a> {
     CreateNew,
     /// Replace whatever is there. Only after explicit user confirmation.
     Overwrite,
+}
+
+/// Load with an encoding the user chose (e.g. "Reopen with Encoding").
+pub fn load_as(path: &Path, encoding: TextEncoding) -> Result<Loaded, LoadError> {
+    let io_err = |source| LoadError::Io {
+        path: path.to_owned(),
+        source,
+    };
+    let bytes = fs::read(path).map_err(io_err)?;
+    let meta = fs::metadata(path).map_err(io_err)?;
+    let text = decode_as(&bytes, encoding).map_err(|source| LoadError::Decode {
+        path: path.to_owned(),
+        source,
+    })?;
+    Ok(Loaded {
+        text,
+        encoding,
+        fingerprint: Fingerprint::of(&bytes, &meta),
+    })
 }
 
 pub fn load(path: &Path) -> Result<Loaded, LoadError> {
@@ -130,7 +153,10 @@ pub fn save(
         });
     }
 
-    let bytes = encode(text, encoding);
+    let bytes = encode(text, encoding).map_err(|e| SaveError::Unencodable {
+        path: path.to_owned(),
+        source: e,
+    })?;
     let perms = match existing {
         Some(_) => Some(fs::metadata(&target).map_err(io_err)?.permissions()),
         None => None,
