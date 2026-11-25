@@ -37,10 +37,21 @@ pub enum MenuAction {
     MarkdownSource,
     MarkdownSplit,
     MarkdownPreview,
+    JsonValidate,
+    JsonFormat,
+    JsonMinify,
+    SortLines,
+    SortLinesDesc,
+    UniqueLines,
+    TrimTrailing,
+    UpperCase,
+    LowerCase,
+    ToLf,
+    ToCrLf,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 31] = [
+    pub const ALL: [MenuAction; 42] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -72,6 +83,17 @@ impl MenuAction {
         Self::MarkdownSource,
         Self::MarkdownSplit,
         Self::MarkdownPreview,
+        Self::JsonValidate,
+        Self::JsonFormat,
+        Self::JsonMinify,
+        Self::SortLines,
+        Self::SortLinesDesc,
+        Self::UniqueLines,
+        Self::TrimTrailing,
+        Self::UpperCase,
+        Self::LowerCase,
+        Self::ToLf,
+        Self::ToCrLf,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -108,6 +130,17 @@ impl MenuAction {
             Self::MarkdownSource => "view.markdown-source",
             Self::MarkdownSplit => "view.markdown-split",
             Self::MarkdownPreview => "view.markdown-preview",
+            Self::JsonValidate => "tools.json-validate",
+            Self::JsonFormat => "tools.json-format",
+            Self::JsonMinify => "tools.json-minify",
+            Self::SortLines => "tools.sort-lines",
+            Self::SortLinesDesc => "tools.sort-lines-desc",
+            Self::UniqueLines => "tools.unique-lines",
+            Self::TrimTrailing => "tools.trim-trailing",
+            Self::UpperCase => "tools.upper-case",
+            Self::LowerCase => "tools.lower-case",
+            Self::ToLf => "tools.to-lf",
+            Self::ToCrLf => "tools.to-crlf",
         }
     }
 
@@ -150,6 +183,17 @@ impl MenuAction {
             Self::MarkdownSource => "view-markdown-source",
             Self::MarkdownSplit => "view-markdown-split",
             Self::MarkdownPreview => "view-markdown-preview",
+            Self::JsonValidate => "tools-json-validate",
+            Self::JsonFormat => "tools-json-format",
+            Self::JsonMinify => "tools-json-minify",
+            Self::SortLines => "tools-sort-lines",
+            Self::SortLinesDesc => "tools-sort-lines-desc",
+            Self::UniqueLines => "tools-unique-lines",
+            Self::TrimTrailing => "tools-trim-trailing",
+            Self::UpperCase => "tools-upper-case",
+            Self::LowerCase => "tools-lower-case",
+            Self::ToLf => "tools-to-lf",
+            Self::ToCrLf => "tools-to-crlf",
         }
     }
 
@@ -188,6 +232,17 @@ impl MenuAction {
             Self::CommandPalette => (cmd_shift, Key::P),
             Self::MarkdownSplit => (cmd_shift, Key::V),
             Self::MarkdownSource | Self::MarkdownPreview => return None,
+            Self::JsonValidate
+            | Self::JsonFormat
+            | Self::JsonMinify
+            | Self::SortLines
+            | Self::SortLinesDesc
+            | Self::UniqueLines
+            | Self::TrimTrailing
+            | Self::UpperCase
+            | Self::LowerCase
+            | Self::ToLf
+            | Self::ToCrLf => return None,
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -207,6 +262,22 @@ const FILE_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::ReopenTab),
 ];
 const WINDOW_ITEMS: &[Option<MenuAction>] = &[Some(MenuAction::NextTab), Some(MenuAction::PrevTab)];
+const TOOLS_ITEMS: &[Option<MenuAction>] = &[
+    Some(MenuAction::JsonValidate),
+    Some(MenuAction::JsonFormat),
+    Some(MenuAction::JsonMinify),
+    None,
+    Some(MenuAction::SortLines),
+    Some(MenuAction::SortLinesDesc),
+    Some(MenuAction::UniqueLines),
+    Some(MenuAction::TrimTrailing),
+    None,
+    Some(MenuAction::UpperCase),
+    Some(MenuAction::LowerCase),
+    None,
+    Some(MenuAction::ToLf),
+    Some(MenuAction::ToCrLf),
+];
 const VIEW_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::CommandPalette),
     None,
@@ -259,6 +330,7 @@ pub fn in_window(
             ("menu-file", file.as_slice()),
             ("menu-edit", EDIT_ITEMS),
             ("menu-view", VIEW_ITEMS),
+            ("menu-tools", TOOLS_ITEMS),
             ("menu-window", WINDOW_ITEMS),
         ] {
             ui.menu_button(label(title), |ui| {
@@ -293,7 +365,7 @@ mod native {
     use muda::accelerator::{Key, KeyAccelerator, Modifiers, NamedKey};
     use muda::{Menu, MenuEvent, MenuItem, PredefinedMenuItem, Submenu};
 
-    use super::{EDIT_ITEMS, FILE_ITEMS, Label, MenuAction, VIEW_ITEMS, WINDOW_ITEMS};
+    use super::{EDIT_ITEMS, FILE_ITEMS, Label, MenuAction, TOOLS_ITEMS, VIEW_ITEMS, WINDOW_ITEMS};
 
     /// The macOS menu bar. Keep alive for the lifetime of the app.
     pub struct NativeMenu {
@@ -346,6 +418,17 @@ mod native {
             MenuAction::CommandPalette => (cmd_shift, ch("p")),
             MenuAction::MarkdownSplit => (cmd_shift, ch("v")),
             MenuAction::MarkdownSource | MenuAction::MarkdownPreview => return None,
+            MenuAction::JsonValidate
+            | MenuAction::JsonFormat
+            | MenuAction::JsonMinify
+            | MenuAction::SortLines
+            | MenuAction::SortLinesDesc
+            | MenuAction::UniqueLines
+            | MenuAction::TrimTrailing
+            | MenuAction::UpperCase
+            | MenuAction::LowerCase
+            | MenuAction::ToLf
+            | MenuAction::ToCrLf => return None,
         };
         Some(KeyAccelerator::new(m, k))
     }
@@ -404,6 +487,10 @@ mod native {
             let view_refs: Vec<&dyn muda::IsMenuItem> =
                 view_items.iter().map(|b| b.as_ref()).collect();
             let view = Submenu::with_items(label("menu-view"), true, &view_refs).ok()?;
+            let tools_items = section(TOOLS_ITEMS, &mut make);
+            let tools_refs: Vec<&dyn muda::IsMenuItem> =
+                tools_items.iter().map(|b| b.as_ref()).collect();
+            let tools = Submenu::with_items(label("menu-tools"), true, &tools_refs).ok()?;
             let minimize = label("window-minimize");
             let zoom = label("window-zoom");
             let mut window_items = section(WINDOW_ITEMS, &mut make);
@@ -413,7 +500,7 @@ mod native {
             let window_refs: Vec<&dyn muda::IsMenuItem> =
                 window_items.iter().map(|b| b.as_ref()).collect();
             let window = Submenu::with_items(label("menu-window"), true, &window_refs).ok()?;
-            let menu = Menu::with_items(&[&app, &file, &edit, &view, &window]).ok()?;
+            let menu = Menu::with_items(&[&app, &file, &edit, &view, &tools, &window]).ok()?;
             menu.init_for_nsapp();
             window.set_as_windows_menu_for_nsapp();
 

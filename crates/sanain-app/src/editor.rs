@@ -301,6 +301,39 @@ impl Editor {
         None
     }
 
+    /// The primary selection's char range, or the whole document if the
+    /// selection is empty: what a text tool acts on.
+    pub fn tool_range(&self) -> std::ops::Range<usize> {
+        let r = self.sels.primary().range();
+        if r.is_empty() {
+            0..self.doc.len_chars()
+        } else {
+            r
+        }
+    }
+
+    /// Replace the tool range with `f(text)` as one undoable edit. Returns
+    /// whether anything changed. A selection stays selected around the
+    /// result; a whole-document change leaves the caret at the start.
+    pub fn transform<E>(&mut self, f: impl FnOnce(&str) -> Result<String, E>) -> Result<bool, E> {
+        let range = self.tool_range();
+        let whole = range.start == 0 && range.end == self.doc.len_chars();
+        let before: String = self.doc.rope().slice(range.clone()).into();
+        let after = f(&before)?;
+        if after == before {
+            return Ok(false);
+        }
+        let len = after.chars().count();
+        self.select(range.clone());
+        self.execute(Command::Insert(after));
+        if whole {
+            self.select(0..0);
+        } else {
+            self.select(range.start..range.start + len);
+        }
+        Ok(true)
+    }
+
     /// Select `range` as the only selection (e.g. a search match).
     pub fn select(&mut self, range: std::ops::Range<usize>) {
         let len = self.doc.len_chars();
@@ -575,6 +608,29 @@ mod tests {
         assert_eq!(ed.document().text(), "c1 b2 c3");
         ed.execute(Command::Undo);
         assert_eq!(ed.document().text(), "a1 b2 a3", "replace all is one step");
+    }
+
+    #[test]
+    fn transform_selection_or_whole_document_in_one_undo() {
+        let mut ed = Editor::new();
+        ed.execute(Command::Insert("b\na\nc".into()));
+        assert_eq!(
+            ed.transform(|t| Ok::<_, ()>(sanain_tools::sort_lines(t, false))),
+            Ok(true)
+        );
+        assert_eq!(ed.document().text(), "a\nb\nc");
+        ed.select(0..3);
+        assert_eq!(ed.transform(|t| Ok::<_, ()>(t.to_uppercase())), Ok(true));
+        assert_eq!(ed.document().text(), "A\nB\nc");
+        assert_eq!(ed.selections().primary().range(), 0..3);
+        assert_eq!(
+            ed.transform(|t| Ok::<_, ()>(t.to_owned())),
+            Ok(false),
+            "no-op"
+        );
+        assert_eq!(ed.transform(|_| Err::<String, _>("bad")), Err("bad"));
+        ed.execute(Command::Undo);
+        assert_eq!(ed.document().text(), "a\nb\nc");
     }
 
     #[test]

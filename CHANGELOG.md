@@ -32,6 +32,12 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   shortcuts; restyled in-window menus on Windows and Linux.
 - Cut, Copy and Paste work (system clipboard was not enabled before).
 - macOS app bundle script (`scripts/macos-bundle.sh`).
+- Tools menu (also in the command palette), acting on the selection or
+  the whole document as one undoable edit: Validate / Format / Minify
+  JSON (keeps duplicate keys, number spellings and escapes exactly; errors
+  show line and column and move the caret there), sort lines, sort
+  descending, remove duplicate lines, trim trailing whitespace, upper and
+  lower case, convert line endings to LF or CRLF.
 - Markdown source, split and preview modes for .md files (View menu,
   command palette, Cmd/Ctrl+Shift+V for split). CommonMark and GFM:
   headings, emphasis, strikethrough, inline code, links, task lists,
