@@ -21,5 +21,9 @@ Requires Rust via rustup; the toolchain version is pinned in
 `rust-toolchain.toml`.
 
     cargo run --release -p sanain-app -- path/to/file.txt
+
+On macOS, build and open the app bundle (correct app name and menu bar):
+
+    scripts/macos-bundle.sh release --open path/to/file.txt
     cargo test --workspace
     cargo clippy --workspace --all-targets -- -D warnings

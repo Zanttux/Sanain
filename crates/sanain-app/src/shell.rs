@@ -2,20 +2,15 @@
 
 use std::path::Path;
 
-use eframe::egui::{self, Key, KeyboardShortcut, Modifiers, ViewportCommand};
+use eframe::egui::{self, ViewportCommand};
 use sanain_app::{Editor, SaveOutcome};
 use sanain_core::LineEnding;
 use sanain_i18n::{FluentValue, Localizer};
 use sanain_io::{LoadError, TextEncoding};
 
+use crate::menu::{self, MenuAction};
 use crate::theme;
 use crate::view::EditorView;
-
-const SAVE: KeyboardShortcut = KeyboardShortcut::new(Modifiers::COMMAND, Key::S);
-const SAVE_AS: KeyboardShortcut =
-    KeyboardShortcut::new(Modifiers::COMMAND.plus(Modifiers::SHIFT), Key::S);
-const OPEN: KeyboardShortcut = KeyboardShortcut::new(Modifiers::COMMAND, Key::O);
-const NEW: KeyboardShortcut = KeyboardShortcut::new(Modifiers::COMMAND, Key::N);
 
 /// What to do once unsaved changes are resolved.
 #[derive(Debug, Clone)]
@@ -50,9 +45,31 @@ pub struct Shell {
     status: Option<(String, bool)>,
     title: String,
     allow_close: bool,
+    #[cfg(target_os = "macos")]
+    native_menu: Option<menu::NativeMenu>,
 }
 
 impl Shell {
+    /// Install the native menu bar where supported. Set
+    /// `SANAIN_IN_WINDOW_MENU=1` to force the in-window menu.
+    pub fn install_menu(&mut self, ctx: &egui::Context) {
+        #[cfg(target_os = "macos")]
+        if std::env::var_os("SANAIN_IN_WINDOW_MENU").is_none() {
+            let ctx = ctx.clone();
+            let label = |id: &str| self.t(id, &[]);
+            self.native_menu = menu::NativeMenu::install(&label, move || ctx.request_repaint());
+        }
+        #[cfg(not(target_os = "macos"))]
+        let _ = ctx;
+    }
+
+    fn has_native_menu(&self) -> bool {
+        #[cfg(target_os = "macos")]
+        return self.native_menu.is_some();
+        #[cfg(not(target_os = "macos"))]
+        false
+    }
+
     pub fn new(editor: Editor, l10n: Localizer, startup_error: Option<String>) -> Self {
         let mut view = EditorView::default();
         view.request_focus();
@@ -64,6 +81,8 @@ impl Shell {
             status: None,
             title: String::new(),
             allow_close: false,
+            #[cfg(target_os = "macos")]
+            native_menu: None,
         }
     }
 
@@ -165,69 +184,63 @@ impl Shell {
         }
     }
 
-    fn menu_bar(&mut self, ui: &mut egui::Ui) {
-        let ctx = ui.ctx().clone();
-        egui::MenuBar::new().ui(ui, |ui| {
-            ui.menu_button(self.t("menu-file", &[]), |ui| {
-                if ui
-                    .add(
-                        egui::Button::new(self.t("file-new", &[]))
-                            .shortcut_text(ctx.format_shortcut(&NEW)),
-                    )
-                    .clicked()
+    fn enabled(&self, action: MenuAction) -> bool {
+        let doc = self.editor.document();
+        let has_selection = self.editor.copy().is_some();
+        self.dialog.is_none()
+            && match action {
+                MenuAction::Undo => doc.can_undo(),
+                MenuAction::Redo => doc.can_redo(),
+                MenuAction::Cut | MenuAction::Copy => has_selection,
+                _ => true,
+            }
+    }
+
+    fn dispatch(&mut self, action: MenuAction, ctx: &egui::Context) {
+        if self.dialog.is_some() {
+            return;
+        }
+        use sanain_app::Command;
+        match action {
+            MenuAction::New => self.guard(Then::New, ctx),
+            MenuAction::Open => self.guard(Then::Open, ctx),
+            MenuAction::Save => {
+                self.save();
+            }
+            MenuAction::SaveAs => {
+                self.save_as();
+            }
+            // Goes through close_requested, which guards unsaved changes.
+            MenuAction::Quit => ctx.send_viewport_cmd(ViewportCommand::Close),
+            MenuAction::Undo => {
+                self.editor.execute(Command::Undo);
+            }
+            MenuAction::Redo => {
+                self.editor.execute(Command::Redo);
+            }
+            MenuAction::SelectAll => {
+                self.editor.execute(Command::SelectAll);
+            }
+            MenuAction::Copy => {
+                if let Some(t) = self.editor.copy() {
+                    ctx.copy_text(t);
+                }
+            }
+            MenuAction::Cut => {
+                if let Some(t) = self.editor.execute(Command::Cut) {
+                    ctx.copy_text(t);
+                }
+            }
+            MenuAction::Paste => {
+                let text = arboard::Clipboard::new().and_then(|mut c| c.get_text());
+                if let Ok(t) = text
+                    && !t.is_empty()
                 {
-                    self.guard(Then::New, &ctx);
+                    self.editor.execute(Command::Insert(t));
                 }
-                if ui
-                    .add(
-                        egui::Button::new(self.t("file-open", &[]))
-                            .shortcut_text(ctx.format_shortcut(&OPEN)),
-                    )
-                    .clicked()
-                {
-                    self.guard(Then::Open, &ctx);
-                }
-                ui.separator();
-                if ui
-                    .add(
-                        egui::Button::new(self.t("file-save", &[]))
-                            .shortcut_text(ctx.format_shortcut(&SAVE)),
-                    )
-                    .clicked()
-                {
-                    self.save();
-                }
-                if ui
-                    .add(
-                        egui::Button::new(self.t("file-save-as", &[]))
-                            .shortcut_text(ctx.format_shortcut(&SAVE_AS)),
-                    )
-                    .clicked()
-                {
-                    self.save_as();
-                }
-            });
-            ui.menu_button(self.t("menu-edit", &[]), |ui| {
-                let doc = self.editor.document();
-                let (can_undo, can_redo) = (doc.can_undo(), doc.can_redo());
-                if ui
-                    .add_enabled(can_undo, egui::Button::new(self.t("edit-undo", &[])))
-                    .clicked()
-                {
-                    self.editor.execute(sanain_app::Command::Undo);
-                }
-                if ui
-                    .add_enabled(can_redo, egui::Button::new(self.t("edit-redo", &[])))
-                    .clicked()
-                {
-                    self.editor.execute(sanain_app::Command::Redo);
-                }
-                ui.separator();
-                if ui.button(self.t("edit-select-all", &[])).clicked() {
-                    self.editor.execute(sanain_app::Command::SelectAll);
-                }
-            });
-        });
+            }
+        }
+        self.view.request_focus();
     }
 
     fn status_bar(&self, ui: &mut egui::Ui) {
@@ -382,19 +395,50 @@ impl eframe::App for Shell {
             self.dialog = Some(Dialog::Unsaved(Then::Close));
         }
 
-        if self.dialog.is_none() {
-            if ctx.input_mut(|i| i.consume_shortcut(&SAVE_AS)) {
-                self.save_as();
-            } else if ctx.input_mut(|i| i.consume_shortcut(&SAVE)) {
-                self.save();
-            } else if ctx.input_mut(|i| i.consume_shortcut(&OPEN)) {
-                self.guard(Then::Open, &ctx);
-            } else if ctx.input_mut(|i| i.consume_shortcut(&NEW)) {
-                self.guard(Then::New, &ctx);
+        let mut actions = Vec::new();
+        #[cfg(target_os = "macos")]
+        if let Some(m) = &self.native_menu {
+            actions.extend(m.poll());
+        }
+        // Without a native menu, file and quit shortcuts are handled here;
+        // editing shortcuts arrive as key and clipboard events in the view.
+        if !self.has_native_menu() && self.dialog.is_none() {
+            for a in [
+                MenuAction::SaveAs,
+                MenuAction::Save,
+                MenuAction::Open,
+                MenuAction::New,
+                MenuAction::Quit,
+            ] {
+                if let Some(s) = a.shortcut()
+                    && ctx.input_mut(|i| i.consume_shortcut(&s))
+                {
+                    actions.push(a);
+                }
             }
         }
 
-        egui::Panel::top("menu").show(ui, |ui| self.menu_bar(ui));
+        if !self.has_native_menu() {
+            let p = theme::palette(&ctx);
+            let frame = egui::Frame::NONE
+                .fill(p.surface)
+                .inner_margin(egui::Margin::symmetric(6, 2))
+                .stroke(egui::Stroke::NONE);
+            egui::Panel::top("menu").frame(frame).show(ui, |ui| {
+                let label = |id: &str| self.t(id, &[]);
+                let enabled = |a| self.enabled(a);
+                if let Some(a) = menu::in_window(ui, &label, enabled) {
+                    actions.push(a);
+                }
+            });
+        }
+        for a in actions {
+            self.dispatch(a, &ctx);
+        }
+        #[cfg(target_os = "macos")]
+        if let Some(m) = &self.native_menu {
+            m.set_enabled(|a| self.enabled(a));
+        }
         egui::Panel::bottom("status").show(ui, |ui| self.status_bar(ui));
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE.fill(theme::palette(&ctx).canvas))

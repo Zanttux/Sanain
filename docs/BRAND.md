@@ -1,5 +1,5 @@
 # Brand system — proposed v0.1
-Display name Sanain; technical slug sanain; pronunciation approximately “SAH-nine”. Positioning: a native, free, open-source editor for everyday text and technical files. Tagline: **The power of words.** Secondary: AI-built. Human-led. Community-driven. Open source promise: Free. Forever. For everyone. Never imply official Notepad++ affiliation. Avoid unverified claims of speed, accessibility or AI provenance.
+Display name Sanain, always capitalised in anything user-facing (D20); technical slug sanain only for crates, CLI and Linux paths; pronunciation approximately “SAH-nine”. Positioning: a native, free, open-source editor for everyday text and technical files. Tagline: **The power of words.** Secondary: AI-built. Human-led. Community-driven. Open source promise: Free. Forever. For everyone. Never imply official Notepad++ affiliation. Avoid unverified claims of speed, accessibility or AI provenance.
 
 ## Principles
 Sanain should look like an established desktop tool built for daily work.

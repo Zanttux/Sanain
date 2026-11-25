@@ -1,7 +1,7 @@
 # Security policy
 
 Report vulnerabilities privately through GitHub:
-**Security → Report a vulnerability** on github.com/Zanttux/sanain.
+**Security → Report a vulnerability** on github.com/Zanttux/Sanain.
 Do not open public issues for security problems or attach real documents.
 
 Sanain is pre-alpha; no version is supported for production use yet and
