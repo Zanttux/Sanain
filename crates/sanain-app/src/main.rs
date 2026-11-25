@@ -1,5 +1,6 @@
 //! Sanain desktop entry point.
 
+mod find;
 mod menu;
 mod shell;
 mod theme;

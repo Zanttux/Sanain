@@ -34,6 +34,7 @@ M1 in progress.
 | E01 | Partial | Round-trip and conflict tests in `crates/sanain-io/tests/file_lifecycle.rs` |
 | E03 | Partial | Undo/redo, grouped transactions, property test, multi-cursor insert/delete |
 | E12 | Partial | Grapheme-cluster navigation and deletion (`crates/sanain-core/src/grapheme.rs`) |
+| E04 | Partial | Find/replace in the current tab: literal, regex, case, whole word, highlight, count, replace all as one undo. Not yet: preview before replace-all, cancellation for huge files, search across files |
 | E05 | Partial | UTF-8, UTF-8 BOM, UTF-16 LE/BE BOM, line endings preserved; legacy encodings not started |
 | E02 | Partial | Tabs, close/reopen, keyboard switching, dirty markers, per-tab recovery. Not yet: drag reorder in UI (model supports it), pin, split editor |
 | E06 | Partial | Unsaved-changes prompts; crash recovery verified on macOS (kill -9 → relaunch restores text). Not yet: session restore of multiple buffers, disk-full drill |
@@ -78,6 +79,6 @@ because nobody independent exists; no fake approvals.
 ## Next
 - Line/column mapping, vertical movement, word movement, line operations.
 - Hard-link-safe save strategy.
-- Search and replace (E04), then session restore of open tabs (E06).
+- Session restore of open tabs (E06), then syntax highlighting (E07).
 - Manual IME and screen-reader pass on macOS; Windows and Linux GUI smoke
   test (needs hardware or VM access).

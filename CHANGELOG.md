@@ -32,6 +32,11 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   shortcuts; restyled in-window menus on Windows and Linux.
 - Cut, Copy and Paste work (system clipboard was not enabled before).
 - macOS app bundle script (`scripts/macos-bundle.sh`).
+- Find and replace: Cmd/Ctrl+F, Find Next/Previous (Cmd/Ctrl+G,
+  Shift+Cmd/Ctrl+G, Enter/Shift+Enter), Replace (Cmd+Option+F on macOS,
+  Ctrl+H elsewhere). Match case, whole word and regular expressions with
+  `$1` capture references. All matches are highlighted with a count;
+  Replace All is one undo step. Regular expressions run in linear time.
 - Tabs: open several files (command line, File > Open with multi-select),
   New Tab, Close Tab (Cmd/Ctrl+W), Reopen Closed Tab (Cmd/Ctrl+Shift+T),
   Next/Previous Tab (Ctrl+Tab / Ctrl+Shift+Tab), middle-click to close,

@@ -68,3 +68,27 @@ file-reopen-tab = Reopen Closed Tab
 window-next-tab = Next Tab
 window-prev-tab = Previous Tab
 tab-close = Close tab
+edit-find = Find…
+edit-find-next = Find Next
+edit-find-prev = Find Previous
+edit-replace = Replace…
+find-placeholder = Find
+replace-placeholder = Replace with
+find-match-case = Match case
+find-whole-word = Whole word
+find-regex = Regular expression
+find-no-results = No results
+find-count = { $total ->
+    [one] 1 match
+   *[other] { $total } matches
+    }
+find-count-current = { $current } of { $total }
+find-prev = Previous match (Shift+Enter)
+find-next = Next match (Enter)
+find-close = Close (Esc)
+replace-one = Replace
+replace-all = Replace All
+status-replaced = { $count ->
+    [one] Replaced 1 match
+   *[other] Replaced { $count } matches
+    }

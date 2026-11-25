@@ -25,10 +25,14 @@ pub enum MenuAction {
     ReopenTab,
     NextTab,
     PrevTab,
+    Find,
+    FindNext,
+    FindPrev,
+    Replace,
 }
 
 impl MenuAction {
-    const ALL: [MenuAction; 19] = [
+    const ALL: [MenuAction; 23] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -48,6 +52,10 @@ impl MenuAction {
         Self::ReopenTab,
         Self::NextTab,
         Self::PrevTab,
+        Self::Find,
+        Self::FindNext,
+        Self::FindPrev,
+        Self::Replace,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -72,6 +80,10 @@ impl MenuAction {
             Self::ReopenTab => "file.reopen-tab",
             Self::NextTab => "window.next-tab",
             Self::PrevTab => "window.prev-tab",
+            Self::Find => "edit.find",
+            Self::FindNext => "edit.find-next",
+            Self::FindPrev => "edit.find-prev",
+            Self::Replace => "edit.replace",
         }
     }
 
@@ -102,6 +114,10 @@ impl MenuAction {
             Self::ReopenTab => "file-reopen-tab",
             Self::NextTab => "window-next-tab",
             Self::PrevTab => "window-prev-tab",
+            Self::Find => "edit-find",
+            Self::FindNext => "edit-find-next",
+            Self::FindPrev => "edit-find-prev",
+            Self::Replace => "edit-replace",
         }
     }
 
@@ -128,6 +144,11 @@ impl MenuAction {
             Self::ReopenTab => (cmd_shift, Key::T),
             Self::NextTab => (Modifiers::CTRL, Key::Tab),
             Self::PrevTab => (Modifiers::CTRL.plus(Modifiers::SHIFT), Key::Tab),
+            Self::Find => (cmd, Key::F),
+            Self::FindNext => (cmd, Key::G),
+            Self::FindPrev => (cmd_shift, Key::G),
+            Self::Replace if cfg!(target_os = "macos") => (cmd.plus(Modifiers::ALT), Key::F),
+            Self::Replace => (cmd, Key::H),
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -156,6 +177,11 @@ const EDIT_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::Paste),
     None,
     Some(MenuAction::SelectAll),
+    None,
+    Some(MenuAction::Find),
+    Some(MenuAction::FindNext),
+    Some(MenuAction::FindPrev),
+    Some(MenuAction::Replace),
     None,
     Some(MenuAction::DuplicateLine),
     Some(MenuAction::DeleteLine),
@@ -243,6 +269,10 @@ mod native {
             MenuAction::ReopenTab => (cmd_shift, Code::KeyT),
             MenuAction::NextTab => (Modifiers::CONTROL, Code::Tab),
             MenuAction::PrevTab => (Modifiers::CONTROL | Modifiers::SHIFT, Code::Tab),
+            MenuAction::Find => (cmd, Code::KeyF),
+            MenuAction::FindNext => (cmd, Code::KeyG),
+            MenuAction::FindPrev => (cmd_shift, Code::KeyG),
+            MenuAction::Replace => (cmd | Modifiers::ALT, Code::KeyF),
         };
         Some(Accelerator::new(m, k))
     }
