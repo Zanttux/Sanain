@@ -33,10 +33,11 @@ pub enum MenuAction {
     ZoomIn,
     ZoomOut,
     ZoomReset,
+    CommandPalette,
 }
 
 impl MenuAction {
-    const ALL: [MenuAction; 27] = [
+    pub const ALL: [MenuAction; 28] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -64,6 +65,7 @@ impl MenuAction {
         Self::ZoomIn,
         Self::ZoomOut,
         Self::ZoomReset,
+        Self::CommandPalette,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -96,6 +98,7 @@ impl MenuAction {
             Self::ZoomIn => "view.zoom-in",
             Self::ZoomOut => "view.zoom-out",
             Self::ZoomReset => "view.zoom-reset",
+            Self::CommandPalette => "view.command-palette",
         }
     }
 
@@ -134,6 +137,7 @@ impl MenuAction {
             Self::ZoomIn => "view-zoom-in",
             Self::ZoomOut => "view-zoom-out",
             Self::ZoomReset => "view-zoom-reset",
+            Self::CommandPalette => "view-command-palette",
         }
     }
 
@@ -169,6 +173,7 @@ impl MenuAction {
             Self::ZoomIn => (cmd, Key::Plus),
             Self::ZoomOut => (cmd, Key::Minus),
             Self::ZoomReset => (cmd, Key::Num0),
+            Self::CommandPalette => (cmd_shift, Key::P),
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -189,6 +194,8 @@ const FILE_ITEMS: &[Option<MenuAction>] = &[
 ];
 const WINDOW_ITEMS: &[Option<MenuAction>] = &[Some(MenuAction::NextTab), Some(MenuAction::PrevTab)];
 const VIEW_ITEMS: &[Option<MenuAction>] = &[
+    Some(MenuAction::CommandPalette),
+    None,
     Some(MenuAction::ZoomIn),
     Some(MenuAction::ZoomOut),
     Some(MenuAction::ZoomReset),
@@ -318,6 +325,7 @@ mod native {
             MenuAction::ZoomIn => (cmd, ch("+")),
             MenuAction::ZoomOut => (cmd, ch("-")),
             MenuAction::ZoomReset => (cmd, ch("0")),
+            MenuAction::CommandPalette => (cmd_shift, ch("p")),
         };
         KeyAccelerator::new(m, k)
     }

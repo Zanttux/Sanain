@@ -40,7 +40,7 @@ M1 in progress.
 | E05 | Partial | UTF-8, UTF-8 BOM, UTF-16 LE/BE BOM, line endings preserved; legacy encodings not started |
 | E02 | Partial | Tabs, close/reopen, keyboard switching, dirty markers, per-tab recovery. Not yet: drag reorder in UI (model supports it), pin, split editor |
 | E07 | Partial | Tree-sitter highlighting for 8 languages, background worker with cancellation, line numbers, keyboard navigation, light/dark/system theme, zoom. Not yet: folding, incremental parsing, more languages |
-| E11 | Partial | Menus with standard shortcuts on all platforms (logical keys on macOS). Not yet: command palette, configurable shortcuts, Notepad++ preset |
+| E11 | Partial | Menus with standard shortcuts (logical keys on macOS); command palette with fuzzy search. Not yet: configurable shortcuts, Notepad++ preset |
 | E06 | Partial | Unsaved-changes prompts; crash recovery per tab (kill -9 → relaunch restores text); session restore of open files and active tab. Not yet: settings opt-out UI, disk-full drill |
 | Others | Not started | |
 
@@ -83,6 +83,6 @@ because nobody independent exists; no fake approvals.
 ## Next
 - Line/column mapping, vertical movement, word movement, line operations.
 - Hard-link-safe save strategy.
-- Command palette (E11), then Markdown preview (M4).
+- Markdown source/split/preview (M4, E08).
 - Manual IME and screen-reader pass on macOS; Windows and Linux GUI smoke
   test (needs hardware or VM access).

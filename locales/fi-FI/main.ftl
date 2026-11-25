@@ -112,3 +112,5 @@ settings-language = Kieli
 settings-language-system = Järjestelmän mukaan
 settings-language-note = Kielen vaihto tulee voimaan, kun Sanain käynnistetään uudelleen.
 settings-save-failed = Asetuksia ei voitu tallentaa: { $reason }
+view-command-palette = Komentopaletti…
+palette-placeholder = Kirjoita komento

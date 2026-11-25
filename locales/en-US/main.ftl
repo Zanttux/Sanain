@@ -111,3 +111,5 @@ settings-language = Language
 settings-language-system = Match system
 settings-language-note = Language changes apply after restarting Sanain.
 settings-save-failed = Could not save settings: { $reason }
+view-command-palette = Command Palette…
+palette-placeholder = Type a command
