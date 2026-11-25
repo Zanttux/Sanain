@@ -194,11 +194,31 @@ pub fn line_col(rope: &Rope, char_idx: usize) -> (usize, usize) {
 /// landing inside a grapheme cluster. Past the first or last line the caret
 /// goes to the document start or end.
 pub fn move_vertical(rope: &Rope, sels: &Selections, down: bool, extend: bool) -> Selections {
+    let goals: Vec<usize> = sels.iter().map(|s| line_col(rope, s.head).1).collect();
+    move_vertical_to(rope, sels, down, extend, &goals)
+}
+
+/// Columns of each caret, for use as goal columns across vertical moves.
+pub fn columns(rope: &Rope, sels: &Selections) -> Vec<usize> {
+    sels.iter().map(|s| line_col(rope, s.head).1).collect()
+}
+
+/// Up/Down aiming for `goals[i]` (char column) for selection `i`, so a
+/// caret passing through a short line returns to its column afterwards.
+pub fn move_vertical_to(
+    rope: &Rope,
+    sels: &Selections,
+    down: bool,
+    extend: bool,
+    goals: &[usize],
+) -> Selections {
     let last_line = rope.len_lines().saturating_sub(1);
     let moved = sels
         .iter()
-        .map(|s| {
+        .enumerate()
+        .map(|(i, s)| {
             let (line, col) = line_col(rope, s.head);
+            let col = goals.get(i).copied().unwrap_or(col);
             let head = match (down, line) {
                 (false, 0) => 0,
                 (true, l) if l >= last_line => rope.len_chars(),

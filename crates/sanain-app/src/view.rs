@@ -281,6 +281,11 @@ impl EditorView {
                 match key {
                     Key::Enter if !m.command => Command::NewLine,
                     Key::Tab if !m.command && !m.shift => Command::Insert("\t".into()),
+                    Key::ArrowUp if m.alt && m.shift => Command::DuplicateLine,
+                    Key::ArrowDown if m.alt && m.shift => Command::DuplicateLine,
+                    Key::ArrowUp if m.alt => Command::MoveLineUp,
+                    Key::ArrowDown if m.alt => Command::MoveLineDown,
+                    Key::K if m.command && m.shift => Command::DeleteLine,
                     Key::Backspace if word => Command::DeleteWordBackward,
                     Key::Delete if word => Command::DeleteWordForward,
                     Key::ArrowLeft if word => Command::WordLeft { extend },

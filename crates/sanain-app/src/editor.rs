@@ -2,6 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
+use sanain_core::lines;
 use sanain_core::selection::{self as sel, Selection, Selections};
 use sanain_core::{Document, LineEnding, Transaction};
 use sanain_io::{Fingerprint, LoadError, SaveError, SaveMode, TextEncoding};
@@ -25,6 +26,10 @@ pub enum Command {
     },
     DeleteWordBackward,
     DeleteWordForward,
+    DeleteLine,
+    DuplicateLine,
+    MoveLineUp,
+    MoveLineDown,
     Right {
         extend: bool,
     },
@@ -79,6 +84,8 @@ pub struct Editor {
     /// Encoding used when saving a buffer that has no file yet.
     untitled_encoding: TextEncoding,
     newline: &'static str,
+    /// Goal columns kept across consecutive Up/Down moves.
+    goal: Option<Vec<usize>>,
 }
 
 impl Default for Editor {
@@ -95,6 +102,7 @@ impl Editor {
             file: None,
             untitled_encoding: TextEncoding::Utf8,
             newline: platform_newline(),
+            goal: None,
         }
     }
 
@@ -125,6 +133,7 @@ impl Editor {
         let loaded = sanain_io::load(path)?;
         Ok(Self {
             newline: preferred_newline(&loaded.text),
+            goal: None,
             doc: Document::from_saved_text(&loaded.text),
             sels: Selections::single(Selection::cursor(0)),
             untitled_encoding: loaded.encoding,
@@ -170,8 +179,27 @@ impl Editor {
             .map(|n| n.to_string_lossy().into_owned())
     }
 
+    /// The line break to insert: the document's first existing break, so
+    /// edits never mix conventions; the file's or platform's default when
+    /// the document has none.
+    fn newline(&self) -> &'static str {
+        let rope = self.doc.rope();
+        if rope.len_lines() < 2 {
+            return self.newline;
+        }
+        let end = sel::line_content_end(rope, 0);
+        let brk: String = rope.slice(end..rope.line_to_char(1)).into();
+        match brk.as_str() {
+            "\r\n" => "\r\n",
+            "\r" => "\r",
+            "\n" => "\n",
+            _ => self.newline,
+        }
+    }
+
     /// Run a command. Returns text for the clipboard (Cut) if any.
     pub fn execute(&mut self, cmd: Command) -> Option<String> {
+        let goal = self.goal.take();
         let rope = self.doc.rope();
         let (tx, next): (Option<Transaction>, Selections) = match cmd {
             Command::Insert(text) => {
@@ -179,7 +207,7 @@ impl Editor {
                 (Some(tx), s)
             }
             Command::NewLine => {
-                let (tx, s) = sel::insert(&self.sels, self.newline);
+                let (tx, s) = sel::insert(&self.sels, self.newline());
                 (Some(tx), s)
             }
             Command::Backspace => {
@@ -215,8 +243,27 @@ impl Editor {
             Command::Right { extend } => {
                 (None, sel::move_horizontal(rope, &self.sels, true, extend))
             }
-            Command::Up { extend } => (None, sel::move_vertical(rope, &self.sels, false, extend)),
-            Command::Down { extend } => (None, sel::move_vertical(rope, &self.sels, true, extend)),
+            Command::Up { extend } | Command::Down { extend } => {
+                let goals = goal
+                    .filter(|g| g.len() == self.sels.len())
+                    .unwrap_or_else(|| sel::columns(rope, &self.sels));
+                let down = matches!(cmd, Command::Down { .. });
+                let next = sel::move_vertical_to(rope, &self.sels, down, extend, &goals);
+                self.goal = Some(goals);
+                (None, next)
+            }
+            Command::DeleteLine => {
+                let (tx, s) = lines::delete_lines(rope, &self.sels);
+                (Some(tx), s)
+            }
+            Command::DuplicateLine => {
+                let (tx, s) = lines::duplicate_lines(rope, &self.sels, self.newline());
+                (Some(tx), s)
+            }
+            Command::MoveLineUp | Command::MoveLineDown => {
+                let (tx, s) = lines::move_lines(rope, &self.sels, cmd == Command::MoveLineDown);
+                (Some(tx), s)
+            }
             Command::LineStart { extend } => {
                 (None, sel::move_line_edge(rope, &self.sels, false, extend))
             }
@@ -404,6 +451,67 @@ mod tests {
         ed.execute(Command::Undo);
         assert_eq!(ed.document().text(), "hello world");
         assert_eq!(ed.selections().primary(), Selection::cursor(11));
+    }
+
+    #[test]
+    fn vertical_moves_keep_goal_column_across_short_lines() {
+        let mut ed = Editor::new();
+        ed.execute(Command::Insert("abcdef\nx\nabcdef".into()));
+        ed.execute(Command::PlaceCaret {
+            at: 5,
+            extend: false,
+        });
+        ed.execute(Command::Down { extend: false });
+        assert_eq!(
+            ed.selections().primary(),
+            Selection::cursor(8),
+            "clamped on 'x'"
+        );
+        ed.execute(Command::Down { extend: false });
+        assert_eq!(
+            ed.selections().primary(),
+            Selection::cursor(14),
+            "back to column 5"
+        );
+        // Any other command resets the goal.
+        ed.execute(Command::Left { extend: false });
+        ed.execute(Command::Up { extend: false });
+        assert_eq!(ed.selections().primary(), Selection::cursor(8));
+    }
+
+    #[test]
+    fn new_breaks_follow_the_document_not_the_platform() {
+        let mut ed = Editor::new();
+        ed.newline = "\r\n"; // as on Windows
+        ed.execute(Command::Insert("a\nb".into()));
+        ed.execute(Command::NewLine);
+        ed.execute(Command::DuplicateLine);
+        assert_eq!(ed.document().text(), "a\nb\n\n");
+        let mut ed = Editor::new();
+        ed.newline = "\n";
+        ed.execute(Command::Insert("x\r\ny".into()));
+        ed.execute(Command::NewLine);
+        assert_eq!(ed.document().text(), "x\r\ny\r\n");
+    }
+
+    #[test]
+    fn line_commands_round_trip() {
+        let mut ed = Editor::new();
+        ed.execute(Command::Insert("one\ntwo".into()));
+        ed.execute(Command::PlaceCaret {
+            at: 1,
+            extend: false,
+        });
+        ed.execute(Command::MoveLineDown);
+        assert_eq!(ed.document().text(), "two\none");
+        ed.execute(Command::DuplicateLine);
+        assert_eq!(ed.document().text(), "two\none\none");
+        ed.execute(Command::DeleteLine);
+        assert_eq!(ed.document().text(), "two\none");
+        ed.execute(Command::Undo);
+        ed.execute(Command::Undo);
+        ed.execute(Command::Undo);
+        assert_eq!(ed.document().text(), "one\ntwo");
     }
 
     #[test]
