@@ -374,3 +374,6 @@ about-license = Свободное ПО с открытым исходным к�
 about-ai = Создан ИИ. Направляется людьми. Развивается сообществом.
 about-notices = Сторонние компоненты и их лицензии перечислены в файле THIRD_PARTY_NOTICES, входящем в каждый выпуск.
 about-source = Исходный код и задачи на GitHub
+tools-xml-validate = Проверить XML
+tools-yaml-validate = Проверить YAML
+tools-markup-valid = { $format } корректен

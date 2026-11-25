@@ -5,6 +5,8 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Tools > Validate XML and Validate YAML report whether the document is
+  well-formed and put the cursor on the first error.
 - About Sanain (app menu on macOS, Help menu elsewhere): version,
   license, how Sanain is made and where the source is.
 - Release tooling: cargo-deny policy (deny.toml) and a third-party notices

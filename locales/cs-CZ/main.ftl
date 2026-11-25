@@ -374,3 +374,6 @@ about-license = Svobodný a otevřený software pod licencí Mozilla Public Lice
 about-ai = Vytvořeno AI. Vedeno lidmi. Rozvíjeno komunitou.
 about-notices = Komponenty třetích stran a jejich licence jsou uvedeny v souboru THIRD_PARTY_NOTICES, který je součástí každého vydání.
 about-source = Zdrojový kód a hlášení chyb na GitHubu
+tools-xml-validate = Ověřit XML
+tools-yaml-validate = Ověřit YAML
+tools-markup-valid = { $format } je platný

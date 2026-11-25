@@ -340,3 +340,6 @@ about-license = Ελεύθερο λογισμικό ανοιχτού κώδικ�
 about-ai = Φτιαγμένο από AI. Με ανθρώπινη καθοδήγηση. Με τη δύναμη της κοινότητας.
 about-notices = Τα στοιχεία τρίτων και οι άδειές τους αναφέρονται στο αρχείο THIRD_PARTY_NOTICES, που περιλαμβάνεται σε κάθε έκδοση.
 about-source = Πηγαίος κώδικας και αναφορές προβλημάτων στο GitHub
+tools-xml-validate = Επικύρωση XML
+tools-yaml-validate = Επικύρωση YAML
+tools-markup-valid = Το { $format } είναι έγκυρο

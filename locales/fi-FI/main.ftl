@@ -340,3 +340,6 @@ about-license = Vapaa ja avoin lähdekoodi Mozilla Public License 2.0 -lisenssil
 about-ai = Tekoälyn rakentama. Ihmisen johtama. Yhteisön kehittämä.
 about-notices = Kolmansien osapuolten komponentit lisensseineen on lueteltu tiedostossa THIRD_PARTY_NOTICES, joka on mukana jokaisessa julkaisussa.
 about-source = Lähdekoodi ja palautteet GitHubissa
+tools-xml-validate = Tarkista XML
+tools-yaml-validate = Tarkista YAML
+tools-markup-valid = Kelvollinen { $format }.

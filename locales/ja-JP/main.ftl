@@ -323,3 +323,6 @@ about-license = Mozilla Public License 2.0 に基づく自由なオープンソ�
 about-ai = AI が作り、人が導き、コミュニティが育てる。
 about-notices = サードパーティ製コンポーネントとそのライセンスは、各リリースに含まれる THIRD_PARTY_NOTICES に記載されています。
 about-source = GitHub のソースコードと Issue
+tools-xml-validate = XML を検証
+tools-yaml-validate = YAML を検証
+tools-markup-valid = { $format } は有効です

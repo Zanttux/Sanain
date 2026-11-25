@@ -340,3 +340,6 @@ about-license = Szabad és nyílt forráskódú szoftver a Mozilla Public Licens
 about-ai = MI építette. Ember vezeti. A közösség formálja.
 about-notices = A külső komponensek és licenceik a THIRD_PARTY_NOTICES fájlban találhatók, amely minden kiadás része.
 about-source = Forráskód és hibajegyek a GitHubon
+tools-xml-validate = XML ellenőrzése
+tools-yaml-validate = YAML ellenőrzése
+tools-markup-valid = A { $format } érvényes

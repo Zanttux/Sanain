@@ -75,10 +75,12 @@ pub enum MenuAction {
     CompareClipboard,
     SplitEditor,
     About,
+    XmlValidate,
+    YamlValidate,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 68] = [
+    pub const ALL: [MenuAction; 70] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -147,6 +149,8 @@ impl MenuAction {
         Self::CompareClipboard,
         Self::SplitEditor,
         Self::About,
+        Self::XmlValidate,
+        Self::YamlValidate,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -220,6 +224,8 @@ impl MenuAction {
             Self::CompareClipboard => "tools.compare-clipboard",
             Self::SplitEditor => "view.split-editor",
             Self::About => "app.about",
+            Self::XmlValidate => "tools.xml-validate",
+            Self::YamlValidate => "tools.yaml-validate",
         }
     }
 
@@ -299,6 +305,8 @@ impl MenuAction {
             Self::CompareClipboard => "tools-compare-clipboard",
             Self::SplitEditor => "view-split-editor",
             Self::About => "app-about",
+            Self::XmlValidate => "tools-xml-validate",
+            Self::YamlValidate => "tools-yaml-validate",
         }
     }
 
@@ -395,6 +403,8 @@ impl MenuAction {
             | Self::UnpinTab
             | Self::WordWrap
             | Self::About
+            | Self::XmlValidate
+            | Self::YamlValidate
             | Self::CompareSaved
             | Self::CompareClipboard => return None,
         };
@@ -480,6 +490,8 @@ const TOOLS_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::JsonValidate),
     Some(MenuAction::JsonFormat),
     Some(MenuAction::JsonMinify),
+    Some(MenuAction::XmlValidate),
+    Some(MenuAction::YamlValidate),
     None,
     Some(MenuAction::SortLines),
     Some(MenuAction::SortLinesDesc),
@@ -750,6 +762,8 @@ mod native {
             | MenuAction::UnpinTab
             | MenuAction::WordWrap
             | MenuAction::About
+            | MenuAction::XmlValidate
+            | MenuAction::YamlValidate
             | MenuAction::CompareSaved
             | MenuAction::CompareClipboard => return None,
         };

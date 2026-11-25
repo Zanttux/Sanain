@@ -340,3 +340,6 @@ about-license = Mozilla Public License 2.0 kapsamında özgür ve açık kaynakl
 about-ai = Yapay zekâ yaptı. İnsanlar yönetiyor. Topluluk geliştiriyor.
 about-notices = Üçüncü taraf bileşenler ve lisansları, her sürüme dahil olan THIRD_PARTY_NOTICES dosyasında listelenmiştir.
 about-source = GitHub’da kaynak kodu ve sorunlar
+tools-xml-validate = XML'i Doğrula
+tools-yaml-validate = YAML'ı Doğrula
+tools-markup-valid = { $format } geçerli

@@ -357,3 +357,6 @@ about-license = Liber și open source sub licența Mozilla Public License 2.0.
 about-ai = Construit de AI. Condus de oameni. Susținut de comunitate.
 about-notices = Componentele terțe și licențele lor sunt enumerate în THIRD_PARTY_NOTICES, inclus în fiecare versiune.
 about-source = Cod sursă și probleme pe GitHub
+tools-xml-validate = Validează XML
+tools-yaml-validate = Validează YAML
+tools-markup-valid = { $format } este valid

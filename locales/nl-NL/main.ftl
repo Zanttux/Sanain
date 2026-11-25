@@ -340,3 +340,6 @@ about-license = Vrij en open source onder de Mozilla Public License 2.0.
 about-ai = Gebouwd door AI. Geleid door mensen. Gedragen door de community.
 about-notices = Componenten van derden en hun licenties staan vermeld in THIRD_PARTY_NOTICES, dat bij elke release wordt meegeleverd.
 about-source = Broncode en meldingen op GitHub
+tools-xml-validate = Valideer XML
+tools-yaml-validate = Valideer YAML
+tools-markup-valid = { $format } is geldig
