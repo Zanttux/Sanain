@@ -2992,6 +2992,7 @@ dependencies = [
  "sanain-io",
  "sanain-language",
  "sanain-markdown",
+ "sanain-tools",
  "sys-locale",
  "tempfile",
 ]
@@ -3049,6 +3050,14 @@ name = "sanain-markdown"
 version = "0.0.1"
 dependencies = [
  "comrak",
+]
+
+[[package]]
+name = "sanain-tools"
+version = "0.0.1"
+dependencies = [
+ "proptest",
+ "thiserror 2.0.21",
 ]
 
 [[package]]

@@ -440,6 +440,82 @@ impl Shell {
         }
     }
 
+    /// Run a text tool on the selection (or whole document) as one edit.
+    fn run_tool(&mut self, action: MenuAction) {
+        use sanain_tools::{Newline, json};
+        let indent = self.settings.indent();
+        let newline = match self.editor().line_ending() {
+            LineEnding::CrLf => "\r\n",
+            LineEnding::Cr => "\r",
+            _ => "\n",
+        };
+        let ok = |s: String| Ok::<_, json::JsonError>(s);
+        let result = match action {
+            MenuAction::JsonValidate => {
+                let range = self.editor().tool_range();
+                let text: String = self.editor().document().rope().slice(range.clone()).into();
+                json::validate_json(&text).map(|()| false)
+            }
+            MenuAction::JsonFormat => self
+                .editor_mut()
+                .transform(|t| json::format(t, &indent, newline)),
+            MenuAction::JsonMinify => self.editor_mut().transform(json::minify),
+            MenuAction::SortLines => self
+                .editor_mut()
+                .transform(|t| ok(sanain_tools::sort_lines(t, false))),
+            MenuAction::SortLinesDesc => self
+                .editor_mut()
+                .transform(|t| ok(sanain_tools::sort_lines(t, true))),
+            MenuAction::UniqueLines => self
+                .editor_mut()
+                .transform(|t| ok(sanain_tools::unique_lines(t))),
+            MenuAction::TrimTrailing => self
+                .editor_mut()
+                .transform(|t| ok(sanain_tools::trim_trailing_whitespace(t))),
+            MenuAction::UpperCase => self
+                .editor_mut()
+                .transform(|t| ok(sanain_tools::upper_case(t))),
+            MenuAction::LowerCase => self
+                .editor_mut()
+                .transform(|t| ok(sanain_tools::lower_case(t))),
+            MenuAction::ToLf => self
+                .editor_mut()
+                .transform(|t| ok(sanain_tools::convert_newlines(t, Newline::Lf))),
+            MenuAction::ToCrLf => self
+                .editor_mut()
+                .transform(|t| ok(sanain_tools::convert_newlines(t, Newline::CrLf))),
+            _ => return,
+        };
+        match result {
+            Ok(changed) => {
+                let id = match (action, changed) {
+                    (MenuAction::JsonValidate, _) => "tools-json-valid",
+                    (_, true) => "tools-done",
+                    (_, false) => "tools-no-change",
+                };
+                self.status = Some((self.t(id, &[]), false));
+            }
+            Err(e) => {
+                // Put the caret on the problem.
+                let range = self.editor().tool_range();
+                let text: String = self.editor().document().rope().slice(range.clone()).into();
+                let at = range.start + text[..e.offset.min(text.len())].chars().count();
+                self.editor_mut().select(at..at);
+                let id = self.ws.active().id;
+                self.views.entry(id).or_default().reveal();
+                let msg = self.t(
+                    "tools-json-error",
+                    &[
+                        ("line", (e.line as i64).into()),
+                        ("column", (e.column as i64).into()),
+                        ("reason", self.t(&json_reason_id(e.message), &[]).into()),
+                    ],
+                );
+                self.status = Some((msg, true));
+            }
+        }
+    }
+
     fn is_markdown(ed: &Editor) -> bool {
         ed.file()
             .and_then(|f| f.path.extension())
@@ -659,6 +735,20 @@ impl Shell {
             MenuAction::CommandPalette => {
                 self.palette.open();
                 return;
+            }
+            MenuAction::JsonValidate
+            | MenuAction::JsonFormat
+            | MenuAction::JsonMinify
+            | MenuAction::SortLines
+            | MenuAction::SortLinesDesc
+            | MenuAction::UniqueLines
+            | MenuAction::TrimTrailing
+            | MenuAction::UpperCase
+            | MenuAction::LowerCase
+            | MenuAction::ToLf
+            | MenuAction::ToCrLf => {
+                self.run_tool(action);
+                None
             }
             MenuAction::Settings => {
                 self.settings_open = true;
@@ -1120,6 +1210,24 @@ impl eframe::App for Shell {
     }
 }
 
+/// Localization ID for a JSON error reason (see locales: `json-reason-*`).
+fn json_reason_id(message: &str) -> String {
+    let mut id = String::from("json-reason-");
+    let mut dash = false;
+    for c in message.chars().flat_map(char::to_lowercase) {
+        if c.is_ascii_alphanumeric() {
+            if dash && !id.ends_with('-') {
+                id.push('-');
+            }
+            id.push(c);
+            dash = false;
+        } else {
+            dash = true;
+        }
+    }
+    id
+}
+
 /// Format a localized message. Fluent's isolation marks are stripped
 /// because egui renders them as visible boxes.
 fn tr(l10n: &Localizer, id: &str, args: &[(&str, FluentValue<'_>)]) -> String {
@@ -1144,4 +1252,22 @@ pub fn describe_load_error(l10n: &Localizer, path: &Path, e: &LoadError) -> Stri
     };
     l10n.format(id, Some(&args))
         .replace(['\u{2068}', '\u{2069}'], "")
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn json_reason_ids_exist_in_english() {
+        let en = include_str!("../../../locales/en-US/main.ftl");
+        for m in [
+            "unterminated string",
+            "invalid \\u escape",
+            "expected ':'",
+            "expected ',' or a closing bracket",
+            "too deeply nested to format",
+        ] {
+            let id = super::json_reason_id(m);
+            assert!(en.contains(&format!("{id} = ")), "{id} missing");
+        }
+    }
 }
