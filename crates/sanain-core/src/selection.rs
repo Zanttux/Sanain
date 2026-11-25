@@ -164,6 +164,98 @@ pub fn move_horizontal(rope: &Rope, sels: &Selections, forward: bool, extend: bo
     Selections::new(moved, sels.primary, rope.len_chars())
 }
 
+/// Char index where `line`'s content ends, before its line break.
+pub fn line_content_end(rope: &Rope, line: usize) -> usize {
+    let start = rope.line_to_char(line);
+    let slice = rope.line(line);
+    let mut len = slice.len_chars();
+    // Strip CRLF as a unit, or any single break char ropey recognises.
+    if len >= 2 && slice.char(len - 2) == '\r' && slice.char(len - 1) == '\n' {
+        len -= 2;
+    } else if len >= 1
+        && matches!(
+            slice.char(len - 1),
+            '\n' | '\r' | '\u{0B}' | '\u{0C}' | '\u{85}' | '\u{2028}' | '\u{2029}'
+        )
+    {
+        len -= 1;
+    }
+    start + len
+}
+
+/// Zero-based (line, char column) of `char_idx`.
+pub fn line_col(rope: &Rope, char_idx: usize) -> (usize, usize) {
+    let idx = char_idx.min(rope.len_chars());
+    let line = rope.char_to_line(idx);
+    (line, idx - rope.line_to_char(line))
+}
+
+/// Up/Down by one line, keeping the char column where possible and never
+/// landing inside a grapheme cluster. Past the first or last line the caret
+/// goes to the document start or end.
+pub fn move_vertical(rope: &Rope, sels: &Selections, down: bool, extend: bool) -> Selections {
+    let last_line = rope.len_lines().saturating_sub(1);
+    let moved = sels
+        .iter()
+        .map(|s| {
+            let (line, col) = line_col(rope, s.head);
+            let head = match (down, line) {
+                (false, 0) => 0,
+                (true, l) if l >= last_line => rope.len_chars(),
+                _ => {
+                    let target = if down { line + 1 } else { line - 1 };
+                    let start = rope.line_to_char(target);
+                    let mut at = (start + col).min(line_content_end(rope, target));
+                    if !grapheme::is_boundary(rope, at) {
+                        at = grapheme::prev_boundary(rope, at);
+                    }
+                    at
+                }
+            };
+            if extend {
+                Selection::new(s.anchor, head)
+            } else {
+                Selection::cursor(head)
+            }
+        })
+        .collect();
+    Selections::new(moved, sels.primary, rope.len_chars())
+}
+
+/// Home/End: move to the start or content end of the caret's line.
+pub fn move_line_edge(rope: &Rope, sels: &Selections, end: bool, extend: bool) -> Selections {
+    let moved = sels
+        .iter()
+        .map(|s| {
+            let line = rope.char_to_line(s.head.min(rope.len_chars()));
+            let head = if end {
+                line_content_end(rope, line)
+            } else {
+                rope.line_to_char(line)
+            };
+            if extend {
+                Selection::new(s.anchor, head)
+            } else {
+                Selection::cursor(head)
+            }
+        })
+        .collect();
+    Selections::new(moved, sels.primary, rope.len_chars())
+}
+
+pub fn select_all(rope: &Rope) -> Selections {
+    Selections::single(Selection::new(0, rope.len_chars()))
+}
+
+/// The selected text of every non-empty selection, joined by `\n`.
+pub fn selected_text(rope: &Rope, sels: &Selections) -> String {
+    sels.iter()
+        .filter(|s| !s.is_empty())
+        .map(|s| rope.slice(s.range()).to_string())
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 /// Apply one replacement per selection. Changes are emitted from the end of
 /// the document backwards so each range is valid in original coordinates.
 fn replace_each(
@@ -315,5 +407,64 @@ mod tests {
         let v: Vec<_> = s.iter().copied().collect();
         assert_eq!(v, vec![Selection::new(8, 2), Selection::cursor(10)]);
         assert_eq!(s.primary(), Selection::new(8, 2));
+    }
+
+    #[test]
+    fn vertical_movement_clamps_and_respects_crlf() {
+        let rope = Rope::from_str("abcd\r\nx\r\nefgh");
+        let s = Selections::single(Selection::cursor(3)); // line 0 col 3
+        let d = move_vertical(&rope, &s, true, false);
+        assert_eq!(
+            d.primary(),
+            Selection::cursor(7),
+            "clamped before CRLF on 'x'"
+        );
+        let d2 = move_vertical(&rope, &d, true, false);
+        assert_eq!(line_col(&rope, d2.primary().head), (2, 1));
+        assert_eq!(
+            move_vertical(&rope, &d2, true, false).primary(),
+            Selection::cursor(13)
+        );
+        assert_eq!(
+            move_vertical(&rope, &s, false, true).primary(),
+            Selection::new(3, 0)
+        );
+    }
+
+    #[test]
+    fn vertical_movement_snaps_to_grapheme_boundary() {
+        // Column 2 on line 1 falls between 'e' and its combining accent.
+        let rope = Rope::from_str("abc\nxe\u{301}y");
+        let s = Selections::single(Selection::cursor(2));
+        assert_eq!(
+            move_vertical(&rope, &s, true, false).primary(),
+            Selection::cursor(5)
+        );
+    }
+
+    #[test]
+    fn home_end_and_select_all() {
+        let rope = Rope::from_str("one\r\ntwo");
+        let s = Selections::single(Selection::cursor(1));
+        assert_eq!(
+            move_line_edge(&rope, &s, true, false).primary(),
+            Selection::cursor(3)
+        );
+        let s = Selections::single(Selection::cursor(7));
+        assert_eq!(
+            move_line_edge(&rope, &s, false, true).primary(),
+            Selection::new(7, 5)
+        );
+        assert_eq!(select_all(&rope).primary(), Selection::new(0, 8));
+        assert_eq!(selected_text(&rope, &select_all(&rope)), "one\r\ntwo");
+    }
+
+    #[test]
+    fn line_content_end_handles_all_breaks() {
+        let rope = Rope::from_str("a\nb\r\nc\rd");
+        assert_eq!(line_content_end(&rope, 0), 1);
+        assert_eq!(line_content_end(&rope, 1), 3);
+        assert_eq!(line_content_end(&rope, 2), 6);
+        assert_eq!(line_content_end(&rope, 3), 8);
     }
 }
