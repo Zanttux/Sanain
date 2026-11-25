@@ -74,10 +74,11 @@ pub enum MenuAction {
     CompareSaved,
     CompareClipboard,
     SplitEditor,
+    About,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 67] = [
+    pub const ALL: [MenuAction; 68] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -145,6 +146,7 @@ impl MenuAction {
         Self::CompareSaved,
         Self::CompareClipboard,
         Self::SplitEditor,
+        Self::About,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -217,6 +219,7 @@ impl MenuAction {
             Self::CompareSaved => "tools.compare-saved",
             Self::CompareClipboard => "tools.compare-clipboard",
             Self::SplitEditor => "view.split-editor",
+            Self::About => "app.about",
         }
     }
 
@@ -295,6 +298,7 @@ impl MenuAction {
             Self::CompareSaved => "tools-compare-saved",
             Self::CompareClipboard => "tools-compare-clipboard",
             Self::SplitEditor => "view-split-editor",
+            Self::About => "app-about",
         }
     }
 
@@ -390,6 +394,7 @@ impl MenuAction {
             | Self::PinTab
             | Self::UnpinTab
             | Self::WordWrap
+            | Self::About
             | Self::CompareSaved
             | Self::CompareClipboard => return None,
         };
@@ -558,6 +563,7 @@ pub fn in_window(
             ("menu-view", VIEW_ITEMS),
             ("menu-tools", TOOLS_ITEMS),
             ("menu-window", WINDOW_ITEMS),
+            ("menu-help", &[Some(MenuAction::About)]),
         ] {
             ui.menu_button(label(title), |ui| {
                 ui.set_min_width(220.0);
@@ -743,6 +749,7 @@ mod native {
             | MenuAction::PinTab
             | MenuAction::UnpinTab
             | MenuAction::WordWrap
+            | MenuAction::About
             | MenuAction::CompareSaved
             | MenuAction::CompareClipboard => return None,
         };
@@ -782,10 +789,13 @@ mod native {
             let quit = make(MenuAction::Quit);
             let settings = make(MenuAction::Settings);
             let updates = make(MenuAction::CheckUpdates);
+            let about = make(MenuAction::About);
             let app = Submenu::with_items(
                 "Sanain",
                 true,
                 &[
+                    &about,
+                    &PredefinedMenuItem::separator(),
                     &settings,
                     &updates,
                     &PredefinedMenuItem::separator(),
