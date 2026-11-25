@@ -4,6 +4,7 @@ mod diffview;
 mod find;
 mod folderpanel;
 mod imagecache;
+mod logview;
 mod menu;
 mod palette;
 mod preview;
@@ -21,7 +22,10 @@ use sanain_i18n::Localizer;
 use sanain_io::recovery::RecoveryStore;
 
 fn main() -> eframe::Result {
-    let paths: Vec<PathBuf> = std::env::args_os().skip(1).map(PathBuf::from).collect();
+    let (large, paths): (Vec<PathBuf>, Vec<PathBuf>) = std::env::args_os()
+        .skip(1)
+        .map(PathBuf::from)
+        .partition(|p| shell::Shell::is_large(p));
 
     let settings_dir = Settings::default_dir();
     let settings = settings_dir
@@ -103,6 +107,10 @@ fn main() -> eframe::Result {
                 settings_dir,
             );
             shell.set_history(history);
+            // One log viewer at a time: the last large file named wins.
+            if let Some(p) = large.last() {
+                shell.open_large(p, &cc.egui_ctx);
+            }
             shell.install_menu(&cc.egui_ctx);
             shell.auto_update_check(&cc.egui_ctx);
             Ok(Box::new(shell))

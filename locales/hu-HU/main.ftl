@@ -266,3 +266,18 @@ history-purge-confirm = Előzmények törlése
 history-purged = A helyi előzmények törölve.
 settings-local-history = Mentett fájlok helyi előzményeinek megőrzése
 settings-local-history-detail = Fájlonként legfeljebb 50 verziót őriz meg 30 napig, csak ezen a számítógépen.
+file-open-log = Megnyitás naplómegjelenítőben…
+log-lines = { $count ->
+    [one] 1 sor
+   *[other] { $count } sor
+    }
+log-indexing = Olvasás… { $percent }%
+log-matches = { $count ->
+    [one] 1 egyező sor
+   *[other] { $count } egyező sor
+    }
+log-filter-hint = Sorok szűrése
+log-bad-pattern = Érvénytelen minta
+log-follow = Követés
+log-close = Megjelenítő bezárása
+log-opened-large = A(z) { $name } nagy, ezért csak olvasható módon nyílt meg a naplómegjelenítőben.

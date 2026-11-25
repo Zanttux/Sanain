@@ -288,3 +288,22 @@ history-purge-confirm = Видалити історію
 history-purged = Локальну історію видалено.
 settings-local-history = Зберігати локальну історію збережених файлів
 settings-local-history-detail = Зберігає до 50 версій кожного файлу протягом 30 днів, лише на цьому комп’ютері.
+file-open-log = Відкрити в переглядачі журналів…
+log-lines = { $count ->
+    [one] { $count } рядок
+    [few] { $count } рядки
+    [many] { $count } рядків
+   *[other] { $count } рядка
+    }
+log-indexing = Читання… { $percent } %
+log-matches = { $count ->
+    [one] { $count } відповідний рядок
+    [few] { $count } відповідні рядки
+    [many] { $count } відповідних рядків
+   *[other] { $count } відповідного рядка
+    }
+log-filter-hint = Фільтрувати рядки
+log-bad-pattern = Неприпустимий шаблон
+log-follow = Стежити
+log-close = Закрити переглядач
+log-opened-large = Файл { $name } завеликий, тому його відкрито лише для читання в переглядачі журналів.

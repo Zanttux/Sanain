@@ -266,3 +266,18 @@ history-purge-confirm = Verlauf löschen
 history-purged = Lokaler Verlauf gelöscht.
 settings-local-history = Lokalen Verlauf gesicherter Dateien aufbewahren
 settings-local-history-detail = Bewahrt bis zu 50 Versionen pro Datei für 30 Tage auf, nur auf diesem Computer.
+file-open-log = In Protokollanzeige öffnen…
+log-lines = { $count ->
+    [one] 1 Zeile
+   *[other] { $count } Zeilen
+    }
+log-indexing = Wird gelesen… { $percent } %
+log-matches = { $count ->
+    [one] 1 passende Zeile
+   *[other] { $count } passende Zeilen
+    }
+log-filter-hint = Zeilen filtern
+log-bad-pattern = Ungültiges Muster
+log-follow = Folgen
+log-close = Anzeige schließen
+log-opened-large = { $name } ist groß und wurde daher schreibgeschützt in der Protokollanzeige geöffnet.

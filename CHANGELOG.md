@@ -5,6 +5,12 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Log viewer for large and growing files: File > Open in Log Viewer, and
+  files of 256 MB or more open there automatically. Read-only; lines are
+  read from disk as they scroll into view. Filter lines by text or
+  regular expression, and Follow to keep showing the end as the file
+  grows (a file that shrinks is read again from the start). Reading and
+  filtering run in the background and stop when the viewer closes.
 - Local history: each save keeps a copy of the file on this computer (up
   to 50 versions per file, 30 days, files up to 10 MB). File > Local
   History lists them; open a version in a new tab or restore it as one

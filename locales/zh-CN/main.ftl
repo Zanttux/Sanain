@@ -255,3 +255,16 @@ history-purge-confirm = 删除历史记录
 history-purged = 已删除本地历史记录。
 settings-local-history = 保留已存储文件的本地历史记录
 settings-local-history-detail = 每个文件最多保留 50 个版本，保留 30 天，仅存于此电脑。
+file-open-log = 在日志查看器中打开…
+log-lines = { $count ->
+   *[other] { $count } 行
+    }
+log-indexing = 正在读取… { $percent }%
+log-matches = { $count ->
+   *[other] { $count } 行匹配
+    }
+log-filter-hint = 筛选行
+log-bad-pattern = 无效的模式
+log-follow = 跟随
+log-close = 关闭查看器
+log-opened-large = “{ $name }”较大，因此已在日志查看器中以只读方式打开。

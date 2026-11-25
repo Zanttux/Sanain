@@ -255,3 +255,16 @@ history-purge-confirm = 履歴を削除
 history-purged = ローカル履歴を削除しました。
 settings-local-history = 保存したファイルのローカル履歴を保持
 settings-local-history-detail = ファイルごとに最大 50 バージョンを 30 日間、このコンピュータ上にのみ保持します。
+file-open-log = ログビューアで開く…
+log-lines = { $count ->
+   *[other] { $count } 行
+    }
+log-indexing = 読み込み中… { $percent }%
+log-matches = { $count ->
+   *[other] 一致する行: { $count }
+    }
+log-filter-hint = 行を絞り込む
+log-bad-pattern = 無効なパターン
+log-follow = 追従
+log-close = ビューアを閉じる
+log-opened-large = { $name } は大きいため、ログビューアで読み出し専用で開きました。

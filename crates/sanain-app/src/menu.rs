@@ -60,10 +60,11 @@ pub enum MenuAction {
     CheckUpdates,
     LocalHistory,
     ClearHistory,
+    OpenLog,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 53] = [
+    pub const ALL: [MenuAction; 54] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -117,6 +118,7 @@ impl MenuAction {
         Self::CheckUpdates,
         Self::LocalHistory,
         Self::ClearHistory,
+        Self::OpenLog,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -175,6 +177,7 @@ impl MenuAction {
             Self::CheckUpdates => "app.check-updates",
             Self::LocalHistory => "file.local-history",
             Self::ClearHistory => "file.clear-history",
+            Self::OpenLog => "file.open-log",
         }
     }
 
@@ -239,6 +242,7 @@ impl MenuAction {
             Self::CheckUpdates => "app-check-updates",
             Self::LocalHistory => "file-local-history",
             Self::ClearHistory => "file-clear-history",
+            Self::OpenLog => "file-open-log",
         }
     }
 
@@ -321,7 +325,8 @@ impl MenuAction {
             | Self::UnfoldAll
             | Self::CheckUpdates
             | Self::LocalHistory
-            | Self::ClearHistory => return None,
+            | Self::ClearHistory
+            | Self::OpenLog => return None,
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -374,6 +379,7 @@ pub type Label<'a> = &'a dyn Fn(&str) -> String;
 const FILE_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::New),
     Some(MenuAction::Open),
+    Some(MenuAction::OpenLog),
     None,
     Some(MenuAction::Save),
     Some(MenuAction::SaveAs),
@@ -639,7 +645,8 @@ mod native {
             | MenuAction::UnfoldAll
             | MenuAction::CheckUpdates
             | MenuAction::LocalHistory
-            | MenuAction::ClearHistory => return None,
+            | MenuAction::ClearHistory
+            | MenuAction::OpenLog => return None,
         };
         Some(KeyAccelerator::new(m, k))
     }

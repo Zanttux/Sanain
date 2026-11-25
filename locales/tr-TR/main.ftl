@@ -266,3 +266,18 @@ history-purge-confirm = Geçmişi Sil
 history-purged = Yerel geçmiş silindi.
 settings-local-history = Kaydedilen dosyaların yerel geçmişini sakla
 settings-local-history-detail = Dosya başına en fazla 50 sürümü 30 gün boyunca yalnızca bu bilgisayarda saklar.
+file-open-log = Günlük Görüntüleyicide Aç…
+log-lines = { $count ->
+    [one] 1 satır
+   *[other] { $count } satır
+    }
+log-indexing = Okunuyor… %{ $percent }
+log-matches = { $count ->
+    [one] 1 eşleşen satır
+   *[other] { $count } eşleşen satır
+    }
+log-filter-hint = Satırları filtrele
+log-bad-pattern = Geçersiz desen
+log-follow = Takip Et
+log-close = Görüntüleyiciyi Kapat
+log-opened-large = { $name } büyük olduğu için günlük görüntüleyicide salt okunur olarak açıldı.

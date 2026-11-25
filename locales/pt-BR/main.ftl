@@ -277,3 +277,20 @@ history-purge-confirm = Excluir histórico
 history-purged = Histórico local excluído.
 settings-local-history = Manter histórico local dos arquivos salvos
 settings-local-history-detail = Mantém até 50 versões por arquivo durante 30 dias, somente neste computador.
+file-open-log = Abrir no visualizador de logs…
+log-lines = { $count ->
+    [one] { $count } linha
+    [many] { $count } linhas
+   *[other] { $count } linhas
+    }
+log-indexing = Lendo… { $percent }%
+log-matches = { $count ->
+    [one] { $count } linha correspondente
+    [many] { $count } linhas correspondentes
+   *[other] { $count } linhas correspondentes
+    }
+log-filter-hint = Filtrar linhas
+log-bad-pattern = Padrão inválido
+log-follow = Acompanhar
+log-close = Fechar visualizador
+log-opened-large = { $name } é grande, então foi aberto como somente leitura no visualizador de logs.
