@@ -1,29 +1,31 @@
-//! Window chrome: menus, status bar, file dialogs and confirmations.
+//! Window chrome: menus, tab bar, status bar, file dialogs and
+//! confirmations.
 
+use std::collections::HashMap;
 use std::path::Path;
 
 use eframe::egui::{self, ViewportCommand};
-use sanain_app::{Editor, SaveOutcome};
+use sanain_app::workspace::{TabId, Workspace};
+use sanain_app::{Command, Editor, SaveOutcome};
 use sanain_core::LineEnding;
 use sanain_i18n::{FluentValue, Localizer};
 use sanain_io::{LoadError, TextEncoding};
-
-use sanain_app::recovery::Recovery;
 
 use crate::menu::{self, MenuAction};
 use crate::theme;
 use crate::view::EditorView;
 
-/// What to do once unsaved changes are resolved.
-#[derive(Debug, Clone)]
+/// What to do once a tab's unsaved changes are resolved.
+#[derive(Debug, Clone, Copy)]
 enum Then {
-    Close,
-    New,
-    Open,
+    /// Close this tab.
+    CloseTab(TabId),
+    /// Quit: close dirty tabs one by one, then the window.
+    Quit,
 }
 
 /// A dialog button's follow-up, run after the dialog closes.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 enum Action {
     SaveThen(Then),
     Proceed(Then),
@@ -40,14 +42,13 @@ enum Dialog {
 }
 
 pub struct Shell {
-    editor: Editor,
+    ws: Workspace,
+    views: HashMap<TabId, EditorView>,
     l10n: Localizer,
-    view: EditorView,
     dialog: Option<Dialog>,
     status: Option<(String, bool)>,
     title: String,
     allow_close: bool,
-    recovery: Option<Recovery>,
     #[cfg(target_os = "macos")]
     native_menu: Option<menu::NativeMenu>,
 }
@@ -74,27 +75,28 @@ impl Shell {
     }
 
     pub fn new(
-        editor: Editor,
+        ws: Workspace,
         l10n: Localizer,
-        startup_error: Option<String>,
-        recovery: Option<Recovery>,
-        recovered: bool,
+        startup_errors: Vec<String>,
+        restored: usize,
     ) -> Self {
-        let mut view = EditorView::default();
-        view.request_focus();
-        let status = recovered.then(|| (l10n.get("status-recovered"), false));
-        Self {
-            editor,
+        let status = (restored > 0).then(|| (l10n.get("status-recovered"), false));
+        let mut shell = Self {
+            ws,
+            views: HashMap::new(),
             l10n,
-            view,
-            dialog: startup_error.map(Dialog::Error),
+            dialog: None,
             status,
-            recovery,
             title: String::new(),
             allow_close: false,
             #[cfg(target_os = "macos")]
             native_menu: None,
+        };
+        if !startup_errors.is_empty() {
+            shell.dialog = Some(Dialog::Error(startup_errors.join("\n")));
         }
+        shell.focus_active();
+        shell
     }
 
     fn t(&self, id: &str, args: &[(&str, FluentValue<'_>)]) -> String {
@@ -108,25 +110,40 @@ impl Shell {
             .replace(['\u{2068}', '\u{2069}'], "")
     }
 
+    fn editor(&self) -> &Editor {
+        &self.ws.active().editor
+    }
+
+    fn editor_mut(&mut self) -> &mut Editor {
+        &mut self.ws.active_mut().editor
+    }
+
+    fn name_of(&self, ed: &Editor) -> String {
+        ed.file_name().unwrap_or_else(|| self.t("untitled", &[]))
+    }
+
     fn display_name(&self) -> String {
-        self.editor
-            .file_name()
-            .unwrap_or_else(|| self.t("untitled", &[]))
+        self.name_of(self.editor())
+    }
+
+    fn focus_active(&mut self) {
+        let id = self.ws.active().id;
+        self.views.entry(id).or_default().request_focus();
     }
 
     fn save(&mut self) -> bool {
-        let outcome = self.editor.save();
+        let outcome = self.editor_mut().save();
         self.handle_save(outcome)
     }
 
     fn save_as(&mut self) -> bool {
         let mut dialog = rfd::FileDialog::new().set_file_name(self.display_name());
-        if let Some(dir) = self.editor.file().and_then(|f| f.path.parent()) {
+        if let Some(dir) = self.editor().file().and_then(|f| f.path.parent()) {
             dialog = dialog.set_directory(dir);
         }
         match dialog.save_file() {
             Some(path) => {
-                let outcome = self.editor.save_as(&path);
+                let outcome = self.editor_mut().save_as(&path);
                 self.handle_save(outcome)
             }
             None => false,
@@ -154,63 +171,83 @@ impl Shell {
         false
     }
 
-    /// Run `then` now if there is nothing to lose, otherwise ask first.
-    fn guard(&mut self, then: Then, ctx: &egui::Context) {
-        if self.editor.document().is_dirty() {
-            self.dialog = Some(Dialog::Unsaved(then));
+    /// Close a tab, asking first if it has unsaved changes.
+    fn request_close_tab(&mut self, id: TabId, ctx: &egui::Context) {
+        let Some(i) = self.ws.position(id) else {
+            return;
+        };
+        if self.ws.tabs()[i].editor.document().is_dirty() {
+            self.ws.activate(i);
+            self.dialog = Some(Dialog::Unsaved(Then::CloseTab(id)));
         } else {
-            self.proceed(then, ctx);
+            self.proceed(Then::CloseTab(id), ctx);
         }
     }
 
-    fn proceed(&mut self, then: Then, ctx: &egui::Context) {
-        // The document is either saved or its changes were declined: the
-        // checkpoint for it is no longer needed.
-        if let Some(r) = &mut self.recovery {
-            r.discard();
-        }
-        match then {
-            Then::Close => {
-                if let Some(r) = &self.recovery {
-                    r.flush(std::time::Duration::from_secs(2));
-                }
+    /// Quit, asking about each unsaved tab in turn.
+    fn request_quit(&mut self, ctx: &egui::Context) {
+        match self.ws.first_dirty() {
+            Some(i) => {
+                self.ws.activate(i);
+                self.dialog = Some(Dialog::Unsaved(Then::Quit));
+            }
+            None => {
+                self.ws.flush();
                 self.allow_close = true;
                 ctx.send_viewport_cmd(ViewportCommand::Close);
             }
-            Then::New => {
-                self.editor = Editor::new();
-                self.status = None;
-                self.view = EditorView::default();
-                self.view.request_focus();
-            }
-            Then::Open => {
-                if let Some(path) = rfd::FileDialog::new().pick_file() {
-                    self.open(&path);
+        }
+    }
+
+    /// Continue after the active tab was saved or its changes declined.
+    fn proceed(&mut self, then: Then, ctx: &egui::Context) {
+        match then {
+            Then::CloseTab(id) => {
+                if let Some(i) = self.ws.position(id) {
+                    self.ws.close(i);
+                    self.views.remove(&id);
                 }
             }
+            Then::Quit => {
+                let id = self.ws.active().id;
+                let i = self.ws.active_index();
+                self.ws.close(i);
+                self.views.remove(&id);
+                self.request_quit(ctx);
+                return;
+            }
+        }
+        self.status = None;
+        self.focus_active();
+    }
+
+    fn open_dialog(&mut self) {
+        let Some(paths) = rfd::FileDialog::new().pick_files() else {
+            return;
+        };
+        for p in paths {
+            self.open(&p);
         }
     }
 
     fn open(&mut self, path: &Path) {
-        match Editor::open(path) {
-            Ok(ed) => {
-                self.editor = ed;
+        match self.ws.open(path) {
+            Ok(_) => {
                 self.status = None;
-                self.view = EditorView::default();
-                self.view.request_focus();
+                self.focus_active();
             }
             Err(e) => self.dialog = Some(Dialog::Error(describe_load_error(&self.l10n, path, &e))),
         }
     }
 
     fn enabled(&self, action: MenuAction) -> bool {
-        let doc = self.editor.document();
-        let has_selection = self.editor.copy().is_some();
+        let doc = self.editor().document();
         self.dialog.is_none()
             && match action {
                 MenuAction::Undo => doc.can_undo(),
                 MenuAction::Redo => doc.can_redo(),
-                MenuAction::Cut | MenuAction::Copy => has_selection,
+                MenuAction::Cut | MenuAction::Copy => self.editor().copy().is_some(),
+                MenuAction::NextTab | MenuAction::PrevTab => self.ws.len() > 1,
                 _ => true,
             }
     }
@@ -219,91 +256,204 @@ impl Shell {
         if self.dialog.is_some() {
             return;
         }
-        use sanain_app::Command;
-        match action {
-            MenuAction::New => self.guard(Then::New, ctx),
-            MenuAction::Open => self.guard(Then::Open, ctx),
+        let editor_cmd = |cmd| Some(cmd);
+        let cmd = match action {
+            MenuAction::New => {
+                self.ws.new_tab();
+                None
+            }
+            MenuAction::Open => {
+                self.open_dialog();
+                None
+            }
             MenuAction::Save => {
                 self.save();
+                None
             }
             MenuAction::SaveAs => {
                 self.save_as();
+                None
+            }
+            MenuAction::CloseTab => {
+                let id = self.ws.active().id;
+                self.request_close_tab(id, ctx);
+                None
+            }
+            MenuAction::ReopenTab => {
+                if let Some(Err(e)) = self.ws.reopen_closed() {
+                    let path = match &e {
+                        LoadError::Io { path, .. } | LoadError::Decode { path, .. } => path.clone(),
+                    };
+                    self.dialog = Some(Dialog::Error(describe_load_error(&self.l10n, &path, &e)));
+                } else {
+                    self.focus_active();
+                }
+                None
+            }
+            MenuAction::NextTab => {
+                self.ws.cycle(true);
+                None
+            }
+            MenuAction::PrevTab => {
+                self.ws.cycle(false);
+                None
             }
             // Goes through close_requested, which guards unsaved changes.
-            MenuAction::Quit => ctx.send_viewport_cmd(ViewportCommand::Close),
-            MenuAction::Undo => {
-                self.editor.execute(Command::Undo);
+            MenuAction::Quit => {
+                ctx.send_viewport_cmd(ViewportCommand::Close);
+                None
             }
-            MenuAction::Redo => {
-                self.editor.execute(Command::Redo);
-            }
-            MenuAction::SelectAll => {
-                self.editor.execute(Command::SelectAll);
-            }
-            MenuAction::DuplicateLine => {
-                self.editor.execute(Command::DuplicateLine);
-            }
-            MenuAction::DeleteLine => {
-                self.editor.execute(Command::DeleteLine);
-            }
-            MenuAction::MoveLineUp => {
-                self.editor.execute(Command::MoveLineUp);
-            }
-            MenuAction::MoveLineDown => {
-                self.editor.execute(Command::MoveLineDown);
-            }
+            MenuAction::Undo => editor_cmd(Command::Undo),
+            MenuAction::Redo => editor_cmd(Command::Redo),
+            MenuAction::SelectAll => editor_cmd(Command::SelectAll),
+            MenuAction::DuplicateLine => editor_cmd(Command::DuplicateLine),
+            MenuAction::DeleteLine => editor_cmd(Command::DeleteLine),
+            MenuAction::MoveLineUp => editor_cmd(Command::MoveLineUp),
+            MenuAction::MoveLineDown => editor_cmd(Command::MoveLineDown),
             MenuAction::Copy => {
-                if let Some(t) = self.editor.copy() {
+                if let Some(t) = self.editor().copy() {
                     ctx.copy_text(t);
                 }
+                None
             }
             MenuAction::Cut => {
-                if let Some(t) = self.editor.execute(Command::Cut) {
+                if let Some(t) = self.editor_mut().execute(Command::Cut) {
                     ctx.copy_text(t);
                 }
+                None
             }
-            MenuAction::Paste => {
-                let text = arboard::Clipboard::new().and_then(|mut c| c.get_text());
-                if let Ok(t) = text
-                    && !t.is_empty()
-                {
-                    self.editor.execute(Command::Insert(t));
-                }
-            }
+            MenuAction::Paste => arboard::Clipboard::new()
+                .and_then(|mut c| c.get_text())
+                .ok()
+                .filter(|t| !t.is_empty())
+                .map(Command::Insert),
+        };
+        if let Some(cmd) = cmd {
+            self.editor_mut().execute(cmd);
         }
-        self.view.request_focus();
+        self.focus_active();
+    }
+
+    fn tab_bar(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+        let p = theme::palette(ctx);
+        let mut activate = None;
+        let mut close = None;
+        egui::ScrollArea::horizontal()
+            .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.spacing_mut().item_spacing.x = 0.0;
+                    let active = self.ws.active_index();
+                    for (i, tab) in self.ws.tabs().iter().enumerate() {
+                        let is_active = i == active;
+                        let dirty = tab.editor.document().is_dirty();
+                        let name = self.name_of(&tab.editor);
+                        let frame = egui::Frame::NONE
+                            .fill(if is_active { p.canvas } else { p.surface })
+                            .inner_margin(egui::Margin {
+                                left: 12,
+                                right: 6,
+                                top: 5,
+                                bottom: 5,
+                            });
+                        let r = frame.show(ui, |ui| {
+                            ui.horizontal(|ui| {
+                                ui.spacing_mut().item_spacing.x = 6.0;
+                                let color = if is_active { p.text } else { p.muted };
+                                let label = ui.add(
+                                    egui::Label::new(egui::RichText::new(&name).color(color))
+                                        .selectable(false)
+                                        .sense(egui::Sense::click()),
+                                );
+                                if label.clicked() {
+                                    activate = Some(i);
+                                }
+                                if label.middle_clicked() {
+                                    close = Some(tab.id);
+                                }
+                                // Unsaved marker doubles as the close button,
+                                // as in most native editors.
+                                let glyph = if dirty { "●" } else { "×" };
+                                let btn = ui
+                                    .add(
+                                        egui::Button::new(
+                                            egui::RichText::new(glyph).color(p.muted),
+                                        )
+                                        .frame(false)
+                                        .min_size(egui::vec2(16.0, 16.0)),
+                                    )
+                                    .on_hover_text(self.t("tab-close", &[]));
+                                if btn.clicked() {
+                                    close = Some(tab.id);
+                                }
+                            });
+                        });
+                        let rect = r.response.rect;
+                        let painter = ui.painter();
+                        painter.vline(
+                            rect.right(),
+                            rect.y_range(),
+                            egui::Stroke::new(1.0, p.border),
+                        );
+                        if is_active {
+                            let top =
+                                egui::Rect::from_min_size(rect.min, egui::vec2(rect.width(), 2.0));
+                            painter.rect_filled(top, 0.0, p.accent);
+                        } else {
+                            painter.hline(
+                                rect.x_range(),
+                                rect.bottom() - 0.5,
+                                egui::Stroke::new(1.0, p.border),
+                            );
+                        }
+                        let r = r.response.interact(egui::Sense::click());
+                        if r.clicked() {
+                            activate = Some(i);
+                        }
+                        if r.middle_clicked() {
+                            close = Some(tab.id);
+                        }
+                    }
+                });
+            });
+        if let Some(i) = activate {
+            self.ws.activate(i);
+            self.focus_active();
+        }
+        if let Some(id) = close {
+            self.request_close_tab(id, ctx);
+        }
     }
 
     fn status_bar(&self, ui: &mut egui::Ui) {
         let p = theme::palette(ui.ctx());
+        let editor = self.editor();
         ui.horizontal(|ui| {
             if let Some((msg, is_error)) = &self.status {
                 ui.colored_label(if *is_error { p.error } else { p.muted }, msg);
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let enc = match self.editor.encoding() {
+                let enc = match editor.encoding() {
                     TextEncoding::Utf8 => "encoding-utf8",
                     TextEncoding::Utf8Bom => "encoding-utf8-bom",
                     TextEncoding::Utf16LeBom => "encoding-utf16le",
                     TextEncoding::Utf16BeBom => "encoding-utf16be",
                 };
                 ui.colored_label(p.muted, self.t(enc, &[]));
-                let le = match self.editor.line_ending() {
+                let le = match editor.line_ending() {
                     LineEnding::CrLf => "line-ending-crlf",
                     LineEnding::Cr => "line-ending-cr",
                     LineEnding::Mixed => "line-ending-mixed",
                     LineEnding::Lf | LineEnding::None => "line-ending-lf",
                 };
                 ui.colored_label(p.muted, self.t(le, &[]));
-                let sels = self.editor.selections();
+                let sels = editor.selections();
                 if sels.len() > 1 {
                     let n = sels.len() as i64;
                     ui.colored_label(p.muted, self.t("status-selections", &[("count", n.into())]));
                 }
-                let (line, col) = sanain_core::selection::line_col(
-                    self.editor.document().rope(),
-                    sels.primary().head,
-                );
+                let (line, col) =
+                    sanain_core::selection::line_col(editor.document().rope(), sels.primary().head);
                 let pos = self.t(
                     "status-position",
                     &[
@@ -351,11 +501,11 @@ impl Shell {
                     Dialog::Unsaved(then) => {
                         if ui.button(self.t("button-save", &[])).clicked() {
                             close = true;
-                            after = Some(Action::SaveThen(then.clone()));
+                            after = Some(Action::SaveThen(*then));
                         }
                         if ui.button(self.t("button-dont-save", &[])).clicked() {
                             close = true;
-                            after = Some(Action::Proceed(then.clone()));
+                            after = Some(Action::Proceed(*then));
                         }
                         if ui.button(self.t("button-cancel", &[])).clicked() {
                             close = true;
@@ -393,7 +543,7 @@ impl Shell {
         });
         if close {
             self.dialog = None;
-            self.view.request_focus();
+            self.focus_active();
             match after {
                 Some(Action::SaveThen(then)) => {
                     if self.save() {
@@ -405,7 +555,7 @@ impl Shell {
                     self.save_as();
                 }
                 Some(Action::Overwrite) => {
-                    let o = self.editor.save_overwrite();
+                    let o = self.editor_mut().save_overwrite();
                     self.handle_save(o);
                 }
                 None => {}
@@ -418,12 +568,11 @@ impl eframe::App for Shell {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
 
-        if ctx.input(|i| i.viewport().close_requested())
-            && !self.allow_close
-            && self.editor.document().is_dirty()
-        {
+        if ctx.input(|i| i.viewport().close_requested()) && !self.allow_close {
             ctx.send_viewport_cmd(ViewportCommand::CancelClose);
-            self.dialog = Some(Dialog::Unsaved(Then::Close));
+            if self.dialog.is_none() {
+                self.request_quit(&ctx);
+            }
         }
 
         let mut actions = Vec::new();
@@ -431,14 +580,18 @@ impl eframe::App for Shell {
         if let Some(m) = &self.native_menu {
             actions.extend(m.poll());
         }
-        // Without a native menu, file and quit shortcuts are handled here;
-        // editing shortcuts arrive as key and clipboard events in the view.
+        // Without a native menu, file, tab and quit shortcuts are handled
+        // here; editing shortcuts arrive as key events in the view.
         if !self.has_native_menu() && self.dialog.is_none() {
             for a in [
                 MenuAction::SaveAs,
                 MenuAction::Save,
                 MenuAction::Open,
                 MenuAction::New,
+                MenuAction::CloseTab,
+                MenuAction::ReopenTab,
+                MenuAction::PrevTab,
+                MenuAction::NextTab,
                 MenuAction::Quit,
             ] {
                 if let Some(s) = a.shortcut()
@@ -453,8 +606,7 @@ impl eframe::App for Shell {
             let p = theme::palette(&ctx);
             let frame = egui::Frame::NONE
                 .fill(p.surface)
-                .inner_margin(egui::Margin::symmetric(6, 2))
-                .stroke(egui::Stroke::NONE);
+                .inner_margin(egui::Margin::symmetric(6, 2));
             egui::Panel::top("menu").frame(frame).show(ui, |ui| {
                 let label = |id: &str| self.t(id, &[]);
                 let enabled = |a| self.enabled(a);
@@ -470,39 +622,41 @@ impl eframe::App for Shell {
         if let Some(m) = &self.native_menu {
             m.set_enabled(|a| self.enabled(a));
         }
+
+        let p = theme::palette(&ctx);
+        egui::Panel::top("tabs")
+            .frame(egui::Frame::NONE.fill(p.surface))
+            .show(ui, |ui| self.tab_bar(ui, &ctx));
         egui::Panel::bottom("status").show(ui, |ui| self.status_bar(ui));
         egui::CentralPanel::default()
-            .frame(egui::Frame::NONE.fill(theme::palette(&ctx).canvas))
+            .frame(egui::Frame::NONE.fill(p.canvas))
             .show(ui, |ui| {
                 let name = self.t("editor-accessible-name", &[]);
                 let interactive = self.dialog.is_none();
-                ui.add_enabled_ui(interactive, |ui| {
-                    if self.view.show(ui, &mut self.editor, &name) {
-                        self.status = None;
-                    }
+                let id = self.ws.active().id;
+                let view = self.views.entry(id).or_default();
+                let editor = &mut self.ws.active_mut().editor;
+                ui.push_id(id, |ui| {
+                    ui.add_enabled_ui(interactive, |ui| {
+                        if view.show(ui, editor, &name) {
+                            self.status = None;
+                        }
+                    });
                 });
             });
 
         self.dialogs(&ctx);
 
-        let mut recovery_error = None;
-        if let Some(r) = &mut self.recovery {
-            if let Some(wait) = r.tick(&self.editor, std::time::Instant::now()) {
-                ctx.request_repaint_after(wait);
-            }
-            recovery_error = r.take_error();
-            // A clean window closing without a dialog: let pending
-            // removals reach disk before the process exits.
-            if ctx.input(|i| i.viewport().close_requested()) && !self.editor.document().is_dirty() {
-                r.flush(std::time::Duration::from_secs(2));
-            }
+        let (wait, error) = self.ws.tick(std::time::Instant::now());
+        if let Some(wait) = wait {
+            ctx.request_repaint_after(wait);
         }
-        if let Some(reason) = recovery_error {
+        if let Some(reason) = error {
             let msg = self.t("status-recovery-failed", &[("reason", reason.into())]);
             self.status = Some((msg, true));
         }
 
-        let dirty = if self.editor.document().is_dirty() {
+        let dirty = if self.editor().document().is_dirty() {
             "yes"
         } else {
             "no"

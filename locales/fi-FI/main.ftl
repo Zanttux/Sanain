@@ -9,7 +9,7 @@ status-tabs = { $count ->
     }
 error-open = Tiedostoa { $name } ei voitu avata.
 menu-edit = Muokkaa
-file-new = Uusi
+file-new = Uusi välilehti
 file-save-as = Tallenna nimellä…
 edit-undo = Kumoa
 edit-redo = Tee uudelleen
@@ -64,3 +64,8 @@ edit-duplicate-line = Monista rivi
 edit-delete-line = Poista rivi
 edit-move-line-up = Siirrä riviä ylös
 edit-move-line-down = Siirrä riviä alas
+file-close-tab = Sulje välilehti
+file-reopen-tab = Avaa suljettu välilehti uudelleen
+window-next-tab = Seuraava välilehti
+window-prev-tab = Edellinen välilehti
+tab-close = Sulje välilehti

@@ -2,5 +2,6 @@
 
 pub mod editor;
 pub mod recovery;
+pub mod workspace;
 
 pub use editor::{Command, Editor, SaveOutcome};

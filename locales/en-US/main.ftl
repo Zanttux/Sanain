@@ -8,7 +8,7 @@ status-tabs = { $count ->
     }
 error-open = Could not open { $name }.
 menu-edit = Edit
-file-new = New
+file-new = New Tab
 file-save-as = Save As…
 edit-undo = Undo
 edit-redo = Redo
@@ -63,3 +63,8 @@ edit-duplicate-line = Duplicate Line
 edit-delete-line = Delete Line
 edit-move-line-up = Move Line Up
 edit-move-line-down = Move Line Down
+file-close-tab = Close Tab
+file-reopen-tab = Reopen Closed Tab
+window-next-tab = Next Tab
+window-prev-tab = Previous Tab
+tab-close = Close tab

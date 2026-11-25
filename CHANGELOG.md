@@ -32,6 +32,12 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   shortcuts; restyled in-window menus on Windows and Linux.
 - Cut, Copy and Paste work (system clipboard was not enabled before).
 - macOS app bundle script (`scripts/macos-bundle.sh`).
+- Tabs: open several files (command line, File > Open with multi-select),
+  New Tab, Close Tab (Cmd/Ctrl+W), Reopen Closed Tab (Cmd/Ctrl+Shift+T),
+  Next/Previous Tab (Ctrl+Tab / Ctrl+Shift+Tab), middle-click to close,
+  unsaved marker per tab. Opening a file that is already open switches to
+  it. Quitting asks about each unsaved tab in turn. Every crash-recovery
+  snapshot is restored as its own tab.
 - Line operations: move line up/down (Option/Alt+Up/Down), duplicate
   (Option/Alt+Shift+Down), delete (Cmd/Ctrl+Shift+K), also in the Edit
   menu. They work on every selected line and keep the file's line endings.
