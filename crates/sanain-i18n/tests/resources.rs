@@ -79,3 +79,28 @@ fn all_locales_parse_and_match_canonical_messages() {
         }
     }
 }
+
+#[test]
+fn every_message_formats_without_errors_in_every_locale() {
+    use fluent_bundle::FluentArgs;
+    let canonical = messages(RESOURCES.iter().find(|(t, _)| *t == FALLBACK).unwrap().1);
+    for (tag, source) in RESOURCES {
+        let bundle = build_bundle(tag, source).unwrap();
+        for (id, vars) in &canonical {
+            let Some(pattern) = bundle.get_message(id).and_then(|m| m.value()) else {
+                continue;
+            };
+            // Exercise plural branches with several counts.
+            for n in [0, 1, 2, 5, 22] {
+                let mut args = FluentArgs::new();
+                for v in vars {
+                    args.set(v.as_str(), n);
+                }
+                let mut errors = Vec::new();
+                let text = bundle.format_pattern(pattern, Some(&args), &mut errors);
+                assert!(errors.is_empty(), "{tag}: `{id}` with {n}: {errors:?}");
+                assert!(!text.trim().is_empty(), "{tag}: `{id}` is empty");
+            }
+        }
+    }
+}

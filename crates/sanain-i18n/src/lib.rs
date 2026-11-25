@@ -20,6 +20,62 @@ pub const FALLBACK: &str = "en-US";
 pub const RESOURCES: &[(&str, &str)] = &[
     ("en-US", include_str!("../../../locales/en-US/main.ftl")),
     ("fi-FI", include_str!("../../../locales/fi-FI/main.ftl")),
+    ("cs-CZ", include_str!("../../../locales/cs-CZ/main.ftl")),
+    ("da-DK", include_str!("../../../locales/da-DK/main.ftl")),
+    ("de-DE", include_str!("../../../locales/de-DE/main.ftl")),
+    ("el-GR", include_str!("../../../locales/el-GR/main.ftl")),
+    ("es-ES", include_str!("../../../locales/es-ES/main.ftl")),
+    ("fr-FR", include_str!("../../../locales/fr-FR/main.ftl")),
+    ("hu-HU", include_str!("../../../locales/hu-HU/main.ftl")),
+    ("id-ID", include_str!("../../../locales/id-ID/main.ftl")),
+    ("it-IT", include_str!("../../../locales/it-IT/main.ftl")),
+    ("ja-JP", include_str!("../../../locales/ja-JP/main.ftl")),
+    ("ko-KR", include_str!("../../../locales/ko-KR/main.ftl")),
+    ("nb-NO", include_str!("../../../locales/nb-NO/main.ftl")),
+    ("nl-NL", include_str!("../../../locales/nl-NL/main.ftl")),
+    ("pl-PL", include_str!("../../../locales/pl-PL/main.ftl")),
+    ("pt-BR", include_str!("../../../locales/pt-BR/main.ftl")),
+    ("pt-PT", include_str!("../../../locales/pt-PT/main.ftl")),
+    ("ro-RO", include_str!("../../../locales/ro-RO/main.ftl")),
+    ("ru-RU", include_str!("../../../locales/ru-RU/main.ftl")),
+    ("sv-SE", include_str!("../../../locales/sv-SE/main.ftl")),
+    ("tr-TR", include_str!("../../../locales/tr-TR/main.ftl")),
+    ("uk-UA", include_str!("../../../locales/uk-UA/main.ftl")),
+    ("vi-VN", include_str!("../../../locales/vi-VN/main.ftl")),
+    ("zh-CN", include_str!("../../../locales/zh-CN/main.ftl")),
+    ("zh-TW", include_str!("../../../locales/zh-TW/main.ftl")),
+];
+
+/// Every shipped UI language with its name in that language, for the
+/// language picker. All but en-US are translations awaiting or under
+/// native-speaker review (see docs/LOCALIZATION.md).
+pub const LANGUAGES: &[(&str, &str)] = &[
+    ("en-US", "English"),
+    ("fi-FI", "Suomi"),
+    ("cs-CZ", "Čeština"),
+    ("da-DK", "Dansk"),
+    ("de-DE", "Deutsch"),
+    ("el-GR", "Ελληνικά"),
+    ("es-ES", "Español"),
+    ("fr-FR", "Français"),
+    ("hu-HU", "Magyar"),
+    ("id-ID", "Bahasa Indonesia"),
+    ("it-IT", "Italiano"),
+    ("ja-JP", "日本語"),
+    ("ko-KR", "한국어"),
+    ("nb-NO", "Norsk bokmål"),
+    ("nl-NL", "Nederlands"),
+    ("pl-PL", "Polski"),
+    ("pt-BR", "Português (Brasil)"),
+    ("pt-PT", "Português (Portugal)"),
+    ("ro-RO", "Română"),
+    ("ru-RU", "Русский"),
+    ("sv-SE", "Svenska"),
+    ("tr-TR", "Türkçe"),
+    ("uk-UA", "Українська"),
+    ("vi-VN", "Tiếng Việt"),
+    ("zh-CN", "简体中文"),
+    ("zh-TW", "繁體中文"),
 ];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -153,7 +209,8 @@ mod tests {
         assert_eq!(Localizer::new(&["fi-FI"]).unwrap().locale(), "fi-FI");
         assert_eq!(Localizer::new(&["fi"]).unwrap().locale(), "fi-FI");
         assert_eq!(Localizer::new(&["fi-SE"]).unwrap().locale(), "fi-FI");
-        assert_eq!(Localizer::new(&["sv-FI"]).unwrap().locale(), "en-US");
+        assert_eq!(Localizer::new(&["sv-FI"]).unwrap().locale(), "sv-SE");
+        assert_eq!(Localizer::new(&["is-IS"]).unwrap().locale(), "en-US");
         assert_eq!(Localizer::new(&["xx-!!", "fi"]).unwrap().locale(), "fi-FI");
         assert_eq!(Localizer::new(&[]).unwrap().locale(), "en-US");
     }

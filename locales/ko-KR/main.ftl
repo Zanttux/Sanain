@@ -1,0 +1,222 @@
+# Machine translation by Claude (AI); review by a native speaker required before release.
+app-name = Sanain
+menu-file = 파일
+file-open = 열기…
+file-save = 저장
+status-tabs = { $count ->
+   *[other] 탭 { $count }개
+    }
+error-open = { $name }을(를) 열 수 없습니다.
+menu-edit = 편집
+file-new = 새 탭
+file-save-as = 다른 이름으로 저장…
+edit-undo = 실행 취소
+edit-redo = 다시 실행
+edit-select-all = 모두 선택
+untitled = 제목 없음
+window-title = { $dirty ->
+    [yes] ● { $name } — Sanain
+   *[no] { $name } — Sanain
+    }
+status-position = 줄 { $line }, 열 { $column }
+status-selections = { $count ->
+   *[other] 선택 영역 { $count }개
+    }
+status-saved = { $name } 저장됨
+encoding-utf8 = UTF-8
+encoding-utf8-bom = UTF-8 (BOM 포함)
+encoding-utf16le = UTF-16 LE
+encoding-utf16be = UTF-16 BE
+line-ending-lf = LF
+line-ending-crlf = CRLF
+line-ending-cr = CR
+line-ending-mixed = 혼합된 줄 끝
+editor-accessible-name = 텍스트 편집기
+button-save = 저장
+button-dont-save = 저장 안 함
+button-cancel = 취소
+button-ok = 확인
+button-overwrite = 덮어쓰기
+button-save-as = 다른 이름으로 저장…
+dialog-unsaved-title = { $name }의 변경 사항을 저장하시겠습니까?
+dialog-unsaved-body = 저장하지 않으면 변경 사항이 손실됩니다.
+dialog-conflict-title = 디스크에서 { $name }이(가) 변경됨
+dialog-conflict-body = 파일을 연 후 다른 프로그램이 이 파일을 수정했습니다. 덮어쓰면 해당 변경 사항이 대체됩니다.
+dialog-readonly-title = { $name }은(는) 읽기 전용입니다
+dialog-readonly-body = 대신 다른 이름으로 사본을 저장하십시오.
+error-open-encoding = { $name }은(는) UTF-8 또는 UTF-16 텍스트가 아닙니다. 파일을 열지 않았으므로 내용은 변경되지 않았습니다. 파일 > 인코딩 지정하여 다시 열기에서 인코딩을 선택하십시오.
+error-save = { $name }을(를) 저장할 수 없습니다: { $reason }
+menu-window = 윈도우
+edit-cut = 잘라내기
+edit-copy = 복사하기
+edit-paste = 붙여넣기
+app-quit = Sanain 종료
+app-hide = Sanain 가리기
+app-hide-others = 기타 가리기
+app-show-all = 모두 보기
+window-minimize = 최소화
+window-zoom = 확대/축소
+status-recovered = 지난 세션의 저장되지 않은 변경 사항을 복원했습니다
+status-recovery-failed = 복구 사본을 저장할 수 없습니다: { $reason }
+edit-duplicate-line = 줄 복제
+edit-delete-line = 줄 삭제
+edit-move-line-up = 줄을 위로 이동
+edit-move-line-down = 줄을 아래로 이동
+file-close-tab = 탭 닫기
+file-reopen-tab = 닫은 탭 다시 열기
+window-next-tab = 다음 탭
+window-prev-tab = 이전 탭
+tab-close = 탭 닫기
+edit-find = 찾기…
+edit-find-next = 다음 찾기
+edit-find-prev = 이전 찾기
+edit-replace = 바꾸기…
+find-placeholder = 찾기
+replace-placeholder = 바꿀 내용
+find-match-case = 대소문자 구분
+find-whole-word = 단어 단위로
+find-regex = 정규 표현식
+find-no-results = 결과 없음
+find-count = { $total ->
+   *[other] 일치 항목 { $total }개
+    }
+find-count-current = { $current } / { $total }
+find-prev = 이전 일치 항목 (Shift+Enter)
+find-next = 다음 일치 항목 (Enter)
+find-close = 닫기 (Esc)
+replace-one = 바꾸기
+replace-all = 모두 바꾸기
+status-replaced = { $count ->
+   *[other] 일치 항목 { $count }개를 바꿨습니다
+    }
+language-plain = 일반 텍스트
+menu-view = 보기
+app-settings = 설정…
+view-zoom-in = 확대
+view-zoom-out = 축소
+view-zoom-reset = 실제 크기
+settings-title = 설정
+settings-font-size = 글꼴 크기
+settings-tab-width = 탭 너비
+settings-insert-spaces = Tab 키를 누르면 공백 삽입
+settings-theme = 모양
+settings-theme-system = 시스템 설정 따르기
+settings-theme-light = 라이트
+settings-theme-dark = 다크
+settings-restore-session = 지난 세션의 파일 다시 열기
+settings-language = 언어
+settings-language-system = 시스템 설정 따르기
+settings-language-note = 언어 변경은 Sanain을 다시 시작한 후 적용됩니다.
+settings-save-failed = 설정을 저장할 수 없습니다: { $reason }
+view-command-palette = 명령 팔레트…
+palette-placeholder = 명령 입력
+view-markdown-source = Markdown 소스
+view-markdown-split = Markdown 소스 및 미리보기
+view-markdown-preview = Markdown 미리보기
+preview-too-large = 이 문서는 너무 커서 미리 볼 수 없습니다.
+preview-mermaid-unsupported = Mermaid 다이어그램은 아직 렌더링되지 않습니다. 소스를 표시합니다.
+menu-tools = 도구
+tools-json-validate = JSON 검사
+tools-json-format = JSON 서식 지정
+tools-json-minify = JSON 축소
+tools-sort-lines = 줄 정렬
+tools-sort-lines-desc = 줄 내림차순 정렬
+tools-unique-lines = 중복 줄 제거
+tools-trim-trailing = 줄 끝 공백 제거
+tools-upper-case = 대문자로
+tools-lower-case = 소문자로
+tools-to-lf = 줄 끝을 LF로 변환
+tools-to-crlf = 줄 끝을 CRLF로 변환
+tools-json-valid = 유효한 JSON입니다
+tools-done = 완료되었습니다. 실행 취소로 되돌릴 수 있습니다.
+tools-no-change = 변경할 내용 없음
+tools-json-error = 잘못된 JSON, { $line }줄 { $column }열: { $reason }
+json-reason-unterminated-string = 종료되지 않은 문자열
+json-reason-invalid-u-escape = 잘못된 \u 이스케이프
+json-reason-invalid-escape = 잘못된 이스케이프
+json-reason-control-character-in-string = 문자열에 제어 문자가 있음
+json-reason-invalid-number = 잘못된 숫자
+json-reason-unexpected-character = 예기치 않은 문자
+json-reason-unexpected-content-after-the-value = 값 뒤에 예기치 않은 내용이 있음
+json-reason-unexpected-comma = 예기치 않은 쉼표
+json-reason-expected-a-string-key = 문자열 키가 필요함
+json-reason-expected = ':'이(가) 필요함
+json-reason-expected-or-a-closing-bracket = ',' 또는 닫는 괄호가 필요함
+json-reason-expected-a-value = 값이 필요함
+json-reason-empty-document = 빈 문서
+json-reason-unexpected-end-of-input = 입력이 예기치 않게 끝남
+json-reason-too-deeply-nested-to-format = 중첩이 너무 깊어 서식을 지정할 수 없음
+tools-compare = 비교 대상…
+compare-need-two = 비교할 다른 탭을 여십시오.
+compare-pick-title = { $name }과(와) 비교할 대상
+compare-count = { $count ->
+    [0] 차이 없음
+   *[other] 변경 사항 { $count }개
+    }
+compare-close = 비교 닫기
+compare-to-left = 이 변경 사항을 왼쪽으로 복사
+compare-to-right = 이 변경 사항을 오른쪽으로 복사
+compare-stale = 비교 중에 문서가 변경되었습니다. 비교를 새로 고쳤으니 다시 시도하십시오.
+view-structured = 구조화된 보기 (CSV, JSON)
+csv-delimiter = 구분 기호
+csv-rows = { $count ->
+   *[other] { $count }행
+    }
+csv-unterminated = { $line }번째 줄에서 시작된 따옴표가 닫히지 않음
+csv-truncated = 처음 200,000행 표시 중
+json-more = … { $count }개 더
+dialog-open-link-title = 웹 브라우저에서 이 링크를 여시겠습니까?
+button-open = 열기
+link-blocked = 안전을 위해 이 종류의 링크는 열지 않습니다.
+link-not-found = 링크된 파일을 찾을 수 없음: { $target }
+enc-windows-1252 = 서유럽어
+enc-iso-8859-15 = 서유럽어
+enc-windows-1250 = 중앙 유럽어
+enc-iso-8859-2 = 중앙 유럽어
+enc-windows-1251 = 키릴 자모
+enc-koi8-r = 키릴 자모
+enc-windows-1253 = 그리스어
+enc-windows-1254 = 터키어
+enc-windows-1255 = 히브리어
+enc-windows-1256 = 아랍어
+enc-windows-1257 = 발트어
+enc-windows-874 = 태국어
+enc-shift_jis = 일본어
+enc-euc-jp = 일본어
+enc-gb18030 = 중국어 간체
+enc-big5 = 중국어 번체
+enc-euc-kr = 한국어
+file-reopen-encoding = 인코딩 지정하여 다시 열기…
+file-save-encoding = 인코딩 지정하여 저장…
+encoding-reopen-title = 인코딩 지정하여 다시 열기
+encoding-save-title = 인코딩 지정하여 저장
+encoding-not-exact = 이 인코딩으로는 파일을 변경하지 않고 열 수 없습니다: { $reason }
+encoding-unencodable = “{ $character }”은(는) { $encoding }(으)로 저장할 수 없습니다. 다른 인코딩을 선택하거나 텍스트를 변경하십시오. 아무것도 기록되지 않았습니다.
+encoding-save-first = 다른 인코딩으로 다시 열기 전에 변경 사항을 저장하거나 실행 취소하십시오.
+image-remote = 원격 이미지는 불러오지 않습니다.
+image-blocked = 이 문서의 폴더에 있는 이미지만 표시됩니다.
+image-unsupported = 지원되지 않는 이미지 형식입니다.
+image-too-large = 이미지가 너무 커서 표시할 수 없습니다.
+image-unreadable = 이미지를 읽을 수 없습니다.
+settings-theme-high-contrast = 고대비
+view-fold = 접기
+view-unfold = 펼치기
+view-unfold-all = 모두 펼치기
+settings-shortcuts = 키보드 단축키
+settings-keymap-preset = 사전 설정
+settings-keymap-default = Sanain
+settings-keymap-notepadpp = Notepad++
+settings-shortcut-change = 변경
+settings-shortcut-reset = 재설정
+settings-shortcut-press = 단축키를 누르십시오… (Esc로 취소)
+settings-shortcut-moved = 단축키를 다음에서 이동함:
+edit-find-in-folder = 폴더에서 찾기…
+folder-search-placeholder = 폴더에서 찾기
+folder-search-run = 검색
+folder-search-stop = 중지
+folder-search-no-folder = 폴더 선택
+folder-search-summary = { $files ->
+   *[other] 파일 { $files }개에서
+    } { $count ->
+   *[other] 일치 항목 { $count }개
+    }

@@ -1,0 +1,230 @@
+# Machine translation by Claude (AI); review by a native speaker required before release.
+app-name = Sanain
+menu-file = Filer
+file-open = Åbn…
+file-save = Gem
+status-tabs = { $count ->
+    [one] Én fane
+   *[other] { $count } faner
+    }
+error-open = Kunne ikke åbne { $name }.
+menu-edit = Rediger
+file-new = Ny fane
+file-save-as = Gem som…
+edit-undo = Fortryd
+edit-redo = Annuller fortryd
+edit-select-all = Marker alt
+untitled = Uden navn
+window-title = { $dirty ->
+    [yes] ● { $name } — Sanain
+   *[no] { $name } — Sanain
+    }
+status-position = Linje { $line }, kol. { $column }
+status-selections = { $count ->
+    [one] 1 markering
+   *[other] { $count } markeringer
+    }
+status-saved = Gemte { $name }
+encoding-utf8 = UTF-8
+encoding-utf8-bom = UTF-8 med BOM
+encoding-utf16le = UTF-16 LE
+encoding-utf16be = UTF-16 BE
+line-ending-lf = LF
+line-ending-crlf = CRLF
+line-ending-cr = CR
+line-ending-mixed = Blandede linjeskift
+editor-accessible-name = Teksteditor
+button-save = Gem
+button-dont-save = Gem ikke
+button-cancel = Annuller
+button-ok = OK
+button-overwrite = Overskriv
+button-save-as = Gem som…
+dialog-unsaved-title = Vil du gemme ændringerne i { $name }?
+dialog-unsaved-body = Dine ændringer går tabt, hvis du ikke gemmer dem.
+dialog-conflict-title = { $name } er ændret på disken
+dialog-conflict-body = Et andet program har ændret denne fil, efter du åbnede den. Hvis du overskriver, erstattes disse ændringer.
+dialog-readonly-title = { $name } er skrivebeskyttet
+dialog-readonly-body = Gem i stedet en kopi under et andet navn.
+error-open-encoding = { $name } er ikke UTF-8- eller UTF-16-tekst. Filen blev ikke åbnet, så indholdet er uændret. Brug Filer > Genåbn med tegnkodning for at vælge tegnkodning.
+error-save = Kunne ikke gemme { $name }: { $reason }
+menu-window = Vindue
+edit-cut = Klip
+edit-copy = Kopier
+edit-paste = Indsæt
+app-quit = Afslut Sanain
+app-hide = Skjul Sanain
+app-hide-others = Skjul andre
+app-show-all = Vis alle
+window-minimize = Minimer
+window-zoom = Zoom
+status-recovered = Ikke-gemte ændringer fra sidste session er gendannet
+status-recovery-failed = Kunne ikke gemme en gendannelseskopi: { $reason }
+edit-duplicate-line = Dupliker linje
+edit-delete-line = Slet linje
+edit-move-line-up = Flyt linje op
+edit-move-line-down = Flyt linje ned
+file-close-tab = Luk fane
+file-reopen-tab = Genåbn lukket fane
+window-next-tab = Næste fane
+window-prev-tab = Forrige fane
+tab-close = Luk fane
+edit-find = Søg…
+edit-find-next = Søg efter næste
+edit-find-prev = Søg efter forrige
+edit-replace = Erstat…
+find-placeholder = Søg
+replace-placeholder = Erstat med
+find-match-case = Forskel på store og små bogstaver
+find-whole-word = Hele ord
+find-regex = Regulært udtryk
+find-no-results = Ingen resultater
+find-count = { $total ->
+    [one] 1 forekomst
+   *[other] { $total } forekomster
+    }
+find-count-current = { $current } af { $total }
+find-prev = Forrige forekomst (Shift+Enter)
+find-next = Næste forekomst (Enter)
+find-close = Luk (Esc)
+replace-one = Erstat
+replace-all = Erstat alle
+status-replaced = { $count ->
+    [one] Erstattede 1 forekomst
+   *[other] Erstattede { $count } forekomster
+    }
+language-plain = Almindelig tekst
+menu-view = Vis
+app-settings = Indstillinger…
+view-zoom-in = Zoom ind
+view-zoom-out = Zoom ud
+view-zoom-reset = Faktisk størrelse
+settings-title = Indstillinger
+settings-font-size = Skriftstørrelse
+settings-tab-width = Tabulatorbredde
+settings-insert-spaces = Indsæt mellemrum ved tryk på Tab
+settings-theme = Udseende
+settings-theme-system = Følg systemet
+settings-theme-light = Lyst
+settings-theme-dark = Mørkt
+settings-restore-session = Genåbn filer fra sidste session
+settings-language = Sprog
+settings-language-system = Følg systemet
+settings-language-note = Sprogændringer træder i kraft, når Sanain genstartes.
+settings-save-failed = Kunne ikke gemme indstillingerne: { $reason }
+view-command-palette = Kommandopalet…
+palette-placeholder = Skriv en kommando
+view-markdown-source = Markdown-kilde
+view-markdown-split = Markdown-kilde og eksempel
+view-markdown-preview = Markdown-eksempel
+preview-too-large = Dokumentet er for stort til at blive vist som eksempel.
+preview-mermaid-unsupported = Mermaid-diagrammer gengives endnu ikke; kilden vises.
+menu-tools = Værktøjer
+tools-json-validate = Valider JSON
+tools-json-format = Formater JSON
+tools-json-minify = Minimer JSON
+tools-sort-lines = Sorter linjer
+tools-sort-lines-desc = Sorter linjer faldende
+tools-unique-lines = Fjern dublerede linjer
+tools-trim-trailing = Fjern efterstillede mellemrum
+tools-upper-case = Store bogstaver
+tools-lower-case = Små bogstaver
+tools-to-lf = Konverter linjeskift til LF
+tools-to-crlf = Konverter linjeskift til CRLF
+tools-json-valid = JSON er gyldig
+tools-done = Færdig. Fortryd tilbagefører ændringen.
+tools-no-change = Intet at ændre
+tools-json-error = Ugyldig JSON på linje { $line }, kolonne { $column }: { $reason }
+json-reason-unterminated-string = uafsluttet streng
+json-reason-invalid-u-escape = ugyldig \u-escape
+json-reason-invalid-escape = ugyldig escape-sekvens
+json-reason-control-character-in-string = kontroltegn i streng
+json-reason-invalid-number = ugyldigt tal
+json-reason-unexpected-character = uventet tegn
+json-reason-unexpected-content-after-the-value = uventet indhold efter værdien
+json-reason-unexpected-comma = uventet komma
+json-reason-expected-a-string-key = forventede en strengnøgle
+json-reason-expected = forventede ':'
+json-reason-expected-or-a-closing-bracket = forventede ',' eller en afsluttende parentes
+json-reason-expected-a-value = forventede en værdi
+json-reason-empty-document = tomt dokument
+json-reason-unexpected-end-of-input = uventet slutning på input
+json-reason-too-deeply-nested-to-format = for dybt indlejret til at formatere
+tools-compare = Sammenlign med…
+compare-need-two = Åbn en anden fane at sammenligne med.
+compare-pick-title = Sammenlign { $name } med
+compare-count = { $count ->
+    [0] Ingen forskelle
+    [one] 1 ændring
+   *[other] { $count } ændringer
+    }
+compare-close = Luk sammenligning
+compare-to-left = Kopier denne ændring til venstre
+compare-to-right = Kopier denne ændring til højre
+compare-stale = Et dokument blev ændret under sammenligningen. Sammenligningen er opdateret; prøv igen.
+view-structured = Struktureret visning (CSV, JSON)
+csv-delimiter = Skilletegn
+csv-rows = { $count ->
+    [one] 1 række
+   *[other] { $count } rækker
+    }
+csv-unterminated = Uafsluttet anførselstegn, der starter på linje { $line }
+csv-truncated = Viser de første 200.000 rækker
+json-more = … { $count } mere
+dialog-open-link-title = Vil du åbne dette link i din webbrowser?
+button-open = Åbn
+link-blocked = Denne type link åbnes ikke af sikkerhedshensyn.
+link-not-found = Den linkede fil blev ikke fundet: { $target }
+enc-windows-1252 = Vesteuropæisk
+enc-iso-8859-15 = Vesteuropæisk
+enc-windows-1250 = Centraleuropæisk
+enc-iso-8859-2 = Centraleuropæisk
+enc-windows-1251 = Kyrillisk
+enc-koi8-r = Kyrillisk
+enc-windows-1253 = Græsk
+enc-windows-1254 = Tyrkisk
+enc-windows-1255 = Hebraisk
+enc-windows-1256 = Arabisk
+enc-windows-1257 = Baltisk
+enc-windows-874 = Thai
+enc-shift_jis = Japansk
+enc-euc-jp = Japansk
+enc-gb18030 = Kinesisk, forenklet
+enc-big5 = Kinesisk, traditionelt
+enc-euc-kr = Koreansk
+file-reopen-encoding = Genåbn med tegnkodning…
+file-save-encoding = Gem med tegnkodning…
+encoding-reopen-title = Genåbn med tegnkodning
+encoding-save-title = Gem med tegnkodning
+encoding-not-exact = Denne tegnkodning kan ikke åbne filen uden at ændre den: { $reason }
+encoding-unencodable = “{ $character }” kan ikke gemmes som { $encoding }. Vælg en anden tegnkodning, eller ret teksten; intet blev skrevet.
+encoding-save-first = Gem eller fortryd dine ændringer, før du genåbner med en anden tegnkodning.
+image-remote = Eksterne billeder indlæses ikke.
+image-blocked = Kun billeder i dokumentets mappe vises.
+image-unsupported = Billedformatet understøttes ikke.
+image-too-large = Billedet er for stort til at blive vist.
+image-unreadable = Billedet kunne ikke læses.
+settings-theme-high-contrast = Høj kontrast
+view-fold = Fold sammen
+view-unfold = Fold ud
+view-unfold-all = Fold alle ud
+settings-shortcuts = Tastaturgenveje
+settings-keymap-preset = Forudindstilling
+settings-keymap-default = Sanain
+settings-keymap-notepadpp = Notepad++
+settings-shortcut-change = Skift
+settings-shortcut-reset = Nulstil
+settings-shortcut-press = Tryk på en genvej… (Esc annullerer)
+settings-shortcut-moved = Genvejen er flyttet fra:
+edit-find-in-folder = Søg i mappe…
+folder-search-placeholder = Søg i mappe
+folder-search-run = Søg
+folder-search-stop = Stop
+folder-search-no-folder = Vælg mappe
+folder-search-summary = { $count ->
+    [one] 1 forekomst
+   *[other] { $count } forekomster
+    } i { $files ->
+    [one] 1 fil
+   *[other] { $files } filer
+    }
