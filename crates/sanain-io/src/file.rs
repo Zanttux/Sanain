@@ -142,7 +142,7 @@ pub fn save(
 /// Write `bytes` to `target` via a synced temporary file in the same
 /// directory and an atomic rename. Returns the new file's metadata, read
 /// before the rename so nothing can fail after the file is replaced.
-pub(crate) fn write_atomic(
+pub fn write_atomic(
     target: &Path,
     bytes: &[u8],
     permissions: Option<fs::Permissions>,

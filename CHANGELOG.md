@@ -32,6 +32,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   shortcuts; restyled in-window menus on Windows and Linux.
 - Cut, Copy and Paste work (system clipboard was not enabled before).
 - macOS app bundle script (`scripts/macos-bundle.sh`).
+- Session restore: open files and the active tab return on the next
+  launch when Sanain starts without file arguments (`SANAIN_NO_SESSION=1`
+  disables it until a setting exists).
 - Find and replace: Cmd/Ctrl+F, Find Next/Previous (Cmd/Ctrl+G,
   Shift+Cmd/Ctrl+G, Enter/Shift+Enter), Replace (Cmd+Option+F on macOS,
   Ctrl+H elsewhere). Match case, whole word and regular expressions with

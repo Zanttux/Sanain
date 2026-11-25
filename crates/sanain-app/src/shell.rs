@@ -51,6 +51,9 @@ pub struct Shell {
     title: String,
     allow_close: bool,
     find: FindBar,
+    session_file: Option<std::path::PathBuf>,
+    /// Set once the session was recorded for the current quit attempt.
+    quit_recorded: bool,
     #[cfg(target_os = "macos")]
     native_menu: Option<menu::NativeMenu>,
 }
@@ -81,6 +84,7 @@ impl Shell {
         l10n: Localizer,
         startup_errors: Vec<String>,
         restored: usize,
+        session_file: Option<std::path::PathBuf>,
     ) -> Self {
         let status = (restored > 0).then(|| (l10n.get("status-recovered"), false));
         let mut shell = Self {
@@ -92,6 +96,8 @@ impl Shell {
             title: String::new(),
             allow_close: false,
             find: FindBar::default(),
+            session_file,
+            quit_recorded: false,
             #[cfg(target_os = "macos")]
             native_menu: None,
         };
@@ -224,6 +230,13 @@ impl Shell {
 
     /// Quit, asking about each unsaved tab in turn.
     fn request_quit(&mut self, ctx: &egui::Context) {
+        // Record open files before the quit flow starts closing tabs.
+        if !std::mem::replace(&mut self.quit_recorded, true)
+            && let Some(f) = &self.session_file
+            && let Err(e) = self.ws.session().save(f)
+        {
+            eprintln!("sanain: could not save session: {e}");
+        }
         match self.ws.first_dirty() {
             Some(i) => {
                 self.ws.activate(i);
@@ -593,6 +606,10 @@ impl Shell {
         });
         if close {
             self.dialog = None;
+            if after.is_none() {
+                // Cancelled: a later quit records the session afresh.
+                self.quit_recorded = false;
+            }
             self.focus_active();
             match after {
                 Some(Action::SaveThen(then)) => {

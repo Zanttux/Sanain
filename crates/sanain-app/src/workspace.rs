@@ -236,6 +236,37 @@ impl Workspace {
         (soonest, error)
     }
 
+    /// Files open in this window, in tab order, for session restore.
+    pub fn session(&self) -> crate::session::Session {
+        let mut paths = Vec::new();
+        let mut active = 0;
+        for (i, t) in self.tabs.iter().enumerate() {
+            if let Some(f) = t.editor.file() {
+                if i == self.active {
+                    active = paths.len();
+                }
+                paths.push(f.path.clone());
+            }
+        }
+        crate::session::Session { paths, active }
+    }
+
+    /// Reopen a saved session: missing files are skipped silently, files
+    /// already open (e.g. restored from recovery) are not duplicated.
+    pub fn restore_session(&mut self, s: &crate::session::Session) {
+        let mut active = None;
+        for (i, p) in s.paths.iter().enumerate() {
+            if let Ok(idx) = self.open(p)
+                && i == s.active
+            {
+                active = Some(idx);
+            }
+        }
+        if let Some(a) = active {
+            self.active = a;
+        }
+    }
+
     /// Wait for pending checkpoint I/O; call before exiting.
     pub fn flush(&self) {
         for tab in &self.tabs {
@@ -303,6 +334,27 @@ mod tests {
         assert_eq!(ws.active().id, id);
         assert_eq!(ws.active_index(), 0);
         assert_eq!(ws.first_dirty(), Some(1));
+    }
+
+    #[test]
+    fn session_round_trip_skips_missing_and_untitled() {
+        let dir = tempfile::tempdir().unwrap();
+        let a = dir.path().join("a.txt");
+        let b = dir.path().join("b.txt");
+        fs::write(&a, "A").unwrap();
+        fs::write(&b, "B").unwrap();
+        let mut ws = Workspace::new(None);
+        ws.open(&a).unwrap();
+        ws.new_tab(); // untitled: not recorded
+        ws.open(&b).unwrap();
+        let s = ws.session();
+        assert_eq!(s.paths, vec![a.clone(), b.clone()]);
+        assert_eq!(s.active, 1);
+        fs::remove_file(&a).unwrap();
+        let mut ws2 = Workspace::new(None);
+        ws2.restore_session(&s);
+        assert_eq!(ws2.len(), 1);
+        assert_eq!(ws2.active().editor.document().text(), "B");
     }
 
     #[test]

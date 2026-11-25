@@ -8,6 +8,7 @@ mod view;
 
 use std::path::PathBuf;
 
+use sanain_app::session::Session;
 use sanain_app::workspace::Workspace;
 use sanain_i18n::Localizer;
 use sanain_io::recovery::RecoveryStore;
@@ -31,22 +32,33 @@ fn main() -> eframe::Result {
     };
 
     // Crash recovery. SANAIN_RECOVERY_DIR overrides the location.
-    let store = std::env::var_os("SANAIN_RECOVERY_DIR")
+    let recovery_dir = std::env::var_os("SANAIN_RECOVERY_DIR")
         .map(PathBuf::from)
-        .or_else(RecoveryStore::default_dir)
-        .and_then(|dir| match RecoveryStore::open(&dir) {
-            Ok(s) => Some(s),
-            Err(e) => {
-                eprintln!("sanain: recovery disabled ({}): {e}", dir.display());
-                None
-            }
-        });
+        .or_else(RecoveryStore::default_dir);
+    // The session file lives next to the recovery directory.
+    let session_file = recovery_dir
+        .as_ref()
+        .and_then(|d| d.parent())
+        .map(|d| d.join("session"));
+    let store = recovery_dir.and_then(|dir| match RecoveryStore::open(&dir) {
+        Ok(s) => Some(s),
+        Err(e) => {
+            eprintln!("sanain: recovery disabled ({}): {e}", dir.display());
+            None
+        }
+    });
     let snapshots = store
         .as_ref()
         .and_then(|s| s.list().ok())
         .map(|l| l.into_iter().filter_map(Result::ok).collect())
         .unwrap_or_default();
-    let (workspace, load_errors, restored) = Workspace::startup(store, snapshots, &paths);
+    let (mut workspace, load_errors, restored) = Workspace::startup(store, snapshots, &paths);
+    if paths.is_empty()
+        && std::env::var_os("SANAIN_NO_SESSION").is_none()
+        && let Some(session) = session_file.as_deref().and_then(Session::load)
+    {
+        workspace.restore_session(&session);
+    }
     let startup_errors: Vec<String> = load_errors
         .iter()
         .map(|(p, e)| shell::describe_load_error(&l10n, p, e))
@@ -65,7 +77,8 @@ fn main() -> eframe::Result {
         options,
         Box::new(move |cc| {
             theme::install(&cc.egui_ctx);
-            let mut shell = shell::Shell::new(workspace, l10n, startup_errors, restored);
+            let mut shell =
+                shell::Shell::new(workspace, l10n, startup_errors, restored, session_file);
             shell.install_menu(&cc.egui_ctx);
             Ok(Box::new(shell))
         }),

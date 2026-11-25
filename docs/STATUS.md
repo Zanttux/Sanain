@@ -37,7 +37,7 @@ M1 in progress.
 | E04 | Partial | Find/replace in the current tab: literal, regex, case, whole word, highlight, count, replace all as one undo. Not yet: preview before replace-all, cancellation for huge files, search across files |
 | E05 | Partial | UTF-8, UTF-8 BOM, UTF-16 LE/BE BOM, line endings preserved; legacy encodings not started |
 | E02 | Partial | Tabs, close/reopen, keyboard switching, dirty markers, per-tab recovery. Not yet: drag reorder in UI (model supports it), pin, split editor |
-| E06 | Partial | Unsaved-changes prompts; crash recovery verified on macOS (kill -9 → relaunch restores text). Not yet: session restore of multiple buffers, disk-full drill |
+| E06 | Partial | Unsaved-changes prompts; crash recovery per tab (kill -9 → relaunch restores text); session restore of open files and active tab. Not yet: settings opt-out UI, disk-full drill |
 | Others | Not started | |
 
 Known M1 limits: native menus only on macOS (Windows/Linux use in-window
@@ -79,6 +79,6 @@ because nobody independent exists; no fake approvals.
 ## Next
 - Line/column mapping, vertical movement, word movement, line operations.
 - Hard-link-safe save strategy.
-- Session restore of open tabs (E06), then syntax highlighting (E07).
+- Syntax highlighting (E07), then settings (font, tab width, theme, restore).
 - Manual IME and screen-reader pass on macOS; Windows and Linux GUI smoke
   test (needs hardware or VM access).
