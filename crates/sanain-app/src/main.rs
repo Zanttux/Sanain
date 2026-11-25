@@ -1,5 +1,6 @@
 //! Sanain desktop entry point.
 
+mod menu;
 mod shell;
 mod theme;
 mod view;
@@ -51,7 +52,9 @@ fn main() -> eframe::Result {
         options,
         Box::new(move |cc| {
             theme::install(&cc.egui_ctx);
-            Ok(Box::new(shell::Shell::new(editor, l10n, startup_error)))
+            let mut shell = shell::Shell::new(editor, l10n, startup_error);
+            shell.install_menu(&cc.egui_ctx);
+            Ok(Box::new(shell))
         }),
     )
 }

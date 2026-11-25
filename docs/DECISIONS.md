@@ -17,8 +17,9 @@
 | D14 | Confirmed | Product only; no separate research project, reports or dashboard |
 | D15 | Confirmed | Graphite/mint brand, single-colour wordmark and icon approved as working assets 2026-11-25; trademark clearance pending; en-US and fi-FI locales |
 | D16 | Confirmed | Start at 0.0.1; Semantic Versioning; no 1.0.0 before M7 gates (docs/RELEASE.md) |
-| D18 | Confirmed | Public repository github.com/Zanttux/sanain; routine GitHub operations delegated per AUTONOMY (owner approved 2026-11-25) |
+| D18 | Confirmed | Public repository github.com/Zanttux/Sanain; routine GitHub operations delegated per AUTONOMY (owner approved 2026-11-25) |
 | D19 | Confirmed | Owner standing order (2026-11-25): Claude does not pause to ask questions. It decides, records the decision here or in STATUS, and continues. Owner-only physical tasks are listed in STATUS. |
+| D20 | Confirmed | Owner (2026-11-25): the name is "Sanain" everywhere people see it — app menu, window titles, bundle, repository (github.com/Zanttux/Sanain), docs. Lowercase `sanain` only where tooling requires it: crate names, the CLI executable, config/data directory names on Linux. |
 | D17 | Accepted | Workspace layout and first slice (docs/adr/0002-workspace-and-first-slice.md) |
 
 ADRs live in docs/adr/. Record ADR date, context, alternatives, evidence, consequences and reversal plan. Claude may decide routine implementation details; reserved decisions follow AUTONOMY. Proposed license and external authority require explicit owner approval.

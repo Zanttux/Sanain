@@ -6,7 +6,7 @@ M1 in progress.
 ## Done
 - Environment: macOS 27.2.1 arm64 (Apple M5), Rust 1.100.0 via rustup,
   git 2.54, gh 2.101 authenticated.
-- Repository: github.com/Zanttux/sanain (public, MPL-2.0). Commits use the
+- Repository: github.com/Zanttux/Sanain (public, MPL-2.0). Commits use the
   owner's GitHub noreply address.
 - Workspace at 0.0.1: `sanain-core`, `sanain-io`, `sanain-i18n`.
   First vertical slice (open UTF-8 file → edit → undo → atomic save →
@@ -39,7 +39,9 @@ M1 in progress.
 | E06 | Partial | Unsaved-changes prompts on close/new/open; no crash recovery yet |
 | Others | Not started | |
 
-Known M1 limits: menus are drawn in the window, not the macOS menu bar;
+Known M1 limits: native menus only on macOS (Windows/Linux use in-window
+menus); running the bare binary on macOS shows "sanain" in the menu bar,
+use `scripts/macos-bundle.sh` for the proper app name;
 no word-wise movement, sticky column or line wrapping; every visible line
 is re-laid out each frame (very long lines will be slow); dialog button
 order follows macOS on all platforms; IME composition and VoiceOver

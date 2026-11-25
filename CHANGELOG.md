@@ -28,5 +28,13 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   confirmations, status bar with position, line ending and encoding,
   light and dark themes from the brand tokens.
 
+- Native macOS menu bar (Sanain, File, Edit, Window) with standard
+  shortcuts; restyled in-window menus on Windows and Linux.
+- Cut, Copy and Paste work (system clipboard was not enabled before).
+- macOS app bundle script (`scripts/macos-bundle.sh`).
+- Crash-recovery snapshot store with versioned, checksummed files
+  (not yet used by the app).
+
 ### Changed
+- Repository renamed to github.com/Zanttux/Sanain.
 - Wordmark set in a single colour.

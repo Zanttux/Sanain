@@ -131,24 +131,37 @@ pub fn save(
     }
 
     let bytes = encode(text, encoding);
+    let perms = match existing {
+        Some(_) => Some(fs::metadata(&target).map_err(io_err)?.permissions()),
+        None => None,
+    };
+    let meta = write_atomic(&target, &bytes, perms).map_err(io_err)?;
+    Ok(Fingerprint::of(&bytes, &meta))
+}
+
+/// Write `bytes` to `target` via a synced temporary file in the same
+/// directory and an atomic rename. Returns the new file's metadata, read
+/// before the rename so nothing can fail after the file is replaced.
+pub(crate) fn write_atomic(
+    target: &Path,
+    bytes: &[u8],
+    permissions: Option<fs::Permissions>,
+) -> io::Result<fs::Metadata> {
     let dir = target
         .parent()
         .filter(|p| !p.as_os_str().is_empty())
         .unwrap_or(Path::new("."));
-    let tmp = TempFile::create_in(dir).map_err(io_err)?;
+    let tmp = TempFile::create_in(dir)?;
     let mut file = &tmp.file;
-    file.write_all(&bytes).map_err(io_err)?;
-    if existing.is_some() {
-        let perms = fs::metadata(&target).map_err(io_err)?.permissions();
-        fs::set_permissions(&tmp.path, perms).map_err(io_err)?;
+    file.write_all(bytes)?;
+    if let Some(perms) = permissions {
+        fs::set_permissions(&tmp.path, perms)?;
     }
-    tmp.file.sync_all().map_err(io_err)?;
-    // Read metadata before the rename: renaming keeps the mtime, and nothing
-    // after the rename may fail, or a completed save would look failed.
-    let meta = tmp.file.metadata().map_err(io_err)?;
-    tmp.persist(&target).map_err(io_err)?;
+    tmp.file.sync_all()?;
+    let meta = tmp.file.metadata()?;
+    tmp.persist(target)?;
     sync_dir(dir);
-    Ok(Fingerprint::of(&bytes, &meta))
+    Ok(meta)
 }
 
 /// A temporary file next to the target, removed on drop unless persisted.
