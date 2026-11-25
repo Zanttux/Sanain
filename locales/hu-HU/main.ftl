@@ -289,3 +289,13 @@ view-word-wrap = Automatikus sortörés
 status-wrap-on = A hosszú sorok mostantól az ablak szélességénél törnek.
 status-wrap-off = A hosszú sorok már nem törnek.
 settings-word-wrap = Hosszú sorok tördelése
+edit-go-to-line = Ugrás sorra…
+edit-go-to-heading = Ugrás címsorra…
+goto-line-hint = Sor vagy sor:oszlop
+goto-line-note = { $count ->
+    [one] A dokumentum 1 sorból áll.
+   *[other] A dokumentum { $count } sorból áll.
+    }
+goto-line-invalid = Adjon meg egy sorszámot, opcionálisan :oszlop utótaggal.
+goto-heading-hint = Gépeljen a címsorok szűréséhez
+goto-heading-none = Ebben a dokumentumban nincsenek címsorok.

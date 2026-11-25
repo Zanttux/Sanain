@@ -289,3 +289,13 @@ view-word-wrap = Automatisk linjeskift
 status-wrap-on = Lange linjer ombrydes nu efter vinduets bredde.
 status-wrap-off = Lange linjer ombrydes ikke længere.
 settings-word-wrap = Ombryd lange linjer
+edit-go-to-line = Gå til linje…
+edit-go-to-heading = Gå til overskrift…
+goto-line-hint = Linje eller linje:kolonne
+goto-line-note = { $count ->
+    [one] Dokumentet har 1 linje.
+   *[other] Dokumentet har { $count } linjer.
+    }
+goto-line-invalid = Angiv et linjenummer, eventuelt efterfulgt af :kolonne.
+goto-heading-hint = Skriv for at filtrere overskrifter
+goto-heading-none = Dette dokument har ingen overskrifter.

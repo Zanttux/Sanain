@@ -289,3 +289,13 @@ view-word-wrap = Sözcük Kaydırma
 status-wrap-on = Uzun satırlar artık pencere genişliğinde kaydırılıyor.
 status-wrap-off = Uzun satırlar artık kaydırılmıyor.
 settings-word-wrap = Uzun satırları kaydır
+edit-go-to-line = Satıra Git…
+edit-go-to-heading = Başlığa Git…
+goto-line-hint = Satır veya satır:sütun
+goto-line-note = { $count ->
+    [one] Belgede 1 satır var.
+   *[other] Belgede { $count } satır var.
+    }
+goto-line-invalid = Bir satır numarası girin; isteğe bağlı olarak ardından :sütun ekleyin.
+goto-heading-hint = Başlıkları filtrelemek için yazın
+goto-heading-none = Bu belgede başlık yok.

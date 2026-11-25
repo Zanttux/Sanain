@@ -289,3 +289,13 @@ view-word-wrap = Automatische terugloop
 status-wrap-on = Lange regels lopen nu terug op de vensterbreedte.
 status-wrap-off = Lange regels lopen niet meer terug.
 settings-word-wrap = Lange regels laten teruglopen
+edit-go-to-line = Ga naar regel…
+edit-go-to-heading = Ga naar kop…
+goto-line-hint = Regel of regel:kolom
+goto-line-note = { $count ->
+    [one] Het document heeft 1 regel.
+   *[other] Het document heeft { $count } regels.
+    }
+goto-line-invalid = Voer een regelnummer in, eventueel gevolgd door :kolom.
+goto-heading-hint = Typ om koppen te filteren
+goto-heading-none = Dit document heeft geen koppen.

@@ -302,3 +302,14 @@ view-word-wrap = Quebra automática de linha
 status-wrap-on = As linhas longas agora são quebradas na largura da janela.
 status-wrap-off = As linhas longas não são mais quebradas.
 settings-word-wrap = Quebrar linhas longas
+edit-go-to-line = Ir para a linha…
+edit-go-to-heading = Ir para o título…
+goto-line-hint = Linha ou linha:coluna
+goto-line-note = { $count ->
+    [one] O documento tem 1 linha.
+    [many] O documento tem { $count } de linhas.
+   *[other] O documento tem { $count } linhas.
+    }
+goto-line-invalid = Digite um número de linha, opcionalmente seguido de :coluna.
+goto-heading-hint = Digite para filtrar os títulos
+goto-heading-none = Este documento não tem títulos.

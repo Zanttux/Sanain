@@ -1198,6 +1198,64 @@ impl Shell {
         self.focus_active();
     }
 
+    /// Go to Line and Go to Heading, shown in the palette popup.
+    fn goto_palette(&mut self, ctx: &egui::Context) {
+        use crate::palette::Mode;
+        let target = match self.palette.mode {
+            Mode::GoToLine => {
+                let lines = self.editor().document().rope().len_lines() as i64;
+                let hint = self.t("goto-line-hint", &[]);
+                let note = self.t("goto-line-note", &[("count", lines.into())]);
+                match self.palette.show_input(ctx, &hint, &note) {
+                    Some(text) => match sanain_app::editor::parse_line_target(&text) {
+                        Some(t) => Some(t),
+                        None => {
+                            self.status = Some((self.t("goto-line-invalid", &[]), true));
+                            None
+                        }
+                    },
+                    None => None,
+                }
+            }
+            Mode::Headings => {
+                let text = self.editor().document().text();
+                let entries: Vec<Entry<usize>> =
+                    sanain_markdown::outline(&sanain_markdown::parse(&text))
+                        .into_iter()
+                        .map(|(level, title, line)| Entry {
+                            action: line.saturating_sub(1),
+                            label: format!(
+                                "{}{title}",
+                                "    ".repeat(usize::from(level.saturating_sub(1)))
+                            ),
+                            shortcut: format!("{line}"),
+                            enabled: true,
+                        })
+                        .collect();
+                let hint = self.t(
+                    if entries.is_empty() {
+                        "goto-heading-none"
+                    } else {
+                        "goto-heading-hint"
+                    },
+                    &[],
+                );
+                self.palette
+                    .show(ctx, &entries, &hint)
+                    .map(|line| (line, 0))
+            }
+            Mode::Commands => None,
+        };
+        if let Some((line, col)) = target {
+            self.editor_mut().go_to(line, col);
+            let id = self.ws.active().id;
+            self.views.entry(id).or_default().reveal();
+        }
+        if !self.palette.open {
+            self.focus_active();
+        }
+    }
+
     fn data_kind(ed: &Editor) -> Option<DataKind> {
         let ext = ed.file()?.path.extension()?.to_str()?.to_ascii_lowercase();
         match ext.as_str() {
@@ -1777,6 +1835,7 @@ impl Shell {
                     self.editor().file().is_some() && self.history.is_some()
                 }
                 MenuAction::ClearHistory => self.history.is_some(),
+                MenuAction::GoToHeading => Self::is_markdown(self.editor()),
                 MenuAction::PinTab => !self.ws.active().pinned,
                 MenuAction::UnpinTab => self.ws.active().pinned,
                 _ => true,
@@ -1898,7 +1957,7 @@ impl Shell {
                 None
             }
             MenuAction::CommandPalette => {
-                self.palette.open();
+                self.palette.open(crate::palette::Mode::Commands);
                 return;
             }
             MenuAction::PinTab | MenuAction::UnpinTab => {
@@ -2008,6 +2067,14 @@ impl Shell {
             }
             MenuAction::Settings => {
                 self.settings_open = true;
+                return;
+            }
+            MenuAction::GoToLine => {
+                self.palette.open(crate::palette::Mode::GoToLine);
+                return;
+            }
+            MenuAction::GoToHeading => {
+                self.palette.open(crate::palette::Mode::Headings);
                 return;
             }
             MenuAction::WordWrap => {
@@ -2582,7 +2649,12 @@ impl eframe::App for Shell {
         self.compare_picker(&ctx);
         self.history_window(&ctx);
         self.encoding_window(&ctx);
-        if self.palette.open && self.dialog.is_none() {
+        if self.palette.open
+            && self.dialog.is_none()
+            && self.palette.mode != crate::palette::Mode::Commands
+        {
+            self.goto_palette(&ctx);
+        } else if self.palette.open && self.dialog.is_none() {
             let entries: Vec<Entry> = MenuAction::ALL
                 .into_iter()
                 .filter(|a| *a != MenuAction::CommandPalette)

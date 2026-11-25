@@ -315,3 +315,15 @@ view-word-wrap = Zawijanie wierszy
 status-wrap-on = Długie wiersze są teraz zawijane do szerokości okna.
 status-wrap-off = Długie wiersze nie są już zawijane.
 settings-word-wrap = Zawijaj długie wiersze
+edit-go-to-line = Przejdź do wiersza…
+edit-go-to-heading = Przejdź do nagłówka…
+goto-line-hint = Wiersz lub wiersz:kolumna
+goto-line-note = { $count ->
+    [one] Dokument ma 1 wiersz.
+    [few] Dokument ma { $count } wiersze.
+    [many] Dokument ma { $count } wierszy.
+   *[other] Dokument ma { $count } wiersza.
+    }
+goto-line-invalid = Wpisz numer wiersza, opcjonalnie z dopiskiem :kolumna.
+goto-heading-hint = Pisz, aby filtrować nagłówki
+goto-heading-none = Ten dokument nie ma nagłówków.

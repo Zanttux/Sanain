@@ -302,3 +302,14 @@ view-word-wrap = Retour automatique à la ligne
 status-wrap-on = Les lignes longues sont désormais renvoyées à la ligne selon la largeur de la fenêtre.
 status-wrap-off = Les lignes longues ne sont plus renvoyées à la ligne.
 settings-word-wrap = Renvoyer automatiquement les lignes longues à la ligne
+edit-go-to-line = Aller à la ligne…
+edit-go-to-heading = Aller au titre…
+goto-line-hint = Ligne ou ligne:colonne
+goto-line-note = { $count ->
+    [one] Le document compte 1 ligne.
+    [many] Le document compte { $count } de lignes.
+   *[other] Le document compte { $count } lignes.
+    }
+goto-line-invalid = Saisissez un numéro de ligne, éventuellement suivi de :colonne.
+goto-heading-hint = Tapez pour filtrer les titres
+goto-heading-none = Ce document ne contient aucun titre.

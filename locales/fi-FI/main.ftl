@@ -289,3 +289,13 @@ view-word-wrap = Rivitys
 status-wrap-on = Pitkät rivit rivitetään nyt ikkunan levyiseksi.
 status-wrap-off = Pitkiä rivejä ei enää rivitetä.
 settings-word-wrap = Rivitä pitkät rivit
+edit-go-to-line = Siirry riville…
+edit-go-to-heading = Siirry otsikkoon…
+goto-line-hint = Rivi tai rivi:sarake
+goto-line-note = { $count ->
+    [one] Asiakirjassa on 1 rivi.
+   *[other] Asiakirjassa on { $count } riviä.
+    }
+goto-line-invalid = Anna rivinumero ja halutessasi :sarake.
+goto-heading-hint = Suodata otsikoita kirjoittamalla
+goto-heading-none = Tässä asiakirjassa ei ole otsikoita.

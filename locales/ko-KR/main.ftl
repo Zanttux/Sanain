@@ -276,3 +276,12 @@ view-word-wrap = 자동 줄 바꿈
 status-wrap-on = 이제 긴 줄이 창 너비에 맞춰 줄 바꿈됩니다.
 status-wrap-off = 이제 긴 줄이 줄 바꿈되지 않습니다.
 settings-word-wrap = 긴 줄 자동 줄 바꿈
+edit-go-to-line = 줄로 이동…
+edit-go-to-heading = 제목으로 이동…
+goto-line-hint = 줄 또는 줄:열
+goto-line-note = { $count ->
+   *[other] 문서에 { $count }개의 줄이 있습니다.
+    }
+goto-line-invalid = 줄 번호를 입력하세요. 필요하면 뒤에 :열을 붙이세요.
+goto-heading-hint = 입력하여 제목 필터링
+goto-heading-none = 이 문서에는 제목이 없습니다.

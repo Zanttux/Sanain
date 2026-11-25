@@ -289,3 +289,13 @@ view-word-wrap = Radbrytning
 status-wrap-on = Långa rader bryts nu vid fönsterbredden.
 status-wrap-off = Långa rader bryts inte längre.
 settings-word-wrap = Bryt långa rader
+edit-go-to-line = Gå till rad…
+edit-go-to-heading = Gå till rubrik…
+goto-line-hint = Rad eller rad:kolumn
+goto-line-note = { $count ->
+    [one] Dokumentet har 1 rad.
+   *[other] Dokumentet har { $count } rader.
+    }
+goto-line-invalid = Ange ett radnummer, eventuellt följt av :kolumn.
+goto-heading-hint = Skriv för att filtrera rubriker
+goto-heading-none = Det här dokumentet har inga rubriker.

@@ -315,3 +315,15 @@ view-word-wrap = Zalamování řádků
 status-wrap-on = Dlouhé řádky se nyní zalamují podle šířky okna.
 status-wrap-off = Dlouhé řádky se již nezalamují.
 settings-word-wrap = Zalamovat dlouhé řádky
+edit-go-to-line = Přejít na řádek…
+edit-go-to-heading = Přejít na nadpis…
+goto-line-hint = Řádek nebo řádek:sloupec
+goto-line-note = { $count ->
+    [one] Dokument má 1 řádek.
+    [few] Dokument má { $count } řádky.
+    [many] Dokument má { $count } řádku.
+   *[other] Dokument má { $count } řádků.
+    }
+goto-line-invalid = Zadejte číslo řádku, případně následované :sloupec.
+goto-heading-hint = Psaním filtrujte nadpisy
+goto-heading-none = Tento dokument nemá žádné nadpisy.
