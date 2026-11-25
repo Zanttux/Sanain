@@ -22,6 +22,14 @@ use crate::theme;
 use crate::view::{EditorView, ViewOptions};
 use sanain_app::settings::{FONT_SIZE_DEFAULT, Settings, ThemeChoice};
 
+/// An open side-by-side comparison of two tabs.
+struct Compare {
+    left: TabId,
+    right: TabId,
+    revs: (Revision, Revision),
+    diff: sanain_tools::diff::Diff,
+}
+
 /// How a Markdown tab is shown.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum MdMode {
@@ -74,6 +82,8 @@ pub struct Shell {
     settings_dir: Option<std::path::PathBuf>,
     settings_open: bool,
     palette: Palette,
+    compare: Option<Compare>,
+    compare_pick: bool,
     md_modes: HashMap<TabId, MdMode>,
     md_cache: HashMap<TabId, (Revision, std::sync::Arc<Vec<sanain_markdown::Block>>)>,
     /// Caret line the preview was last scrolled to, per tab.
@@ -133,6 +143,8 @@ impl Shell {
             settings_dir,
             settings_open: false,
             palette: Palette::default(),
+            compare: None,
+            compare_pick: false,
             md_modes: HashMap::new(),
             md_cache: HashMap::new(),
             md_synced: HashMap::new(),
@@ -516,6 +528,169 @@ impl Shell {
         }
     }
 
+    fn start_compare(&mut self, right: TabId) {
+        self.compare = Some(Compare {
+            left: self.ws.active().id,
+            right,
+            revs: (Revision(u64::MAX), Revision(u64::MAX)),
+            diff: Default::default(),
+        });
+    }
+
+    fn tab_text(&self, id: TabId) -> Option<(Revision, String)> {
+        let i = self.ws.position(id)?;
+        let d = self.ws.tabs()[i].editor.document();
+        Some((d.revision(), d.text()))
+    }
+
+    fn compare_picker(&mut self, ctx: &egui::Context) {
+        if !self.compare_pick {
+            return;
+        }
+        let active = self.ws.active().id;
+        let others: Vec<(TabId, String)> = self
+            .ws
+            .tabs()
+            .iter()
+            .filter(|t| t.id != active)
+            .map(|t| (t.id, self.name_of(&t.editor)))
+            .collect();
+        let mut open = true;
+        let mut chosen = None;
+        egui::Window::new(self.t(
+            "compare-pick-title",
+            &[("name", self.display_name().into())],
+        ))
+        .id(egui::Id::unique("sanain-compare-pick"))
+        .open(&mut open)
+        .collapsible(false)
+        .resizable(false)
+        .show(ctx, |ui| {
+            for (id, name) in &others {
+                if ui.button(name).clicked() {
+                    chosen = Some(*id);
+                }
+            }
+        });
+        if let Some(id) = chosen {
+            self.start_compare(id);
+            self.compare_pick = false;
+        } else if !open {
+            self.compare_pick = false;
+        }
+    }
+
+    /// Draw the comparison if the active tab is its left side. Returns
+    /// whether it was drawn.
+    fn compare_area(&mut self, ui: &mut egui::Ui) -> bool {
+        let Some(c) = &self.compare else { return false };
+        if c.left != self.ws.active().id {
+            return false;
+        }
+        let (left, right) = (c.left, c.right);
+        let (Some((lrev, ltext)), Some((rrev, rtext))) =
+            (self.tab_text(left), self.tab_text(right))
+        else {
+            self.compare = None;
+            return false;
+        };
+        if let Some(c) = &mut self.compare
+            && c.revs != (lrev, rrev)
+        {
+            c.diff = sanain_tools::diff::diff_lines(&ltext, &rtext);
+            c.revs = (lrev, rrev);
+        }
+        let Some(c) = &self.compare else { return false };
+        let p = theme::palette(ui.ctx());
+        let lname = self.name_of(&self.ws.tabs()[self.ws.position(left).unwrap_or(0)].editor);
+        let rname = self.name_of(&self.ws.tabs()[self.ws.position(right).unwrap_or(0)].editor);
+        let changes = c.diff.hunks.len() as i64;
+        let mut close = false;
+        egui::Frame::NONE
+            .fill(p.surface)
+            .inner_margin(egui::Margin::symmetric(8, 6))
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label(format!("{lname}  ↔  {rname}"));
+                    ui.colored_label(
+                        p.muted,
+                        self.t("compare-count", &[("count", changes.into())]),
+                    );
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button(self.t("compare-close", &[])).clicked() {
+                            close = true;
+                        }
+                    });
+                });
+            });
+        let labels = crate::diffview::Labels {
+            to_left: self.t("compare-to-left", &[]),
+            to_right: self.t("compare-to-right", &[]),
+        };
+        let action = crate::diffview::show(
+            ui,
+            &c.diff,
+            &ltext,
+            &rtext,
+            p,
+            self.settings.font_size,
+            &labels,
+        );
+        if close || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+            self.compare = None;
+            return true;
+        }
+        if let Some(a) = action {
+            self.apply_hunk(a, &ltext, &rtext);
+        }
+        true
+    }
+
+    /// Copy one hunk across, unless either side changed since the diff was
+    /// computed (then the comparison refreshes instead).
+    fn apply_hunk(&mut self, a: crate::diffview::ApplyDir, ltext: &str, rtext: &str) {
+        use crate::diffview::ApplyDir;
+        let Some(c) = &self.compare else { return };
+        let (left, right) = (c.left, c.right);
+        let now = (
+            self.tab_text(left).map(|t| t.0),
+            self.tab_text(right).map(|t| t.0),
+        );
+        if now != (Some(c.revs.0), Some(c.revs.1)) {
+            self.status = Some((self.t("compare-stale", &[]), true));
+            return;
+        }
+        let (target, bytes, text, target_text) = match a {
+            ApplyDir::ToLeft(h) => {
+                let Some(h) = c.diff.hunks.get(h) else { return };
+                (
+                    left,
+                    h.left_bytes.clone(),
+                    &rtext[h.right_bytes.clone()],
+                    ltext,
+                )
+            }
+            ApplyDir::ToRight(h) => {
+                let Some(h) = c.diff.hunks.get(h) else { return };
+                (
+                    right,
+                    h.right_bytes.clone(),
+                    &ltext[h.left_bytes.clone()],
+                    rtext,
+                )
+            }
+        };
+        let start = target_text[..bytes.start].chars().count();
+        let end = start + target_text[bytes.clone()].chars().count();
+        let text = text.to_owned();
+        if let Some(i) = self.ws.position(target) {
+            let current = self.ws.active_index();
+            self.ws.activate(i);
+            self.editor_mut().replace_range(start..end, &text);
+            self.ws.activate(current);
+        }
+    }
+
     fn is_markdown(ed: &Editor) -> bool {
         ed.file()
             .and_then(|f| f.path.extension())
@@ -735,6 +910,19 @@ impl Shell {
             MenuAction::CommandPalette => {
                 self.palette.open();
                 return;
+            }
+            MenuAction::CompareTabs => {
+                if self.compare.take().is_none() {
+                    match self.ws.len() {
+                        0 | 1 => self.status = Some((self.t("compare-need-two", &[]), false)),
+                        2 => {
+                            let other = self.ws.tabs()[1 - self.ws.active_index()].id;
+                            self.start_compare(other);
+                        }
+                        _ => self.compare_pick = true,
+                    }
+                }
+                None
             }
             MenuAction::JsonValidate
             | MenuAction::JsonFormat
@@ -1146,19 +1334,25 @@ impl eframe::App for Shell {
         egui::Panel::bottom("status").show(ui, |ui| self.status_bar(ui));
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE.fill(p.canvas))
-            .show(ui, |ui| match self.md_mode() {
-                MdMode::Source => self.editor_area(ui),
-                MdMode::Preview => self.preview_area(ui),
-                MdMode::Split => {
-                    ui.columns(2, |cols| {
-                        self.editor_area(&mut cols[0]);
-                        self.preview_area(&mut cols[1]);
-                    });
+            .show(ui, |ui| {
+                if self.compare_area(ui) {
+                    return;
+                }
+                match self.md_mode() {
+                    MdMode::Source => self.editor_area(ui),
+                    MdMode::Preview => self.preview_area(ui),
+                    MdMode::Split => {
+                        ui.columns(2, |cols| {
+                            self.editor_area(&mut cols[0]);
+                            self.preview_area(&mut cols[1]);
+                        });
+                    }
                 }
             });
 
         self.dialogs(&ctx);
         self.settings_window(&ctx);
+        self.compare_picker(&ctx);
         if self.palette.open && self.dialog.is_none() {
             let entries: Vec<Entry> = MenuAction::ALL
                 .into_iter()

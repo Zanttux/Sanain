@@ -149,3 +149,15 @@ json-reason-expected-a-value = expected a value
 json-reason-empty-document = empty document
 json-reason-unexpected-end-of-input = unexpected end of input
 json-reason-too-deeply-nested-to-format = too deeply nested to format
+tools-compare = Compare With…
+compare-need-two = Open another tab to compare with.
+compare-pick-title = Compare { $name } with
+compare-count = { $count ->
+    [0] No differences
+    [one] 1 change
+   *[other] { $count } changes
+    }
+compare-close = Close Comparison
+compare-to-left = Copy this change to the left
+compare-to-right = Copy this change to the right
+compare-stale = A document changed during the comparison. The comparison was refreshed; try again.
