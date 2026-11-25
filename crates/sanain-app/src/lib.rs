@@ -3,6 +3,7 @@
 pub mod editor;
 pub mod fuzzy;
 pub mod images;
+pub mod keymap;
 pub mod recovery;
 pub mod session;
 pub mod settings;

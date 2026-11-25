@@ -35,6 +35,7 @@ pub struct Settings {
     pub restore_session: bool,
     /// UI language as a BCP 47 tag; `None` follows the system.
     pub locale: Option<String>,
+    pub keymap: crate::keymap::Keymap,
 }
 
 impl Default for Settings {
@@ -46,6 +47,7 @@ impl Default for Settings {
             theme: ThemeChoice::System,
             restore_session: true,
             locale: None,
+            keymap: crate::keymap::Keymap::default(),
         }
     }
 }
@@ -87,6 +89,7 @@ impl Settings {
         if let Some(l) = &self.locale {
             out.push_str(&format!("locale={l}\n"));
         }
+        out.push_str(&self.keymap.encode());
         out
     }
 
@@ -127,7 +130,9 @@ impl Settings {
                     }
                 }
                 "locale" if !v.is_empty() && v.len() <= 35 => s.locale = Some(v.to_owned()),
-                _ => {}
+                other => {
+                    s.keymap.read_line(other, v);
+                }
             }
         }
         Some(s)
@@ -173,6 +178,12 @@ mod tests {
             theme: ThemeChoice::Light,
             restore_session: false,
             locale: Some("fi-FI".into()),
+            keymap: {
+                let mut k = crate::keymap::Keymap::default();
+                k.read_line("keymap", "notepad++");
+                k.read_line("key.file.save", "Mod+Alt+S");
+                k
+            },
         };
         assert_eq!(Settings::decode(&s.encode()), Some(s.clone()));
         let hc = Settings {

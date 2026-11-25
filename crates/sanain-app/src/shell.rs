@@ -127,6 +127,10 @@ pub struct Shell {
     settings: Settings,
     settings_dir: Option<std::path::PathBuf>,
     settings_open: bool,
+    /// Command whose new shortcut is being recorded in Settings.
+    recording: Option<MenuAction>,
+    /// Commands that lost their shortcut to the last recorded one.
+    shortcut_moved: Vec<String>,
     palette: Palette,
     compare: Option<Compare>,
     encoding_pick: Option<EncodingPick>,
@@ -156,7 +160,10 @@ impl Shell {
         if std::env::var_os("SANAIN_IN_WINDOW_MENU").is_none() {
             let ctx = ctx.clone();
             let label = |id: &str| self.t(id, &[]);
-            self.native_menu = menu::NativeMenu::install(&label, move || ctx.request_repaint());
+            self.native_menu =
+                menu::NativeMenu::install(&label, &self.settings.keymap, move || {
+                    ctx.request_repaint()
+                });
         }
         #[cfg(not(target_os = "macos"))]
         let _ = ctx;
@@ -195,6 +202,8 @@ impl Shell {
             settings,
             settings_dir,
             settings_open: false,
+            recording: None,
+            shortcut_moved: Vec::new(),
             palette: Palette::default(),
             compare: None,
             encoding_pick: None,
@@ -456,6 +465,9 @@ impl Shell {
         let title = self.t("settings-title", &[]);
         let l = |id: &str| tr(&self.l10n, id, &[]);
         let s = &mut self.settings;
+        let recording = &mut self.recording;
+        let moved = &mut self.shortcut_moved;
+        let was_recording = recording.is_some();
         egui::Window::new(title)
             .id(egui::Id::unique("sanain-settings"))
             .open(&mut open)
@@ -521,10 +533,126 @@ impl Shell {
                     });
                 ui.add_space(4.0);
                 ui.weak(l("settings-language-note"));
+                ui.add_space(8.0);
+                egui::CollapsingHeader::new(l("settings-shortcuts"))
+                    .id_salt("settings-shortcuts")
+                    .show(ui, |ui| {
+                        ui.horizontal(|ui| {
+                            ui.label(l("settings-keymap-preset"));
+                            use sanain_app::keymap::Preset;
+                            for (p, id) in [
+                                (Preset::Default, "settings-keymap-default"),
+                                (Preset::NotepadPlusPlus, "settings-keymap-notepadpp"),
+                            ] {
+                                ui.radio_value(&mut s.keymap.preset, p, l(id));
+                            }
+                        });
+                        egui::ScrollArea::vertical()
+                            .max_height(260.0)
+                            .show(ui, |ui| {
+                                egui::Grid::new("shortcut-grid")
+                                    .num_columns(3)
+                                    .striped(true)
+                                    .show(ui, |ui| {
+                                        for a in MenuAction::ALL {
+                                            ui.label(
+                                                l(a.label_id()).trim_end_matches('…').to_owned(),
+                                            );
+                                            let text = if *recording == Some(a) {
+                                                l("settings-shortcut-press")
+                                            } else {
+                                                a.shortcut(&s.keymap)
+                                                    .map(|k| ctx.format_shortcut(&k))
+                                                    .unwrap_or_default()
+                                            };
+                                            ui.monospace(text);
+                                            ui.horizontal(|ui| {
+                                                if ui
+                                                    .small_button(l("settings-shortcut-change"))
+                                                    .clicked()
+                                                {
+                                                    *recording = Some(a);
+                                                }
+                                                if s.keymap.custom.contains_key(a.command_id())
+                                                    && ui
+                                                        .small_button(l("settings-shortcut-reset"))
+                                                        .clicked()
+                                                {
+                                                    s.keymap.custom.remove(a.command_id());
+                                                }
+                                            });
+                                            ui.end_row();
+                                        }
+                                    });
+                            });
+                    });
+                if let Some(a) = *recording {
+                    // Capture the next chord; Escape cancels.
+                    let pressed = ui.input(|i| {
+                        i.events.iter().find_map(|e| match e {
+                            egui::Event::Key {
+                                key,
+                                pressed: true,
+                                modifiers,
+                                ..
+                            } => Some((*key, *modifiers)),
+                            _ => None,
+                        })
+                    });
+                    match pressed {
+                        Some((egui::Key::Escape, _)) => *recording = None,
+                        Some((key, m)) => {
+                            if let Some(chord) = menu::chord_from_press(key, m) {
+                                let clash: Vec<String> = MenuAction::ALL
+                                    .into_iter()
+                                    .filter(|o| {
+                                        *o != a
+                                            && o.shortcut(&s.keymap) == menu::chord_to_egui(&chord)
+                                    })
+                                    .map(|o| l(o.label_id()))
+                                    .collect();
+                                // The other command loses this shortcut.
+                                for o in MenuAction::ALL {
+                                    if o != a
+                                        && o.shortcut(&s.keymap) == menu::chord_to_egui(&chord)
+                                    {
+                                        s.keymap.custom.insert(o.command_id().to_owned(), None);
+                                    }
+                                }
+                                s.keymap
+                                    .custom
+                                    .insert(a.command_id().to_owned(), Some(chord));
+                                *recording = None;
+                                *moved = clash;
+                            }
+                        }
+                        None => {}
+                    }
+                }
+                if !moved.is_empty() {
+                    ui.colored_label(
+                        theme::palette(ui.ctx()).warning,
+                        format!("{} {}", l("settings-shortcut-moved"), moved.join(", ")),
+                    );
+                }
             });
         if self.settings != before {
             self.save_settings();
         }
+        // Keep the native menu's shortcuts in step; clear them while
+        // recording so the menu does not swallow the key press.
+        #[cfg(target_os = "macos")]
+        if let Some(m) = &self.native_menu {
+            if self.recording.is_some() && !was_recording {
+                m.clear_shortcuts();
+            } else if (was_recording && self.recording.is_none())
+                || self.settings.keymap != before.keymap
+            {
+                m.apply_keymap(&self.settings.keymap);
+            }
+        }
+        #[cfg(not(target_os = "macos"))]
+        let _ = was_recording;
         if !open {
             self.settings_open = false;
             self.focus_active();
@@ -1254,9 +1382,47 @@ impl Shell {
             }
     }
 
+    /// Whether a text field other than the editor has keyboard focus.
+    fn text_field_focused(&self, ctx: &egui::Context) -> bool {
+        let editor = self
+            .views
+            .get(&self.ws.active().id)
+            .and_then(|v| v.widget_id);
+        ctx.memory(|m| m.focused())
+            .is_some_and(|f| Some(f) != editor)
+    }
+
     fn dispatch(&mut self, action: MenuAction, ctx: &egui::Context) {
         if self.dialog.is_some() {
             return;
+        }
+        // Menu shortcuts reach us even when a field like the find bar has
+        // focus: hand clipboard and undo there instead of to the document.
+        if self.text_field_focused(ctx) {
+            use egui::{Event, Key, Modifiers};
+            let key = |key, modifiers| Event::Key {
+                key,
+                physical_key: None,
+                pressed: true,
+                repeat: false,
+                modifiers,
+            };
+            let event = match action {
+                MenuAction::Copy => Some(Event::Copy),
+                MenuAction::Cut => Some(Event::Cut),
+                MenuAction::Paste => arboard::Clipboard::new()
+                    .and_then(|mut c| c.get_text())
+                    .ok()
+                    .map(Event::Paste),
+                MenuAction::SelectAll => Some(key(Key::A, Modifiers::COMMAND)),
+                MenuAction::Undo => Some(key(Key::Z, Modifiers::COMMAND)),
+                MenuAction::Redo => Some(key(Key::Z, Modifiers::COMMAND.plus(Modifiers::SHIFT))),
+                _ => None,
+            };
+            if let Some(e) = event {
+                ctx.input_mut(|i| i.events.push(e));
+                return;
+            }
         }
         let editor_cmd = |cmd| Some(cmd);
         let cmd = match action {
@@ -1719,29 +1885,18 @@ impl eframe::App for Shell {
         }
         // Without a native menu, file, tab and quit shortcuts are handled
         // here; editing shortcuts arrive as key events in the view.
-        if !self.has_native_menu() && self.dialog.is_none() {
-            for a in [
-                MenuAction::SaveAs,
-                MenuAction::Save,
-                MenuAction::Open,
-                MenuAction::New,
-                MenuAction::CloseTab,
-                MenuAction::ReopenTab,
-                MenuAction::PrevTab,
-                MenuAction::NextTab,
-                MenuAction::Replace,
-                MenuAction::CommandPalette,
-                MenuAction::MarkdownSplit,
-                MenuAction::Settings,
-                MenuAction::ZoomIn,
-                MenuAction::ZoomOut,
-                MenuAction::ZoomReset,
-                MenuAction::Find,
-                MenuAction::FindPrev,
-                MenuAction::FindNext,
-                MenuAction::Quit,
-            ] {
-                if let Some(s) = a.shortcut()
+        if !self.has_native_menu() && self.dialog.is_none() && self.recording.is_none() {
+            let text_field = self.text_field_focused(&ctx);
+            for a in MenuAction::ALL {
+                // Clipboard shortcuts arrive as clipboard events; editing
+                // commands belong to the focused text field if it is not
+                // the editor.
+                let skip = matches!(a, MenuAction::Cut | MenuAction::Copy | MenuAction::Paste)
+                    || (text_field && a.edits_text());
+                if skip {
+                    continue;
+                }
+                if let Some(s) = a.shortcut(&self.settings.keymap)
                     && ctx.input_mut(|i| i.consume_shortcut(&s))
                 {
                     actions.push(a);
@@ -1757,7 +1912,7 @@ impl eframe::App for Shell {
             egui::Panel::top("menu").frame(frame).show(ui, |ui| {
                 let label = |id: &str| self.t(id, &[]);
                 let enabled = |a| self.enabled(a);
-                if let Some(a) = menu::in_window(ui, &label, enabled) {
+                if let Some(a) = menu::in_window(ui, &label, enabled, &self.settings.keymap) {
                     actions.push(a);
                 }
             });
@@ -1833,7 +1988,7 @@ impl eframe::App for Shell {
                     action: a,
                     label: self.t(a.label_id(), &[]).trim_end_matches('…').to_owned(),
                     shortcut: a
-                        .shortcut()
+                        .shortcut(&self.settings.keymap)
                         .map(|s| ctx.format_shortcut(&s))
                         .unwrap_or_default(),
                     enabled: self.enabled(a),

@@ -32,6 +32,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   shortcuts; restyled in-window menus on Windows and Linux.
 - Cut, Copy and Paste work (system clipboard was not enabled before).
 - macOS app bundle script (`scripts/macos-bundle.sh`).
+- Keyboard shortcuts are configurable in Settings: pick a preset (Sanain
+  or Notepad++) and change or reset any command's shortcut by pressing
+  the new keys. A shortcut taken from another command is reported.
+  Menus, the command palette and the native macOS menu follow the keymap.
 - Code folding by indentation, for any file type: click the ▾/▸ marker
   next to the line number, or use View > Fold / Unfold / Unfold All.
   Folds stay on their lines while you edit above them and open when the
@@ -117,6 +121,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   or when changes are discarded.
 
 ### Fixed
+- With the native macOS menu, Cmd+A, Cmd+Z and clipboard shortcuts in
+  the find bar or other text fields now act on that field, not on the
+  document.
 - Esc now closes the find bar after searching with Enter.
 
 ### Changed
