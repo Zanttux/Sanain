@@ -21,6 +21,13 @@ costs, store requirements and licenses before committing to a channel.
 Binary releases must ship a third-party licence notices file (BSD-2-Clause,
 BSD-3-Clause and MIT dependencies require it); generate it in CI (e.g. cargo-about).
 
+Generate it with `scripts/third-party-notices.py THIRD_PARTY_NOTICES.md`
+(crates linked into the app, all platforms, with their license texts;
+MIT notices generated from crate authors where the package omits the
+file; Apache-2.0 and BSL-1.0 full texts appended once). CI runs it on
+every pull request and fails if any crate lacks license text. License,
+advisory and source policy: `deny.toml`, checked by cargo-deny in CI.
+
 CI builds releases from tagged commits with the lockfile and produces
 checksums, SBOM, notices and release notes. The owner approves publishing.
 Updates: Sanain can check GitHub for a newer release (manual, or once a

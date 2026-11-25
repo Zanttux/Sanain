@@ -5,6 +5,8 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Release tooling: cargo-deny policy (deny.toml) and a third-party notices
+  generator (scripts/third-party-notices.py), both run in CI.
 - UTF-16 files without a byte order mark are recognised and opened
   directly (and saved without one). For other files that are not UTF-8,
   Reopen with Encoding suggests an encoding guessed from the contents.
