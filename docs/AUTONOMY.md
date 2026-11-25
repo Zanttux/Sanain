@@ -2,6 +2,13 @@
 ## Standing delegation
 Local inspection, planning, coding, tests, documentation, dependency evaluation and reversible spikes may proceed immediately. Once the owner activates a scoped repository policy, routine issue labels, transparent bot replies, branches, commits, PRs, CI reruns and low-risk internal merges may proceed without per-task approval, subject to required checks and legitimate review rules. No bot bypass or fake independent approval. If rules require a human reviewer, queue the PR. External PRs require human approval initially; owner may later approve a narrowly scoped policy with isolated CI and review controls. Routine release preparation is delegated; publication requires initial owner approval until a signed release policy is activated.
 
+## Standing order (owner, 2026-11-25)
+Do not stop to ask. Make the recommended choice, record it in DECISIONS
+or STATUS, and continue. Tasks only the owner can perform (legal
+searches, payments, account logins) are listed in STATUS under
+"Owner-only items" and never block other work. This does not permit
+fabricated approvals, secret handling, spending or destructive actions.
+
 ## Reserved decisions
 Owner approves license, public repository and brand clearance, account creation, spending ceilings, persistent runners, permissions/secrets, changes to protected workflows or safety policy, destructive actions, legal commitments, security-sensitive changes and stable publication outside an approved policy. Never change your own authority. Owner may revoke delegation at any time. Do not assume credentials or budget exist.
 

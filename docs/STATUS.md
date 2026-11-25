@@ -57,8 +57,11 @@ registers (EUIPO, PRH, USPTO, WIPO) not searched: needs owner or counsel.
 ## Owner decisions (2026-11-25)
 Approved: MPL-2.0, egui/eframe, public repository with delegated routine
 GitHub operations, single-colour wordmark and icon as working assets.
-Open: trademark search (EUIPO, PRH, USPTO, WIPO) before any launch
-announcement.
+Standing order: no questions to the owner (D19).
+
+## Owner-only items (never block work)
+- Trademark search for "Sanain" (EUIPO, PRH, USPTO, WIPO) before any
+  launch announcement.
 
 ## Repository settings (verified 2026-11-25)
 Squash merge only, branches deleted on merge, wiki off, discussions on.
