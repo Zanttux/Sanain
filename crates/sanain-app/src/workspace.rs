@@ -201,6 +201,10 @@ impl Workspace {
         &self.tabs[self.active]
     }
 
+    pub fn tab_mut(&mut self, i: usize) -> Option<&mut Tab> {
+        self.tabs.get_mut(i)
+    }
+
     pub fn active_mut(&mut self) -> &mut Tab {
         &mut self.tabs[self.active]
     }

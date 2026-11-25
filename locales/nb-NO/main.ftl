@@ -329,3 +329,4 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Bare de første 200 endrede linjene vises.
 replace-preview-stale = Dokumentet er endret; ingenting ble erstattet. Kjør Erstatt alle på nytt.
+view-split-editor = Del redigeringsprogram

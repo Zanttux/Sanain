@@ -166,6 +166,11 @@ pub struct Shell {
     /// The last recorded macro.
     macro_cmds: Vec<Command>,
     replace_preview: Option<ReplacePreview>,
+    /// Split editor: the tabs shown in the left and right panes, and which
+    /// pane has focus (its tab is the active tab).
+    split: Option<([TabId; 2], usize)>,
+    /// Scroll and caret display state of the right pane.
+    right_views: HashMap<TabId, EditorView>,
     log: Option<crate::logview::LogView>,
     /// For work started outside a frame (e.g. opening a file).
     ctx: egui::Context,
@@ -259,6 +264,8 @@ impl Shell {
             history_open: false,
             macro_cmds: Vec::new(),
             replace_preview: None,
+            split: None,
+            right_views: HashMap::new(),
             log: None,
             ctx: egui::Context::default(),
             update: None,
@@ -312,7 +319,7 @@ impl Shell {
         if let Some(i) = self.find.matches.next_from(from, forward) {
             let r = self.find.matches.ranges[i].clone();
             self.editor_mut().select(r);
-            self.views.entry(id).or_default().reveal();
+            self.active_view(id).reveal();
         }
     }
 
@@ -378,7 +385,17 @@ impl Shell {
 
     fn focus_active(&mut self) {
         let id = self.ws.active().id;
-        self.views.entry(id).or_default().request_focus();
+        self.active_view(id).request_focus();
+    }
+
+    /// The view showing the active tab: the right pane's when it has focus
+    /// in a split.
+    fn active_view(&mut self, id: TabId) -> &mut EditorView {
+        if matches!(self.split, Some((_, 1))) {
+            self.right_views.entry(id).or_default()
+        } else {
+            self.views.entry(id).or_default()
+        }
     }
 
     fn save(&mut self) -> bool {
@@ -884,7 +901,7 @@ impl Shell {
                 let at = range.start + text[..e.offset.min(text.len())].chars().count();
                 self.editor_mut().select(at..at);
                 let id = self.ws.active().id;
-                self.views.entry(id).or_default().reveal();
+                self.active_view(id).reveal();
                 let msg = self.t(
                     "tools-json-error",
                     &[
@@ -1319,7 +1336,7 @@ impl Shell {
         if let Some((line, col)) = target {
             self.editor_mut().go_to(line, col);
             let id = self.ws.active().id;
-            self.views.entry(id).or_default().reveal();
+            self.active_view(id).reveal();
         }
         if !self.palette.open {
             self.focus_active();
@@ -1420,7 +1437,7 @@ impl Shell {
         let msg = self.t("status-replaced", &[("count", (pv.count as i64).into())]);
         self.status = Some((msg, false));
         let id = self.ws.active().id;
-        self.views.entry(id).or_default().reveal();
+        self.active_view(id).reveal();
     }
 
     fn data_kind(ed: &Editor) -> Option<DataKind> {
@@ -1858,6 +1875,98 @@ impl Shell {
         }
     }
 
+    /// Keep the split consistent with the tabs: the focused pane shows the
+    /// active tab; a pane whose tab closed takes the active tab.
+    fn sync_split(&mut self) {
+        let active = self.ws.active().id;
+        let Some((panes, focus)) = &mut self.split else {
+            return;
+        };
+        panes[*focus] = active;
+        for p in panes.iter_mut() {
+            if self.ws.position(*p).is_none() {
+                *p = active;
+            }
+        }
+    }
+
+    /// Two editors side by side. Interacting with a pane makes its tab
+    /// active, so menus and shortcuts act on it.
+    fn split_area(&mut self, ui: &mut egui::Ui) -> bool {
+        self.sync_split();
+        let Some((panes, focus)) = self.split else {
+            return false;
+        };
+        let name = self.t("editor-accessible-name", &[]);
+        let interactive = self.dialog.is_none();
+        let opts = ViewOptions {
+            font_size: self.settings.font_size,
+            indent: self.settings.indent(),
+            tab_width: usize::from(self.settings.tab_width),
+            wrap: self.settings.word_wrap,
+        };
+        let p = theme::palette(ui.ctx());
+        let mut touched = None;
+        ui.columns(2, |cols| {
+            for (pane, ui) in cols.iter_mut().enumerate() {
+                let id = panes[pane];
+                let Some(i) = self.ws.position(id) else {
+                    continue;
+                };
+                let view = if pane == 0 {
+                    self.views.entry(id).or_default()
+                } else {
+                    self.right_views.entry(id).or_default()
+                };
+                let highlights: &[std::ops::Range<usize>] =
+                    if self.find.open && i == self.ws.active_index() {
+                        &self.find.matches.ranges
+                    } else {
+                        &[]
+                    };
+                let syntax: &[CharSpan] = self.spans.get(&id).map_or(&[], |(_, s)| s);
+                let Some(tab) = self.ws.tab_mut(i) else {
+                    continue;
+                };
+                let editor = &mut tab.editor;
+                if pane == focus {
+                    let r = ui.max_rect();
+                    ui.painter().hline(
+                        r.x_range(),
+                        r.top() + 1.0,
+                        egui::Stroke::new(2.0, p.accent),
+                    );
+                }
+                if pane == 1 {
+                    ui.painter().vline(
+                        ui.max_rect().left() - 4.0,
+                        ui.max_rect().y_range(),
+                        egui::Stroke::new(1.0, p.border),
+                    );
+                }
+                ui.push_id((id, pane), |ui| {
+                    ui.add_enabled_ui(interactive, |ui| {
+                        if view.show(ui, editor, &name, highlights, syntax, &opts) {
+                            touched = Some(pane);
+                        }
+                    });
+                });
+            }
+        });
+        if let Some(pane) = touched {
+            self.status = None;
+            if let Some((panes, focus)) = &mut self.split
+                && *focus != pane
+            {
+                *focus = pane;
+                if let Some(i) = self.ws.position(panes[pane]) {
+                    self.ws.activate(i);
+                }
+            }
+        }
+        true
+    }
+
     fn editor_area(&mut self, ui: &mut egui::Ui) {
         let name = self.t("editor-accessible-name", &[]);
         let interactive = self.dialog.is_none();
@@ -2281,6 +2390,22 @@ impl Shell {
                 self.settings_open = true;
                 return;
             }
+            MenuAction::SplitEditor => {
+                if self.split.take().is_none() {
+                    let active = self.ws.active().id;
+                    // The other pane starts with the next tab, or the same
+                    // document when only one is open.
+                    let i = self.ws.active_index();
+                    let other = self
+                        .ws
+                        .tabs()
+                        .get((i + 1) % self.ws.len())
+                        .map_or(active, |t| t.id);
+                    self.split = Some(([active, other], 0));
+                }
+                self.focus_active();
+                return;
+            }
             MenuAction::CompareSaved => {
                 let Some(path) = self.editor().file().map(|f| f.path.clone()) else {
                     return;
@@ -2331,7 +2456,7 @@ impl Shell {
                 let cmds = self.macro_cmds.clone();
                 self.editor_mut().play(&cmds);
                 let id = self.ws.active().id;
-                self.views.entry(id).or_default().reveal();
+                self.active_view(id).reveal();
                 self.focus_active();
                 return;
             }
@@ -2889,7 +3014,7 @@ impl eframe::App for Shell {
                     if self.editor().file().is_some_and(|f| f.path == hit.path) {
                         self.editor_mut().select(hit.chars.clone());
                         let id = self.ws.active().id;
-                        self.views.entry(id).or_default().reveal();
+                        self.active_view(id).reveal();
                         self.focus_active();
                     }
                 }
@@ -2899,7 +3024,11 @@ impl eframe::App for Shell {
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE.fill(p.canvas))
             .show(ui, |ui| {
-                if self.log_area(ui) || self.compare_area(ui) || self.structured_area(ui) {
+                if self.log_area(ui)
+                    || self.compare_area(ui)
+                    || self.split_area(ui)
+                    || self.structured_area(ui)
+                {
                     return;
                 }
                 match self.md_mode() {

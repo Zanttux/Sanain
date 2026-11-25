@@ -312,3 +312,4 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = 変更される最初の 200 行のみを表示しています。
 replace-preview-stale = ドキュメントが変更されたため、何も置換されませんでした。もう一度「すべてを置換」を実行してください。
+view-split-editor = エディターを分割

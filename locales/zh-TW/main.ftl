@@ -312,3 +312,4 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = 僅顯示前 200 行變更。
 replace-preview-stale = 文件已變更，未取代任何內容。請重新執行「全部取代」。
+view-split-editor = 分割編輯器
