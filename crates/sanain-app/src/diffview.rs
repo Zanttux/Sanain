@@ -3,7 +3,7 @@
 use std::ops::Range;
 
 use eframe::egui::{self, Align2, FontId, Rect, Sense, Stroke, pos2, vec2};
-use sanain_tools::diff::{Diff, Row, split_lines};
+use sanain_tools::diff::{Diff, Row, intraline, split_lines};
 
 use crate::theme::Palette;
 
@@ -48,6 +48,8 @@ pub fn show(
 
     let del_bg = p.error.gamma_multiply(0.18);
     let ins_bg = p.accent.gamma_multiply(0.18);
+    let del_strong = p.error.gamma_multiply(0.45);
+    let ins_strong = p.accent.gamma_multiply(0.45);
 
     egui::ScrollArea::vertical().auto_shrink(false).show_rows(
         ui,
@@ -80,11 +82,25 @@ pub fn show(
                     Row::LeftOnly(l) => (Some(l), None, Some(del_bg), None, "−", " "),
                     Row::RightOnly(r) => (None, Some(r), None, Some(ins_bg), " ", "+"),
                 };
+                let line_text = |lines: &[&str], n: Option<usize>| -> String {
+                    n.and_then(|n| lines.get(n))
+                        .map_or("", |l| l.trim_end_matches(['\n', '\r']))
+                        .to_owned()
+                };
+                // Changed characters within a changed pair of lines.
+                let (lspans, rspans) = match row {
+                    Row::Changed { left, right } => {
+                        intraline(&line_text(&ll, Some(left)), &line_text(&rl, Some(right)))
+                    }
+                    _ => (Vec::new(), Vec::new()),
+                };
                 let side = |r: Rect,
                             line: Option<usize>,
                             lines: &[&str],
                             bg: Option<egui::Color32>,
-                            mark: &str| {
+                            mark: &str,
+                            spans: &[Range<usize>],
+                            strong: egui::Color32| {
                     let painter = ui.painter_at(r);
                     if let Some(bg) = bg {
                         painter.rect_filled(r, 0.0, bg);
@@ -104,20 +120,38 @@ pub fn show(
                             font.clone(),
                             p.muted,
                         );
-                        let text = lines
-                            .get(n)
-                            .map_or("", |l| l.trim_end_matches(['\n', '\r']));
-                        painter.text(
-                            pos2(r.min.x + gutter, r.center().y),
-                            Align2::LEFT_CENTER,
-                            text.replace('\t', "    "),
-                            font.clone(),
-                            p.text,
-                        );
+                        let raw = line_text(lines, Some(n));
+                        // Tabs are drawn as four spaces; map char indices.
+                        let shown = |idx: usize| -> usize {
+                            idx + 3 * raw.chars().take(idx).filter(|c| *c == '\t').count()
+                        };
+                        let galley = ui.fonts_mut(|f| {
+                            f.layout_no_wrap(raw.replace('\t', "    "), font.clone(), p.text)
+                        });
+                        let origin = pos2(r.min.x + gutter, r.center().y - galley.size().y / 2.0);
+                        for span in spans {
+                            let x0 = galley
+                                .pos_from_cursor(egui::text::CCursor::new(shown(span.start)))
+                                .min
+                                .x;
+                            let x1 = galley
+                                .pos_from_cursor(egui::text::CCursor::new(shown(span.end)))
+                                .min
+                                .x;
+                            painter.rect_filled(
+                                Rect::from_min_max(
+                                    pos2(origin.x + x0, r.min.y + 1.0),
+                                    pos2(origin.x + x1.max(x0 + 2.0), r.max.y - 1.0),
+                                ),
+                                2.0,
+                                strong,
+                            );
+                        }
+                        painter.galley(origin, galley, p.text);
                     }
                 };
-                side(lrect, lline, &ll, lbg, lmark);
-                side(rrect, rline, &rl, rbg, rmark);
+                side(lrect, lline, &ll, lbg, lmark, &lspans, del_strong);
+                side(rrect, rline, &rl, rbg, rmark, &rspans, ins_strong);
                 ui.painter().vline(
                     mrect.center().x,
                     mrect.y_range(),
