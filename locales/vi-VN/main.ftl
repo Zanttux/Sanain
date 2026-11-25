@@ -220,3 +220,15 @@ folder-search-summary = { $count ->
     } trong { $files ->
    *[other] { $files } tệp
     }
+app-check-updates = Kiểm tra bản cập nhật…
+update-checking = Đang kiểm tra bản cập nhật…
+update-up-to-date = Sanain { $version } là phiên bản mới nhất.
+update-no-releases = Chưa có bản phát hành Sanain nào được công bố.
+update-failed = Không thể kiểm tra bản cập nhật: { $reason }
+update-invalid = phản hồi không mong đợi
+update-available-title = Đã có Sanain { $version }
+update-available-body = Mở trang tải xuống để tải về. Sanain không tự tải xuống hay cài đặt bất cứ thứ gì.
+update-open-page = Mở trang tải xuống
+update-later = Để sau
+settings-check-updates = Kiểm tra bản cập nhật mỗi ngày một lần
+settings-check-updates-detail = Hỏi github.com về bản phát hành mới nhất. Không gửi gì khác.

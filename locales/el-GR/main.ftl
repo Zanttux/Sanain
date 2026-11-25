@@ -228,3 +228,15 @@ folder-search-summary = { $count ->
     [one] 1 αρχείο
    *[other] { $files } αρχεία
     }
+app-check-updates = Έλεγχος για ενημερώσεις…
+update-checking = Έλεγχος για ενημερώσεις…
+update-up-to-date = Το Sanain { $version } είναι η νεότερη έκδοση.
+update-no-releases = Δεν έχουν δημοσιευτεί ακόμη εκδόσεις του Sanain.
+update-failed = Δεν ήταν δυνατός ο έλεγχος για ενημερώσεις: { $reason }
+update-invalid = μη αναμενόμενη απόκριση
+update-available-title = Το Sanain { $version } είναι διαθέσιμο
+update-available-body = Ανοίξτε τη σελίδα λήψης για να το αποκτήσετε. Το Sanain δεν κατεβάζει ούτε εγκαθιστά τίποτα από μόνο του.
+update-open-page = Άνοιγμα σελίδας λήψης
+update-later = Αργότερα
+settings-check-updates = Έλεγχος για ενημερώσεις μία φορά την ημέρα
+settings-check-updates-detail = Ζητά από το github.com την τελευταία έκδοση. Δεν αποστέλλεται τίποτε άλλο.

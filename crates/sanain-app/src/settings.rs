@@ -36,6 +36,11 @@ pub struct Settings {
     /// UI language as a BCP 47 tag; `None` follows the system.
     pub locale: Option<String>,
     pub keymap: crate::keymap::Keymap,
+    /// Check GitHub for a newer release once a day (off by default: no
+    /// network use without the user's choice).
+    pub check_updates: bool,
+    /// Unix time of the last automatic update check.
+    pub last_update_check: u64,
 }
 
 impl Default for Settings {
@@ -48,6 +53,8 @@ impl Default for Settings {
             restore_session: true,
             locale: None,
             keymap: crate::keymap::Keymap::default(),
+            check_updates: false,
+            last_update_check: 0,
         }
     }
 }
@@ -89,6 +96,10 @@ impl Settings {
         if let Some(l) = &self.locale {
             out.push_str(&format!("locale={l}\n"));
         }
+        out.push_str(&format!(
+            "check_updates={}\nlast_update_check={}\n",
+            self.check_updates, self.last_update_check
+        ));
         out.push_str(&self.keymap.encode());
         out
     }
@@ -130,6 +141,8 @@ impl Settings {
                     }
                 }
                 "locale" if !v.is_empty() && v.len() <= 35 => s.locale = Some(v.to_owned()),
+                "check_updates" => s.check_updates = v.parse().unwrap_or(false),
+                "last_update_check" => s.last_update_check = v.parse().unwrap_or(0),
                 other => {
                     s.keymap.read_line(other, v);
                 }
@@ -184,6 +197,8 @@ mod tests {
                 k.read_line("key.file.save", "Mod+Alt+S");
                 k
             },
+            check_updates: true,
+            last_update_check: 1_764_000_000,
         };
         assert_eq!(Settings::decode(&s.encode()), Some(s.clone()));
         let hc = Settings {

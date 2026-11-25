@@ -220,3 +220,15 @@ folder-search-summary = { $count ->
     } dalam { $files ->
    *[other] { $files } berkas
     }
+app-check-updates = Periksa Pembaruan…
+update-checking = Memeriksa pembaruan…
+update-up-to-date = Sanain { $version } adalah versi terbaru.
+update-no-releases = Belum ada rilis Sanain yang diterbitkan.
+update-failed = Tidak dapat memeriksa pembaruan: { $reason }
+update-invalid = respons tak terduga
+update-available-title = Sanain { $version } tersedia
+update-available-body = Buka halaman unduhan untuk mendapatkannya. Sanain tidak mengunduh atau memasang apa pun dengan sendirinya.
+update-open-page = Buka Halaman Unduhan
+update-later = Nanti
+settings-check-updates = Periksa pembaruan sekali sehari
+settings-check-updates-detail = Menanyakan rilis terbaru ke github.com. Tidak ada data lain yang dikirim.

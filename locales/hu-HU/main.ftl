@@ -228,3 +228,15 @@ folder-search-summary = { $count ->
     [one] 1 fájlban
    *[other] { $files } fájlban
     }
+app-check-updates = Frissítések keresése…
+update-checking = Frissítések keresése…
+update-up-to-date = A Sanain { $version } a legújabb verzió.
+update-no-releases = A Sanainból még nem jelent meg kiadás.
+update-failed = Nem sikerült frissítéseket keresni: { $reason }
+update-invalid = váratlan válasz
+update-available-title = Elérhető a Sanain { $version }
+update-available-body = A letöltéshez nyissa meg a letöltési oldalt. A Sanain magától semmit sem tölt le és nem telepít.
+update-open-page = Letöltési oldal megnyitása
+update-later = Később
+settings-check-updates = Frissítések keresése naponta egyszer
+settings-check-updates-detail = A legújabb kiadást kérdezi le a github.com-tól. Semmi mást nem küld.

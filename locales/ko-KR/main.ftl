@@ -220,3 +220,15 @@ folder-search-summary = { $files ->
     } { $count ->
    *[other] 일치 항목 { $count }개
     }
+app-check-updates = 업데이트 확인…
+update-checking = 업데이트 확인 중…
+update-up-to-date = Sanain { $version }이(가) 최신 버전입니다.
+update-no-releases = 아직 게시된 Sanain 릴리스가 없습니다.
+update-failed = 업데이트를 확인할 수 없음: { $reason }
+update-invalid = 예기치 않은 응답
+update-available-title = Sanain { $version } 사용 가능
+update-available-body = 다운로드 페이지를 열어 받으세요. Sanain은 스스로 아무것도 다운로드하거나 설치하지 않습니다.
+update-open-page = 다운로드 페이지 열기
+update-later = 나중에
+settings-check-updates = 하루에 한 번 업데이트 확인
+settings-check-updates-detail = github.com에 최신 릴리스를 요청합니다. 그 외에는 아무것도 전송하지 않습니다.

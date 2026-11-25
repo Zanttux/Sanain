@@ -228,3 +228,15 @@ folder-search-summary = { $count ->
     [one] 1 dosyada
    *[other] { $files } dosyada
     }
+app-check-updates = Güncellemeleri Denetle…
+update-checking = Güncellemeler denetleniyor…
+update-up-to-date = Sanain { $version } en yeni sürümdür.
+update-no-releases = Henüz yayımlanmış bir Sanain sürümü yok.
+update-failed = Güncellemeler denetlenemedi: { $reason }
+update-invalid = beklenmeyen yanıt
+update-available-title = Sanain { $version } kullanılabilir
+update-available-body = Edinmek için indirme sayfasını açın. Sanain kendiliğinden hiçbir şey indirmez veya yüklemez.
+update-open-page = İndirme Sayfasını Aç
+update-later = Daha Sonra
+settings-check-updates = Güncellemeleri günde bir kez denetle
+settings-check-updates-detail = En son sürümü github.com'a sorar. Başka hiçbir şey gönderilmez.

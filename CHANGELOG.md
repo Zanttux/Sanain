@@ -5,6 +5,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Update check: Sanain > Check for Updates (File menu on Windows/Linux)
+  asks GitHub for the latest release and links to its download page.
+  Settings can turn on a daily check; it is off by default. Sanain never
+  downloads or installs updates by itself.
 - 24 more UI languages: Czech, Danish, Dutch, French, German, Greek,
   Hungarian, Indonesian, Italian, Japanese, Korean, Norwegian Bokmål,
   Polish, Portuguese (Brazil and Portugal), Romanian, Russian, Simplified
