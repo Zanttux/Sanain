@@ -143,6 +143,8 @@ pub struct Shell {
     settings_open: bool,
     history: Option<sanain_io::history::HistoryStore>,
     history_open: bool,
+    /// The last recorded macro.
+    macro_cmds: Vec<Command>,
     log: Option<crate::logview::LogView>,
     /// For work started outside a frame (e.g. opening a file).
     ctx: egui::Context,
@@ -234,6 +236,7 @@ impl Shell {
             settings_open: false,
             history: None,
             history_open: false,
+            macro_cmds: Vec::new(),
             log: None,
             ctx: egui::Context::default(),
             update: None,
@@ -1868,6 +1871,9 @@ impl Shell {
                 }
                 MenuAction::ClearHistory => self.history.is_some(),
                 MenuAction::GoToHeading => Self::is_markdown(self.editor()),
+                MenuAction::PlayMacro => {
+                    !self.macro_cmds.is_empty() && !self.editor().is_recording()
+                }
                 MenuAction::PinTab => !self.ws.active().pinned,
                 MenuAction::UnpinTab => self.ws.active().pinned,
                 _ => true,
@@ -2101,6 +2107,25 @@ impl Shell {
                 self.settings_open = true;
                 return;
             }
+            MenuAction::RecordMacro => {
+                if self.editor().is_recording() {
+                    self.macro_cmds = self.editor_mut().stop_recording();
+                    let n = self.macro_cmds.len() as i64;
+                    self.status = Some((self.t("macro-recorded", &[("count", n.into())]), false));
+                } else {
+                    self.editor_mut().start_recording();
+                    self.status = None;
+                }
+                return;
+            }
+            MenuAction::PlayMacro => {
+                let cmds = self.macro_cmds.clone();
+                self.editor_mut().play(&cmds);
+                let id = self.ws.active().id;
+                self.views.entry(id).or_default().reveal();
+                self.focus_active();
+                return;
+            }
             MenuAction::GoToLine => {
                 self.palette.open(crate::palette::Mode::GoToLine);
                 return;
@@ -2325,6 +2350,10 @@ impl Shell {
         let p = theme::palette(ui.ctx());
         let editor = self.editor();
         ui.horizontal(|ui| {
+            if editor.is_recording() {
+                ui.colored_label(p.error, "●");
+                ui.colored_label(p.text, self.t("macro-recording", &[]));
+            }
             if let Some((msg, is_error)) = &self.status {
                 ui.colored_label(if *is_error { p.error } else { p.muted }, msg);
             }

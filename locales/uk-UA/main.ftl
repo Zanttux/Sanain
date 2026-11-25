@@ -331,3 +331,12 @@ format-xml = XML
 format-yaml = YAML
 tools-tree-error = Некоректний { $format } у рядку { $line }, стовпці { $column }: { $reason }
 edit-select-next-occurrence = Виділити наступне входження
+tools-record-macro = Почати або зупинити запис макросу
+tools-play-macro = Відтворити макрос
+macro-recording = Записується макрос
+macro-recorded = { $count ->
+    [one] Макрос записано: { $count } крок.
+    [few] Макрос записано: { $count } кроки.
+    [many] Макрос записано: { $count } кроків.
+   *[other] Макрос записано: { $count } кроку.
+    }

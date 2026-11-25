@@ -5,6 +5,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Macros: Tools > Start or Stop Macro Recording (Cmd/Ctrl+Shift+R)
+  records typing, deleting, cursor keys and editing commands; Play Macro
+  (Cmd/Ctrl+Shift+M) replays them at the current cursor, and each run
+  undoes in one step.
 - Select Next Occurrence (Cmd/Ctrl+D): selects the word at the caret,
   then adds the next occurrence of the selection as another cursor.
 - With word wrap on, Home and End (Cmd+Left/Right on macOS) go to the

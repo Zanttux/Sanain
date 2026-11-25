@@ -289,3 +289,9 @@ format-xml = XML
 format-yaml = YAML
 tools-tree-error = 잘못된 { $format }, { $line }줄 { $column }열: { $reason }
 edit-select-next-occurrence = 다음 항목 선택
+tools-record-macro = 매크로 기록 시작/중지
+tools-play-macro = 매크로 재생
+macro-recording = 매크로 기록 중
+macro-recorded = { $count ->
+   *[other] 매크로 기록됨: { $count }단계.
+    }

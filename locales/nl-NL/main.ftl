@@ -303,3 +303,10 @@ format-xml = XML
 format-yaml = YAML
 tools-tree-error = Ongeldige { $format } op regel { $line }, kolom { $column }: { $reason }
 edit-select-next-occurrence = Selecteer volgende overeenkomst
+tools-record-macro = Macro-opname starten of stoppen
+tools-play-macro = Macro afspelen
+macro-recording = Macro wordt opgenomen
+macro-recorded = { $count ->
+    [one] Macro opgenomen: 1 stap.
+   *[other] Macro opgenomen: { $count } stappen.
+    }

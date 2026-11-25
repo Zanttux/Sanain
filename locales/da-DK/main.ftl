@@ -303,3 +303,10 @@ format-xml = XML
 format-yaml = YAML
 tools-tree-error = Ugyldig { $format } på linje { $line }, kolonne { $column }: { $reason }
 edit-select-next-occurrence = Marker næste forekomst
+tools-record-macro = Start eller stop makrooptagelse
+tools-play-macro = Afspil makro
+macro-recording = Optager makro
+macro-recorded = { $count ->
+    [one] Makro optaget: 1 trin.
+   *[other] Makro optaget: { $count } trin.
+    }

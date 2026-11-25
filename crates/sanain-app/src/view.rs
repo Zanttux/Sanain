@@ -333,6 +333,8 @@ impl EditorView {
                             || (m.mac_cmd && matches!(key, Key::ArrowLeft | Key::ArrowRight)))
                         && !m.alt
                         && self.preedit.is_empty()
+                        // Macros record line-based moves, which replay alike.
+                        && !editor.is_recording()
                     {
                         let rows = self.rows(editor, tab, wrap_cols);
                         let Rows::Wrap(map) = &rows else { continue };
@@ -371,6 +373,7 @@ impl EditorView {
                         && !m.command
                         && !m.ctrl
                         && self.preedit.is_empty()
+                        && !editor.is_recording()
                     {
                         let rows = self.rows(editor, tab, wrap_cols);
                         let down = *key == Key::ArrowDown;

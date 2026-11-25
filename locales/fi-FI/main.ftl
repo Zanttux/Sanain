@@ -303,3 +303,10 @@ format-xml = XML
 format-yaml = YAML
 tools-tree-error = Virheellinen { $format } rivillä { $line }, sarakkeessa { $column }: { $reason }
 edit-select-next-occurrence = Valitse seuraava esiintymä
+tools-record-macro = Aloita tai lopeta makron tallennus
+tools-play-macro = Toista makro
+macro-recording = Makroa tallennetaan
+macro-recorded = { $count ->
+    [one] Makro tallennettu: 1 vaihe.
+   *[other] Makro tallennettu: { $count } vaihetta.
+    }

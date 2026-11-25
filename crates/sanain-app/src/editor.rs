@@ -104,6 +104,8 @@ pub struct Editor {
     newline: &'static str,
     /// Goal columns kept across consecutive Up/Down moves.
     goal: Option<Vec<usize>>,
+    /// Commands recorded for a macro, while recording.
+    macro_rec: Option<Vec<Command>>,
     /// Folded regions, as the char index where each fold's start line
     /// begins. Mapped through edits so folds stay on their lines.
     folds: Vec<usize>,
@@ -128,6 +130,7 @@ impl Editor {
             untitled_encoding: TextEncoding::Utf8,
             newline: platform_newline(),
             goal: None,
+            macro_rec: None,
             folds: Vec::new(),
             fold_tab: 4,
             fold_cache: None,
@@ -170,6 +173,7 @@ impl Editor {
         Ok(Self {
             newline: preferred_newline(&loaded.text),
             goal: None,
+            macro_rec: None,
             folds: Vec::new(),
             fold_tab: 4,
             fold_cache: None,
@@ -238,6 +242,11 @@ impl Editor {
 
     /// Run a command. Returns text for the clipboard (Cut) if any.
     pub fn execute(&mut self, cmd: Command) -> Option<String> {
+        if let Some(rec) = &mut self.macro_rec
+            && cmd.is_recordable()
+        {
+            rec.push(cmd.clone());
+        }
         let goal = self.goal.take();
         let rope = self.doc.rope();
         let (tx, next): (Option<Transaction>, Selections) = match cmd {
@@ -497,6 +506,32 @@ impl Editor {
         self.execute(Command::PlaceCaret { at, extend: false });
     }
 
+    /// Start recording editing commands for a macro.
+    pub fn start_recording(&mut self) {
+        self.macro_rec = Some(Vec::new());
+    }
+
+    pub fn is_recording(&self) -> bool {
+        self.macro_rec.is_some()
+    }
+
+    /// Stop recording and return the recorded commands.
+    pub fn stop_recording(&mut self) -> Vec<Command> {
+        self.macro_rec.take().unwrap_or_default()
+    }
+
+    /// Run `commands` at the current selections; the edits undo as one
+    /// step.
+    pub fn play(&mut self, commands: &[Command]) {
+        let mark = self.doc.undo_mark();
+        let rec = self.macro_rec.take();
+        for c in commands {
+            self.execute(c.clone());
+        }
+        self.macro_rec = rec;
+        self.doc.merge_undo_since(mark);
+    }
+
     /// Select `range` as the only selection (e.g. a search match).
     pub fn select(&mut self, range: std::ops::Range<usize>) {
         let len = self.doc.len_chars();
@@ -726,6 +761,22 @@ pub fn parse_line_target(s: &str) -> Option<(usize, usize)> {
     Some((line.max(1) - 1, col.max(1) - 1))
 }
 
+impl Command {
+    /// Whether a macro records this command. Pointer placement, undo and
+    /// redo are left out: absolute positions and history steps do not
+    /// replay meaningfully.
+    pub fn is_recordable(&self) -> bool {
+        !matches!(
+            self,
+            Command::PlaceCaret { .. }
+                | Command::AddCaret { .. }
+                | Command::SetSelections(_)
+                | Command::Undo
+                | Command::Redo
+        )
+    }
+}
+
 fn snap(rope: &ropey::Rope, at: usize) -> usize {
     let at = at.min(rope.len_chars());
     if sanain_core::grapheme::is_boundary(rope, at) {
@@ -754,6 +805,44 @@ fn preferred_newline(text: &str) -> &'static str {
 mod tests {
     use super::*;
     use std::fs;
+
+    #[test]
+    fn macro_records_and_replays_as_one_undo() {
+        let mut ed = Editor::new();
+        ed.execute(Command::Insert("alpha\nbeta\ngamma\n".into()));
+        ed.execute(Command::PlaceCaret {
+            at: 0,
+            extend: false,
+        });
+        ed.start_recording();
+        ed.execute(Command::Insert("- ".into()));
+        ed.execute(Command::LineEnd { extend: false });
+        ed.execute(Command::Insert(";".into()));
+        ed.execute(Command::Down { extend: false });
+        ed.execute(Command::LineStart { extend: false });
+        ed.execute(Command::PlaceCaret {
+            at: 0,
+            extend: false,
+        }); // not recorded
+        let m = ed.stop_recording();
+        assert_eq!(m.len(), 5);
+        assert!(!ed.is_recording());
+        ed.execute(Command::Undo);
+        ed.execute(Command::Undo);
+        ed.execute(Command::PlaceCaret {
+            at: 6,
+            extend: false,
+        });
+        ed.play(&m);
+        ed.play(&m);
+        assert_eq!(ed.document().text(), "alpha\n- beta;\n- gamma;\n");
+        ed.execute(Command::Undo);
+        assert_eq!(
+            ed.document().text(),
+            "alpha\n- beta;\ngamma\n",
+            "one run, one undo"
+        );
+    }
 
     #[test]
     fn select_next_occurrence() {

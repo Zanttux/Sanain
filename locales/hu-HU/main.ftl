@@ -303,3 +303,10 @@ format-xml = XML
 format-yaml = YAML
 tools-tree-error = Érvénytelen { $format } a(z) { $line }. sor { $column }. oszlopában: { $reason }
 edit-select-next-occurrence = Következő előfordulás kijelölése
+tools-record-macro = Makrórögzítés indítása vagy leállítása
+tools-play-macro = Makró lejátszása
+macro-recording = Makró rögzítése
+macro-recorded = { $count ->
+    [one] Makró rögzítve: 1 lépés.
+   *[other] Makró rögzítve: { $count } lépés.
+    }

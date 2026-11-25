@@ -69,10 +69,12 @@ pub enum MenuAction {
     GoToLine,
     GoToHeading,
     SelectNextOccurrence,
+    RecordMacro,
+    PlayMacro,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 62] = [
+    pub const ALL: [MenuAction; 64] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -135,6 +137,8 @@ impl MenuAction {
         Self::GoToLine,
         Self::GoToHeading,
         Self::SelectNextOccurrence,
+        Self::RecordMacro,
+        Self::PlayMacro,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -202,6 +206,8 @@ impl MenuAction {
             Self::GoToLine => "edit.go-to-line",
             Self::GoToHeading => "edit.go-to-heading",
             Self::SelectNextOccurrence => "edit.select-next-occurrence",
+            Self::RecordMacro => "tools.record-macro",
+            Self::PlayMacro => "tools.play-macro",
         }
     }
 
@@ -275,6 +281,8 @@ impl MenuAction {
             Self::GoToLine => "edit-go-to-line",
             Self::GoToHeading => "edit-go-to-heading",
             Self::SelectNextOccurrence => "edit-select-next-occurrence",
+            Self::RecordMacro => "tools-record-macro",
+            Self::PlayMacro => "tools-play-macro",
         }
     }
 
@@ -323,6 +331,8 @@ impl MenuAction {
             Self::GoToLine => (cmd, Key::L),
             Self::GoToHeading => (cmd_shift, Key::O),
             Self::SelectNextOccurrence => (cmd, Key::D),
+            Self::RecordMacro => (cmd_shift, Key::R),
+            Self::PlayMacro => (cmd_shift, Key::M),
             Self::MoveLineUp => (Modifiers::ALT, Key::ArrowUp),
             Self::MoveLineDown => (Modifiers::ALT, Key::ArrowDown),
             Self::CloseTab => (cmd, Key::W),
@@ -441,6 +451,9 @@ const WINDOW_ITEMS: &[Option<MenuAction>] = &[
 ];
 const TOOLS_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::CompareTabs),
+    None,
+    Some(MenuAction::RecordMacro),
+    Some(MenuAction::PlayMacro),
     None,
     Some(MenuAction::JsonValidate),
     Some(MenuAction::JsonFormat),
@@ -661,6 +674,8 @@ mod native {
             MenuAction::GoToLine => (cmd, ch("l")),
             MenuAction::GoToHeading => (cmd_shift, ch("o")),
             MenuAction::SelectNextOccurrence => (cmd, ch("d")),
+            MenuAction::RecordMacro => (cmd_shift, ch("r")),
+            MenuAction::PlayMacro => (cmd_shift, ch("m")),
             MenuAction::AddCursorAbove => (cmd | Modifiers::ALT, Key::Named(NamedKey::ArrowUp)),
             MenuAction::AddCursorBelow => (cmd | Modifiers::ALT, Key::Named(NamedKey::ArrowDown)),
             MenuAction::MoveLineUp => (Modifiers::ALT, Key::Named(NamedKey::ArrowUp)),

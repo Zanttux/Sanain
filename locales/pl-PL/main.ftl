@@ -331,3 +331,12 @@ format-xml = XML
 format-yaml = YAML
 tools-tree-error = Niepoprawny { $format } w wierszu { $line }, kolumnie { $column }: { $reason }
 edit-select-next-occurrence = Zaznacz następne wystąpienie
+tools-record-macro = Rozpocznij lub zatrzymaj nagrywanie makra
+tools-play-macro = Odtwórz makro
+macro-recording = Nagrywanie makra
+macro-recorded = { $count ->
+    [one] Nagrano makro: 1 krok.
+    [few] Nagrano makro: { $count } kroki.
+    [many] Nagrano makro: { $count } kroków.
+   *[other] Nagrano makro: { $count } kroku.
+    }

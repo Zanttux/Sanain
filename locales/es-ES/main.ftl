@@ -303,3 +303,10 @@ format-xml = XML
 format-yaml = YAML
 tools-tree-error = { $format } no válido en la línea { $line }, columna { $column }: { $reason }
 edit-select-next-occurrence = Seleccionar siguiente coincidencia
+tools-record-macro = Iniciar o detener la grabación de macro
+tools-play-macro = Reproducir macro
+macro-recording = Grabando macro
+macro-recorded = { $count ->
+    [one] Macro grabada: 1 paso.
+   *[other] Macro grabada: { $count } pasos.
+    }
