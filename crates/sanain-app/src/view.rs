@@ -24,6 +24,22 @@ pub struct ViewOptions {
     pub wrap: bool,
 }
 
+/// Unwrapped lines longer than this (chars) are laid out only around the
+/// visible columns: a multi-megabyte line would otherwise produce more
+/// vertices than the GPU accepts.
+const LONG_LINE: usize = 4096;
+
+/// A laid-out display row: chars `from..to` of the document, drawn
+/// `x` points right of the text origin (non-zero only for clipped long
+/// lines).
+struct RowLayout {
+    galley: Arc<Galley>,
+    from: usize,
+    to: usize,
+    x: f32,
+    clipped: bool,
+}
+
 /// Larger documents are not wrapped (wrapping is recomputed per edit).
 const WRAP_LIMIT_CHARS: usize = 1_000_000;
 
@@ -220,18 +236,37 @@ impl EditorView {
                 let job = line_job(text, start, syntax, &font, palette);
                 ui.fonts_mut(|f| f.layout_job(job))
             };
-            // One display row: (galley, char offset of its first char).
-            let layout_row = |ui: &Ui, seg: Seg, editor: &Editor| -> (Arc<Galley>, usize) {
+            // Columns in view, for clipping very long unwrapped lines.
+            let view_col0 = (((viewport.min.x - gutter_w) / char_w).floor().max(0.0) as usize)
+                .saturating_sub(8);
+            let view_cols = (viewport.width() / char_w).ceil() as usize + 16;
+            // One display row, clipped to the visible columns when the
+            // (unwrapped) line is very long.
+            let layout_row = |ui: &Ui, seg: Seg, editor: &Editor| -> RowLayout {
                 let rope = editor.document().rope();
                 let start = rope.line_to_char(seg.line);
                 let content_end = line_content_end(rope, seg.line);
-                let from = (start + seg.start).min(content_end);
-                let to = seg
+                let mut from = (start + seg.start).min(content_end);
+                let mut to = seg
                     .end
                     .map_or(content_end, |e| (start + e).min(content_end));
+                let clipped = seg.end.is_none() && to - from > LONG_LINE;
+                let mut x = 0.0;
+                if clipped {
+                    let c0 = view_col0.min(to - start);
+                    from = start + c0;
+                    to = (from + view_cols).min(content_end);
+                    x = c0 as f32 * char_w;
+                }
                 let text = rope.slice(from..to).to_string();
                 let job = line_job(text, from, syntax, &font, palette);
-                (ui.fonts_mut(|f| f.layout_job(job)), from)
+                RowLayout {
+                    galley: ui.fonts_mut(|f| f.layout_job(job)),
+                    from,
+                    to,
+                    x,
+                    clipped,
+                }
             };
             let row_at = |pos: Pos2, rows: &Rows| -> usize {
                 (((pos.y - origin.y) / row_h).floor().max(0.0) as usize)
@@ -239,8 +274,13 @@ impl EditorView {
             };
             let hit_row = |ui: &Ui, row: usize, x: f32, rows: &Rows, editor: &Editor| -> usize {
                 let seg = rows.at(row);
-                let (galley, from) = layout_row(ui, seg, editor);
-                let c = galley.cursor_from_pos(vec2(x - text_x, row_h / 2.0));
+                let RowLayout {
+                    galley,
+                    from,
+                    x: dx,
+                    ..
+                } = layout_row(ui, seg, editor);
+                let c = galley.cursor_from_pos(vec2(x - text_x - dx, row_h / 2.0));
                 let at = from + c.index.0;
                 // The end of a wrapped (non-last) row is the next row's
                 // start; stay on this row instead.
@@ -393,9 +433,11 @@ impl EditorView {
                                         let (line, col) =
                                             sanain_core::selection::line_col(rope, s.head);
                                         let r = rows.row_of(line, col);
-                                        let (g, from) = layout_row(ui, rows.at(r), editor);
-                                        let c = s.head.saturating_sub(from);
-                                        text_x + g.pos_from_cursor(CCursor::new(c)).min.x
+                                        let l = layout_row(ui, rows.at(r), editor);
+                                        let c = s.head.saturating_sub(l.from);
+                                        text_x
+                                            + l.x
+                                            + l.galley.pos_from_cursor(CCursor::new(c)).min.x
                                     })
                                     .collect()
                             });
@@ -446,20 +488,35 @@ impl EditorView {
                 let seg = rows.at(row);
                 let line = seg.line;
                 let y = origin.y + row as f32 * row_h;
-                let (galley, start) = layout_row(ui, seg, editor);
-                self.max_width = self.max_width.max(galley.size().x);
+                let RowLayout {
+                    galley,
+                    from: start,
+                    to: clip_end,
+                    x: dx,
+                    clipped,
+                } = layout_row(ui, seg, editor);
                 let line_start = rope.line_to_char(line);
                 let content_end = line_content_end(rope, line);
-                let seg_end = seg
-                    .end
-                    .map_or(content_end, |e| (line_start + e).min(content_end));
+                self.max_width = self.max_width.max(if clipped {
+                    (content_end - line_start) as f32 * char_w
+                } else {
+                    galley.size().x
+                });
+                let seg_end = if clipped {
+                    clip_end
+                } else {
+                    seg.end
+                        .map_or(content_end, |e| (line_start + e).min(content_end))
+                };
+                // Where this row's text starts (shifted for clipped lines).
+                let gx = text_x + dx;
                 let line_end = line_start + rope.line(line).len_chars();
                 // Where this row's chars end for selection purposes: a
                 // wrapped row ends where the next begins.
                 let row_end = if seg.last { line_end } else { seg_end };
                 let x_of = |idx: usize| -> f32 {
                     let col = idx.clamp(start, seg_end) - start;
-                    text_x + galley.pos_from_cursor(CCursor::new(col)).min.x
+                    gx + galley.pos_from_cursor(CCursor::new(col)).min.x
                 };
 
                 let first_hit = highlights.partition_point(|h| h.end <= start);
@@ -518,9 +575,9 @@ impl EditorView {
                         palette.muted,
                     );
                 }
-                painter.galley(pos2(text_x, y), galley.clone(), palette.text);
+                painter.galley(pos2(gx, y), galley.clone(), palette.text);
                 if folded && seg.last {
-                    let x = text_x + galley.size().x + char_w;
+                    let x = gx + galley.size().x + char_w;
                     let r = Rect::from_min_size(pos2(x, y + 2.0), vec2(char_w * 3.0, row_h - 4.0));
                     painter.rect_filled(r, 3.0, palette.surface);
                     painter.text(
@@ -535,7 +592,10 @@ impl EditorView {
                 for s in &sels {
                     // A caret at a wrap point shows at the next row's start.
                     let on_row = s.head >= start
-                        && (s.head < seg_end || (seg.last && s.head <= content_end));
+                        && (s.head < seg_end
+                            || (seg.last
+                                && s.head <= content_end
+                                && (!clipped || s.head == seg_end)));
                     if !on_row {
                         continue;
                     }
@@ -567,9 +627,14 @@ impl EditorView {
             let caret_rect = caret_rect.unwrap_or_else(|| {
                 let (line, col) = sanain_core::selection::line_col(rope, primary_head);
                 let row = rows.row_of(line, col);
-                let (galley, from) = layout_row(ui, rows.at(row), editor);
-                let c = primary_head.saturating_sub(from);
-                let x = text_x + galley.pos_from_cursor(CCursor::new(c)).min.x;
+                let l = layout_row(ui, rows.at(row), editor);
+                let x = if (l.from..=l.to).contains(&primary_head) {
+                    let c = primary_head - l.from;
+                    text_x + l.x + l.galley.pos_from_cursor(CCursor::new(c)).min.x
+                } else {
+                    // Outside a clipped window: monospace estimate.
+                    text_x + col as f32 * char_w
+                };
                 Rect::from_min_size(pos2(x, origin.y + row as f32 * row_h), vec2(2.0, row_h))
             });
             if moved_by_keyboard || std::mem::take(&mut self.reveal_requested) {
@@ -591,9 +656,22 @@ impl EditorView {
             if response.has_focus() {
                 let sel = editor.selections().primary();
                 let (line, col) = sanain_core::selection::line_col(rope, sel.head);
-                let start = rope.line_to_char(line);
-                let end = line_content_end(rope, line);
-                let galley = layout(ui, line, editor);
+                let line_start = rope.line_to_char(line);
+                let line_end = line_content_end(rope, line);
+                // Very long lines: expose a window around the caret.
+                let (start, end) = if line_end - line_start > LONG_LINE {
+                    let a = line_start + col.saturating_sub(LONG_LINE / 2);
+                    (a, (a + LONG_LINE).min(line_end))
+                } else {
+                    (line_start, line_end)
+                };
+                let galley = if (start, end) == (line_start, line_end) {
+                    layout(ui, line, editor)
+                } else {
+                    let text = rope.slice(start..end).to_string();
+                    ui.fonts_mut(|f| f.layout_job(line_job(text, start, syntax, &font, palette)))
+                };
+                let col = sel.head.clamp(start, end) - start;
                 let head = CCursor::new(col.min(end - start));
                 let anchor = if (start..=end).contains(&sel.anchor) {
                     CCursor::new(sel.anchor - start)
