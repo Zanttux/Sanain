@@ -13,13 +13,18 @@ Fast by design. Powerful when needed. Simple by default.
 
 ## What works today
 
-- **Editing:** tabs, multiple cursors, word and line operations, undo/redo,
-  find and replace with regular expressions, code folding, command palette
+- **Editing:** tabs (drag to reorder, pin), multiple cursors (Option/Alt+click,
+  Option/Alt+drag for a column selection, Add Cursor Above/Below, Select
+  Next Occurrence), word and line operations, undo/redo, word wrap, code
+  folding, Go to Line and Go to Heading, command palette
   (Cmd/Ctrl+Shift+P).
+- **Find:** find and replace with regular expressions in the current
+  file, and search across a folder.
 - **Your files stay intact:** unchanged files save byte for byte, line
   endings and encodings are preserved, saves are atomic, and Sanain refuses
   to overwrite a file another program changed. Unsaved text survives a
-  crash and comes back on the next launch.
+  crash and comes back on the next launch. Local history keeps earlier
+  saved versions on your computer so you can restore them.
 - **Encodings:** UTF-8 and UTF-16, plus legacy encodings such as
   Windows-1252, ISO-8859-15 and Shift_JIS by explicit choice, only when
   they reproduce the file exactly.
@@ -27,11 +32,22 @@ Fast by design. Powerful when needed. Simple by default.
   images and safe links. Nothing in a document runs or loads from the
   network.
 - **Data files:** syntax highlighting for 8 languages, JSON
-  validate/format/minify that keeps your numbers and keys as written, a CSV
-  grid and JSON tree, side-by-side comparison of two files, and text tools
-  (sort, deduplicate, case, line endings).
+  validate/format/minify that keeps your numbers and keys as written,
+  read-only trees for JSON, XML and YAML (entities and aliases are never
+  expanded), a CSV grid, side-by-side comparison of two files, and text
+  tools (sort, deduplicate, case, line endings).
+- **Large files and logs:** a read-only log viewer for files of any size,
+  with filtering and follow mode; files of 256 MB or more open there
+  automatically.
 - **Comfort:** light, dark and high-contrast themes, zoom, session restore,
-  native macOS menus, English and Finnish UI.
+  configurable shortcuts with a Notepad++ preset, native macOS menus.
+- **Languages:** the interface is available in 26 languages. English is
+  the reference; Finnish is a draft; the other 24 are machine
+  translations awaiting review by native speakers. Corrections are
+  welcome (see [docs/LOCALIZATION.md](docs/LOCALIZATION.md)).
+- **Updates:** Check for Updates asks GitHub whether a newer release
+  exists and links to it. A daily check can be turned on in Settings; it
+  is off by default. Sanain never downloads or installs anything itself.
 
 | Markdown split view | Find and replace |
 |---|---|
