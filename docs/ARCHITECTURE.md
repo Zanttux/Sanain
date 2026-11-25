@@ -1,10 +1,14 @@
 # Architecture
-## Candidate stack (verify current APIs, licenses, platform support)
-Rust stable, Cargo workspace; GPUI candidate, Iced/egui alternatives. Ropey or equivalent rope buffer; Tree-sitter incremental parsing; Comrak Markdown AST; encoding_rs plus explicit UTF-16 handling; regex and optional bounded advanced engine; similar diff; notify watcher; serde/TOML settings; SQLite or atomic journal for recovery. Avoid redundant text shaping stack if GUI supplies it. No dependency is approved merely by listing it.
+## Stack
+Rust stable, Cargo workspace. GUI: egui/eframe recommended, GPUI alternative (docs/adr/0001-gui-toolkit.md). Ropey or equivalent rope buffer; Tree-sitter incremental parsing; Comrak Markdown AST; encoding_rs plus explicit UTF-16 handling; regex and optional bounded advanced engine; similar diff; notify watcher; serde/TOML settings; SQLite or atomic journal for recovery. Avoid redundant text shaping stack if GUI supplies it. No dependency is approved merely by listing it.
 
-## Proposed workspace
+## Workspace
+Implemented: `sanain-core`, `sanain-io`, `sanain-i18n` (see
+docs/adr/0002-workspace-and-first-slice.md). The rest are planned and are
+added when a slice needs them.
 - sanain-core: document IDs, rope, byte/character/grapheme mappings, transactions, undo, selections; no GUI/network.
 - sanain-io: encoding, newline preservation, file identity, atomic save, watcher, recovery.
+- sanain-i18n: Fluent resources, locale negotiation, fallback.
 - sanain-language: syntax grammars, incremental parsing, cancellation.
 - sanain-tools: pure transformations, diff, CSV/JSON/XML/YAML adapters.
 - sanain-markdown: AST, preview model, source mapping, safe links.

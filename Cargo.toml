@@ -1,0 +1,33 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.0.1"
+edition = "2024"
+rust-version = "1.88"
+publish = false
+# License pending owner decision (docs/LICENSE_DECISION.md). Do not add a
+# `license` field until a LICENSE file is installed.
+
+[workspace.dependencies]
+ropey = "1.6.1"
+tempfile = "3"
+thiserror = "2"
+fluent-bundle = "0.16"
+unic-langid = "0.9.6"
+proptest = "1"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+dbg_macro = "warn"
+todo = "warn"
+unwrap_used = "warn"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

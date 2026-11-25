@@ -6,8 +6,8 @@
 | D03 | Confirmed | First-class Markdown |
 | D04 | Confirmed | Sanain display name; sanain technical slug and CLI; legal clearance pending |
 | D05 | Proposed | Windows first validation; macOS/Linux before cross-platform stable claim |
-| D06 | Proposed | MPL-2.0; compare MIT/Apache-2.0 |
-| D07 | Proposed | GPUI spike; Iced and egui fallback |
+| D06 | Proposed | MPL-2.0 recommended (docs/LICENSE_DECISION.md); owner approval pending |
+| D07 | Proposed | egui/eframe recommended after spike (docs/adr/0001-gui-toolkit.md); owner review pending |
 | D08 | Confirmed | Claude primary operational developer and maintainer; human-led; welcome community contributions and disclose provenance |
 | D09 | Proposed | Optional identical $9.99 supporter store distribution |
 | D10 | Proposed | No runtime AI initially; optional local/BYOK later |
@@ -16,5 +16,7 @@
 | D13 | Confirmed | No paid feature gating |
 | D14 | Confirmed | Product only; no separate research project, reports or dashboard |
 | D15 | Proposed | Graphite/mint brand, slogans, en-US and fi-FI initial locales |
+| D16 | Confirmed | Start at 0.0.1; Semantic Versioning; no 1.0.0 before M7 gates (docs/RELEASE.md) |
+| D17 | Accepted | Workspace layout and first slice (docs/adr/0002-workspace-and-first-slice.md) |
 
-Record ADR date, context, alternatives, evidence, consequences and reversal plan. Claude may decide routine implementation details; reserved decisions follow AUTONOMY. Proposed license and external authority require explicit owner approval.
+ADRs live in docs/adr/. Record ADR date, context, alternatives, evidence, consequences and reversal plan. Claude may decide routine implementation details; reserved decisions follow AUTONOMY. Proposed license and external authority require explicit owner approval.

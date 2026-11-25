@@ -1,2 +1,20 @@
-# Contributing (draft)
-Human and AI-assisted contributions welcome subject to same quality gates. Open an issue for large changes, link requirement IDs, include tests and disclose AI assistance and third-party provenance. No secrets or real user documents. Follow formatting, linting and test instructions in CLAUDE.md. Maintainer review required; no automatic merges. License and contribution terms must be approved before accepting external contributions. Be respectful; critique code, not authors.
+# Contributing
+
+Contributions from people and AI-assisted contributors go through the same
+review. The project license is not chosen yet; external contributions can
+be accepted only after it is (docs/LICENSE_DECISION.md).
+
+1. Open an issue for anything larger than a small fix.
+2. Use synthetic test files. Never include secrets or private documents.
+3. Add tests. Before opening a PR, run:
+
+       cargo fmt --all
+       cargo clippy --workspace --all-targets --locked -- -D warnings
+       cargo test --workspace --locked
+
+4. Put every user-visible string in `locales/en-US/main.ftl` and use its
+   message ID. Do not concatenate translated fragments.
+5. Disclose AI assistance and third-party code in the PR description.
+
+Maintainer review is required; there are no automatic merges. Critique code,
+not people.

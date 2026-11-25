@@ -1,0 +1,18 @@
+[package]
+name = "sanain-io"
+description = "Byte-exact file loading and atomic saving for Sanain."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+tempfile.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+sanain-core = { path = "../sanain-core" }
+proptest.workspace = true
+
+[lints]
+workspace = true
