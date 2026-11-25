@@ -1,0 +1,246 @@
+# Machine translation by Claude (AI); review by a native speaker required before release.
+app-name = Sanain
+menu-file = Файл
+file-open = Відкрити…
+file-save = Зберегти
+status-tabs = { $count ->
+    [one] { $count } вкладка
+    [few] { $count } вкладки
+    [many] { $count } вкладок
+   *[other] { $count } вкладки
+    }
+error-open = Не вдалося відкрити { $name }.
+menu-edit = Редагування
+file-new = Нова вкладка
+file-save-as = Зберегти як…
+edit-undo = Скасувати
+edit-redo = Повторити
+edit-select-all = Виділити все
+untitled = Без назви
+window-title = { $dirty ->
+    [yes] ● { $name } — Sanain
+   *[no] { $name } — Sanain
+    }
+status-position = Рядок { $line }, стовпець { $column }
+status-selections = { $count ->
+    [one] { $count } виділення
+    [few] { $count } виділення
+    [many] { $count } виділень
+   *[other] { $count } виділення
+    }
+status-saved = Збережено: { $name }
+encoding-utf8 = UTF-8
+encoding-utf8-bom = UTF-8 з BOM
+encoding-utf16le = UTF-16 LE
+encoding-utf16be = UTF-16 BE
+line-ending-lf = LF
+line-ending-crlf = CRLF
+line-ending-cr = CR
+line-ending-mixed = Змішані закінчення рядків
+editor-accessible-name = Текстовий редактор
+button-save = Зберегти
+button-dont-save = Не зберігати
+button-cancel = Скасувати
+button-ok = OK
+button-overwrite = Перезаписати
+button-save-as = Зберегти як…
+dialog-unsaved-title = Зберегти зміни в { $name }?
+dialog-unsaved-body = Якщо не зберегти зміни, їх буде втрачено.
+dialog-conflict-title = Файл { $name } змінено на диску
+dialog-conflict-body = Інша програма змінила цей файл після того, як ви його відкрили. Перезапис замінить ці зміни.
+dialog-readonly-title = Файл { $name } доступний лише для читання
+dialog-readonly-body = Збережіть копію під іншою назвою.
+error-open-encoding = { $name } не є текстом у UTF-8 чи UTF-16. Файл не відкрито, тому його вміст не змінено. Щоб вибрати кодування, скористайтеся Файл > Відкрити знову з кодуванням.
+error-save = Не вдалося зберегти { $name }: { $reason }
+menu-window = Вікно
+edit-cut = Вирізати
+edit-copy = Копіювати
+edit-paste = Вставити
+app-quit = Вийти з Sanain
+app-hide = Сховати Sanain
+app-hide-others = Сховати інші
+app-show-all = Показати все
+window-minimize = Згорнути
+window-zoom = Масштабувати
+status-recovered = Відновлено незбережені зміни з попереднього сеансу
+status-recovery-failed = Не вдалося зберегти резервну копію: { $reason }
+edit-duplicate-line = Дублювати рядок
+edit-delete-line = Видалити рядок
+edit-move-line-up = Перемістити рядок вгору
+edit-move-line-down = Перемістити рядок вниз
+file-close-tab = Закрити вкладку
+file-reopen-tab = Відкрити закриту вкладку
+window-next-tab = Наступна вкладка
+window-prev-tab = Попередня вкладка
+tab-close = Закрити вкладку
+edit-find = Знайти…
+edit-find-next = Знайти наступне
+edit-find-prev = Знайти попереднє
+edit-replace = Замінити…
+find-placeholder = Знайти
+replace-placeholder = Замінити на
+find-match-case = З урахуванням регістру
+find-whole-word = Ціле слово
+find-regex = Регулярний вираз
+find-no-results = Немає результатів
+find-count = { $total ->
+    [one] { $total } збіг
+    [few] { $total } збіги
+    [many] { $total } збігів
+   *[other] { $total } збігу
+    }
+find-count-current = { $current } з { $total }
+find-prev = Попередній збіг (Shift+Enter)
+find-next = Наступний збіг (Enter)
+find-close = Закрити (Esc)
+replace-one = Замінити
+replace-all = Замінити все
+status-replaced = { $count ->
+    [one] Замінено { $count } збіг
+    [few] Замінено { $count } збіги
+    [many] Замінено { $count } збігів
+   *[other] Замінено { $count } збігу
+    }
+language-plain = Звичайний текст
+menu-view = Вигляд
+app-settings = Налаштування…
+view-zoom-in = Збільшити
+view-zoom-out = Зменшити
+view-zoom-reset = Фактичний розмір
+settings-title = Налаштування
+settings-font-size = Розмір шрифту
+settings-tab-width = Ширина табуляції
+settings-insert-spaces = Вставляти пробіли при натисканні Tab
+settings-theme = Оформлення
+settings-theme-system = Як у системі
+settings-theme-light = Світле
+settings-theme-dark = Темне
+settings-restore-session = Відкривати файли з попереднього сеансу
+settings-language = Мова
+settings-language-system = Як у системі
+settings-language-note = Зміна мови набуде чинності після перезапуску Sanain.
+settings-save-failed = Не вдалося зберегти налаштування: { $reason }
+view-command-palette = Палітра команд…
+palette-placeholder = Введіть команду
+view-markdown-source = Вихідний текст Markdown
+view-markdown-split = Вихідний текст і перегляд Markdown
+view-markdown-preview = Перегляд Markdown
+preview-too-large = Документ завеликий для попереднього перегляду.
+preview-mermaid-unsupported = Діаграми Mermaid поки не відображаються; показано вихідний текст.
+menu-tools = Інструменти
+tools-json-validate = Перевірити JSON
+tools-json-format = Форматувати JSON
+tools-json-minify = Стиснути JSON
+tools-sort-lines = Сортувати рядки
+tools-sort-lines-desc = Сортувати рядки за спаданням
+tools-unique-lines = Видалити повторювані рядки
+tools-trim-trailing = Видалити пробіли в кінці рядків
+tools-upper-case = Верхній регістр
+tools-lower-case = Нижній регістр
+tools-to-lf = Перетворити закінчення рядків на LF
+tools-to-crlf = Перетворити закінчення рядків на CRLF
+tools-json-valid = JSON коректний
+tools-done = Готово. Команда «Скасувати» поверне зміни.
+tools-no-change = Нічого змінювати
+tools-json-error = Некоректний JSON у рядку { $line }, стовпці { $column }: { $reason }
+json-reason-unterminated-string = незакритий рядок
+json-reason-invalid-u-escape = некоректна escape-послідовність \u
+json-reason-invalid-escape = некоректна escape-послідовність
+json-reason-control-character-in-string = керівний символ у рядку
+json-reason-invalid-number = некоректне число
+json-reason-unexpected-character = неочікуваний символ
+json-reason-unexpected-content-after-the-value = неочікуваний вміст після значення
+json-reason-unexpected-comma = неочікувана кома
+json-reason-expected-a-string-key = очікувався рядковий ключ
+json-reason-expected = очікувалося ':'
+json-reason-expected-or-a-closing-bracket = очікувалася ',' або закривна дужка
+json-reason-expected-a-value = очікувалося значення
+json-reason-empty-document = порожній документ
+json-reason-unexpected-end-of-input = неочікуваний кінець даних
+json-reason-too-deeply-nested-to-format = надто глибока вкладеність для форматування
+tools-compare = Порівняти з…
+compare-need-two = Відкрийте ще одну вкладку для порівняння.
+compare-pick-title = Порівняти { $name } з
+compare-count = { $count ->
+    [0] Відмінностей немає
+    [one] { $count } зміна
+    [few] { $count } зміни
+    [many] { $count } змін
+   *[other] { $count } зміни
+    }
+compare-close = Закрити порівняння
+compare-to-left = Скопіювати цю зміну ліворуч
+compare-to-right = Скопіювати цю зміну праворуч
+compare-stale = Документ змінився під час порівняння. Порівняння оновлено; спробуйте ще раз.
+view-structured = Структурований вигляд (CSV, JSON)
+csv-delimiter = Роздільник
+csv-rows = { $count ->
+    [one] { $count } рядок
+    [few] { $count } рядки
+    [many] { $count } рядків
+   *[other] { $count } рядка
+    }
+csv-unterminated = Незакрита лапка, починаючи з рядка { $line }
+csv-truncated = Показано перші 200 000 рядків
+json-more = … ще { $count }
+dialog-open-link-title = Відкрити це посилання у веббраузері?
+button-open = Відкрити
+link-blocked = Посилання такого типу не відкриваються з міркувань безпеки.
+link-not-found = Пов’язаний файл не знайдено: { $target }
+enc-windows-1252 = Західноєвропейське
+enc-iso-8859-15 = Західноєвропейське
+enc-windows-1250 = Центральноєвропейське
+enc-iso-8859-2 = Центральноєвропейське
+enc-windows-1251 = Кирилиця
+enc-koi8-r = Кирилиця
+enc-windows-1253 = Грецьке
+enc-windows-1254 = Турецьке
+enc-windows-1255 = Іврит
+enc-windows-1256 = Арабське
+enc-windows-1257 = Балтійське
+enc-windows-874 = Тайське
+enc-shift_jis = Японське
+enc-euc-jp = Японське
+enc-gb18030 = Китайське спрощене
+enc-big5 = Китайське традиційне
+enc-euc-kr = Корейське
+file-reopen-encoding = Відкрити знову з кодуванням…
+file-save-encoding = Зберегти з кодуванням…
+encoding-reopen-title = Відкрити знову з кодуванням
+encoding-save-title = Зберегти з кодуванням
+encoding-not-exact = Це кодування не може відкрити файл без його зміни: { $reason }
+encoding-unencodable = «{ $character }» неможливо зберегти в кодуванні { $encoding }. Виберіть інше кодування або змініть текст; нічого не записано.
+encoding-save-first = Збережіть або скасуйте зміни, перш ніж відкривати файл з іншим кодуванням.
+image-remote = Віддалені зображення не завантажуються.
+image-blocked = Показуються лише зображення з теки цього документа.
+image-unsupported = Непідтримуваний формат зображення.
+image-too-large = Зображення завелике для показу.
+image-unreadable = Не вдалося прочитати зображення.
+settings-theme-high-contrast = Висока контрастність
+view-fold = Згорнути
+view-unfold = Розгорнути
+view-unfold-all = Розгорнути все
+settings-shortcuts = Сполучення клавіш
+settings-keymap-preset = Набір
+settings-keymap-default = Sanain
+settings-keymap-notepadpp = Notepad++
+settings-shortcut-change = Змінити
+settings-shortcut-reset = Скинути
+settings-shortcut-press = Натисніть сполучення клавіш… (Esc — скасувати)
+settings-shortcut-moved = Сполучення перенесено з:
+edit-find-in-folder = Знайти в теці…
+folder-search-placeholder = Знайти в теці
+folder-search-run = Шукати
+folder-search-stop = Зупинити
+folder-search-no-folder = Вибрати теку
+folder-search-summary = { $count ->
+    [one] { $count } збіг
+    [few] { $count } збіги
+    [many] { $count } збігів
+   *[other] { $count } збігу
+    } у { $files ->
+    [one] { $files } файлі
+    [few] { $files } файлах
+    [many] { $files } файлах
+   *[other] { $files } файла
+    }

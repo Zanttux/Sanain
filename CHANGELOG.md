@@ -5,6 +5,13 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- 24 more UI languages: Czech, Danish, Dutch, French, German, Greek,
+  Hungarian, Indonesian, Italian, Japanese, Korean, Norwegian Bokmål,
+  Polish, Portuguese (Brazil and Portugal), Romanian, Russian, Simplified
+  and Traditional Chinese, Spanish, Swedish, Turkish, Ukrainian and
+  Vietnamese. They are machine translations by Claude and await review by
+  native speakers; corrections are welcome. The language picker in
+  Settings lists every language by its own name.
 - Cargo workspace at 0.0.1 with pinned toolchain and CI for Linux, Windows
   and macOS.
 - `sanain-core`: rope document, grouped transactions, undo/redo, revision

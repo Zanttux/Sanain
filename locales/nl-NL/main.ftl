@@ -1,0 +1,230 @@
+# Machine translation by Claude (AI); review by a native speaker required before release.
+app-name = Sanain
+menu-file = Bestand
+file-open = Open…
+file-save = Bewaar
+status-tabs = { $count ->
+    [one] Eén tabblad
+   *[other] { $count } tabbladen
+    }
+error-open = Kan { $name } niet openen.
+menu-edit = Wijzig
+file-new = Nieuw tabblad
+file-save-as = Bewaar als…
+edit-undo = Herstel
+edit-redo = Opnieuw
+edit-select-all = Selecteer alles
+untitled = Naamloos
+window-title = { $dirty ->
+    [yes] ● { $name } — Sanain
+   *[no] { $name } — Sanain
+    }
+status-position = Rg { $line }, Kol { $column }
+status-selections = { $count ->
+    [one] 1 selectie
+   *[other] { $count } selecties
+    }
+status-saved = { $name } bewaard
+encoding-utf8 = UTF-8
+encoding-utf8-bom = UTF-8 met BOM
+encoding-utf16le = UTF-16 LE
+encoding-utf16be = UTF-16 BE
+line-ending-lf = LF
+line-ending-crlf = CRLF
+line-ending-cr = CR
+line-ending-mixed = Gemengde regeleinden
+editor-accessible-name = Teksteditor
+button-save = Bewaar
+button-dont-save = Niet bewaren
+button-cancel = Annuleer
+button-ok = OK
+button-overwrite = Overschrijf
+button-save-as = Bewaar als…
+dialog-unsaved-title = Wijzigingen in { $name } bewaren?
+dialog-unsaved-body = Je wijzigingen gaan verloren als je ze niet bewaart.
+dialog-conflict-title = { $name } is op schijf gewijzigd
+dialog-conflict-body = Een ander programma heeft dit bestand gewijzigd nadat je het opende. Overschrijven vervangt die wijzigingen.
+dialog-readonly-title = { $name } is alleen-lezen
+dialog-readonly-body = Bewaar in plaats daarvan een kopie onder een andere naam.
+error-open-encoding = { $name } is geen UTF-8- of UTF-16-tekst. Het bestand is niet geopend, dus de inhoud is ongewijzigd. Kies de codering via Bestand > Opnieuw openen met codering.
+error-save = Kan { $name } niet bewaren: { $reason }
+menu-window = Venster
+edit-cut = Knip
+edit-copy = Kopieer
+edit-paste = Plak
+app-quit = Stop Sanain
+app-hide = Verberg Sanain
+app-hide-others = Verberg andere
+app-show-all = Toon alles
+window-minimize = Minimaliseer
+window-zoom = Zoom
+status-recovered = Niet-bewaarde wijzigingen van de vorige sessie zijn hersteld
+status-recovery-failed = Kan geen herstelkopie bewaren: { $reason }
+edit-duplicate-line = Dupliceer regel
+edit-delete-line = Verwijder regel
+edit-move-line-up = Verplaats regel omhoog
+edit-move-line-down = Verplaats regel omlaag
+file-close-tab = Sluit tabblad
+file-reopen-tab = Open gesloten tabblad opnieuw
+window-next-tab = Volgend tabblad
+window-prev-tab = Vorig tabblad
+tab-close = Sluit tabblad
+edit-find = Zoek…
+edit-find-next = Zoek volgende
+edit-find-prev = Zoek vorige
+edit-replace = Vervang…
+find-placeholder = Zoek
+replace-placeholder = Vervang door
+find-match-case = Hoofdlettergevoelig
+find-whole-word = Heel woord
+find-regex = Reguliere expressie
+find-no-results = Geen resultaten
+find-count = { $total ->
+    [one] 1 overeenkomst
+   *[other] { $total } overeenkomsten
+    }
+find-count-current = { $current } van { $total }
+find-prev = Vorige overeenkomst (Shift+Enter)
+find-next = Volgende overeenkomst (Enter)
+find-close = Sluit (Esc)
+replace-one = Vervang
+replace-all = Vervang alles
+status-replaced = { $count ->
+    [one] 1 overeenkomst vervangen
+   *[other] { $count } overeenkomsten vervangen
+    }
+language-plain = Platte tekst
+menu-view = Weergave
+app-settings = Instellingen…
+view-zoom-in = Zoom in
+view-zoom-out = Zoom uit
+view-zoom-reset = Werkelijke grootte
+settings-title = Instellingen
+settings-font-size = Lettergrootte
+settings-tab-width = Tabbreedte
+settings-insert-spaces = Spaties invoegen bij drukken op Tab
+settings-theme = Weergave
+settings-theme-system = Volg systeem
+settings-theme-light = Licht
+settings-theme-dark = Donker
+settings-restore-session = Bestanden van de vorige sessie opnieuw openen
+settings-language = Taal
+settings-language-system = Volg systeem
+settings-language-note = Taalwijzigingen worden toegepast nadat Sanain opnieuw is gestart.
+settings-save-failed = Kan instellingen niet bewaren: { $reason }
+view-command-palette = Opdrachtpalet…
+palette-placeholder = Typ een opdracht
+view-markdown-source = Markdown-bron
+view-markdown-split = Markdown-bron en voorvertoning
+view-markdown-preview = Markdown-voorvertoning
+preview-too-large = Dit document is te groot voor een voorvertoning.
+preview-mermaid-unsupported = Mermaid-diagrammen worden nog niet weergegeven; de bron wordt getoond.
+menu-tools = Gereedschap
+tools-json-validate = Valideer JSON
+tools-json-format = Formatteer JSON
+tools-json-minify = Minimaliseer JSON
+tools-sort-lines = Sorteer regels
+tools-sort-lines-desc = Sorteer regels aflopend
+tools-unique-lines = Verwijder dubbele regels
+tools-trim-trailing = Verwijder witruimte aan regeleinden
+tools-upper-case = Hoofdletters
+tools-lower-case = Kleine letters
+tools-to-lf = Zet regeleinden om naar LF
+tools-to-crlf = Zet regeleinden om naar CRLF
+tools-json-valid = JSON is geldig
+tools-done = Klaar. Herstel maakt het ongedaan.
+tools-no-change = Niets te wijzigen
+tools-json-error = Ongeldige JSON op regel { $line }, kolom { $column }: { $reason }
+json-reason-unterminated-string = niet-afgesloten tekenreeks
+json-reason-invalid-u-escape = ongeldige \u-escape
+json-reason-invalid-escape = ongeldige escape
+json-reason-control-character-in-string = besturingsteken in tekenreeks
+json-reason-invalid-number = ongeldig getal
+json-reason-unexpected-character = onverwacht teken
+json-reason-unexpected-content-after-the-value = onverwachte inhoud na de waarde
+json-reason-unexpected-comma = onverwachte komma
+json-reason-expected-a-string-key = tekenreekssleutel verwacht
+json-reason-expected = ':' verwacht
+json-reason-expected-or-a-closing-bracket = ',' of een sluithaak verwacht
+json-reason-expected-a-value = waarde verwacht
+json-reason-empty-document = leeg document
+json-reason-unexpected-end-of-input = onverwacht einde van invoer
+json-reason-too-deeply-nested-to-format = te diep genest om te formatteren
+tools-compare = Vergelijk met…
+compare-need-two = Open een ander tabblad om mee te vergelijken.
+compare-pick-title = Vergelijk { $name } met
+compare-count = { $count ->
+    [0] Geen verschillen
+    [one] 1 wijziging
+   *[other] { $count } wijzigingen
+    }
+compare-close = Sluit vergelijking
+compare-to-left = Kopieer deze wijziging naar links
+compare-to-right = Kopieer deze wijziging naar rechts
+compare-stale = Een document is tijdens de vergelijking gewijzigd. De vergelijking is vernieuwd; probeer het opnieuw.
+view-structured = Gestructureerde weergave (CSV, JSON)
+csv-delimiter = Scheidingsteken
+csv-rows = { $count ->
+    [one] 1 rij
+   *[other] { $count } rijen
+    }
+csv-unterminated = Niet-afgesloten aanhalingsteken vanaf regel { $line }
+csv-truncated = De eerste 200.000 rijen worden getoond
+json-more = … nog { $count }
+dialog-open-link-title = Deze link openen in je webbrowser?
+button-open = Open
+link-blocked = Dit soort link wordt om veiligheidsredenen niet geopend.
+link-not-found = Gekoppeld bestand niet gevonden: { $target }
+enc-windows-1252 = West-Europees
+enc-iso-8859-15 = West-Europees
+enc-windows-1250 = Centraal-Europees
+enc-iso-8859-2 = Centraal-Europees
+enc-windows-1251 = Cyrillisch
+enc-koi8-r = Cyrillisch
+enc-windows-1253 = Grieks
+enc-windows-1254 = Turks
+enc-windows-1255 = Hebreeuws
+enc-windows-1256 = Arabisch
+enc-windows-1257 = Baltisch
+enc-windows-874 = Thai
+enc-shift_jis = Japans
+enc-euc-jp = Japans
+enc-gb18030 = Chinees, vereenvoudigd
+enc-big5 = Chinees, traditioneel
+enc-euc-kr = Koreaans
+file-reopen-encoding = Opnieuw openen met codering…
+file-save-encoding = Bewaar met codering…
+encoding-reopen-title = Opnieuw openen met codering
+encoding-save-title = Bewaar met codering
+encoding-not-exact = Met deze codering kan het bestand niet worden geopend zonder het te wijzigen: { $reason }
+encoding-unencodable = “{ $character }” kan niet worden bewaard als { $encoding }. Kies een andere codering of wijzig de tekst; er is niets geschreven.
+encoding-save-first = Bewaar je wijzigingen of maak ze ongedaan voordat je opnieuw opent met een andere codering.
+image-remote = Externe afbeeldingen worden niet geladen.
+image-blocked = Alleen afbeeldingen in de map van dit document worden getoond.
+image-unsupported = Niet-ondersteunde afbeeldingsindeling.
+image-too-large = Afbeelding is te groot om te tonen.
+image-unreadable = Afbeelding kan niet worden gelezen.
+settings-theme-high-contrast = Hoog contrast
+view-fold = Vouw in
+view-unfold = Vouw uit
+view-unfold-all = Vouw alles uit
+settings-shortcuts = Toetscombinaties
+settings-keymap-preset = Voorinstelling
+settings-keymap-default = Sanain
+settings-keymap-notepadpp = Notepad++
+settings-shortcut-change = Wijzig
+settings-shortcut-reset = Herstel standaard
+settings-shortcut-press = Druk op een toetscombinatie… (Esc annuleert)
+settings-shortcut-moved = Toetscombinatie verplaatst van:
+edit-find-in-folder = Zoek in map…
+folder-search-placeholder = Zoek in map
+folder-search-run = Zoek
+folder-search-stop = Stop
+folder-search-no-folder = Kies map
+folder-search-summary = { $count ->
+    [one] 1 overeenkomst
+   *[other] { $count } overeenkomsten
+    } in { $files ->
+    [one] 1 bestand
+   *[other] { $files } bestanden
+    }

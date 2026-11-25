@@ -514,11 +514,14 @@ impl Shell {
                         ui.checkbox(&mut s.restore_session, l("settings-restore-session"));
                         ui.end_row();
                         ui.label(l("settings-language"));
-                        let current = match s.locale.as_deref() {
-                            Some("fi-FI") => "Suomi".to_owned(),
-                            Some("en-US") => "English".to_owned(),
-                            _ => l("settings-language-system"),
-                        };
+                        let current = s
+                            .locale
+                            .as_deref()
+                            .and_then(|t| sanain_i18n::LANGUAGES.iter().find(|(tag, _)| *tag == t))
+                            .map_or_else(
+                                || l("settings-language-system"),
+                                |(_, name)| (*name).to_owned(),
+                            );
                         egui::ComboBox::from_id_salt("settings-language")
                             .selected_text(current)
                             .show_ui(ui, |ui| {
@@ -528,8 +531,13 @@ impl Shell {
                                     l("settings-language-system"),
                                 );
                                 // Language names in their own language.
-                                ui.selectable_value(&mut s.locale, Some("en-US".into()), "English");
-                                ui.selectable_value(&mut s.locale, Some("fi-FI".into()), "Suomi");
+                                for (tag, name) in sanain_i18n::LANGUAGES {
+                                    ui.selectable_value(
+                                        &mut s.locale,
+                                        Some((*tag).to_owned()),
+                                        *name,
+                                    );
+                                }
                             });
                         ui.end_row();
                     });
