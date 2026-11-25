@@ -334,3 +334,15 @@ compare-clipboard-empty = Clipboardul nu conține text de comparat.
 error-save-disk-full = { $name } nu a fost salvat: discul este plin. Fișierul de pe disc nu s-a modificat, iar textul dvs. este încă aici. Eliberați spațiu sau folosiți Salvează ca pentru a-l salva în altă parte.
 error-save-permission = { $name } nu a fost salvat: nu aveți permisiunea de a scrie în acea locație. Fișierul de pe disc nu s-a modificat. Folosiți Salvează ca pentru a-l salva în altă parte.
 error-save-read-only-volume = { $name } nu a fost salvat: discul este doar în citire. Fișierul de pe disc nu s-a modificat. Folosiți Salvează ca pentru a-l salva în altă parte.
+replace-preview-title = { $count ->
+    [one] Se înlocuiește 1 potrivire?
+    [few] Se înlocuiesc { $count } potriviri?
+   *[other] Se înlocuiesc { $count } de potriviri?
+    }
+replace-preview-confirm = { $count ->
+    [one] Înlocuiește 1
+    [few] Înlocuiește { $count }
+   *[other] Înlocuiește { $count }
+    }
+replace-preview-more = Sunt afișate doar primele 200 de rânduri modificate.
+replace-preview-stale = Documentul s-a modificat; nu s-a înlocuit nimic. Rulați din nou Înlocuiește tot.

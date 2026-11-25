@@ -349,3 +349,17 @@ compare-clipboard-empty = Schowek nie zawiera tekstu do porównania.
 error-save-disk-full = Nie zapisano pliku { $name }: dysk jest pełny. Plik na dysku nie został zmieniony, a tekst nadal jest dostępny. Zwolnij miejsce lub użyj polecenia Zapisz jako, aby zapisać plik w innym miejscu.
 error-save-permission = Nie zapisano pliku { $name }: brak uprawnień do zapisu w tej lokalizacji. Plik na dysku nie został zmieniony. Użyj polecenia Zapisz jako, aby zapisać plik w innym miejscu.
 error-save-read-only-volume = Nie zapisano pliku { $name }: dysk jest tylko do odczytu. Plik na dysku nie został zmieniony. Użyj polecenia Zapisz jako, aby zapisać plik w innym miejscu.
+replace-preview-title = { $count ->
+    [one] Zamienić 1 dopasowanie?
+    [few] Zamienić { $count } dopasowania?
+    [many] Zamienić { $count } dopasowań?
+   *[other] Zamienić { $count } dopasowania?
+    }
+replace-preview-confirm = { $count ->
+    [one] Zamień 1
+    [few] Zamień { $count }
+    [many] Zamień { $count }
+   *[other] Zamień { $count }
+    }
+replace-preview-more = Wyświetlane jest tylko pierwsze 200 zmienionych wierszy.
+replace-preview-stale = Dokument się zmienił; nic nie zostało zamienione. Uruchom ponownie Zamień wszystko.

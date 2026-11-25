@@ -319,3 +319,13 @@ compare-clipboard-empty = Panoda karşılaştırılacak metin yok.
 error-save-disk-full = { $name } kaydedilmedi: disk dolu. Diskteki dosya değişmedi ve metniniz hâlâ burada. Biraz yer açın veya başka bir yere kaydetmek için Farklı Kaydet'i kullanın.
 error-save-permission = { $name } kaydedilmedi: oraya yazma izniniz yok. Diskteki dosya değişmedi. Başka bir yere kaydetmek için Farklı Kaydet'i kullanın.
 error-save-read-only-volume = { $name } kaydedilmedi: disk salt okunur. Diskteki dosya değişmedi. Başka bir yere kaydetmek için Farklı Kaydet'i kullanın.
+replace-preview-title = { $count ->
+    [one] 1 eşleşme değiştirilsin mi?
+   *[other] { $count } eşleşme değiştirilsin mi?
+    }
+replace-preview-confirm = { $count ->
+    [one] 1 tanesini değiştir
+   *[other] { $count } tanesini değiştir
+    }
+replace-preview-more = Yalnızca değişen ilk 200 satır gösteriliyor.
+replace-preview-stale = Belge değişti; hiçbir şey değiştirilmedi. Tümünü Değiştir'i yeniden çalıştırın.

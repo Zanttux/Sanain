@@ -138,6 +138,36 @@ impl Matcher {
         (tx, edits.len())
     }
 
+    /// Lines a replace-all transaction changes, as (0-based line in the
+    /// original, text before, text after), at most `max` of them, for a
+    /// preview. Line breaks are not included.
+    pub fn preview(rope: &Rope, tx: &Transaction, max: usize) -> Vec<(usize, String, String)> {
+        let mut after = rope.clone();
+        if tx.apply(&mut after).is_err() {
+            return Vec::new();
+        }
+        let line_text = |r: &Rope, l: usize| -> String {
+            let s: String = r.line(l).chars().collect();
+            s.trim_end_matches(['\n', '\r']).to_owned()
+        };
+        let mut starts: Vec<usize> = tx.changes().iter().map(|c| c.range.start).collect();
+        starts.sort_unstable();
+        let mut out: Vec<(usize, String, String)> = Vec::new();
+        for start in starts {
+            let line = rope.char_to_line(start.min(rope.len_chars()));
+            if out.last().is_some_and(|(l, _, _)| *l == line) {
+                continue;
+            }
+            if out.len() == max {
+                break;
+            }
+            let new_pos = tx.map_pos(rope.line_to_char(line)).min(after.len_chars());
+            let new_line = after.char_to_line(new_pos);
+            out.push((line, line_text(rope, line), line_text(&after, new_line)));
+        }
+        out
+    }
+
     /// The replacement for a single match at `range` (for "Replace").
     pub fn replacement_for(
         &self,
@@ -213,6 +243,29 @@ mod tests {
             .unwrap()
             .find_all(&Rope::from_str(text))
             .ranges
+    }
+
+    #[test]
+    fn replace_preview_lists_changed_lines() {
+        let rope = Rope::from_str("let a = 1;\nlet b = a + a;\nfoo\nlet c = a;\n");
+        let q = Query {
+            pattern: "a".into(),
+            whole_word: true,
+            ..Query::default()
+        };
+        let m = q.compile().unwrap().unwrap();
+        let (tx, n) = m.replace_all(&rope, "alpha");
+        assert_eq!(n, 4);
+        let p = Matcher::preview(&rope, &tx, 10);
+        assert_eq!(
+            p,
+            vec![
+                (0, "let a = 1;".into(), "let alpha = 1;".into()),
+                (1, "let b = a + a;".into(), "let b = alpha + alpha;".into()),
+                (3, "let c = a;".into(), "let c = alpha;".into()),
+            ]
+        );
+        assert_eq!(Matcher::preview(&rope, &tx, 2).len(), 2, "capped");
     }
 
     #[test]

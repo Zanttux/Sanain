@@ -542,13 +542,19 @@ impl Editor {
     /// Replace every match in one undoable step; returns how many.
     pub fn replace_all(&mut self, matcher: &sanain_core::search::Matcher, with: &str) -> usize {
         let (tx, n) = matcher.replace_all(self.doc.rope(), with);
-        if n > 0 {
-            let first = tx.caret_positions().first().copied().unwrap_or(0);
-            if self.doc.apply(&tx).is_ok() {
-                self.sels = Selections::single(Selection::cursor(first.min(self.doc.len_chars())));
-            }
-        }
+        self.apply_replacement(&tx);
         n
+    }
+
+    /// Apply a prepared replace-all transaction as one undoable step.
+    pub fn apply_replacement(&mut self, tx: &Transaction) {
+        if tx.is_empty() {
+            return;
+        }
+        let first = tx.caret_positions().first().copied().unwrap_or(0);
+        if self.doc.apply(tx).is_ok() {
+            self.sels = Selections::single(Selection::cursor(first.min(self.doc.len_chars())));
+        }
     }
 
     /// Replace the primary selection if it is exactly a match. Returns

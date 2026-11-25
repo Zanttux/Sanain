@@ -319,3 +319,13 @@ compare-clipboard-empty = El portapapeles no contiene texto para comparar.
 error-save-disk-full = No se ha guardado { $name }: el disco está lleno. El archivo del disco no ha cambiado y su texto sigue aquí. Libere espacio o use Guardar como para guardarlo en otro lugar.
 error-save-permission = No se ha guardado { $name }: no tiene permiso para escribir en esa ubicación. El archivo del disco no ha cambiado. Use Guardar como para guardarlo en otro lugar.
 error-save-read-only-volume = No se ha guardado { $name }: el disco es de solo lectura. El archivo del disco no ha cambiado. Use Guardar como para guardarlo en otro lugar.
+replace-preview-title = { $count ->
+    [one] ¿Reemplazar 1 coincidencia?
+   *[other] ¿Reemplazar { $count } coincidencias?
+    }
+replace-preview-confirm = { $count ->
+    [one] Reemplazar 1
+   *[other] Reemplazar { $count }
+    }
+replace-preview-more = Solo se muestran las primeras 200 líneas modificadas.
+replace-preview-stale = El documento ha cambiado; no se ha reemplazado nada. Vuelva a ejecutar Reemplazar todo.

@@ -319,3 +319,13 @@ compare-clipboard-empty = Udklipsholderen indeholder ingen tekst at sammenligne.
 error-save-disk-full = { $name } blev ikke gemt: disken er fuld. Filen på disken er uændret, og din tekst er her stadig. Frigør noget plads, eller brug Gem som for at gemme den et andet sted.
 error-save-permission = { $name } blev ikke gemt: du har ikke tilladelse til at skrive den der. Filen på disken er uændret. Brug Gem som for at gemme den et andet sted.
 error-save-read-only-volume = { $name } blev ikke gemt: disken er skrivebeskyttet. Filen på disken er uændret. Brug Gem som for at gemme den et andet sted.
+replace-preview-title = { $count ->
+    [one] Erstat 1 forekomst?
+   *[other] Erstat { $count } forekomster?
+    }
+replace-preview-confirm = { $count ->
+    [one] Erstat 1
+   *[other] Erstat { $count }
+    }
+replace-preview-more = Kun de første 200 ændrede linjer vises.
+replace-preview-stale = Dokumentet er ændret; intet blev erstattet. Kør Erstat alle igen.

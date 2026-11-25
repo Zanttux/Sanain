@@ -319,3 +319,13 @@ compare-clipboard-empty = Gli appunti non contengono testo da confrontare.
 error-save-disk-full = { $name } non è stato salvato: il disco è pieno. Il file sul disco non è cambiato e il tuo testo è ancora qui. Libera spazio oppure usa Salva con nome per salvarlo altrove.
 error-save-permission = { $name } non è stato salvato: non hai l’autorizzazione per scrivere in quella posizione. Il file sul disco non è cambiato. Usa Salva con nome per salvarlo altrove.
 error-save-read-only-volume = { $name } non è stato salvato: il disco è di sola lettura. Il file sul disco non è cambiato. Usa Salva con nome per salvarlo altrove.
+replace-preview-title = { $count ->
+    [one] Sostituire 1 corrispondenza?
+   *[other] Sostituire { $count } corrispondenze?
+    }
+replace-preview-confirm = { $count ->
+    [one] Sostituisci 1
+   *[other] Sostituisci { $count }
+    }
+replace-preview-more = Vengono mostrate solo le prime 200 righe modificate.
+replace-preview-stale = Il documento è cambiato; non è stato sostituito nulla. Esegui di nuovo Sostituisci tutto.

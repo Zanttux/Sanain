@@ -23,6 +23,19 @@ use crate::view::{EditorView, ViewOptions};
 use sanain_app::settings::{FONT_SIZE_DEFAULT, Settings, ThemeChoice};
 use sanain_app::update::{Status as UpdateStatus, UpdateError};
 
+/// A replace-all waiting for confirmation.
+struct ReplacePreview {
+    tab: TabId,
+    revision: Revision,
+    tx: sanain_core::Transaction,
+    count: usize,
+    /// (line, before, after) for the first changed lines.
+    lines: Vec<(usize, String, String)>,
+}
+
+/// Lines shown in the replace-all preview.
+const PREVIEW_LINES: usize = 200;
+
 /// The right side of a comparison: another tab, or fixed text such as
 /// the saved file or the clipboard (read-only).
 enum Side {
@@ -152,6 +165,7 @@ pub struct Shell {
     history_open: bool,
     /// The last recorded macro.
     macro_cmds: Vec<Command>,
+    replace_preview: Option<ReplacePreview>,
     log: Option<crate::logview::LogView>,
     /// For work started outside a frame (e.g. opening a file).
     ctx: egui::Context,
@@ -244,6 +258,7 @@ impl Shell {
             history: None,
             history_open: false,
             macro_cmds: Vec::new(),
+            replace_preview: None,
             log: None,
             ctx: egui::Context::default(),
             update: None,
@@ -321,10 +336,25 @@ impl Shell {
             FindEvent::ReplaceAll => {
                 self.find.refresh(id, &self.ws.active().editor);
                 let with = self.find.replacement.clone();
+                // Show what would change; nothing is replaced until the
+                // user confirms.
                 if let Some(m) = self.find.matcher().cloned() {
-                    let n = self.editor_mut().replace_all(&m, &with) as i64;
-                    let msg = self.t("status-replaced", &[("count", n.into())]);
-                    self.status = Some((msg, false));
+                    let doc = self.editor().document();
+                    let (tx, count) = m.replace_all(doc.rope(), &with);
+                    if count == 0 {
+                        let msg = self.t("status-replaced", &[("count", 0.into())]);
+                        self.status = Some((msg, false));
+                        return;
+                    }
+                    let lines =
+                        sanain_core::search::Matcher::preview(doc.rope(), &tx, PREVIEW_LINES);
+                    self.replace_preview = Some(ReplacePreview {
+                        tab: id,
+                        revision: doc.revision(),
+                        tx,
+                        count,
+                        lines,
+                    });
                 }
             }
         }
@@ -1294,6 +1324,103 @@ impl Shell {
         if !self.palette.open {
             self.focus_active();
         }
+    }
+
+    fn replace_preview_window(&mut self, ctx: &egui::Context) {
+        let Some(pv) = &self.replace_preview else {
+            return;
+        };
+        let p = theme::palette(ctx);
+        let n = pv.count as i64;
+        let title = self.t("replace-preview-title", &[("count", n.into())]);
+        let more = pv.lines.len() == PREVIEW_LINES;
+        let (confirm_l, cancel_l, more_l) = (
+            self.t("replace-preview-confirm", &[("count", n.into())]),
+            self.t("button-cancel", &[]),
+            self.t("replace-preview-more", &[]),
+        );
+        let font = egui::FontId::monospace(self.settings.font_size * 0.9);
+        let mut decision: Option<bool> = None;
+        let mut open = true;
+        egui::Window::new(title)
+            .id(egui::Id::unique("sanain-replace-preview"))
+            .open(&mut open)
+            .collapsible(false)
+            .default_width(640.0)
+            .show(ctx, |ui| {
+                egui::ScrollArea::vertical()
+                    .max_height(360.0)
+                    .show(ui, |ui| {
+                        egui::Grid::new("replace-preview-grid")
+                            .num_columns(2)
+                            .spacing([12.0, 2.0])
+                            .show(ui, |ui| {
+                                let cut = |s: &str| -> String {
+                                    let t: String = s.chars().take(160).collect();
+                                    if s.chars().count() > 160 {
+                                        format!("{t}…")
+                                    } else {
+                                        t
+                                    }
+                                };
+                                for (line, before, after) in &pv.lines {
+                                    ui.label(
+                                        egui::RichText::new(format!("{}", line + 1))
+                                            .font(font.clone())
+                                            .color(p.muted),
+                                    );
+                                    ui.vertical(|ui| {
+                                        ui.label(
+                                            egui::RichText::new(format!("− {}", cut(before)))
+                                                .font(font.clone())
+                                                .color(p.error),
+                                        );
+                                        ui.label(
+                                            egui::RichText::new(format!("+ {}", cut(after)))
+                                                .font(font.clone())
+                                                .color(p.accent),
+                                        );
+                                    });
+                                    ui.end_row();
+                                }
+                            });
+                        if more {
+                            ui.weak(more_l);
+                        }
+                    });
+                ui.separator();
+                ui.horizontal(|ui| {
+                    if ui.button(confirm_l).clicked() {
+                        decision = Some(true);
+                    }
+                    if ui.button(cancel_l).clicked() {
+                        decision = Some(false);
+                    }
+                });
+            });
+        // Esc cancels; confirming takes the button (Enter may belong to
+        // the find field underneath).
+        if !open || ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+            decision = Some(false);
+        }
+        let Some(go) = decision else { return };
+        let Some(pv) = self.replace_preview.take() else {
+            return;
+        };
+        if !go {
+            return;
+        }
+        let fresh =
+            self.ws.active().id == pv.tab && self.editor().document().revision() == pv.revision;
+        if !fresh {
+            self.status = Some((self.t("replace-preview-stale", &[]), true));
+            return;
+        }
+        self.editor_mut().apply_replacement(&pv.tx);
+        let msg = self.t("status-replaced", &[("count", (pv.count as i64).into())]);
+        self.status = Some((msg, false));
+        let id = self.ws.active().id;
+        self.views.entry(id).or_default().reveal();
     }
 
     fn data_kind(ed: &Editor) -> Option<DataKind> {
@@ -2792,6 +2919,7 @@ impl eframe::App for Shell {
         self.settings_window(&ctx);
         self.compare_picker(&ctx);
         self.history_window(&ctx);
+        self.replace_preview_window(&ctx);
         self.encoding_window(&ctx);
         if self.palette.open
             && self.dialog.is_none()

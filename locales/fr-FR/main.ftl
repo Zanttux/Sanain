@@ -334,3 +334,15 @@ compare-clipboard-empty = Le presse-papiers ne contient aucun texte à comparer.
 error-save-disk-full = { $name } n’a pas été enregistré : le disque est plein. Le fichier sur le disque n’a pas changé et votre texte est toujours là. Libérez de l’espace ou utilisez Enregistrer sous pour l’enregistrer ailleurs.
 error-save-permission = { $name } n’a pas été enregistré : vous n’avez pas l’autorisation d’écrire à cet emplacement. Le fichier sur le disque n’a pas changé. Utilisez Enregistrer sous pour l’enregistrer ailleurs.
 error-save-read-only-volume = { $name } n’a pas été enregistré : le disque est en lecture seule. Le fichier sur le disque n’a pas changé. Utilisez Enregistrer sous pour l’enregistrer ailleurs.
+replace-preview-title = { $count ->
+    [one] Remplacer { $count } occurrence ?
+    [many] Remplacer { $count } occurrences ?
+   *[other] Remplacer { $count } occurrences ?
+    }
+replace-preview-confirm = { $count ->
+    [one] Remplacer { $count }
+    [many] Remplacer { $count }
+   *[other] Remplacer { $count }
+    }
+replace-preview-more = Seules les 200 premières lignes modifiées sont affichées.
+replace-preview-stale = Le document a changé ; rien n’a été remplacé. Relancez Tout remplacer.
