@@ -298,3 +298,7 @@ tab-pin = Fixează fila
 tab-unpin = Anulează fixarea filei
 edit-add-cursor-above = Adaugă cursor deasupra
 edit-add-cursor-below = Adaugă cursor dedesubt
+view-word-wrap = Încadrare cuvinte
+status-wrap-on = Rândurile lungi se încadrează acum în lățimea ferestrei.
+status-wrap-off = Rândurile lungi nu se mai încadrează.
+settings-word-wrap = Încadrează rândurile lungi

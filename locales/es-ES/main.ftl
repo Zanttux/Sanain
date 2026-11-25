@@ -285,3 +285,7 @@ tab-pin = Fijar pestaña
 tab-unpin = Desfijar pestaña
 edit-add-cursor-above = Agregar cursor arriba
 edit-add-cursor-below = Agregar cursor abajo
+view-word-wrap = Ajuste de línea
+status-wrap-on = Las líneas largas se ajustan ahora al ancho de la ventana.
+status-wrap-off = Las líneas largas ya no se ajustan.
+settings-word-wrap = Ajustar las líneas largas

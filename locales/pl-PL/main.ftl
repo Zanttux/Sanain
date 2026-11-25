@@ -311,3 +311,7 @@ tab-pin = Przypnij kartę
 tab-unpin = Odepnij kartę
 edit-add-cursor-above = Dodaj kursor powyżej
 edit-add-cursor-below = Dodaj kursor poniżej
+view-word-wrap = Zawijanie wierszy
+status-wrap-on = Długie wiersze są teraz zawijane do szerokości okna.
+status-wrap-off = Długie wiersze nie są już zawijane.
+settings-word-wrap = Zawijaj długie wiersze

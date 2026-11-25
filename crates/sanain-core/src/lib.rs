@@ -12,6 +12,7 @@ pub mod lines;
 pub mod search;
 pub mod selection;
 mod transaction;
+pub mod wrap;
 
 pub use document::{Document, LineEnding, Revision};
 pub use selection::{Selection, Selections};

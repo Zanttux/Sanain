@@ -5,6 +5,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Word wrap: long lines wrap at word boundaries to the window width (on
+  by default; View > Word Wrap or Settings to turn it off). Up/Down move
+  by display row. Documents over 1 M characters are not wrapped yet.
 - Multiple cursors from the UI: Option/Alt+click adds or removes a
   cursor, Option/Alt+drag makes a rectangular (column) selection, Edit >
   Add Cursor Above/Below (Cmd+Option+Up/Down on macOS, Ctrl+Alt+Up/Down

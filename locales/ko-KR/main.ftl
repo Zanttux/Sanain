@@ -272,3 +272,7 @@ tab-pin = 탭 고정
 tab-unpin = 탭 고정 해제
 edit-add-cursor-above = 위에 커서 추가
 edit-add-cursor-below = 아래에 커서 추가
+view-word-wrap = 자동 줄 바꿈
+status-wrap-on = 이제 긴 줄이 창 너비에 맞춰 줄 바꿈됩니다.
+status-wrap-off = 이제 긴 줄이 줄 바꿈되지 않습니다.
+settings-word-wrap = 긴 줄 자동 줄 바꿈

@@ -298,3 +298,7 @@ tab-pin = Épingler l’onglet
 tab-unpin = Détacher l’onglet
 edit-add-cursor-above = Ajouter un curseur au-dessus
 edit-add-cursor-below = Ajouter un curseur en dessous
+view-word-wrap = Retour automatique à la ligne
+status-wrap-on = Les lignes longues sont désormais renvoyées à la ligne selon la largeur de la fenêtre.
+status-wrap-off = Les lignes longues ne sont plus renvoyées à la ligne.
+settings-word-wrap = Renvoyer automatiquement les lignes longues à la ligne

@@ -285,3 +285,7 @@ tab-pin = Fastgør fane
 tab-unpin = Frigør fane
 edit-add-cursor-above = Tilføj markør ovenfor
 edit-add-cursor-below = Tilføj markør nedenfor
+view-word-wrap = Automatisk linjeskift
+status-wrap-on = Lange linjer ombrydes nu efter vinduets bredde.
+status-wrap-off = Lange linjer ombrydes ikke længere.
+settings-word-wrap = Ombryd lange linjer

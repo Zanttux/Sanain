@@ -285,3 +285,7 @@ tab-pin = Fest fane
 tab-unpin = Løsne fane
 edit-add-cursor-above = Legg til markør over
 edit-add-cursor-below = Legg til markør under
+view-word-wrap = Tekstbryting
+status-wrap-on = Lange linjer brytes nå ved vindusbredden.
+status-wrap-off = Lange linjer brytes ikke lenger.
+settings-word-wrap = Bryt lange linjer

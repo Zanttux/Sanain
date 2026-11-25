@@ -298,3 +298,7 @@ tab-pin = Afixar separador
 tab-unpin = Desafixar separador
 edit-add-cursor-above = Adicionar cursor acima
 edit-add-cursor-below = Adicionar cursor abaixo
+view-word-wrap = Moldar texto
+status-wrap-on = As linhas longas são agora moldadas à largura da janela.
+status-wrap-off = As linhas longas já não são moldadas.
+settings-word-wrap = Moldar linhas longas

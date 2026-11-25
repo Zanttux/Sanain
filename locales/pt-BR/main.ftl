@@ -298,3 +298,7 @@ tab-pin = Fixar aba
 tab-unpin = Desafixar aba
 edit-add-cursor-above = Adicionar cursor acima
 edit-add-cursor-below = Adicionar cursor abaixo
+view-word-wrap = Quebra automática de linha
+status-wrap-on = As linhas longas agora são quebradas na largura da janela.
+status-wrap-off = As linhas longas não são mais quebradas.
+settings-word-wrap = Quebrar linhas longas
