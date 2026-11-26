@@ -247,6 +247,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   or when changes are discarded.
 
 ### Fixed
+- macOS: the menu bar showed "sanain" (the file name) when the program
+  was started outside Sanain.app, e.g. with `cargo run`. The executable
+  now carries an embedded Info.plist with the name "Sanain".
 - Regular-expression find and replace split CRLF line endings: `.` and
   `$` treated the CR as part of the line, so e.g. replacing `.*$` or
   trailing spaces left a bare LF. Line breaks are now `\r\n`-aware.
