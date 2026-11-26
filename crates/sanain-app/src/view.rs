@@ -339,7 +339,15 @@ impl EditorView {
                     changed = true;
                 } else if response.drag_started() || response.clicked() {
                     response.request_focus();
-                    let at = hit(ui, pos, &rows, editor);
+                    // A drag is reported only after the pointer has moved a
+                    // few points: start the selection where the button went
+                    // down, not where the pointer is now (#112).
+                    let start = if response.drag_started() {
+                        ui.input(|i| i.pointer.press_origin()).unwrap_or(pos)
+                    } else {
+                        pos
+                    };
+                    let at = hit(ui, start, &rows, editor);
                     editor.execute(Command::PlaceCaret { at, extend: shift });
                     changed = true;
                 } else if response.dragged() {
