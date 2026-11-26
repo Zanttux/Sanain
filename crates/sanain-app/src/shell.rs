@@ -3737,6 +3737,10 @@ impl Shell {
                                 top: 5,
                                 bottom: 5,
                             });
+                        // Where the close button is: the tab-wide click/drag
+                        // area below is registered later and wins egui's hit
+                        // test, so clicks on × are matched by position.
+                        let mut close_rect: Option<egui::Rect> = None;
                         let r = frame.show(ui, |ui| {
                             ui.horizontal(|ui| {
                                 ui.spacing_mut().item_spacing.x = 6.0;
@@ -3777,6 +3781,7 @@ impl Shell {
                                         .min_size(egui::vec2(16.0, 16.0)),
                                     )
                                     .on_hover_text(self.t("tab-close", &[]));
+                                close_rect = Some(btn.rect);
                                 if btn.clicked() {
                                     close = Some(tab.id);
                                 }
@@ -3803,7 +3808,14 @@ impl Shell {
                         rects.push(rect);
                         let r = r.response.interact(egui::Sense::click_and_drag());
                         if r.clicked() {
-                            activate = Some(i);
+                            let on_close = close_rect.is_some_and(|c| {
+                                r.interact_pointer_pos().is_some_and(|p| c.contains(p))
+                            });
+                            if on_close {
+                                close = Some(tab.id);
+                            } else {
+                                activate = Some(i);
+                            }
                         }
                         if r.middle_clicked() {
                             close = Some(tab.id);
