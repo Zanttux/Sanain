@@ -47,6 +47,23 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   delimiters. Editing is off for read-only files and while a quote is
   unterminated. Inserting or deleting columns is not offered.
 
+- Editing in the JSON tree: double-click a key or a scalar value, or
+  select it and press Enter or F2, to edit it inline (Enter commits,
+  Escape cancels). Values are typed as JSON (`42`, `true`, `null`,
+  `"text"`); in a string, text without quotes is taken as the string and
+  escaped. A value that is not JSON, or a key another member of the
+  object already has, shows an inline error and changes nothing.
+  Right-click a node for Edit Value, Rename Key, Add After, Add Inside
+  and Delete; Up and Down move the selection and Delete removes the
+  selected node. Each change is one undoable edit that touches only that
+  node's characters: deleting removes exactly one adjacent comma and the
+  whitespace between, adding copies the siblings' line ending,
+  indentation and colon spacing (inline into an empty `{}` or `[]`), and
+  numbers, escapes and formatting elsewhere stay byte for byte. New
+  members are named `key` (made unique) and the name field opens
+  straight away. Editing is off for read-only files; documents the
+  validator rejects show the error instead of a tree.
+
 ## [0.2.0] — 2026-11-26
 
 Milestone M2 (tabs, sessions, recovery, search): crash and conflict tests

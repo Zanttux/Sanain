@@ -136,11 +136,20 @@ fn grid_id(id: TabId) -> egui::Id {
     egui::Id::unique(("sanain-csv-grid", id))
 }
 
+/// Keyboard focus id of a tab's JSON tree.
+fn json_tree_id(id: TabId) -> egui::Id {
+    egui::Id::unique(("sanain-json-tree", id))
+}
+
 /// Parsed data behind a structured view, for one document revision.
 enum Structured {
     /// The table, and whether its file is read-only on disk (no grid edits).
     Csv(sanain_tools::csv::Table, bool),
-    Json(Result<sanain_tools::json::Node, sanain_tools::json::JsonError>),
+    /// The editable tree, and whether its file is read-only on disk.
+    Json(
+        Result<sanain_tools::json::Doc, sanain_tools::json::JsonError>,
+        bool,
+    ),
     /// XML or YAML as a tree; the message id names the format.
     Tree(
         &'static str,
@@ -309,6 +318,7 @@ pub struct Shell {
     structured_cache: HashMap<TabId, (Revision, Option<char>, Structured)>,
     csv_delimiter: HashMap<TabId, char>,
     csv_grids: HashMap<TabId, crate::structured::GridState>,
+    json_trees: HashMap<TabId, crate::structured::TreeState>,
     compare_pick: bool,
     md_modes: HashMap<TabId, MdMode>,
     md_cache: HashMap<TabId, (Revision, std::sync::Arc<Vec<sanain_markdown::Block>>)>,
@@ -478,6 +488,7 @@ impl Shell {
             structured_cache: HashMap::new(),
             csv_delimiter: HashMap::new(),
             csv_grids: HashMap::new(),
+            json_trees: HashMap::new(),
             compare_pick: false,
             md_modes: HashMap::new(),
             md_cache: HashMap::new(),
@@ -811,6 +822,7 @@ impl Shell {
                     self.structured_cache.remove(&id);
                     self.csv_delimiter.remove(&id);
                     self.csv_grids.remove(&id);
+                    self.json_trees.remove(&id);
                 }
             }
             Then::Quit => {
@@ -2737,8 +2749,11 @@ impl Shell {
         if !fresh {
             let ed = &self.ws.tabs()[i].editor;
             let text = ed.document().text();
+            let read_only = ed.file().is_some_and(|f| {
+                std::fs::metadata(&f.path).is_ok_and(|m| m.permissions().readonly())
+            });
             let data = match kind {
-                DataKind::Json => Structured::Json(sanain_tools::json::tree(&text)),
+                DataKind::Json => Structured::Json(sanain_tools::json::doc(&text), read_only),
                 DataKind::Xml => {
                     Structured::Tree("format-xml", sanain_tools::markup::xml_tree(&text))
                 }
@@ -2748,9 +2763,6 @@ impl Shell {
                 DataKind::Csv | DataKind::Tsv => {
                     let hint = override_delim.or((kind == DataKind::Tsv).then_some('\t'));
                     let d = sanain_tools::csv::detect_delimiter(&text, hint);
-                    let read_only = ed.file().is_some_and(|f| {
-                        std::fs::metadata(&f.path).is_ok_and(|m| m.permissions().readonly())
-                    });
                     Structured::Csv(sanain_tools::csv::parse(&text, d), read_only)
                 }
             };
@@ -2765,6 +2777,7 @@ impl Shell {
         };
         let mut pick = None;
         let mut grid_actions = Vec::new();
+        let mut tree_actions = Vec::new();
         match data {
             Structured::Csv(table, read_only) => {
                 egui::Frame::NONE
@@ -2816,11 +2829,42 @@ impl Shell {
                     &labels,
                 );
             }
-            Structured::Json(Ok(root)) | Structured::Tree(_, Ok(root)) => {
+            Structured::Json(Ok(doc), read_only) => {
                 let more = |n: usize| tr(l10n, "json-more", &[("count", (n as i64).into())]);
-                crate::structured::json(ui, root, p, &more);
+                if *read_only {
+                    egui::Frame::NONE
+                        .fill(p.surface)
+                        .inner_margin(egui::Margin::symmetric(8, 6))
+                        .show(ui, |ui| {
+                            ui.colored_label(p.muted, tr(l10n, "json-read-only", &[]));
+                        });
+                }
+                let labels = crate::structured::TreeLabels {
+                    edit_value: tr(l10n, "json-edit-value", &[]),
+                    rename_key: tr(l10n, "json-rename-key", &[]),
+                    add_after: tr(l10n, "json-add-after", &[]),
+                    add_inside: tr(l10n, "json-add-inside", &[]),
+                    delete: tr(l10n, "json-delete-node", &[]),
+                    invalid_value: tr(l10n, "json-invalid-value", &[]),
+                    duplicate_key: tr(l10n, "json-duplicate-key", &[]),
+                };
+                let state = self.json_trees.entry(id).or_default();
+                tree_actions = crate::structured::json(
+                    ui,
+                    json_tree_id(id),
+                    doc,
+                    p,
+                    !*read_only,
+                    state,
+                    &labels,
+                    &more,
+                );
             }
-            Structured::Json(Err(e)) => {
+            Structured::Tree(_, Ok(root)) => {
+                let more = |n: usize| tr(l10n, "json-more", &[("count", (n as i64).into())]);
+                crate::structured::tree(ui, root, p, &more);
+            }
+            Structured::Json(Err(e), _) => {
                 let msg = tr(
                     l10n,
                     "tools-json-error",
@@ -2854,6 +2898,96 @@ impl Shell {
         for a in grid_actions {
             self.apply_grid_action(id, a);
         }
+        for a in tree_actions {
+            self.apply_tree_action(id, a);
+        }
+    }
+
+    /// Apply a JSON tree change to the tab's text as one undoable edit,
+    /// computed from the tree shown (the cache is for this revision).
+    fn apply_tree_action(&mut self, id: TabId, action: crate::structured::TreeAction) {
+        use crate::structured::{Field, TreeAction};
+        use sanain_tools::json::Kind;
+        let Some((rev, _, Structured::Json(Ok(doc), false))) = self.structured_cache.get(&id)
+        else {
+            return;
+        };
+        let Some(i) = self.ws.position(id) else {
+            return;
+        };
+        if self.ws.tabs()[i].editor.document().revision() != *rev {
+            return;
+        }
+        // The edit, the node to select afterwards and a field to open on it.
+        let (edit, select, open) = match &action {
+            TreeAction::SetValue { path, text } => (
+                doc.find(path)
+                    .and_then(|n| doc.set_value(n, text).ok().flatten()),
+                Some(path.clone()),
+                None,
+            ),
+            TreeAction::RenameKey { path, name } => (
+                doc.find(path)
+                    .and_then(|n| doc.rename_key(n, name).ok().flatten()),
+                Some(path.clone()),
+                None,
+            ),
+            TreeAction::Delete(path) => {
+                let n = doc.find(path);
+                // Select the next sibling, else the previous one, else the parent.
+                let siblings = n
+                    .and_then(|n| doc.items[n].parent)
+                    .map_or(0, |p| doc.items[p].children.len());
+                let mut sel = path.clone();
+                match sel.last_mut() {
+                    Some(k) if *k + 1 < siblings => {}
+                    Some(k) if *k > 0 => *k -= 1,
+                    _ => {
+                        sel.pop();
+                    }
+                }
+                (n.and_then(|n| doc.delete(n)), Some(sel), None)
+            }
+            TreeAction::AddAfter(path) => {
+                let n = doc.find(path);
+                let parent = n.and_then(|n| doc.items[n].parent);
+                let object = parent.is_some_and(|p| doc.items[p].kind == Kind::Object);
+                let key = parent.filter(|_| object).map(|p| doc.unique_key(p, "key"));
+                let mut sel = path.clone();
+                if let Some(k) = sel.last_mut() {
+                    *k += 1;
+                }
+                let field = if object { Field::Key } else { Field::Value };
+                (
+                    n.and_then(|n| doc.add_after(n, key.as_deref(), "null").ok()),
+                    Some(sel.clone()),
+                    Some((sel, field)),
+                )
+            }
+            TreeAction::AddInside(path) => {
+                let n = doc.find(path);
+                let object = n.is_some_and(|n| doc.items[n].kind == Kind::Object);
+                let key = n.filter(|_| object).map(|n| doc.unique_key(n, "key"));
+                let mut sel = path.clone();
+                sel.push(n.map_or(0, |n| doc.items[n].children.len()));
+                let field = if object { Field::Key } else { Field::Value };
+                (
+                    n.and_then(|n| doc.add_child(n, key.as_deref(), "null").ok()),
+                    Some(sel.clone()),
+                    Some((sel, field)),
+                )
+            }
+        };
+        let Some(edit) = edit else {
+            return;
+        };
+        if let Some(tab) = self.ws.tab_mut(i) {
+            tab.editor.replace_range(edit.range, &edit.text);
+        }
+        let state = self.json_trees.entry(id).or_default();
+        state.selected = select;
+        state.selected_field = open.as_ref().map(|(_, f)| *f);
+        state.pending = open;
     }
 
     /// Apply a grid change to the tab's text as one undoable edit, computed
@@ -3664,7 +3798,7 @@ impl Shell {
         let active = self.ws.active().id;
         let editor = self.views.get(&active).and_then(|v| v.widget_id);
         ctx.memory(|m| m.focused())
-            .is_some_and(|f| Some(f) != editor && f != grid_id(active))
+            .is_some_and(|f| Some(f) != editor && f != grid_id(active) && f != json_tree_id(active))
     }
 
     fn dispatch(&mut self, action: MenuAction, ctx: &egui::Context) {
