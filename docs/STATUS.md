@@ -5,14 +5,16 @@ M0 complete except trademark search. M1 feature work largely done; next
 are cross-platform verification and release readiness.
 
 ## Summary for the owner
-- 59 pull requests merged; every one passed CI on Linux, Windows and
+- 74 pull requests merged; every one passed CI on Linux, Windows and
   macOS plus the dependency check (cargo-deny, third-party notices).
-  195 automated tests pass.
+  207 automated tests pass. A fresh-context review of the recent
+  file-handling changes found four bugs, all fixed (#74).
 - Sanain is a usable everyday editor on macOS: tabs and split view,
   multiple cursors, macros, word wrap, find/replace with preview and
   folder search, Markdown preview, data views (JSON/XML/YAML/CSV),
-  comparison, local history, crash recovery, a log viewer for huge
-  files, 18 highlighted languages and 26 UI languages (24 of them
+  comparison, local history, crash recovery, Replace in Files, a log
+  viewer for huge files, unsigned packages for all three platforms,
+  18 highlighted languages and 26 UI languages (24 of them
   unreviewed machine translations).
 - Robustness checked by stress tests: 147 MB file, 2.7 MB single line,
   full disk, missing permissions, random binary data, deeply nested JSON.
@@ -31,7 +33,7 @@ are cross-platform verification and release readiness.
   reopen → bytes verified) passes as an automated test.
 - Checks on this machine (2026-11-26): `cargo fmt --check` clean;
   `cargo clippy --workspace --all-targets --locked -D warnings` clean;
-  `cargo test --workspace --locked` 195 passed, 0 failed; `cargo deny
+  `cargo test --workspace --locked` 207 passed, 0 failed; `cargo deny
   --locked check` clean.
 - Multi-cursor selections and grapheme-aware editing commands.
 - First egui editor window (`cargo run -p sanain-app -- file`). Verified
