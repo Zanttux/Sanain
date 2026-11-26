@@ -2927,6 +2927,31 @@ impl Shell {
                 }
                 return;
             }
+            MenuAction::CompareFile => {
+                let Some(path) = rfd::FileDialog::new().pick_file() else {
+                    return;
+                };
+                let name = path
+                    .file_name()
+                    .map(|n| n.to_string_lossy().into_owned())
+                    .unwrap_or_default();
+                match sanain_io::load(&path) {
+                    Ok(loaded) => self.start_compare(Side::Text {
+                        label: name,
+                        text: loaded.text,
+                    }),
+                    Err(e) => {
+                        self.status = Some((
+                            self.t(
+                                "compare-file-failed",
+                                &[("name", name.into()), ("reason", e.to_string().into())],
+                            ),
+                            true,
+                        ));
+                    }
+                }
+                return;
+            }
             MenuAction::RecordMacro => {
                 if self.editor().is_recording() {
                     self.macro_cmds = self.editor_mut().stop_recording();
