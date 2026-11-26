@@ -5,6 +5,8 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Application icon: Sanain.app (macOS), window and taskbar icon on all
+  platforms, and the Linux desktop entry installed by `--register` (#90).
 - `sanain --register` / `--unregister`: add Sanain to "Open With" for the
   current user — a desktop entry on Linux, Explorer "Edit with Sanain"
   and Open With on Windows (no administrator rights, fully reversible).

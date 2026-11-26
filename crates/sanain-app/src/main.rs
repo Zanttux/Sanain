@@ -140,7 +140,8 @@ fn main() -> eframe::Result {
             .with_title("Sanain")
             .with_app_id("sanain")
             .with_inner_size([960.0, 680.0])
-            .with_min_inner_size([360.0, 240.0]),
+            .with_min_inner_size([360.0, 240.0])
+            .with_icon(app_icon()),
         ..Default::default()
     };
     eframe::run_native(
@@ -220,4 +221,20 @@ fn shell_registration(l10n: &Localizer, register: bool) -> i32 {
             1
         }
     }
+}
+
+/// Window and taskbar icon (packaging/icons, generated from the brand SVG).
+fn app_icon() -> std::sync::Arc<eframe::egui::IconData> {
+    let png = include_bytes!("../../../packaging/icons/sanain-256.png");
+    let icon = image::load_from_memory(png)
+        .map(|i| i.into_rgba8())
+        .map_or_else(
+            |_| eframe::egui::IconData::default(),
+            |rgba| eframe::egui::IconData {
+                width: rgba.width(),
+                height: rgba.height(),
+                rgba: rgba.into_raw(),
+            },
+        );
+    std::sync::Arc::new(icon)
 }

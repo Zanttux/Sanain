@@ -13,7 +13,7 @@ Sanain should look like an established desktop tool built for daily work.
 - Design for long sessions: calm contrast, no motion without purpose.
 
 ## Visual identity
-A dark rounded square with a clean mint S mark; no mascot or borrowed marks. Use assets/brand/icon.svg and wordmark.svg as editable concept masters. Keep clear space of 1/4 icon width; minimum icon 16 px (test simplified mark at 16); no gradients, shadows or stretching. Export platform icons (ICO, ICNS, PNG, Linux SVG) after name approval. Font: system UI for application; system monospace for editor, configurable. Wordmark uses generic sans-serif; convert to paths only after selecting a redistributable font.
+A dark rounded square with a clean mint S mark; no mascot or borrowed marks. Use assets/brand/icon.svg and wordmark.svg as editable concept masters. Keep clear space of 1/4 icon width; minimum icon 16 px (test simplified mark at 16); no gradients, shadows or stretching. Platform icons (ICO, ICNS, PNG) are exported to packaging/icons by scripts/make-icons.sh; done early at the owner's request (2026-11-26, #90) and to be regenerated if the mark changes after name approval. Font: system UI for application; system monospace for editor, configurable. Wordmark uses generic sans-serif; convert to paths only after selecting a redistributable font.
 
 | Token | Light | Dark |
 |---|---|---|

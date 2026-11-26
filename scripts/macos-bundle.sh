@@ -10,6 +10,7 @@ app="target/$profile/Sanain.app"
 rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "target/$profile/sanain" "$app/Contents/MacOS/sanain"
+cp packaging/icons/Sanain.icns "$app/Contents/Resources/Sanain.icns"
 sed "s/@VERSION@/$version/g" packaging/macos/Info.plist > "$app/Contents/Info.plist"
 echo "$app"
 if [ "${2:-}" = --open ]; then
