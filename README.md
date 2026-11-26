@@ -48,7 +48,7 @@ Fast by design. Powerful when needed. Simple by default.
 - **Markdown:** source, split and preview, with tables, task lists,
   coloured code blocks, local images and safe links, plus an Outline
   panel. Nothing in a document runs or loads from the network.
-- **Data files:** syntax highlighting for 18 languages, JSON
+- **Data files:** syntax highlighting for 22 languages, JSON
   validate/format/minify that keeps your numbers and keys as written,
   XML and YAML validation, read-only trees for JSON, XML and YAML
   (entities and aliases are never expanded), a CSV grid, side-by-side

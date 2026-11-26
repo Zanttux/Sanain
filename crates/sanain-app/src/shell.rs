@@ -3506,9 +3506,6 @@ impl Shell {
         ed.file()
             .and_then(|f| Lang::from_path(&f.path))
             .or_else(|| {
-                if Self::is_markdown(ed) {
-                    return None;
-                }
                 let rope = ed.document().rope();
                 let end = rope.len_chars().min(512);
                 Lang::from_content(&rope.slice(..end).to_string())
@@ -4400,9 +4397,6 @@ impl Shell {
                 ui.colored_label(p.muted, self.t(le, &[]));
                 let lang = match self.language(id, editor) {
                     Some(l) => l.name().to_owned(),
-                    None if Self::is_markdown(editor) && current_choice.is_none() => {
-                        "Markdown".to_owned()
-                    }
                     None => plain_l.clone(),
                 };
                 // Click the language to choose another one for this tab.

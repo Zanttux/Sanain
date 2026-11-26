@@ -5,6 +5,16 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased]
 
 ### Added
+- Syntax highlighting for PHP, Lua, PowerShell and Markdown source (22
+  languages in total). PHP files highlight the HTML, JavaScript and CSS
+  around `<?php … ?>`; Markdown source colours headings, emphasis
+  markers, links, inline code, front matter and fenced code blocks in
+  their own language. Detected by extension (`.php`, `.phtml`, `.lua`,
+  `.ps1`, `.psm1`, `.psd1`, `.md`…), by shebang (`php`, `lua`, `pwsh`)
+  or a leading `<?php`; also selectable in the status-bar language menu
+  and recognised as code-fence tags in the Markdown preview. Folding
+  follows the syntax: Markdown heading sections, lists and code fences,
+  Lua blocks (with `end` kept visible), PowerShell and PHP blocks.
 - Split panes can be resized: drag the line between two panes (the
   pointer turns into a resize cursor). A pane keeps at least 120 points
   where the window allows it. Double-click a divider to share that row or

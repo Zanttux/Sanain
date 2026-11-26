@@ -43,6 +43,30 @@ fn foldable(lang: Lang, kind: &str) -> bool {
     if lang == Lang::Yaml && matches!(kind, "block_node" | "block_mapping" | "block_sequence") {
         return false;
     }
+    // PowerShell wraps bodies in nodes that start after the header line
+    // (`statement_list`, `script_block_body`, `hash_literal_body`); only
+    // the constructs that start on their own line fold.
+    if lang == Lang::PowerShell {
+        return matches!(
+            kind,
+            "function_statement"
+                | "class_statement"
+                | "class_method_definition"
+                | "enum_statement"
+                | "statement_block"
+                | "script_block_expression"
+                | "hash_literal_expression"
+                | "array_expression"
+                | "param_block"
+                | "named_block"
+                | "switch_body"
+                | "comment"
+        );
+    }
+    // Markdown folds whole heading sections.
+    if lang == Lang::Markdown && kind == "section" {
+        return true;
+    }
     FOLDABLE.iter().any(|k| kind.contains(k))
 }
 
@@ -78,9 +102,9 @@ fn collect(lang: Lang, root: Node<'_>, source: &[u8]) -> Vec<Range<usize>> {
         } else {
             end.row
         };
-        // A Python block starts at its first statement; fold from the
-        // header line (`def f():`, `if x:`, `else:`) instead.
-        let first = if lang == Lang::Python && node.kind() == "block" {
+        // A Python or Lua block starts at its first statement; fold from
+        // the header line (`def f():`, `if x then`, `else`) instead.
+        let first = if matches!(lang, Lang::Python | Lang::Lua) && node.kind() == "block" {
             node.parent().map_or(start.row, |p| p.start_position().row)
         } else {
             start.row
@@ -92,7 +116,8 @@ fn collect(lang: Lang, root: Node<'_>, source: &[u8]) -> Vec<Range<usize>> {
                 let t = trimmed(last);
                 matches!(t.first(), Some(b'}' | b']' | b')'))
                     || t.starts_with(b"</")
-                    || (lang == Lang::Ruby
+                    || (lang == Lang::Markdown && (t.starts_with(b"```") || t.starts_with(b"~~~")))
+                    || (matches!(lang, Lang::Ruby | Lang::Lua)
                         && t.starts_with(b"end")
                         && !t
                             .get(3)
@@ -251,6 +276,76 @@ return 1;
         assert_eq!(folds(Lang::C, c), vec![0..4]);
         let yaml = "a:\n  b: 1\n  c:\n    - 1\n    - 2\nd: 2\n";
         assert_eq!(folds(Lang::Yaml, yaml), vec![0..5, 2..5]);
+    }
+
+    #[test]
+    fn lua_blocks_fold_from_the_header_and_keep_end_visible() {
+        let src = "\
+local t = {
+  a = 1,
+}
+function f(x)
+  if x then
+    return 1
+  end
+  return 2
+end
+";
+        assert_eq!(folds(Lang::Lua, src), vec![0..2, 3..8, 4..6]);
+    }
+
+    #[test]
+    fn powershell_function_folds_on_its_name_line() {
+        let src = "\
+function Get-X {
+  param($a)
+  $h = @{
+    k = 1
+    j = 2
+  }
+  if ($a) {
+    $h = @{
+      k = 1
+    }
+  }
+}
+";
+        // Not on `$h = @{`'s next line (the hash body) nor on the first
+        // statement of the function body.
+        assert_eq!(folds(Lang::PowerShell, src), vec![0..11, 2..5, 6..10, 7..9]);
+    }
+
+    #[test]
+    fn php_classes_functions_and_arrays() {
+        let src = "<?php\nclass A {\n  function f() {\n    return [\n      1,\n    ];\n  }\n}\n";
+        assert_eq!(folds(Lang::Php, src), vec![1..7, 2..6, 3..5]);
+    }
+
+    #[test]
+    fn markdown_sections_lists_and_fences() {
+        let src = "\
+# A
+
+text
+
+## B
+
+- x
+- y
+
+```rust
+fn f() {}
+```
+
+# C
+end
+";
+        // Sections hide through their last line; blank lines before the
+        // next heading stay visible, and so does a closing fence.
+        assert_eq!(
+            folds(Lang::Markdown, src),
+            vec![0..12, 4..12, 6..8, 9..11, 13..15]
+        );
     }
 
     #[test]
