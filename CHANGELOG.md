@@ -5,6 +5,8 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Markdown preview: fenced code blocks are coloured by language
+  (` ```rust `, ` ```py `, …) using the same highlighting as the editor.
 - Packaging script and workflow: unsigned archives for Linux, Windows and
   macOS (Sanain.app) with license, notices and checksums. Nothing is
   published automatically.

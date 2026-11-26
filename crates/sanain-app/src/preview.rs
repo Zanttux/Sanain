@@ -110,7 +110,7 @@ fn block(ui: &mut egui::Ui, b: &Block, st: &Style<'_>, depth: usize, ev: &mut Op
                         .italics(),
                 );
             }
-            code_frame(ui, code.trim_end_matches('\n'), st);
+            code_frame_lang(ui, code.trim_end_matches('\n'), lang, st);
         }
         BlockKind::Quote(children) => {
             let r = egui::Frame::NONE
@@ -280,7 +280,101 @@ fn image(ui: &mut egui::Ui, url: &str, alt: &str, st: &Style<'_>) {
     }
 }
 
-fn code_frame(ui: &mut egui::Ui, code: &str, st: &Style<'_>) {
+/// Code blocks up to this size get syntax colours.
+const HIGHLIGHT_MAX: usize = 64 * 1024;
+
+/// Highlight spans per (language, code hash).
+type SpanCache = std::collections::HashMap<
+    (sanain_language::Lang, u64),
+    std::rc::Rc<Vec<sanain_language::Span>>,
+>;
+
+thread_local! {
+    static HIGHLIGHTER: std::cell::RefCell<sanain_language::Highlighter> =
+        std::cell::RefCell::new(sanain_language::Highlighter::new());
+    /// Spans per (language, code hash), so a block is parsed once, not per
+    /// frame. Cleared when it grows past a few hundred blocks.
+    static SPANS: std::cell::RefCell<SpanCache> =
+        std::cell::RefCell::new(std::collections::HashMap::new());
+}
+
+fn spans_for(lang: sanain_language::Lang, code: &str) -> std::rc::Rc<Vec<sanain_language::Span>> {
+    use std::hash::{Hash, Hasher};
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    code.hash(&mut h);
+    let key = (lang, h.finish());
+    if let Some(s) = SPANS.with(|c| c.borrow().get(&key).cloned()) {
+        return s;
+    }
+    let spans = std::rc::Rc::new(
+        HIGHLIGHTER
+            .with(|hl| hl.borrow_mut().highlight(lang, code.as_bytes(), None))
+            .unwrap_or_default(),
+    );
+    SPANS.with(|c| {
+        let mut c = c.borrow_mut();
+        if c.len() > 512 {
+            c.clear();
+        }
+        c.insert(key, spans.clone());
+    });
+    spans
+}
+
+/// Colour `code` as `lang`: plain text between spans, palette colours on them.
+pub fn highlighted_job(
+    code: &str,
+    spans: &[sanain_language::Span],
+    font: FontId,
+    p: &Palette,
+) -> LayoutJob {
+    let mut job = LayoutJob::default();
+    let fmt = |color| TextFormat {
+        font_id: font.clone(),
+        color,
+        ..Default::default()
+    };
+    let mut at = 0;
+    for s in spans {
+        let (start, end) = (s.range.start.min(code.len()), s.range.end.min(code.len()));
+        if start < at || !code.is_char_boundary(start) || !code.is_char_boundary(end) {
+            continue;
+        }
+        if start > at {
+            job.append(&code[at..start], 0.0, fmt(p.text));
+        }
+        job.append(
+            &code[start..end],
+            0.0,
+            fmt(crate::theme::syntax(p, s.style)),
+        );
+        at = end;
+    }
+    if at < code.len() {
+        job.append(&code[at..], 0.0, fmt(p.text));
+    }
+    job
+}
+
+/// A code block, coloured when the fence names a known language.
+fn code_frame_lang(ui: &mut egui::Ui, code: &str, lang: &str, st: &Style<'_>) {
+    let Some(l) = sanain_language::Lang::from_fence(lang).filter(|_| code.len() <= HIGHLIGHT_MAX)
+    else {
+        return code_frame(ui, code, st);
+    };
+    let spans = spans_for(l, code);
+    let job = highlighted_job(code, &spans, FontId::monospace(st.size * 0.92), st.p);
+    code_box(
+        ui,
+        code.len(),
+        |ui| {
+            ui.add(egui::Label::new(job).wrap_mode(egui::TextWrapMode::Extend));
+        },
+        st,
+    );
+}
+
+fn code_box(ui: &mut egui::Ui, salt: usize, add: impl FnOnce(&mut egui::Ui), st: &Style<'_>) {
     egui::Frame::NONE
         .fill(st.p.surface)
         .stroke(Stroke::new(1.0, st.p.border))
@@ -288,19 +382,22 @@ fn code_frame(ui: &mut egui::Ui, code: &str, st: &Style<'_>) {
         .inner_margin(egui::Margin::same(8))
         .show(ui, |ui| {
             ui.set_width(ui.available_width());
-            egui::ScrollArea::horizontal()
-                .id_salt(code.len())
-                .show(ui, |ui| {
-                    ui.add(
-                        egui::Label::new(
-                            RichText::new(code)
-                                .font(FontId::monospace(st.size * 0.92))
-                                .color(st.p.text),
-                        )
-                        .wrap_mode(egui::TextWrapMode::Extend),
-                    );
-                });
+            egui::ScrollArea::horizontal().id_salt(salt).show(ui, add);
         });
+}
+
+fn code_frame(ui: &mut egui::Ui, code: &str, st: &Style<'_>) {
+    let text = RichText::new(code)
+        .font(FontId::monospace(st.size * 0.92))
+        .color(st.p.text);
+    code_box(
+        ui,
+        code.len(),
+        |ui| {
+            ui.add(egui::Label::new(text).wrap_mode(egui::TextWrapMode::Extend));
+        },
+        st,
+    );
 }
 
 /// Lay out inline content as one wrapped text job, collecting link spans.
@@ -407,6 +504,19 @@ fn body(p: &Palette) -> Color32 {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn code_block_colours() {
+        let p = crate::theme::DARK;
+        let code = "fn main() { let s = \"ä\"; }";
+        let spans = super::spans_for(sanain_language::Lang::Rust, code);
+        assert!(!spans.is_empty());
+        let job = super::highlighted_job(code, &spans, super::FontId::monospace(12.0), &p);
+        assert_eq!(job.text, code, "text unchanged");
+        let colours: std::collections::HashSet<_> =
+            job.sections.iter().map(|s| s.format.color).collect();
+        assert!(colours.len() >= 3, "keyword, string and plain text differ");
+    }
     #[test]
     fn heading_slugs() {
         assert_eq!(super::slug("Getting Started!"), "getting-started");
