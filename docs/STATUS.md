@@ -57,8 +57,9 @@ Known M1 limits: native menus only on macOS (Windows/Linux use in-window
 menus); running the bare binary on macOS shows "sanain" in the menu bar,
 use `scripts/macos-bundle.sh` for the proper app name;
 word wrap only for documents up to 1 M characters (full rebuild per
-edit); every visible line
-is re-laid out each frame (very long lines will be slow); dialog button
+edit); visible lines are laid
+out each frame (egui caches identical layouts; unwrapped lines over 4 096
+characters are laid out only around the visible columns); dialog button
 order follows macOS on all platforms; IME composition and VoiceOver
 reading of document text not yet verified by a person.
 

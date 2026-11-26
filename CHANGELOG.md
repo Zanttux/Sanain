@@ -198,6 +198,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   or when changes are discarded.
 
 ### Fixed
+- Opening a file with a very long line (such as a multi-megabyte minified
+  JSON file) crashed Sanain when word wrap was off or the file was too
+  large to wrap: the GPU vertex buffer exceeded its limit. Long lines are
+  now laid out only around the visible columns.
 - With the native macOS menu, Cmd+A, Cmd+Z and clipboard shortcuts in
   the find bar or other text fields now act on that field, not on the
   document.
