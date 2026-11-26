@@ -415,3 +415,5 @@ settings-font-loading = 正在尋找已安裝的字體…
 settings-font-missing = 找不到字體 { $font }，改用內建字體。
 settings-theme-more = 更多主題
 settings-theme-user-note = 自訂主題：{ $folder } 資料夾中的 .theme 檔案（請參閱 docs/THEMES.md）。
+language-auto = 自動偵測
+language-choose = 選擇此分頁的語言

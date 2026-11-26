@@ -415,3 +415,5 @@ settings-font-loading = インストール済みのフォントを検索して�
 settings-font-missing = フォント { $font } が見つかりません。内蔵フォントを使用します。
 settings-theme-more = その他のテーマ
 settings-theme-user-note = 独自のテーマ: フォルダ { $folder } 内の .theme ファイル（docs/THEMES.md を参照）。
+language-auto = 自動検出
+language-choose = このタブの言語を選択

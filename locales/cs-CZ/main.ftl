@@ -487,3 +487,5 @@ settings-font-loading = Hledání nainstalovaných písem…
 settings-font-missing = Písmo { $font } nebylo nalezeno; používá se vestavěné písmo.
 settings-theme-more = Další motivy
 settings-theme-user-note = Vlastní motivy: soubory .theme ve složce { $folder } (viz docs/THEMES.md).
+language-auto = Rozpoznat automaticky
+language-choose = Vyberte jazyk této karty

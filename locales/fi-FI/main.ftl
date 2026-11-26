@@ -442,3 +442,5 @@ settings-font-loading = Haetaan asennettuja fontteja…
 settings-font-missing = Fonttia { $font } ei löytynyt; käytetään sisäänrakennettua fonttia.
 settings-theme-more = Lisää teemoja
 settings-theme-user-note = Omat teemat: .theme-tiedostot kansiossa { $folder } (ks. docs/THEMES.md).
+language-auto = Tunnista automaattisesti
+language-choose = Valitse tämän välilehden kieli

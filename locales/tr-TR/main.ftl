@@ -439,3 +439,5 @@ settings-font-loading = Yüklü yazı tipleri aranıyor…
 settings-font-missing = { $font } yazı tipi bulunamadı; yerleşik yazı tipi kullanılıyor.
 settings-theme-more = Diğer temalar
 settings-theme-user-note = Kendi temalarınız: { $folder } klasöründeki .theme dosyaları (bkz. docs/THEMES.md).
+language-auto = Otomatik Algıla
+language-choose = Bu sekmenin dilini seçin

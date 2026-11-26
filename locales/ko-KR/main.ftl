@@ -415,3 +415,5 @@ settings-font-loading = 설치된 글꼴을 찾는 중…
 settings-font-missing = { $font } 글꼴을 찾을 수 없어 내장 글꼴을 사용합니다.
 settings-theme-more = 테마 더 보기
 settings-theme-user-note = 사용자 테마: { $folder } 폴더의 .theme 파일 (docs/THEMES.md 참조)
+language-auto = 자동 감지
+language-choose = 이 탭의 언어 선택

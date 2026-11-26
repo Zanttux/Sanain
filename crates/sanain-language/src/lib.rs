@@ -90,6 +90,37 @@ impl Lang {
         })
     }
 
+    /// Detect from the start of a file whose name says nothing: a shebang
+    /// (`#!/usr/bin/env python3`, `#!/bin/bash`), an XML declaration or an
+    /// HTML doctype. `head` is the first few hundred characters.
+    pub fn from_content(head: &str) -> Option<Self> {
+        let head = head.trim_start_matches('\u{feff}');
+        let first = head.lines().next().unwrap_or("").trim();
+        if let Some(cmd) = first.strip_prefix("#!") {
+            let mut words = cmd.split_whitespace();
+            let mut prog = words.next()?.rsplit('/').next()?;
+            if prog == "env" {
+                prog = words.find(|w| !w.starts_with('-'))?;
+            }
+            let prog = prog.trim_end_matches(|c: char| c.is_ascii_digit() || c == '.');
+            return Some(match prog {
+                "sh" | "bash" | "zsh" | "dash" | "ksh" | "ash" => Lang::Bash,
+                "python" | "pypy" => Lang::Python,
+                "node" | "nodejs" | "deno" | "bun" => Lang::JavaScript,
+                "ruby" | "jruby" => Lang::Ruby,
+                _ => return None,
+            });
+        }
+        let lower = first.to_ascii_lowercase();
+        if lower.starts_with("<?xml") {
+            return Some(Lang::Xml);
+        }
+        if lower.starts_with("<!doctype html") || lower.starts_with("<html") {
+            return Some(Lang::Html);
+        }
+        None
+    }
+
     /// Detect from a Markdown code fence info string (` ```rust `). Only the
     /// first word counts; names and common aliases are accepted.
     pub fn from_fence(info: &str) -> Option<Self> {
@@ -444,6 +475,33 @@ fn map_err(e: tree_sitter_highlight::Error) -> HighlightError {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn content_detection() {
+        assert_eq!(Lang::from_content("#!/bin/bash\necho"), Some(Lang::Bash));
+        assert_eq!(
+            Lang::from_content("#!/usr/bin/env python3\n"),
+            Some(Lang::Python)
+        );
+        assert_eq!(
+            Lang::from_content("#!/usr/bin/env -S node --flag\n"),
+            Some(Lang::JavaScript)
+        );
+        assert_eq!(
+            Lang::from_content("#!/usr/local/bin/ruby2.7"),
+            Some(Lang::Ruby)
+        );
+        assert_eq!(Lang::from_content("#!/usr/bin/perl"), None);
+        assert_eq!(
+            Lang::from_content("\u{feff}<?xml version=\"1.0\"?>"),
+            Some(Lang::Xml)
+        );
+        assert_eq!(
+            Lang::from_content("<!DOCTYPE html>\n<html>"),
+            Some(Lang::Html)
+        );
+        assert_eq!(Lang::from_content("hello"), None);
+    }
 
     #[test]
     fn fence_tags() {

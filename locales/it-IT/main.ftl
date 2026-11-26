@@ -439,3 +439,5 @@ settings-font-loading = Ricerca dei caratteri installati…
 settings-font-missing = Il carattere { $font } non è stato trovato; viene usato il carattere integrato.
 settings-theme-more = Altri temi
 settings-theme-user-note = Temi personali: file .theme nella cartella { $folder } (vedi docs/THEMES.md).
+language-auto = Rileva automaticamente
+language-choose = Scegli il linguaggio di questa scheda

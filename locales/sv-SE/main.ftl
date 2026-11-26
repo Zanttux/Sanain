@@ -439,3 +439,5 @@ settings-font-loading = Söker efter installerade teckensnitt…
 settings-font-missing = Teckensnittet { $font } hittades inte; det inbyggda teckensnittet används.
 settings-theme-more = Fler teman
 settings-theme-user-note = Egna teman: .theme-filer i mappen { $folder } (se docs/THEMES.md).
+language-auto = Identifiera automatiskt
+language-choose = Välj språk för den här fliken

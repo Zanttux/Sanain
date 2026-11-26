@@ -439,3 +439,5 @@ settings-font-loading = Søker etter installerte skrifttyper…
 settings-font-missing = Fant ikke skrifttypen { $font }; bruker den innebygde skrifttypen.
 settings-theme-more = Flere temaer
 settings-theme-user-note = Egne temaer: .theme-filer i { $folder } (se docs/THEMES.md).
+language-auto = Oppdag automatisk
+language-choose = Velg språket for denne fanen

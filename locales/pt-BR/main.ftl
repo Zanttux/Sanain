@@ -463,3 +463,5 @@ settings-font-loading = Procurando fontes instaladas…
 settings-font-missing = A fonte { $font } não foi encontrada; usando a fonte integrada.
 settings-theme-more = Mais temas
 settings-theme-user-note = Seus próprios temas: arquivos .theme na pasta { $folder } (consulte docs/THEMES.md).
+language-auto = Detectar automaticamente
+language-choose = Escolher a linguagem desta aba
