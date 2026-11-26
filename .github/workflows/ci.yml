@@ -30,6 +30,47 @@ jobs:
       - run: cargo fmt --all -- --check
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - run: cargo test --workspace --locked
+      # Disk-full drill (crates/sanain-app/tests/disk_full.rs) on a real
+      # tiny filesystem; the test fills it itself. Built-in tools only.
+      - name: disk-full drill (1 MiB tmpfs)
+        if: runner.os == 'Linux'
+        run: |
+          sudo mkdir -p /mnt/sanain-full
+          sudo mount -t tmpfs -o size=1m tmpfs /mnt/sanain-full
+          sudo chown "$(id -u):$(id -g)" /mnt/sanain-full
+          SANAIN_FULL_DIR=/mnt/sanain-full cargo test -p sanain-app --test disk_full --locked -- --nocapture
+          sudo umount /mnt/sanain-full
+      - name: disk-full drill (2 MiB HFS+ image)
+        if: runner.os == 'macOS'
+        run: |
+          img="$RUNNER_TEMP/sanain-full.dmg"
+          mnt="$RUNNER_TEMP/sanain-full"
+          for i in 1 2 3; do
+            hdiutil create -size 2m -fs HFS+ -volname SanainFull -layout NONE -ov "$img" && break
+            sleep 5
+          done
+          hdiutil attach -nobrowse -mountpoint "$mnt" "$img"
+          SANAIN_FULL_DIR="$mnt" cargo test -p sanain-app --test disk_full --locked -- --nocapture
+          hdiutil detach "$mnt"
+      - name: disk-full drill (8 MiB NTFS VHD)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vhd = Join-Path $env:RUNNER_TEMP 'sanain-full.vhdx'
+          $script = Join-Path $env:RUNNER_TEMP 'sanain-full.diskpart'
+          @(
+            "create vdisk file=`"$vhd`" maximum=8 type=fixed",
+            "select vdisk file=`"$vhd`"",
+            'attach vdisk',
+            'create partition primary',
+            'format fs=ntfs quick label=SanainFull',
+            'assign letter=S'
+          ) | Set-Content -Encoding ascii $script
+          diskpart /s $script
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:SANAIN_FULL_DIR = 'S:\'
+          cargo test -p sanain-app --test disk_full --locked -- --nocapture
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
   # Dependency licenses, RustSec advisories and sources (deny.toml).
   deny:

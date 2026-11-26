@@ -64,6 +64,21 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   straight away. Editing is off for read-only files; documents the
   validator rejects show the error instead of a tree.
 
+### Fixed
+- Saving a hard-linked file (saved in place on Linux and macOS) on a
+  full disk no longer leaves the file truncated: the old contents and
+  modification time are written back, the temporary backup is removed
+  and the error says the disk is full. Only if that also fails does the
+  backup stay, and the error then names it.
+- Saving macros over a file from a newer version no longer leaves a
+  half-written `macros.N.bak` when the disk fills up; the backup is
+  written through a temporary file.
+
+### Changed
+- Automated disk-full drill (`SANAIN_FULL_DIR`) for saves, recovery
+  snapshots, settings, session and macros, run in CI on a tiny
+  filesystem on Linux, macOS and Windows.
+
 ## [0.2.0] — 2026-11-26
 
 Milestone M2 (tabs, sessions, recovery, search): crash and conflict tests
