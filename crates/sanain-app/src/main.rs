@@ -1,4 +1,11 @@
 //! Sanain desktop entry point.
+//!
+//! Release builds on Windows use the GUI subsystem, so starting Sanain does
+//! not open a console window. Command-line output (`--help`, `--version`,
+//! `--register`) is then not shown in a console on Windows release builds;
+//! debug builds keep the console for development.
+
+#![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
 mod diffview;
 mod find;
