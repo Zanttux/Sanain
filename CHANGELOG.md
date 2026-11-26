@@ -261,6 +261,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   or when changes are discarded.
 
 ### Fixed
+- Windows: the window flickered and lagged while being moved; Sanain now
+  draws with OpenGL on Windows (`SANAIN_RENDERER=wgpu` restores the
+  previous renderer) (#95).
 - Windows: starting Sanain no longer opens an extra console window
   (release builds use the GUI subsystem).
 - macOS: the menu bar showed "sanain" (the file name) when the program
