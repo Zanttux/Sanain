@@ -5,6 +5,8 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Embedded languages are highlighted: JavaScript and CSS inside HTML
+  `<script>`/`<style>`, and CSS/HTML in tagged JavaScript templates (#101).
 - Language detection from the first line when the file name says nothing
   (shebangs for shell, Python, Node, Ruby; XML declaration; HTML
   doctype), and a status-bar menu to choose the language of a tab by
