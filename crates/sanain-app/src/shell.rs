@@ -157,6 +157,28 @@ enum MdMode {
     Preview,
 }
 
+/// What an editor pane shows for its tab.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PaneContent {
+    Editor,
+    Preview,
+    EditorAndPreview,
+    Structured,
+}
+
+/// The content of a pane: the structured view when it is on for a data
+/// file, else the Markdown mode (`md` is `None` for other files).
+fn pane_content(structured: bool, md: Option<MdMode>) -> PaneContent {
+    if structured {
+        return PaneContent::Structured;
+    }
+    match md {
+        Some(MdMode::Preview) => PaneContent::Preview,
+        Some(MdMode::Split) => PaneContent::EditorAndPreview,
+        Some(MdMode::Source) | None => PaneContent::Editor,
+    }
+}
+
 /// What to do once a tab's unsaved changes are resolved.
 #[derive(Debug, Clone, Copy)]
 enum Then {
@@ -270,8 +292,8 @@ pub struct Shell {
     compare_pick: bool,
     md_modes: HashMap<TabId, MdMode>,
     md_cache: HashMap<TabId, (Revision, std::sync::Arc<Vec<sanain_markdown::Block>>)>,
-    /// Caret line the preview was last scrolled to, per tab.
-    md_synced: HashMap<TabId, usize>,
+    /// Caret line the preview was last scrolled to, per tab and pane.
+    md_synced: HashMap<(TabId, usize), usize>,
     /// Heading anchor to scroll the preview to, per tab.
     md_anchor: HashMap<TabId, String>,
     images: std::cell::RefCell<crate::imagecache::ImageCache>,
@@ -744,7 +766,7 @@ impl Shell {
                     self.requested.remove(&id);
                     self.md_cache.remove(&id);
                     self.md_modes.remove(&id);
-                    self.md_synced.remove(&id);
+                    self.md_synced.retain(|(t, _), _| *t != id);
                     self.md_anchor.remove(&id);
                     self.structured.remove(&id);
                     self.structured_cache.remove(&id);
@@ -2522,20 +2544,23 @@ impl Shell {
         true
     }
 
-    fn structured_area(&mut self, ui: &mut egui::Ui) -> bool {
-        let id = self.ws.active().id;
-        let Some(kind) = Self::data_kind(self.editor()).filter(|_| self.structured.contains(&id))
-        else {
-            return false;
+    /// The tree or grid view of a data tab.
+    fn structured_area(&mut self, ui: &mut egui::Ui, id: TabId) {
+        let Some(i) = self.ws.position(id) else {
+            return;
         };
-        let rev = self.editor().document().revision();
+        let ed = &self.ws.tabs()[i].editor;
+        let Some(kind) = Self::data_kind(ed) else {
+            return;
+        };
+        let rev = ed.document().revision();
         let override_delim = self.csv_delimiter.get(&id).copied();
         let fresh = self
             .structured_cache
             .get(&id)
             .is_some_and(|(r, d, _)| *r == rev && *d == override_delim);
         if !fresh {
-            let text = self.editor().document().text();
+            let text = self.ws.tabs()[i].editor.document().text();
             let data = match kind {
                 DataKind::Json => Structured::Json(sanain_tools::json::tree(&text)),
                 DataKind::Xml => {
@@ -2557,7 +2582,7 @@ impl Shell {
         let size = self.settings.font_size;
         let l10n = &self.l10n;
         let Some((_, _, data)) = self.structured_cache.get(&id) else {
-            return false;
+            return;
         };
         let mut pick = None;
         match data {
@@ -2626,7 +2651,6 @@ impl Shell {
         if let Some(c) = pick {
             self.csv_delimiter.insert(id, c);
         }
-        true
     }
 
     /// Show two open files side by side (`sanain --diff LEFT RIGHT`). Does
@@ -2871,14 +2895,52 @@ impl Shell {
             })
     }
 
-    fn md_mode(&self) -> MdMode {
-        if Self::is_markdown(self.editor()) {
-            self.md_modes
-                .get(&self.ws.active().id)
-                .copied()
-                .unwrap_or(MdMode::Source)
-        } else {
-            MdMode::Source
+    /// What a pane showing this tab draws, the same in either pane.
+    fn pane_mode(&self, id: TabId) -> PaneContent {
+        let Some(i) = self.ws.position(id) else {
+            return PaneContent::Editor;
+        };
+        let ed = &self.ws.tabs()[i].editor;
+        let structured = Self::data_kind(ed).is_some() && self.structured.contains(&id);
+        let md = Self::is_markdown(ed)
+            .then(|| self.md_modes.get(&id).copied().unwrap_or(MdMode::Source));
+        pane_content(structured, md)
+    }
+
+    /// The content of one pane (0 in a single area, 0 or 1 in a split).
+    /// Returns whether its editor was interacted with.
+    fn pane_area(&mut self, ui: &mut egui::Ui, id: TabId, pane: usize) -> bool {
+        match self.pane_mode(id) {
+            PaneContent::Editor => self.editor_area(ui, id, pane),
+            PaneContent::Preview => {
+                self.preview_area(ui, id, pane);
+                false
+            }
+            PaneContent::EditorAndPreview => {
+                let mut touched = false;
+                ui.columns(2, |cols| {
+                    touched = self.editor_area(&mut cols[0], id, pane);
+                    self.preview_area(&mut cols[1], id, pane);
+                });
+                touched
+            }
+            PaneContent::Structured => {
+                self.structured_area(ui, id);
+                false
+            }
+        }
+    }
+
+    /// Give a split pane focus and make its tab active. Does nothing
+    /// without a split.
+    fn focus_pane(&mut self, pane: usize) {
+        if let Some((panes, focus)) = &mut self.split
+            && *focus != pane
+        {
+            *focus = pane;
+            if let Some(i) = self.ws.position(panes[pane]) {
+                self.ws.activate(i);
+            }
         }
     }
 
@@ -2897,95 +2959,75 @@ impl Shell {
         }
     }
 
-    /// Two editors side by side. Interacting with a pane makes its tab
-    /// active, so menus and shortcuts act on it.
+    /// Two panes side by side, each showing its tab as the single area
+    /// would. Interacting with a pane makes its tab active, so menus and
+    /// shortcuts act on it.
     fn split_area(&mut self, ui: &mut egui::Ui) -> bool {
         self.sync_split();
         let Some((panes, focus)) = self.split else {
             return false;
         };
-        let name = self.t("editor-accessible-name", &[]);
-        let interactive = self.dialog.is_none();
-        let pane_opts = panes.map(|id| {
-            let (indent, tab_width) = self.tab_indent(id);
-            ViewOptions {
-                font_size: self.settings.font_size,
-                indent,
-                tab_width,
-                wrap: self.settings.word_wrap,
-                menu: self.context_labels(),
-            }
-        });
         let p = theme::palette(ui.ctx());
         let mut touched = None;
         ui.columns(2, |cols| {
             for (pane, ui) in cols.iter_mut().enumerate() {
                 let id = panes[pane];
-                let Some(i) = self.ws.position(id) else {
+                if self.ws.position(id).is_none() {
                     continue;
-                };
-                let view = if pane == 0 {
-                    self.views.entry(id).or_default()
-                } else {
-                    self.right_views.entry(id).or_default()
-                };
-                let highlights: &[std::ops::Range<usize>] =
-                    if self.find.open && i == self.ws.active_index() {
-                        &self.find.matches.ranges
-                    } else {
-                        &[]
-                    };
-                let syntax: &[CharSpan] = self.spans.get(&id).map_or(&[], |(_, s)| s);
-                let Some(tab) = self.ws.tab_mut(i) else {
-                    continue;
-                };
-                let editor = &mut tab.editor;
+                }
+                let rect = ui.max_rect();
+                // A click anywhere in the pane (preview, tree) focuses it.
+                let pressed =
+                    ui.input(|i| i.pointer.any_pressed()) && ui.rect_contains_pointer(rect);
+                let used = ui
+                    .push_id((id, pane), |ui| self.pane_area(ui, id, pane))
+                    .inner;
+                // Drawn after the content so a filled preview cannot hide it.
                 if pane == focus {
-                    let r = ui.max_rect();
                     ui.painter().hline(
-                        r.x_range(),
-                        r.top() + 1.0,
+                        rect.x_range(),
+                        rect.top() + 1.0,
                         egui::Stroke::new(2.0, p.accent),
                     );
                 }
                 if pane == 1 {
                     ui.painter().vline(
-                        ui.max_rect().left() - 4.0,
-                        ui.max_rect().y_range(),
+                        rect.left() - 4.0,
+                        rect.y_range(),
                         egui::Stroke::new(1.0, p.border),
                     );
                 }
-                ui.push_id((id, pane), |ui| {
-                    ui.add_enabled_ui(interactive, |ui| {
-                        if view.show(ui, editor, &name, highlights, syntax, &pane_opts[pane]) {
-                            touched = Some(pane);
-                        }
-                    });
-                });
+                if used || (pressed && self.dialog.is_none()) {
+                    touched = Some(pane);
+                }
             }
         });
         if let Some(pane) = touched {
             self.status = None;
-            if let Some((panes, focus)) = &mut self.split
-                && *focus != pane
-            {
-                *focus = pane;
-                if let Some(i) = self.ws.position(panes[pane]) {
-                    self.ws.activate(i);
-                }
-            }
+            self.focus_pane(pane);
         }
         true
     }
 
-    fn editor_area(&mut self, ui: &mut egui::Ui) {
+    /// The text editor of a pane. Returns whether it was interacted with.
+    fn editor_area(&mut self, ui: &mut egui::Ui, id: TabId, pane: usize) -> bool {
         let name = self.t("editor-accessible-name", &[]);
         let menu = self.context_labels();
         let interactive = self.dialog.is_none();
-        let id = self.ws.active().id;
         let (indent, tab_width) = self.tab_indent(id);
-        let view = self.views.entry(id).or_default();
-        let editor = &mut self.ws.active_mut().editor;
+        let active = id == self.ws.active().id;
+        let Some(i) = self.ws.position(id) else {
+            return false;
+        };
+        let view = if pane == 1 {
+            self.right_views.entry(id).or_default()
+        } else {
+            self.views.entry(id).or_default()
+        };
+        let Some(tab) = self.ws.tab_mut(i) else {
+            return false;
+        };
+        let editor = &mut tab.editor;
         // Spans from an older revision are kept until fresh ones arrive;
         // a frame of slightly shifted colour beats flicker.
         let syntax: &[CharSpan] = self.spans.get(&id).map_or(&[], |(_, s)| s);
@@ -2996,23 +3038,30 @@ impl Shell {
             wrap: self.settings.word_wrap,
             menu,
         };
-        let highlights: &[std::ops::Range<usize>] = if self.find.open {
+        let highlights: &[std::ops::Range<usize>] = if self.find.open && active {
             &self.find.matches.ranges
         } else {
             &[]
         };
+        let mut touched = false;
         ui.push_id(id, |ui| {
             ui.add_enabled_ui(interactive, |ui| {
-                if view.show(ui, editor, &name, highlights, syntax, &opts) {
-                    self.status = None;
-                }
+                touched = view.show(ui, editor, &name, highlights, syntax, &opts);
             });
         });
+        if touched {
+            self.status = None;
+        }
+        touched
     }
 
-    fn preview_area(&mut self, ui: &mut egui::Ui) {
-        let tab = self.ws.active();
-        let (id, rev) = (tab.id, tab.editor.document().revision());
+    /// The Markdown preview of a pane's tab, following that tab's caret.
+    fn preview_area(&mut self, ui: &mut egui::Ui, id: TabId, pane: usize) {
+        let Some(i) = self.ws.position(id) else {
+            return;
+        };
+        let tab = &self.ws.tabs()[i];
+        let rev = tab.editor.document().revision();
         let doc = tab.editor.document();
         let p = theme::palette(ui.ctx());
         if doc.rope().len_bytes() > preview::MAX_PREVIEW_BYTES {
@@ -3028,18 +3077,23 @@ impl Shell {
             return;
         };
         let blocks = blocks.clone();
-        let head = self.editor().selections().primary().head;
-        let caret_line =
-            sanain_core::selection::line_col(self.editor().document().rope(), head).0 + 1;
-        let scroll = self.md_synced.get(&id) != Some(&caret_line);
-        // An anchor click scrolls once, on the next frame.
-        let anchor = self.md_anchor.remove(&id);
+        let ed = &self.ws.tabs()[i].editor;
+        let head = ed.selections().primary().head;
+        let caret_line = sanain_core::selection::line_col(ed.document().rope(), head).0 + 1;
+        let scroll = self.md_synced.get(&(id, pane)) != Some(&caret_line);
+        // An anchor click scrolls once, on the next frame, in the focused
+        // pane (the one clicked).
+        let focused = self.split.is_none_or(|(_, f)| f == pane);
+        let anchor = if focused {
+            self.md_anchor.remove(&id)
+        } else {
+            None
+        };
         let mut event = None;
-        self.md_synced.insert(id, caret_line);
+        self.md_synced.insert((id, pane), caret_line);
         let l10n = &self.l10n;
         let untranslated = |key: &str| tr(l10n, key, &[]);
-        let doc_dir = self
-            .editor()
+        let doc_dir = ed
             .file()
             .and_then(|f| f.path.parent().map(std::path::Path::to_path_buf));
         let ctx = ui.ctx().clone();
@@ -3087,6 +3141,10 @@ impl Shell {
                         );
                     });
             });
+        if event.is_some() {
+            // Links resolve against the active tab: the clicked pane's.
+            self.focus_pane(pane);
+        }
         match event {
             Some(preview::Event::LinkClicked(url)) => self.follow_link(&url),
             Some(preview::Event::AllowImages(dir)) => self.allowed_image_dirs.push(dir),
@@ -4417,23 +4475,11 @@ impl eframe::App for Shell {
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE.fill(p.canvas))
             .show(ui, |ui| {
-                if self.log_area(ui)
-                    || self.compare_area(ui)
-                    || self.split_area(ui)
-                    || self.structured_area(ui)
-                {
+                if self.log_area(ui) || self.compare_area(ui) || self.split_area(ui) {
                     return;
                 }
-                match self.md_mode() {
-                    MdMode::Source => self.editor_area(ui),
-                    MdMode::Preview => self.preview_area(ui),
-                    MdMode::Split => {
-                        ui.columns(2, |cols| {
-                            self.editor_area(&mut cols[0]);
-                            self.preview_area(&mut cols[1]);
-                        });
-                    }
-                }
+                let id = self.ws.active().id;
+                self.pane_area(ui, id, 0);
             });
 
         self.poll_update();
@@ -4563,6 +4609,39 @@ pub fn describe_load_error(l10n: &Localizer, path: &Path, e: &LoadError) -> Stri
 
 #[cfg(test)]
 mod tests {
+    use super::{MdMode, PaneContent, pane_content};
+
+    #[test]
+    fn pane_shows_the_markdown_mode_of_its_tab() {
+        assert_eq!(
+            pane_content(false, Some(MdMode::Source)),
+            PaneContent::Editor
+        );
+        assert_eq!(
+            pane_content(false, Some(MdMode::Preview)),
+            PaneContent::Preview
+        );
+        assert_eq!(
+            pane_content(false, Some(MdMode::Split)),
+            PaneContent::EditorAndPreview
+        );
+    }
+
+    #[test]
+    fn pane_shows_structured_view_when_on() {
+        assert_eq!(pane_content(true, None), PaneContent::Structured);
+        // The structured view wins, as in the single area.
+        assert_eq!(
+            pane_content(true, Some(MdMode::Preview)),
+            PaneContent::Structured
+        );
+    }
+
+    #[test]
+    fn other_tabs_show_the_plain_editor() {
+        assert_eq!(pane_content(false, None), PaneContent::Editor);
+    }
+
     #[test]
     fn json_reason_ids_exist_in_english() {
         let en = include_str!("../../../locales/en-US/main.ftl");

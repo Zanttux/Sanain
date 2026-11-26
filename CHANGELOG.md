@@ -4,6 +4,12 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+- Split editor: each pane shows its tab as the single editor would —
+  Markdown source, preview or both, and the JSON/XML/YAML tree or CSV
+  grid when the structured view is on. Clicking a preview or tree focuses
+  its pane; links and image permissions work from either pane.
+
 ### Fixed
 - Notepad++ shortcut preset: Mod+D was both Duplicate Line and Select
   Next Occurrence; it is Duplicate Line only, as in Notepad++. A test now
