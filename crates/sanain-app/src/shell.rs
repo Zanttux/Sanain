@@ -23,6 +23,9 @@ use crate::view::{EditorView, ViewOptions};
 use sanain_app::settings::{FONT_SIZE_DEFAULT, Settings, ThemeChoice};
 use sanain_app::update::{Status as UpdateStatus, UpdateError};
 
+/// Markdown outline (level, title, line) for a tab at a revision.
+type HeadingCache = ((TabId, Revision), Vec<(u8, String, usize)>);
+
 /// A replace-all waiting for confirmation.
 struct ReplacePreview {
     tab: TabId,
@@ -49,6 +52,9 @@ struct Compare {
     right: Side,
     revs: (Revision, Revision),
     diff: sanain_tools::diff::Diff,
+    /// The texts the diff was computed from (refreshed when a side's
+    /// revision changes, not every frame).
+    texts: (std::sync::Arc<String>, std::sync::Arc<String>),
 }
 
 /// The encoding picker's purpose.
@@ -173,6 +179,8 @@ pub struct Shell {
     macro_cmds: Vec<Command>,
     replace_preview: Option<ReplacePreview>,
     about_open: bool,
+    /// Markdown headings for Go to Heading, per tab and revision.
+    headings: Option<HeadingCache>,
     recent: sanain_app::recent::Recent,
     /// `.editorconfig` indentation per tab, keyed by the file it was read for.
     tab_indent: HashMap<TabId, (Option<std::path::PathBuf>, sanain_app::editorconfig::Indent)>,
@@ -329,6 +337,7 @@ impl Shell {
             macro_cmds: Vec::new(),
             replace_preview: None,
             about_open: false,
+            headings: None,
             recent: Default::default(),
             tab_indent: HashMap::new(),
             split: None,
@@ -1510,20 +1519,30 @@ impl Shell {
                 }
             }
             Mode::Headings => {
-                let text = self.editor().document().text();
-                let entries: Vec<Entry<usize>> =
-                    sanain_markdown::outline(&sanain_markdown::parse(&text))
-                        .into_iter()
-                        .map(|(level, title, line)| Entry {
-                            action: line.saturating_sub(1),
-                            label: format!(
-                                "{}{title}",
-                                "    ".repeat(usize::from(level.saturating_sub(1)))
-                            ),
-                            shortcut: format!("{line}"),
-                            enabled: true,
-                        })
-                        .collect();
+                // Parse once per revision, not every frame the list is open.
+                let key = (self.ws.active().id, self.editor().document().revision());
+                if self.headings.as_ref().map(|(k, _)| *k) != Some(key) {
+                    let text = self.editor().document().text();
+                    let outline = sanain_markdown::outline(&sanain_markdown::parse(&text));
+                    self.headings = Some((key, outline));
+                }
+                let outline = self
+                    .headings
+                    .as_ref()
+                    .map(|(_, o)| o.clone())
+                    .unwrap_or_default();
+                let entries: Vec<Entry<usize>> = outline
+                    .into_iter()
+                    .map(|(level, title, line)| Entry {
+                        action: line.saturating_sub(1),
+                        label: format!(
+                            "{}{title}",
+                            "    ".repeat(usize::from(level.saturating_sub(1)))
+                        ),
+                        shortcut: format!("{line}"),
+                        enabled: true,
+                    })
+                    .collect();
                 let hint = self.t(
                     if entries.is_empty() {
                         "goto-heading-none"
@@ -2032,6 +2051,7 @@ impl Shell {
             right,
             revs: (Revision(u64::MAX), Revision(u64::MAX)),
             diff: Default::default(),
+            texts: Default::default(),
         });
     }
 
@@ -2086,21 +2106,34 @@ impl Shell {
             return false;
         }
         let left = c.left;
-        let right_side = match &c.right {
-            Side::Tab(id) => self.tab_text(*id),
-            Side::Text { text, .. } => Some((Revision(0), text.clone())),
+        let rev_of = |id: TabId| {
+            self.ws
+                .position(id)
+                .map(|i| self.ws.tabs()[i].editor.document().revision())
         };
-        let (Some((lrev, ltext)), Some((rrev, rtext))) = (self.tab_text(left), right_side) else {
+        let right_rev = match &c.right {
+            Side::Tab(id) => rev_of(*id),
+            Side::Text { .. } => Some(Revision(0)),
+        };
+        let (Some(lrev), Some(rrev)) = (rev_of(left), right_rev) else {
             self.compare = None;
             return false;
         };
-        if let Some(c) = &mut self.compare
-            && c.revs != (lrev, rrev)
-        {
-            c.diff = sanain_tools::diff::diff_lines(&ltext, &rtext);
-            c.revs = (lrev, rrev);
+        // Copy the texts only when a side changed.
+        if c.revs != (lrev, rrev) {
+            let ltext = self.tab_text(left).map(|t| t.1).unwrap_or_default();
+            let rtext = match &c.right {
+                Side::Tab(id) => self.tab_text(*id).map(|t| t.1).unwrap_or_default(),
+                Side::Text { text, .. } => text.clone(),
+            };
+            if let Some(c) = &mut self.compare {
+                c.diff = sanain_tools::diff::diff_lines(&ltext, &rtext);
+                c.revs = (lrev, rrev);
+                c.texts = (std::sync::Arc::new(ltext), std::sync::Arc::new(rtext));
+            }
         }
         let Some(c) = &self.compare else { return false };
+        let (ltext, rtext) = (c.texts.0.clone(), c.texts.1.clone());
         let p = theme::palette(ui.ctx());
         let lname = self.name_of(&self.ws.tabs()[self.ws.position(left).unwrap_or(0)].editor);
         let rname = match &c.right {
@@ -2476,7 +2509,7 @@ impl Shell {
         match Self::language(&tab.editor) {
             Some(lang) if self.requested.get(&tab.id) != Some(&rev) => {
                 self.syntax
-                    .submit(tab.id, rev, lang, tab.editor.document().text());
+                    .submit(tab.id, rev, lang, tab.editor.document().rope().clone());
                 self.requested.insert(tab.id, rev);
             }
             None => {
