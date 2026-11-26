@@ -1,30 +1,34 @@
 # Status
 
-Updated 2026-11-26. Version 0.1.0 (pre-alpha, M1 done). Unsigned `nightly`
+Updated 2026-11-26. Version 0.1.0 (pre-alpha, M1 done; tagged v0.1.0). Unsigned `nightly`
 pre-release published automatically from main (D23).
 M0 complete except trademark search. M1 feature work largely done; next
 are cross-platform verification and release readiness.
 
 ## Summary for the owner
-- 74 pull requests merged; every one passed CI on Linux, Windows and
-  macOS plus the dependency check (cargo-deny, third-party notices).
-  233 automated tests pass. A fresh-context review of the recent
-  file-handling changes found four bugs, all fixed (#74).
-- Sanain is a usable everyday editor on macOS: tabs and split view,
-  multiple cursors, macros, word wrap, find/replace with preview and
-  folder search, Markdown preview, data views (JSON/XML/YAML/CSV),
-  comparison, local history, crash recovery, Replace in Files, a log
-  viewer for huge files, unsigned packages for all three platforms,
-  18 highlighted languages and 26 UI languages (24 of them
-  unreviewed machine translations).
+- 0.1.0 published as an unsigned pre-release (installers and portable
+  builds for Windows, macOS and Linux); nightly builds follow every
+  change; website at https://zanttux.github.io/Sanain/.
+- 102 pull requests merged; every one passed CI on Linux, Windows and
+  macOS plus the dependency check. 247 automated tests pass. Reviews by
+  fresh Claude agents and by Codex found and fixed several bugs (#74,
+  #118).
+- Sanain is a usable everyday editor on macOS: tabs and split view (with
+  Markdown preview and data views in either pane), multiple cursors,
+  rectangular selection, macros, word wrap, syntax-aware folding,
+  find/replace with preview, Replace in Files, Markdown preview with an
+  outline, data views (JSON/XML/YAML/CSV), comparison, local history,
+  crash recovery, a log viewer for huge files, themes, Finder/Explorer/
+  Linux "Open With", 18 highlighted languages, 26 UI languages (24
+  machine-translated, accepted for now per D24).
 - Robustness checked by stress tests: 147 MB file, 2.7 MB single line,
   full disk, missing permissions, random binary data, deeply nested JSON.
-- Not verified yet: running on Windows and Linux (CI builds and tests
-  only), screen readers (VoiceOver, NVDA, Orca) and IME input by a person.
-- Unsigned nightly builds for all three platforms are published on every
-  change (first run verified: macOS archive downloads, checksum matches,
-  app starts). Signed builds need code-signing certificates (see
-  "Owner-only items").
+- Not verified yet by a person: Windows and Linux at runtime (owner
+  testing Windows now: #95 flicker, re-run installer for #115), screen
+  readers and IME input.
+- Waiting on the owner: Windows test results (#95), the GitHub Sponsors
+  page going public (#93), code-signing certificates and store accounts
+  (#79).
 
 ## Done
 - Mouse selection (#112-#114): drags start at the press point; double-click
