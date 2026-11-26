@@ -144,6 +144,10 @@ fn main() -> eframe::Result {
         workspace.restore_session(&session);
     }
 
+    // Before the event loop starts, so a file opened from Finder at launch
+    // is not missed; the app wakes up itself once it is running.
+    sanain_platform::prepare_open_documents();
+
     let options = eframe::NativeOptions {
         renderer: renderer(),
         viewport: eframe::egui::ViewportBuilder::default()
@@ -170,6 +174,8 @@ fn main() -> eframe::Result {
             );
             shell.set_history(history);
             shell.start_editor_font(&cc.egui_ctx);
+            let wake = cc.egui_ctx.clone();
+            sanain_platform::on_opened_files(move || wake.request_repaint());
             shell.init_recent();
             // One log viewer at a time: the last large file named wins.
             if let Some(p) = large.last() {

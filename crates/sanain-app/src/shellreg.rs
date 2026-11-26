@@ -8,8 +8,8 @@
 //! - Windows: per-user registry keys (HKCU) for "Edit with Sanain" in the
 //!   Explorer context menu of every file and an "Open with" entry, written
 //!   with `reg.exe`.
-//! - macOS: not yet; Finder sends files as Apple events, which the window
-//!   library does not deliver (needs an ADR for a small unsafe shim).
+//! - macOS: nothing to register; Info.plist declares the document types and
+//!   sanain-platform handles Finder's open events (ADR 0003).
 
 use std::path::{Path, PathBuf};
 

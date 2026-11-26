@@ -4206,13 +4206,15 @@ impl eframe::App for Shell {
         self.ctx = ctx.clone();
         self.poll_fonts(&ctx);
         // Files dropped onto the window open in tabs.
-        let dropped: Vec<std::path::PathBuf> = ctx.input(|i| {
+        // Files opened from the system (Finder on macOS) are handled the same way.
+        let mut dropped: Vec<std::path::PathBuf> = ctx.input(|i| {
             i.raw
                 .dropped_files
                 .iter()
                 .map(|f| f.path().to_path_buf())
                 .collect()
         });
+        dropped.extend(sanain_platform::take_opened_files());
         for p in dropped {
             if p.is_file() {
                 self.open(&p);
