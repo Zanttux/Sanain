@@ -28,6 +28,12 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   moves to the pointer first (#114).
 
 ### Added
+- Syntax-aware folding: for highlighted languages, fold markers follow
+  the Tree-sitter syntax tree (functions, blocks, classes, objects,
+  arrays, elements, multi-line comments) instead of indentation, so
+  irregularly indented code folds correctly; closing brackets and tags
+  stay visible. Plain text, Markdown and very large files still fold by
+  indentation.
 - Keyboard rectangular selection with Ctrl+Alt+Shift+Arrow (Control+Option+Shift
   on macOS): tab-expanded logical columns, whole graphemes and clamped short
   lines; typing replaces every selected row. Shift+Alt+Arrow keeps line duplication.

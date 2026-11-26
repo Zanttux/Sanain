@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use eframe::egui::{self, ViewportCommand};
-use sanain_app::syntax::{CharSpan, SyntaxWorker};
+use sanain_app::syntax::{CharSpan, MAX_BYTES, SyntaxWorker};
 use sanain_app::workspace::{TabId, Workspace};
 use sanain_app::{Command, Editor, SaveOutcome};
 use sanain_core::LineEnding;
@@ -3149,11 +3149,18 @@ impl Shell {
     /// collect finished results.
     fn update_syntax(&mut self, ctx: &egui::Context) {
         for h in self.syntax.poll() {
+            if let Some(t) = self.ws.position(h.tab).and_then(|i| self.ws.tab_mut(i)) {
+                t.editor.set_syntax_folds(h.revision, h.folds);
+            }
             self.spans.insert(h.tab, (h.revision, h.spans));
         }
         let tab = self.ws.active();
         let rev = tab.editor.document().revision();
         let lang = self.language(tab.id, &tab.editor);
+        // Without a syntax tree, folding goes by indentation.
+        if lang.is_none() || tab.editor.document().rope().len_bytes() > MAX_BYTES {
+            self.editor_mut().clear_syntax_folds();
+        }
         let tab = self.ws.active();
         match lang {
             Some(lang) if self.requested.get(&tab.id) != Some(&rev) => {
@@ -4027,6 +4034,9 @@ impl Shell {
         // Highlight again with the new language.
         self.requested.remove(&id);
         self.spans.remove(&id);
+        if let Some(t) = self.ws.position(id).and_then(|i| self.ws.tab_mut(i)) {
+            t.editor.clear_syntax_folds();
+        }
     }
 
     fn dialogs(&mut self, ctx: &egui::Context) {

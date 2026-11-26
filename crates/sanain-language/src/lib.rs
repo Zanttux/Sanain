@@ -12,6 +12,8 @@ use std::sync::atomic::AtomicUsize;
 
 use tree_sitter_highlight::{HighlightConfiguration, HighlightEvent};
 
+mod folds;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Lang {
     Bash,
@@ -389,6 +391,8 @@ pub enum HighlightError {
 pub struct Highlighter {
     configs: HashMap<Lang, Option<HighlightConfiguration>>,
     inner: tree_sitter_highlight::Highlighter,
+    /// Parser for folding (the highlighter keeps its own).
+    parser: tree_sitter::Parser,
 }
 
 impl std::fmt::Debug for Highlighter {
@@ -408,6 +412,7 @@ impl Highlighter {
         Self {
             configs: HashMap::new(),
             inner: tree_sitter_highlight::Highlighter::new(),
+            parser: tree_sitter::Parser::new(),
         }
     }
 
@@ -451,7 +456,7 @@ impl Highlighter {
         for l in lang.embedded() {
             let _ = self.config(*l);
         }
-        let Self { configs, inner } = self;
+        let Self { configs, inner, .. } = self;
         let Some(Some(config)) = configs.get(&lang) else {
             return Ok(Vec::new());
         };
@@ -487,6 +492,28 @@ impl Highlighter {
             }
         }
         Ok(spans)
+    }
+
+    /// Foldable line ranges of `source`, from its syntax tree. In each
+    /// range, `start` is the line the fold starts on (it stays visible)
+    /// and `start + 1..end` are the lines it hides. A closing bracket or
+    /// tag on the node's last line stays visible. Sorted by start, at most
+    /// one (the outermost) per start line. Lines are counted by `\n`.
+    /// Cancellable like [`Self::highlight`].
+    pub fn folds(
+        &mut self,
+        lang: Lang,
+        source: &[u8],
+        cancel: Option<&AtomicUsize>,
+    ) -> Result<Vec<Range<usize>>, HighlightError> {
+        let Some(config) = self.config(lang) else {
+            return Err(HighlightError::Failed(format!(
+                "{} query did not compile",
+                lang.name()
+            )));
+        };
+        let language = config.language.clone();
+        folds::folds(&mut self.parser, &language, lang, source, cancel)
     }
 
     /// Whether every bundled grammar's query compiles (used by tests and

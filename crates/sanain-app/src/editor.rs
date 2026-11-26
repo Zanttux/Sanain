@@ -122,6 +122,9 @@ pub struct Editor {
     fold_tab: usize,
     /// Cached hidden-line map: (revision, folds, tab width, map).
     fold_cache: Option<(sanain_core::Revision, Vec<usize>, usize, FoldMap)>,
+    /// Syntax fold ranges for a revision (see [`Self::set_syntax_folds`]);
+    /// indentation folding applies when absent or stale.
+    syntax_folds: Option<(sanain_core::Revision, Vec<std::ops::Range<usize>>)>,
 }
 
 impl Default for Editor {
@@ -144,6 +147,7 @@ impl Editor {
             folds: Vec::new(),
             fold_tab: 4,
             fold_cache: None,
+            syntax_folds: None,
         }
     }
 
@@ -188,6 +192,7 @@ impl Editor {
             folds: Vec::new(),
             fold_tab: 4,
             fold_cache: None,
+            syntax_folds: None,
             doc: Document::from_saved_text(&loaded.text),
             sels: Selections::single(Selection::cursor(0)),
             untitled_encoding: loaded.encoding,
@@ -662,8 +667,13 @@ impl Editor {
         // Commands build transactions from current selections, which are
         // always within bounds; a failure here is a bug, and the document
         // is left unchanged by `apply` in that case.
+        // Cheap: ropes share structure.
+        let before = self.syntax_folds.is_some().then(|| self.doc.rope().clone());
         if self.doc.apply(&tx).is_ok() {
             self.sels = next;
+            if let Some(before) = before {
+                self.map_syntax_folds(&before, &tx);
+            }
             let rope = self.doc.rope();
             let mut folds: Vec<usize> = self
                 .folds
@@ -679,6 +689,86 @@ impl Editor {
         }
     }
 
+    /// Use syntax-tree fold ranges computed for `revision` (from
+    /// [`sanain_language::Highlighter::folds`]: each range starts a fold
+    /// on `start` and hides `start + 1..end`). Results for another
+    /// revision are ignored; `None` returns to indentation folding.
+    pub fn set_syntax_folds(
+        &mut self,
+        revision: sanain_core::Revision,
+        folds: Option<Vec<std::ops::Range<usize>>>,
+    ) {
+        if revision != self.doc.revision() {
+            return;
+        }
+        match folds {
+            Some(f) => self.syntax_folds = Some((revision, f)),
+            None => self.clear_syntax_folds(),
+        }
+        self.fold_cache = None;
+    }
+
+    /// Fold by indentation (no syntax tree for this buffer).
+    pub fn clear_syntax_folds(&mut self) {
+        if self.syntax_folds.take().is_some() {
+            self.fold_cache = None;
+        }
+    }
+
+    /// Carry syntax folds through an edit until the next parse arrives,
+    /// so folded regions do not jump while typing.
+    fn map_syntax_folds(&mut self, before: &ropey::Rope, tx: &Transaction) {
+        let Some((rev, folds)) = self.syntax_folds.take() else {
+            return;
+        };
+        let rope = self.doc.rope();
+        // Mapping costs folds × changes; large edits wait for the parse.
+        if rev.0 + 1 != self.doc.revision().0 || folds.len() * tx.changes().len() > 1 << 20 {
+            return;
+        }
+        let map = |line: usize| {
+            let at = tx.map_pos(before.line_to_char(line.min(before.len_lines())));
+            rope.char_to_line(at.min(rope.len_chars()))
+        };
+        let mut mapped: Vec<std::ops::Range<usize>> = folds
+            .into_iter()
+            .map(|r| {
+                let end = if r.end >= before.len_lines() {
+                    rope.len_lines()
+                } else {
+                    map(r.end)
+                };
+                map(r.start)..end
+            })
+            .filter(|r| r.end > r.start + 1)
+            .collect();
+        mapped.sort_by(|a, b| a.start.cmp(&b.start).then(b.end.cmp(&a.end)));
+        mapped.dedup_by_key(|r| r.start);
+        self.syntax_folds = Some((self.doc.revision(), mapped));
+    }
+
+    /// Lines hidden when folding at `line`: from the syntax tree when
+    /// available, else by indentation.
+    fn fold_range(&self, line: usize, tab: usize) -> Option<std::ops::Range<usize>> {
+        match &self.syntax_folds {
+            Some((rev, folds)) if *rev == self.doc.revision() => {
+                let i = folds.binary_search_by_key(&line, |r| r.start).ok()?;
+                Some(line + 1..folds[i].end)
+            }
+            _ => folding::fold_range(self.doc.rope(), line, tab),
+        }
+    }
+
+    /// Whether `line` starts a fold (for gutter markers).
+    pub fn is_fold_start(&self, line: usize, tab: usize) -> bool {
+        match &self.syntax_folds {
+            Some((rev, folds)) if *rev == self.doc.revision() => {
+                folds.binary_search_by_key(&line, |r| r.start).is_ok()
+            }
+            _ => folding::is_fold_start(self.doc.rope(), line, tab),
+        }
+    }
+
     /// Lines hidden by folds (cached per revision and fold set).
     pub fn fold_map(&mut self, tab: usize) -> &FoldMap {
         self.fold_tab = tab;
@@ -689,9 +779,7 @@ impl Editor {
             let ranges = self
                 .folds
                 .iter()
-                .filter_map(|&p| {
-                    folding::fold_range(rope, rope.char_to_line(p.min(rope.len_chars())), tab)
-                })
+                .filter_map(|&p| self.fold_range(rope.char_to_line(p.min(rope.len_chars())), tab))
                 .collect();
             self.fold_cache = Some((rev, self.folds.clone(), tab, FoldMap::new(ranges)));
         }
@@ -719,14 +807,14 @@ impl Editor {
             self.folds.remove(i);
             return true;
         }
-        if folding::fold_range(rope, line, tab).is_none() {
+        let Some(hidden) = self.fold_range(line, tab) else {
             return false;
-        }
+        };
         self.folds.push(at);
         self.folds.sort_unstable();
         // Move the caret out of the hidden lines.
         let head_line = rope.char_to_line(self.sels.primary().head);
-        if folding::fold_range(rope, line, tab).is_some_and(|r| r.contains(&head_line)) {
+        if hidden.contains(&head_line) {
             let end = sel::line_content_end(rope, line);
             self.sels = Selections::single(Selection::cursor(end));
         }
@@ -738,8 +826,8 @@ impl Editor {
         let rope = self.doc.rope();
         let line = rope.char_to_line(self.sels.primary().head);
         let start = (0..=line).rev().find(|&l| {
-            l == line && folding::is_fold_start(rope, l, tab)
-                || folding::fold_range(rope, l, tab).is_some_and(|r| r.contains(&line))
+            l == line && self.is_fold_start(l, tab)
+                || self.fold_range(l, tab).is_some_and(|r| r.contains(&line))
         });
         match start {
             Some(l) if !self.is_folded(l) => self.toggle_fold(l, tab),
@@ -770,10 +858,12 @@ impl Editor {
         let rope = self.doc.rope();
         let head = rope.char_to_line(self.sels.primary().head);
         let tab = self.fold_tab;
-        self.folds.retain(|&p| {
+        let mut folds = std::mem::take(&mut self.folds);
+        folds.retain(|&p| {
             let l = rope.char_to_line(p.min(rope.len_chars()));
-            !folding::fold_range(rope, l, tab).is_some_and(|r| r.contains(&head))
+            !self.fold_range(l, tab).is_some_and(|r| r.contains(&head))
         });
+        self.folds = folds;
     }
 
     pub fn save(&mut self) -> SaveOutcome {
@@ -1293,6 +1383,45 @@ mod tests {
         assert!(ed.fold_at_caret(4));
         assert!(!ed.fold_map(4).is_empty());
         assert!(ed.unfold_all());
+    }
+
+    #[test]
+    fn syntax_folds_replace_indentation_folds() {
+        let src = "int main(void)\n{\nif (x) {\nreturn 1;\n}\n  return 0;\n    }\n";
+        let mut ed = Editor::new();
+        ed.execute(Command::Insert(src.into()));
+        ed.execute(Command::PlaceCaret {
+            at: 0,
+            extend: false,
+        });
+        // Indentation folding finds nothing at the `if`.
+        assert!(!ed.is_fold_start(2, 4));
+        assert!(!ed.toggle_fold(2, 4));
+        let folds = sanain_language::Highlighter::new()
+            .folds(sanain_language::Lang::C, src.as_bytes(), None)
+            .unwrap();
+        // A result for an older revision is ignored.
+        let rev = ed.document().revision();
+        ed.set_syntax_folds(sanain_core::Revision(rev.0 - 1), Some(folds.clone()));
+        assert!(!ed.is_fold_start(2, 4));
+        ed.set_syntax_folds(rev, Some(folds));
+        assert!(ed.is_fold_start(2, 4) && ed.is_fold_start(0, 4));
+        assert!(!ed.is_fold_start(3, 4));
+        // Folding the `if` hides its body only; `}` stays visible.
+        assert!(ed.toggle_fold(2, 4));
+        assert_eq!(ed.fold_map(4).hidden(), std::slice::from_ref(&(3..4)));
+        assert!(ed.toggle_fold(0, 4));
+        assert_eq!(ed.fold_map(4).hidden(), std::slice::from_ref(&(1..6)));
+        assert!(ed.toggle_fold(0, 4), "unfold");
+        // An edit above carries the folds down a line until the next parse.
+        ed.execute(Command::Insert("// x\n".into()));
+        assert!(ed.is_fold_start(3, 4) && !ed.is_fold_start(0, 4));
+        assert!(ed.is_folded(3));
+        assert_eq!(ed.fold_map(4).hidden(), std::slice::from_ref(&(4..5)));
+        assert!(ed.unfold_all());
+        // Back to indentation folding.
+        ed.clear_syntax_folds();
+        assert!(!ed.is_fold_start(3, 4));
     }
 
     #[test]
