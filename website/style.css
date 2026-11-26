@@ -73,7 +73,7 @@ table.dl code { font: 13.5px var(--mono); color: var(--text); overflow-wrap: any
 footer { padding: 36px 0 60px; color: var(--muted); font-size: 14px; border-top: 1px solid var(--border); }
 footer a { color: var(--muted); }
 @media (max-width: 640px) {
-  nav.top a:not(.lang) { display: none; }
+  nav.top a { display: none; }
   .buffer pre { grid-template-columns: 34px 1fr; }
   .buffer .tab:not(.on) { display: none; }
   table.dl th:nth-child(3), table.dl td:nth-child(3) { display: none; }

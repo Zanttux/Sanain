@@ -36,9 +36,8 @@ jobs:
       - name: Assemble the site
         run: |
           python3 website/build.py
-          mkdir -p _site/screenshots _site/fi
+          mkdir -p _site/screenshots
           cp website/index.html website/style.css _site/
-          cp website/fi/index.html _site/fi/
           cp assets/brand/icon.svg _site/icon.svg
           cp docs/screenshots/editor.png docs/screenshots/markdown.png docs/screenshots/split.png docs/screenshots/log.png _site/screenshots/
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
