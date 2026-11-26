@@ -2572,6 +2572,16 @@ impl Shell {
                 MenuAction::Redo => doc.can_redo(),
                 MenuAction::Cut | MenuAction::Copy => self.editor().copy().is_some(),
                 MenuAction::NextTab | MenuAction::PrevTab => self.ws.len() > 1,
+                MenuAction::MoveTabLeft | MenuAction::MoveTabRight => {
+                    let i = self.ws.active_index();
+                    let to = if matches!(action, MenuAction::MoveTabLeft) {
+                        i.checked_sub(1)
+                    } else {
+                        Some(i + 1).filter(|&t| t < self.ws.len())
+                    };
+                    // Pinned and unpinned tabs stay in their own groups.
+                    to.is_some_and(|t| self.ws.tabs()[t].pinned == self.ws.tabs()[i].pinned)
+                }
                 MenuAction::MarkdownSource
                 | MenuAction::MarkdownSplit
                 | MenuAction::MarkdownPreview => Self::is_markdown(self.editor()),
@@ -2678,6 +2688,16 @@ impl Shell {
             }
             MenuAction::PrevTab => {
                 self.ws.cycle(false);
+                None
+            }
+            MenuAction::MoveTabLeft | MenuAction::MoveTabRight => {
+                let i = self.ws.active_index();
+                let to = if matches!(action, MenuAction::MoveTabLeft) {
+                    i.saturating_sub(1)
+                } else {
+                    i + 1
+                };
+                self.ws.move_tab(i, to);
                 None
             }
             // Goes through close_requested, which guards unsaved changes.

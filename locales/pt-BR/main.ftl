@@ -406,3 +406,5 @@ cli-help =
     Use -- antes de nomes de arquivo que começam com hífen.
 cli-unknown-option = Opção desconhecida { $option }.
 cli-diff-needs-two = --diff precisa de dois arquivos: sanain --diff ESQUERDA DIREITA
+window-move-tab-left = Mover aba para a esquerda
+window-move-tab-right = Mover aba para a direita

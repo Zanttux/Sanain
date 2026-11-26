@@ -387,3 +387,5 @@ cli-help =
     Kötőjellel kezdődő fájlnevek előtt használja a -- jelet.
 cli-unknown-option = Ismeretlen kapcsoló: { $option }.
 cli-diff-needs-two = A --diff két fájlt igényel: sanain --diff BAL JOBB
+window-move-tab-left = Lap mozgatása balra
+window-move-tab-right = Lap mozgatása jobbra

@@ -386,3 +386,5 @@ cli-help =
     Use -- before file names that start with a dash.
 cli-unknown-option = Unknown option { $option }.
 cli-diff-needs-two = --diff needs two files: sanain --diff LEFT RIGHT
+window-move-tab-left = Move Tab Left
+window-move-tab-right = Move Tab Right

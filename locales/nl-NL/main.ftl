@@ -387,3 +387,5 @@ cli-help =
     Gebruik -- vóór bestandsnamen die met een streepje beginnen.
 cli-unknown-option = Onbekende optie { $option }.
 cli-diff-needs-two = --diff heeft twee bestanden nodig: sanain --diff LINKS RECHTS
+window-move-tab-left = Tabblad naar links verplaatsen
+window-move-tab-right = Tabblad naar rechts verplaatsen

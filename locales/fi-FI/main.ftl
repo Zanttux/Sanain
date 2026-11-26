@@ -387,3 +387,5 @@ cli-help =
     Kirjoita -- ennen tiedostonimiä, jotka alkavat viivalla.
 cli-unknown-option = Tuntematon valitsin { $option }.
 cli-diff-needs-two = --diff tarvitsee kaksi tiedostoa: sanain --diff VASEN OIKEA
+window-move-tab-left = Siirrä välilehti vasemmalle
+window-move-tab-right = Siirrä välilehti oikealle

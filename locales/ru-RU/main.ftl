@@ -425,3 +425,5 @@ cli-help =
     Используйте -- перед именами файлов, начинающимися с дефиса.
 cli-unknown-option = Неизвестный параметр { $option }.
 cli-diff-needs-two = Для --diff нужны два файла: sanain --diff ЛЕВЫЙ ПРАВЫЙ
+window-move-tab-left = Переместить вкладку влево
+window-move-tab-right = Переместить вкладку вправо

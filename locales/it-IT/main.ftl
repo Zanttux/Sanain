@@ -387,3 +387,5 @@ cli-help =
     Usa -- prima dei nomi di file che iniziano con un trattino.
 cli-unknown-option = Opzione sconosciuta { $option }.
 cli-diff-needs-two = --diff richiede due file: sanain --diff SINISTRA DESTRA
+window-move-tab-left = Sposta scheda a sinistra
+window-move-tab-right = Sposta scheda a destra
