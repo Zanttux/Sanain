@@ -4,20 +4,105 @@
 //! one `path=...` line per tab in order, then `pinned=I` for each pinned
 //! tab (an index into the paths). Unknown lines are ignored. Paths
 //! that are not valid UTF-8 or contain line breaks are not recorded.
+//!
+//! A split editor adds its layout after those lines:
+//!
+//! ```text
+//! split=right            groups side by side (or `down`: stacked)
+//! group=0.4              a group and its share of the area
+//! pane=0,1               a pane in that group: path index, share
+//! group=0.6
+//! pane=1,0.5
+//! pane=2,0.5
+//! focus=2                the focused pane, in reading order
+//! ```
+//!
+//! Older versions ignore these lines (and so open the files unsplit). A
+//! layout that does not parse is dropped; the rest of the session still
+//! loads.
 
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
+use crate::panes::{Direction, GroupLayout, Layout};
+
 const HEADER: &str = "sanain-session 1";
 
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct Session {
     pub paths: Vec<PathBuf>,
     /// Index into `paths` of the active tab.
     pub active: usize,
     /// Indices into `paths` of pinned tabs.
     pub pinned: Vec<usize>,
+    /// The split editor's layout; each pane shows an index into `paths`.
+    pub layout: Option<Layout<usize>>,
+}
+
+/// Reads the split lines as they come; any error spoils the whole layout.
+#[derive(Default)]
+struct LayoutParser {
+    layout: Option<Layout<usize>>,
+    bad: bool,
+}
+
+impl LayoutParser {
+    fn line(&mut self, key: &str, v: &str) {
+        if self.bad {
+            return;
+        }
+        let ok = match (key, &mut self.layout) {
+            ("split", None) => {
+                let dir = match v {
+                    "right" => Some(Direction::Right),
+                    "down" => Some(Direction::Down),
+                    _ => None,
+                };
+                self.layout = dir.map(|dir| Layout {
+                    dir,
+                    groups: Vec::new(),
+                    focus: 0,
+                });
+                dir.is_some()
+            }
+            ("group", Some(l)) => v.parse().ok().is_some_and(|share| {
+                l.groups.push(GroupLayout {
+                    share,
+                    panes: Vec::new(),
+                });
+                true
+            }),
+            ("pane", Some(l)) => {
+                let parsed = v
+                    .split_once(',')
+                    .and_then(|(i, f)| Some((i.parse().ok()?, f.parse().ok()?)));
+                match (parsed, l.groups.last_mut()) {
+                    (Some(p), Some(g)) => {
+                        g.panes.push(p);
+                        true
+                    }
+                    _ => false,
+                }
+            }
+            ("focus", Some(l)) => v.parse().ok().is_some_and(|f| {
+                l.focus = f;
+                true
+            }),
+            _ => false,
+        };
+        self.bad = !ok;
+    }
+
+    fn finish(self, paths: usize) -> Option<Layout<usize>> {
+        let l = self.layout.filter(|_| !self.bad)?;
+        let valid = l.len() >= 2
+            && l.focus < l.len()
+            && l.groups
+                .iter()
+                .all(|g| !g.panes.is_empty() && g.panes.iter().all(|(i, _)| *i < paths));
+        valid.then_some(l)
+    }
 }
 
 impl Session {
@@ -25,11 +110,14 @@ impl Session {
         let mut out = format!("{HEADER}\nactive={}\n", self.active);
         let mut written = 0;
         let mut pinned = Vec::new();
+        // Index each recorded path gets in the file.
+        let mut index = vec![None; self.paths.len()];
         for (i, p) in self.paths.iter().enumerate() {
             if let Some(s) = p.to_str().filter(|s| !s.contains(['\n', '\r'])) {
                 if self.pinned.contains(&i) {
                     pinned.push(written);
                 }
+                index[i] = Some(written);
                 written += 1;
                 out.push_str("path=");
                 out.push_str(s);
@@ -38,6 +126,25 @@ impl Session {
         }
         for i in pinned {
             out.push_str(&format!("pinned={i}\n"));
+        }
+        let layout = self
+            .layout
+            .clone()
+            .map(|l| l.filter_map(|i| index.get(i).copied().flatten()))
+            .filter(|l| l.len() >= 2);
+        if let Some(l) = layout {
+            let dir = match l.dir {
+                Direction::Right => "right",
+                Direction::Down => "down",
+            };
+            out.push_str(&format!("split={dir}\n"));
+            for g in &l.groups {
+                out.push_str(&format!("group={}\n", g.share));
+                for (i, share) in &g.panes {
+                    out.push_str(&format!("pane={i},{share}\n"));
+                }
+            }
+            out.push_str(&format!("focus={}\n", l.focus));
         }
         out
     }
@@ -49,14 +156,17 @@ impl Session {
             return None;
         }
         let mut s = Session::default();
+        let mut layout = LayoutParser::default();
         for line in lines {
             match line.split_once('=') {
                 Some(("active", v)) => s.active = v.parse().ok()?,
                 Some(("path", v)) if !v.is_empty() => s.paths.push(PathBuf::from(v)),
                 Some(("pinned", v)) => s.pinned.extend(v.parse::<usize>().ok()),
+                Some((k @ ("split" | "group" | "pane" | "focus"), v)) => layout.line(k, v),
                 _ => {}
             }
         }
+        s.layout = layout.finish(s.paths.len());
         if s.active >= s.paths.len() {
             s.active = 0;
         }
@@ -87,6 +197,7 @@ mod tests {
             paths: vec!["/a/b.txt".into(), "/c d/ä.md".into()],
             active: 1,
             pinned: vec![1],
+            layout: None,
         };
         assert_eq!(Session::decode(&s.encode()), Some(s));
         let bad_active = "sanain-session 1\nactive=9\npath=/x\n";
@@ -115,8 +226,93 @@ mod tests {
             paths: vec![dir.path().join("x.txt")],
             active: 0,
             pinned: Vec::new(),
+            layout: None,
         };
         s.save(&f).unwrap();
         assert_eq!(Session::load(&f), Some(s));
+    }
+
+    fn three_pane_layout() -> Layout<usize> {
+        Layout {
+            dir: Direction::Right,
+            groups: vec![
+                GroupLayout {
+                    share: 0.25,
+                    panes: vec![(0, 1.0)],
+                },
+                GroupLayout {
+                    share: 0.75,
+                    panes: vec![(1, 0.3), (2, 0.7)],
+                },
+            ],
+            focus: 2,
+        }
+    }
+
+    fn three_paths() -> Vec<PathBuf> {
+        vec!["/a".into(), "/b".into(), "/c".into()]
+    }
+
+    #[test]
+    fn split_layout_round_trips() {
+        let s = Session {
+            paths: three_paths(),
+            active: 2,
+            pinned: vec![0],
+            layout: Some(three_pane_layout()),
+        };
+        let text = s.encode();
+        assert!(
+            text.contains("split=right\ngroup=0.25\npane=0,1\n"),
+            "{text}"
+        );
+        assert_eq!(Session::decode(&text), Some(s));
+    }
+
+    #[test]
+    fn old_session_files_load_unsplit() {
+        let s =
+            Session::decode("sanain-session 1\nactive=1\npath=/a\npath=/b\npinned=0\n").unwrap();
+        assert_eq!(s.paths.len(), 2);
+        assert_eq!(s.active, 1);
+        assert_eq!(s.layout, None);
+    }
+
+    #[test]
+    fn malformed_split_is_ignored_and_the_rest_loads() {
+        let base = "sanain-session 1\nactive=0\npath=/a\npath=/b\n";
+        for split in [
+            "split=sideways\ngroup=1\npane=0,1\npane=1,1\nfocus=0\n",
+            "group=1\npane=0,1\n",
+            "split=right\npane=0,1\ngroup=1\npane=1,1\n",
+            "split=right\ngroup=x\npane=0,1\ngroup=1\npane=1,1\n",
+            "split=right\ngroup=1\npane=0\ngroup=1\npane=1,1\n",
+            "split=right\ngroup=1\npane=0,1\ngroup=1\npane=7,1\n",
+            "split=right\ngroup=1\npane=0,1\ngroup=1\npane=1,1\nfocus=-1\n",
+            "split=right\ngroup=1\npane=0,1\ngroup=1\npane=1,1\nfocus=5\n",
+            "split=right\ngroup=1\npane=0,1\ngroup=1\n",
+            "split=right\ngroup=1\npane=0,1\n",
+            "split=right\nsplit=down\ngroup=1\npane=0,1\ngroup=1\npane=1,1\n",
+        ] {
+            let s = Session::decode(&format!("{base}{split}")).unwrap();
+            assert_eq!(s.layout, None, "{split:?}");
+            assert_eq!(s.paths.len(), 2);
+        }
+    }
+
+    #[test]
+    fn layout_follows_paths_that_are_not_recorded() {
+        let s = Session {
+            paths: vec!["/a".into(), "/bad\npath".into(), "/c".into()],
+            active: 0,
+            pinned: Vec::new(),
+            layout: Some(three_pane_layout()),
+        };
+        let back = Session::decode(&s.encode()).unwrap();
+        assert_eq!(back.paths, vec![PathBuf::from("/a"), PathBuf::from("/c")]);
+        let l = back.layout.unwrap();
+        assert_eq!(l.len(), 2);
+        assert_eq!(l.groups[1].panes[0].0, 1);
+        assert_eq!(l.focus, 1);
     }
 }

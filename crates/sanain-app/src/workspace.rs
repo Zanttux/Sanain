@@ -1,6 +1,7 @@
 //! Open documents in one window: tabs, the active tab, recently closed
 //! files and each tab's crash-recovery checkpoints. No GUI types.
 
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
@@ -8,6 +9,7 @@ use sanain_io::LoadError;
 use sanain_io::recovery::{Entry, RecoveryStore};
 
 use crate::Editor;
+use crate::panes::Panes;
 use crate::recovery::Recovery;
 
 /// Stable identity of a tab for the lifetime of the process.
@@ -297,10 +299,13 @@ impl Workspace {
         (soonest, error)
     }
 
-    /// Files open in this window, in tab order, for session restore.
-    pub fn session(&self) -> crate::session::Session {
+    /// Files open in this window, in tab order, and the split layout (if
+    /// any), for session restore. Panes showing an untitled tab are left
+    /// out of the layout.
+    pub fn session(&self, split: Option<&Panes<TabId>>) -> crate::session::Session {
         let mut paths = Vec::new();
         let mut pinned = Vec::new();
+        let mut index = HashMap::new();
         let mut active = 0;
         for (i, t) in self.tabs.iter().enumerate() {
             if let Some(f) = t.editor.file() {
@@ -310,23 +315,33 @@ impl Workspace {
                 if t.pinned {
                     pinned.push(paths.len());
                 }
+                index.insert(t.id, paths.len());
                 paths.push(f.path.clone());
             }
         }
+        let layout = split
+            .filter(|s| s.is_split())
+            .map(|s| s.layout().filter_map(|id| index.get(&id).copied()))
+            .filter(|l| l.len() >= 2);
         crate::session::Session {
             paths,
             active,
             pinned,
+            layout,
         }
     }
 
     /// Reopen a saved session: missing files are skipped silently, files
     /// already open (e.g. restored from recovery) are not duplicated.
-    pub fn restore_session(&mut self, s: &crate::session::Session) {
+    /// Returns the split layout, without panes whose file did not open;
+    /// its focused pane's tab becomes the active one.
+    pub fn restore_session(&mut self, s: &crate::session::Session) -> Option<Panes<TabId>> {
         let mut active = None;
         let mut pin = Vec::new();
+        let mut ids = vec![None; s.paths.len()];
         for (i, p) in s.paths.iter().enumerate() {
             if let Ok(idx) = self.open(p) {
+                ids[i] = Some(self.tabs[idx].id);
                 if i == s.active {
                     active = Some(self.tabs[idx].id);
                 }
@@ -343,6 +358,15 @@ impl Workspace {
         if let Some(a) = active.and_then(|id| self.position(id)) {
             self.active = a;
         }
+        let split = s
+            .layout
+            .clone()
+            .map(|l| l.filter_map(|i| ids.get(i).copied().flatten()))
+            .and_then(Panes::from_layout)?;
+        if let Some(a) = self.position(split.focused().tab) {
+            self.active = a;
+        }
+        Some(split)
     }
 
     /// Wait for pending checkpoint I/O; call before exiting.
@@ -359,6 +383,7 @@ impl Workspace {
 mod tests {
     use super::*;
     use crate::Command;
+    use crate::panes::{Direction, DividerId};
     use std::fs;
 
     #[test]
@@ -425,14 +450,60 @@ mod tests {
         ws.open(&a).unwrap();
         ws.new_tab(); // untitled: not recorded
         ws.open(&b).unwrap();
-        let s = ws.session();
+        let s = ws.session(None);
         assert_eq!(s.paths, vec![a.clone(), b.clone()]);
         assert_eq!(s.active, 1);
         fs::remove_file(&a).unwrap();
         let mut ws2 = Workspace::new(None);
-        ws2.restore_session(&s);
+        assert_eq!(ws2.restore_session(&s), None);
         assert_eq!(ws2.len(), 1);
         assert_eq!(ws2.active().editor.document().text(), "B");
+    }
+
+    #[test]
+    fn split_layout_survives_a_session_and_drops_missing_files() {
+        let dir = tempfile::tempdir().unwrap();
+        let [a, b, c] = ["a.txt", "b.txt", "c.txt"].map(|n| dir.path().join(n));
+        for p in [&a, &b, &c] {
+            fs::write(p, "x").unwrap();
+        }
+        let mut ws = Workspace::new(None);
+        let ids = [&a, &b, &c].map(|p| {
+            let i = ws.open(p).unwrap();
+            ws.tabs()[i].id
+        });
+        let untitled = {
+            ws.new_tab();
+            ws.active().id
+        };
+        let mut split = Panes::new(ids[0]);
+        split.split(Direction::Right, ids[1]);
+        split.set_focus(1);
+        split.split(Direction::Down, ids[2]);
+        split.move_divider(DividerId::Outer(0), 0.3, 0.1);
+        split.set_focus(2);
+        let s = ws.session(Some(&split));
+        let mut ws2 = Workspace::new(None);
+        let back = ws2.restore_session(&s).unwrap();
+        assert_eq!(back.len(), 3);
+        assert_eq!(back.direction(), Direction::Right);
+        assert!((back.fractions()[0].x1 - 0.3).abs() < 1e-5);
+        let shown: Vec<_> = back.panes().map(|p| ws2.position(p.tab)).collect();
+        assert_eq!(shown, [Some(0), Some(1), Some(2)]);
+        // The focused pane's tab is the active one.
+        assert_eq!(ws2.active().id, back.focused().tab);
+        assert_eq!(ws2.active_index(), 2);
+
+        // A file that is gone takes its pane with it.
+        fs::remove_file(&b).unwrap();
+        let mut ws3 = Workspace::new(None);
+        let back = ws3.restore_session(&s).unwrap();
+        assert_eq!(back.len(), 2);
+        assert_eq!(back.direction(), Direction::Right);
+        // Only the file in a pane with an untitled tab: no split.
+        split.set_tab(1, untitled);
+        split.set_tab(2, untitled);
+        assert_eq!(ws.session(Some(&split)).layout, None);
     }
 
     #[test]

@@ -5,15 +5,27 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased]
 
 ### Added
+- Split panes can be resized: drag the line between two panes (the
+  pointer turns into a resize cursor). A pane keeps at least 120 points
+  where the window allows it. Double-click a divider to share that row or
+  column evenly again. Adding or closing a pane keeps the other panes'
+  proportions.
+- The split layout is saved with the session: direction, nesting, which
+  file each pane shows, the focused pane and the pane sizes come back on
+  the next launch. Panes whose file did not reopen (or that showed an
+  untitled document) are left out. Session files from earlier versions
+  load as before without a split, a damaged layout is ignored, and
+  earlier versions read new session files and simply open the files
+  unsplit.
 - The split editor holds up to four panes. View › Split Right (Ctrl/Cmd+\,
   formerly Split Editor) adds a pane beside the focused one and the new
   Split Down adds one below it; the first split sets the direction and a
   split the other way stacks panes inside that column or row (one level of
   nesting). Close Pane closes the focused pane, and Focus Next Pane / Focus
   Previous Pane move between panes (no default shortcuts; assign them in
-  Settings). Panes share the space evenly. Split Right no longer toggles
-  the split off: use Close Pane. Saved shortcuts for Split Editor keep
-  working.
+  Settings). Panes start out sharing the space evenly. Split Right no
+  longer toggles the split off: use Close Pane. Saved shortcuts for Split
+  Editor keep working.
 - Settings › Keyboard shortcuts › Import from Notepad++… reads a Notepad++
   `shortcuts.xml` (on Windows `%AppData%\Notepad++\shortcuts.xml`) and
   applies its changed shortcuts for the commands Sanain has (file, edit,
