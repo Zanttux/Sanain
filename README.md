@@ -7,9 +7,12 @@ Fast by design. Powerful when needed. Simple by default.
 
 ![Sanain editing a Rust file with tabs and syntax highlighting](docs/screenshots/editor.png)
 
-> **Status: pre-alpha (0.0.1).** There are no downloadable releases yet;
-> build from source to try it. Tested by hand on macOS; Windows and Linux
-> are built and tested in CI but not yet tried interactively.
+> **Status: pre-alpha (0.0.1).** Unsigned development builds for macOS,
+> Windows and Linux are published automatically as the
+> [nightly pre-release](https://github.com/Zanttux/Sanain/releases/tag/nightly)
+> (macOS: right-click › Open the first time; Windows may show a
+> SmartScreen warning). Tested by hand on macOS; Windows and Linux are
+> built and tested in CI but not yet tried interactively.
 
 ## What works today
 
@@ -88,7 +91,7 @@ says otherwise. See [PRIVACY.md](PRIVACY.md).
 `scripts/package.py` builds an unsigned archive for the current platform
 (macOS `Sanain.app`, Windows zip, Linux tar.gz) with the license,
 third-party notices and a checksum; the `Package` workflow builds all
-three. No release has been published yet.
+three and publishes them as the `nightly` pre-release on every change.
 
 ## Building
 

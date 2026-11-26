@@ -1,6 +1,7 @@
 # Status
 
-Updated 2026-11-26. Version 0.0.1 (pre-alpha, no release published).
+Updated 2026-11-26. Version 0.0.1 (pre-alpha). Unsigned `nightly`
+pre-release published automatically from main (D23).
 M0 complete except trademark search. M1 feature work largely done; next
 are cross-platform verification and release readiness.
 
@@ -20,8 +21,10 @@ are cross-platform verification and release readiness.
   full disk, missing permissions, random binary data, deeply nested JSON.
 - Not verified yet: running on Windows and Linux (CI builds and tests
   only), screen readers (VoiceOver, NVDA, Orca) and IME input by a person.
-- Needs you before a public release: code-signing certificates and the
-  decision to publish (see "Owner-only items").
+- Unsigned nightly builds for all three platforms are published on every
+  change (first run verified: macOS archive downloads, checksum matches,
+  app starts). Signed builds need code-signing certificates (see
+  "Owner-only items").
 
 ## Done
 - Environment: macOS 27.2.1 arm64 (Apple M5), Rust 1.100.0 via rustup,
