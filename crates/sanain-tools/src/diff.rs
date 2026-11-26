@@ -61,11 +61,25 @@ pub fn split_lines(text: &str) -> Vec<&str> {
 }
 
 pub fn diff_lines(left: &str, right: &str) -> Diff {
+    diff_lines_with(left, right, false)
+}
+
+/// Like [`diff_lines`]; with `ignore_whitespace`, lines that differ only in
+/// whitespace (including line endings) count as equal. Hunk byte ranges
+/// still refer to the original text, so applying a hunk stays exact.
+pub fn diff_lines_with(left: &str, right: &str, ignore_whitespace: bool) -> Diff {
     let a = split_lines(left);
     let b = split_lines(right);
     let (sa, sb) = (line_starts(&a), line_starts(&b));
     let deadline = Some(Instant::now() + Duration::from_secs(2));
-    let ops = capture_diff_slices_deadline(Algorithm::Myers, &a, &b, deadline);
+    let ops = if ignore_whitespace {
+        let key = |l: &&str| l.chars().filter(|c| !c.is_whitespace()).collect::<String>();
+        let ka: Vec<String> = a.iter().map(key).collect();
+        let kb: Vec<String> = b.iter().map(key).collect();
+        capture_diff_slices_deadline(Algorithm::Myers, &ka, &kb, deadline)
+    } else {
+        capture_diff_slices_deadline(Algorithm::Myers, &a, &b, deadline)
+    };
     let mut diff = Diff::default();
     for op in ops {
         let (oi, ol, ni, nl) = match op {
@@ -201,6 +215,24 @@ pub fn intraline(left: &str, right: &str) -> (Vec<Range<usize>>, Vec<Range<usize
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn ignore_whitespace() {
+        let l = "fn a() {\n    x();\n}\r\nend\n";
+        let r = "fn a() {\n\tx( );\n}\nend changed\n";
+        assert_eq!(
+            diff_lines(l, r).hunks.len(),
+            1,
+            "all whitespace edits are one hunk with the real change"
+        );
+        assert!(diff_lines(l, r).hunks[0].left_lines.start == 1);
+        let d = diff_lines_with(l, r, true);
+        assert_eq!(d.hunks.len(), 1);
+        assert_eq!(d.hunks[0].left_lines, 3..4, "only the real change remains");
+        assert_eq!(&l[d.hunks[0].left_bytes.clone()], "end\n");
+        assert_eq!(&r[d.hunks[0].right_bytes.clone()], "end changed\n");
+        assert!(diff_lines_with("a b\n", "ab\r\n", true).hunks.is_empty());
+    }
     use super::*;
 
     fn apply_all(left: &str, right: &str) -> String {

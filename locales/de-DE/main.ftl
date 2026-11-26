@@ -375,3 +375,4 @@ tabs-kept-unsaved = { $count ->
 status-indent-tabs = Tabs
 status-indent-spaces = Leerzeichen: { $count }
 find-searching = Suche läuft…
+compare-ignore-whitespace = Leerraum ignorieren

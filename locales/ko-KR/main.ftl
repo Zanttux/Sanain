@@ -356,3 +356,4 @@ tabs-kept-unsaved = { $count ->
 status-indent-tabs = 탭
 status-indent-spaces = 공백: { $count }
 find-searching = 검색 중…
+compare-ignore-whitespace = 공백 무시

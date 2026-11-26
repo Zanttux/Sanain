@@ -375,3 +375,4 @@ tabs-kept-unsaved = { $count ->
 status-indent-tabs = Sarkaimet
 status-indent-spaces = Välilyönnit: { $count }
 find-searching = Haetaan…
+compare-ignore-whitespace = Ohita tyhjätila

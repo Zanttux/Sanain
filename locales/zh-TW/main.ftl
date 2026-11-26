@@ -356,3 +356,4 @@ tabs-kept-unsaved = { $count ->
 status-indent-tabs = 定位字元
 status-indent-spaces = 空格: { $count }
 find-searching = 正在搜尋…
+compare-ignore-whitespace = 忽略空白

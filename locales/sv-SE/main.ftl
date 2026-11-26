@@ -375,3 +375,4 @@ tabs-kept-unsaved = { $count ->
 status-indent-tabs = Tabbar
 status-indent-spaces = Blanksteg: { $count }
 find-searching = Söker…
+compare-ignore-whitespace = Ignorera blanksteg
