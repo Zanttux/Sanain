@@ -389,3 +389,4 @@ cli-unknown-option = Άγνωστη επιλογή { $option }.
 cli-diff-needs-two = Το --diff χρειάζεται δύο αρχεία: sanain --diff ΑΡΙΣΤΕΡΑ ΔΕΞΙΑ
 window-move-tab-left = Μετακίνηση καρτέλας αριστερά
 window-move-tab-right = Μετακίνηση καρτέλας δεξιά
+edit-skip-occurrence = Μετάβαση στην επόμενη εμφάνιση

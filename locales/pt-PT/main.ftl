@@ -408,3 +408,4 @@ cli-unknown-option = Opção desconhecida { $option }.
 cli-diff-needs-two = --diff precisa de dois ficheiros: sanain --diff ESQUERDA DIREITA
 window-move-tab-left = Mover separador para a esquerda
 window-move-tab-right = Mover separador para a direita
+edit-skip-occurrence = Saltar para a ocorrência seguinte

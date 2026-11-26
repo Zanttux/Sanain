@@ -5,6 +5,8 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Edit › Skip to Next Occurrence (Cmd/Ctrl+Shift+D): replace the newest
+  occurrence selection with the next one.
 - Window › Move Tab Left/Right (Ctrl+Shift+Page Up/Down): reorder tabs
   from the keyboard.
 - Command line: `sanain --diff LEFT RIGHT` opens two files side by side;

@@ -389,3 +389,4 @@ cli-unknown-option = Unbekannte Option { $option }.
 cli-diff-needs-two = --diff benötigt zwei Dateien: sanain --diff LINKS RECHTS
 window-move-tab-left = Tab nach links verschieben
 window-move-tab-right = Tab nach rechts verschieben
+edit-skip-occurrence = Zum nächsten Vorkommen springen

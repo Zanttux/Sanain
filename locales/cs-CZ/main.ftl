@@ -427,3 +427,4 @@ cli-unknown-option = Neznámá volba { $option }.
 cli-diff-needs-two = --diff vyžaduje dva soubory: sanain --diff LEVÝ PRAVÝ
 window-move-tab-left = Přesunout kartu doleva
 window-move-tab-right = Přesunout kartu doprava
+edit-skip-occurrence = Přeskočit na další výskyt

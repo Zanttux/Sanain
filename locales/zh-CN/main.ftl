@@ -370,3 +370,4 @@ cli-unknown-option = 未知选项 { $option }。
 cli-diff-needs-two = --diff 需要两个文件：sanain --diff 左 右
 window-move-tab-left = 向左移动标签页
 window-move-tab-right = 向右移动标签页
+edit-skip-occurrence = 跳到下一个匹配项

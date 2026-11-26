@@ -427,3 +427,4 @@ cli-unknown-option = Невідомий параметр { $option }.
 cli-diff-needs-two = Для --diff потрібні два файли: sanain --diff ЛІВИЙ ПРАВИЙ
 window-move-tab-left = Перемістити вкладку ліворуч
 window-move-tab-right = Перемістити вкладку праворуч
+edit-skip-occurrence = Перейти до наступного входження

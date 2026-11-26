@@ -389,3 +389,4 @@ cli-unknown-option = Ukjent valg { $option }.
 cli-diff-needs-two = --diff trenger to filer: sanain --diff VENSTRE HØYRE
 window-move-tab-left = Flytt fane til venstre
 window-move-tab-right = Flytt fane til høyre
+edit-skip-occurrence = Hopp til neste forekomst

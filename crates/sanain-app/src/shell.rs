@@ -3060,6 +3060,7 @@ impl Shell {
                 }
             }
             MenuAction::SelectNextOccurrence => editor_cmd(Command::SelectNextOccurrence),
+            MenuAction::SkipOccurrence => editor_cmd(Command::SkipOccurrence),
             MenuAction::AddCursorAbove => editor_cmd(Command::AddCaretVertical { down: false }),
             MenuAction::AddCursorBelow => editor_cmd(Command::AddCaretVertical { down: true }),
             MenuAction::DeleteLine => editor_cmd(Command::DeleteLine),

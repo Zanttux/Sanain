@@ -370,3 +370,4 @@ cli-unknown-option = 不明なオプション { $option }。
 cli-diff-needs-two = --diff には 2 つのファイルが必要です: sanain --diff 左 右
 window-move-tab-left = タブを左に移動
 window-move-tab-right = タブを右に移動
+edit-skip-occurrence = 次の出現箇所へスキップ

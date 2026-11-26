@@ -370,3 +370,4 @@ cli-unknown-option = Tùy chọn không xác định { $option }.
 cli-diff-needs-two = --diff cần hai tệp: sanain --diff TRÁI PHẢI
 window-move-tab-left = Di chuyển thẻ sang trái
 window-move-tab-right = Di chuyển thẻ sang phải
+edit-skip-occurrence = Bỏ qua đến lần xuất hiện tiếp theo

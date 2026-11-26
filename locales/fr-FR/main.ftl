@@ -408,3 +408,4 @@ cli-unknown-option = Option inconnue { $option }.
 cli-diff-needs-two = --diff nécessite deux fichiers : sanain --diff GAUCHE DROITE
 window-move-tab-left = Déplacer l’onglet vers la gauche
 window-move-tab-right = Déplacer l’onglet vers la droite
+edit-skip-occurrence = Passer à l’occurrence suivante
