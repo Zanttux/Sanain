@@ -359,3 +359,12 @@ find-searching = 検索中…
 compare-ignore-whitespace = 空白を無視
 tools-compare-file = ファイルと比較…
 compare-file-failed = { $name } と比較できませんでした: { $reason }
+cli-help =
+    使い方:
+      sanain [ファイル…]     ファイルを開く
+      sanain --diff 左 右    2 つのファイルを並べて比較
+      sanain --version       バージョンを表示
+      sanain --help          このヘルプを表示
+    ダッシュで始まるファイル名の前には -- を付けてください。
+cli-unknown-option = 不明なオプション { $option }。
+cli-diff-needs-two = --diff には 2 つのファイルが必要です: sanain --diff 左 右

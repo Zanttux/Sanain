@@ -359,3 +359,12 @@ find-searching = Đang tìm kiếm…
 compare-ignore-whitespace = Bỏ qua khoảng trắng
 tools-compare-file = So sánh với tệp…
 compare-file-failed = Không thể so sánh với { $name }: { $reason }
+cli-help =
+    Cách dùng:
+      sanain [TỆP…]              mở tệp
+      sanain --diff TRÁI PHẢI    so sánh hai tệp cạnh nhau
+      sanain --version           hiển thị phiên bản
+      sanain --help              hiển thị trợ giúp này
+    Dùng -- trước tên tệp bắt đầu bằng dấu gạch ngang.
+cli-unknown-option = Tùy chọn không xác định { $option }.
+cli-diff-needs-two = --diff cần hai tệp: sanain --diff TRÁI PHẢI

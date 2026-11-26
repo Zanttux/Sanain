@@ -416,3 +416,12 @@ find-searching = Пошук…
 compare-ignore-whitespace = Ігнорувати пробіли
 tools-compare-file = Порівняти з файлом…
 compare-file-failed = Не вдалося порівняти з { $name }: { $reason }
+cli-help =
+    Використання:
+      sanain [ФАЙЛ…]                відкрити файли
+      sanain --diff ЛІВИЙ ПРАВИЙ    порівняти два файли поруч
+      sanain --version              показати версію
+      sanain --help                 показати цю довідку
+    Використовуйте -- перед назвами файлів, що починаються з дефіса.
+cli-unknown-option = Невідомий параметр { $option }.
+cli-diff-needs-two = Для --diff потрібні два файли: sanain --diff ЛІВИЙ ПРАВИЙ

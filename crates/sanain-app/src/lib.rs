@@ -1,5 +1,6 @@
 //! Application state for Sanain, independent of the GUI toolkit.
 
+pub mod cli;
 pub mod editor;
 pub mod editorconfig;
 pub mod filesearch;

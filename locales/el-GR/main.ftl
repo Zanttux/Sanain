@@ -378,3 +378,12 @@ find-searching = Αναζήτηση…
 compare-ignore-whitespace = Παράβλεψη κενών
 tools-compare-file = Σύγκριση με αρχείο…
 compare-file-failed = Δεν ήταν δυνατή η σύγκριση με το { $name }: { $reason }
+cli-help =
+    Χρήση:
+      sanain [ΑΡΧΕΙΟ…]                άνοιγμα αρχείων
+      sanain --diff ΑΡΙΣΤΕΡΑ ΔΕΞΙΑ    σύγκριση δύο αρχείων δίπλα-δίπλα
+      sanain --version                εμφάνιση της έκδοσης
+      sanain --help                   εμφάνιση αυτής της βοήθειας
+    Χρησιμοποιήστε -- πριν από ονόματα αρχείων που αρχίζουν με παύλα.
+cli-unknown-option = Άγνωστη επιλογή { $option }.
+cli-diff-needs-two = Το --diff χρειάζεται δύο αρχεία: sanain --diff ΑΡΙΣΤΕΡΑ ΔΕΞΙΑ

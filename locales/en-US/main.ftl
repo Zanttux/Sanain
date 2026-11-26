@@ -377,3 +377,12 @@ find-searching = Searching…
 compare-ignore-whitespace = Ignore whitespace
 tools-compare-file = Compare with File…
 compare-file-failed = Could not compare with { $name }: { $reason }
+cli-help =
+    Usage:
+      sanain [FILE…]              open files
+      sanain --diff LEFT RIGHT    compare two files side by side
+      sanain --version            show the version
+      sanain --help               show this help
+    Use -- before file names that start with a dash.
+cli-unknown-option = Unknown option { $option }.
+cli-diff-needs-two = --diff needs two files: sanain --diff LEFT RIGHT

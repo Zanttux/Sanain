@@ -2047,6 +2047,31 @@ impl Shell {
         true
     }
 
+    /// Show two open files side by side (`sanain --diff LEFT RIGHT`). Does
+    /// nothing if either is not open (its load error is already reported).
+    pub fn compare_files(&mut self, left: &Path, right: &Path) {
+        let same = |a: &Path, b: &Path| {
+            a == b || matches!((a.canonicalize(), b.canonicalize()), (Ok(x), Ok(y)) if x == y)
+        };
+        let find = |p: &Path| {
+            self.ws
+                .tabs()
+                .iter()
+                .find(|t| t.editor.file().is_some_and(|f| same(&f.path, p)))
+                .map(|t| t.id)
+        };
+        let (Some(l), Some(r)) = (find(left), find(right)) else {
+            return;
+        };
+        if l == r {
+            return;
+        }
+        if let Some(i) = self.ws.position(l) {
+            self.ws.activate(i);
+        }
+        self.start_compare(Side::Tab(r));
+    }
+
     fn start_compare(&mut self, right: Side) {
         self.compare = Some(Compare {
             left: self.ws.active().id,

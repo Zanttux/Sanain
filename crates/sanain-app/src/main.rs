@@ -22,10 +22,26 @@ use sanain_i18n::Localizer;
 use sanain_io::recovery::RecoveryStore;
 
 fn main() -> eframe::Result {
-    let (large, paths): (Vec<PathBuf>, Vec<PathBuf>) = std::env::args_os()
-        .skip(1)
-        .map(PathBuf::from)
+    let parsed = sanain_app::cli::parse(std::env::args_os().skip(1));
+    if parsed == sanain_app::cli::Parsed::Version {
+        println!("Sanain {}", env!("CARGO_PKG_VERSION"));
+        return Ok(());
+    }
+    let cli = match &parsed {
+        sanain_app::cli::Parsed::Run(c) => Some(c),
+        _ => None,
+    };
+    let diff = cli.and_then(|c| c.diff.clone());
+    let (large, mut paths): (Vec<PathBuf>, Vec<PathBuf>) = cli
+        .map(|c| c.paths.clone())
+        .unwrap_or_default()
+        .into_iter()
         .partition(|p| shell::Shell::is_large(p));
+    // Both sides of --diff open as tabs (so either can be edited).
+    if let Some((l, r)) = &diff {
+        paths.push(r.clone());
+        paths.push(l.clone());
+    }
 
     let settings_dir = Settings::default_dir();
     let settings = settings_dir
@@ -49,6 +65,33 @@ fn main() -> eframe::Result {
             std::process::exit(2);
         }
     };
+
+    // Help and usage errors need the localizer; print and exit.
+    match &parsed {
+        sanain_app::cli::Parsed::Help => {
+            println!("{}", l10n.get("cli-help"));
+            return Ok(());
+        }
+        sanain_app::cli::Parsed::Unknown(arg) => {
+            let mut args = sanain_i18n::FluentArgs::new();
+            args.set("option", arg.as_str());
+            // Bidi isolation marks are for GUI text; terminals show them.
+            let msg = l10n
+                .format("cli-unknown-option", Some(&args))
+                .replace(['\u{2068}', '\u{2069}'], "");
+            eprintln!("sanain: {msg}\n\n{}", l10n.get("cli-help"));
+            std::process::exit(2);
+        }
+        sanain_app::cli::Parsed::DiffNeedsTwo => {
+            eprintln!(
+                "sanain: {}\n\n{}",
+                l10n.get("cli-diff-needs-two"),
+                l10n.get("cli-help")
+            );
+            std::process::exit(2);
+        }
+        _ => {}
+    }
 
     // Crash recovery. SANAIN_RECOVERY_DIR overrides the location.
     let recovery_dir = std::env::var_os("SANAIN_RECOVERY_DIR")
@@ -111,6 +154,9 @@ fn main() -> eframe::Result {
             // One log viewer at a time: the last large file named wins.
             if let Some(p) = large.last() {
                 shell.open_large(p, &cc.egui_ctx);
+            }
+            if let Some((l, r)) = &diff {
+                shell.compare_files(l, r);
             }
             shell.install_menu(&cc.egui_ctx);
             shell.auto_update_check(&cc.egui_ctx);

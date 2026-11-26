@@ -378,3 +378,12 @@ find-searching = Suche läuft…
 compare-ignore-whitespace = Leerraum ignorieren
 tools-compare-file = Mit Datei vergleichen…
 compare-file-failed = Vergleich mit { $name } nicht möglich: { $reason }
+cli-help =
+    Verwendung:
+      sanain [DATEI…]               Dateien öffnen
+      sanain --diff LINKS RECHTS    zwei Dateien nebeneinander vergleichen
+      sanain --version              Version anzeigen
+      sanain --help                 diese Hilfe anzeigen
+    Verwenden Sie -- vor Dateinamen, die mit einem Bindestrich beginnen.
+cli-unknown-option = Unbekannte Option { $option }.
+cli-diff-needs-two = --diff benötigt zwei Dateien: sanain --diff LINKS RECHTS

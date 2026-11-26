@@ -378,3 +378,12 @@ find-searching = Zoeken…
 compare-ignore-whitespace = Negeer witruimte
 tools-compare-file = Vergelijk met bestand…
 compare-file-failed = Kan niet vergelijken met { $name }: { $reason }
+cli-help =
+    Gebruik:
+      sanain [BESTAND…]             bestanden openen
+      sanain --diff LINKS RECHTS    twee bestanden naast elkaar vergelijken
+      sanain --version              de versie tonen
+      sanain --help                 deze hulp tonen
+    Gebruik -- vóór bestandsnamen die met een streepje beginnen.
+cli-unknown-option = Onbekende optie { $option }.
+cli-diff-needs-two = --diff heeft twee bestanden nodig: sanain --diff LINKS RECHTS

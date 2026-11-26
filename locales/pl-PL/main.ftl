@@ -416,3 +416,12 @@ find-searching = Wyszukiwanie…
 compare-ignore-whitespace = Ignoruj białe znaki
 tools-compare-file = Porównaj z plikiem…
 compare-file-failed = Nie można porównać z { $name }: { $reason }
+cli-help =
+    Użycie:
+      sanain [PLIK…]              otwórz pliki
+      sanain --diff LEWY PRAWY    porównaj dwa pliki obok siebie
+      sanain --version            pokaż wersję
+      sanain --help               pokaż tę pomoc
+    Użyj -- przed nazwami plików zaczynającymi się od myślnika.
+cli-unknown-option = Nieznana opcja { $option }.
+cli-diff-needs-two = --diff wymaga dwóch plików: sanain --diff LEWY PRAWY

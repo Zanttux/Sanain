@@ -378,3 +378,12 @@ find-searching = Söker…
 compare-ignore-whitespace = Ignorera blanksteg
 tools-compare-file = Jämför med fil…
 compare-file-failed = Det gick inte att jämföra med { $name }: { $reason }
+cli-help =
+    Användning:
+      sanain [FIL…]                  öppna filer
+      sanain --diff VÄNSTER HÖGER    jämför två filer sida vid sida
+      sanain --version               visa versionen
+      sanain --help                  visa den här hjälpen
+    Använd -- före filnamn som börjar med bindestreck.
+cli-unknown-option = Okänt alternativ { $option }.
+cli-diff-needs-two = --diff behöver två filer: sanain --diff VÄNSTER HÖGER
