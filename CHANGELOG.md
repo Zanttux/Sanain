@@ -5,6 +5,8 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Log viewer: UTF-16 logs (with or without a byte order mark), as written
+  by many Windows programs, are indexed, shown and filtered correctly.
 - Replace in Files: replace the matches of a folder search in all result
   files after a confirmation. Open files change in their tab (undoable);
   other files are saved, with their previous contents in local history.
