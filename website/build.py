@@ -19,7 +19,7 @@ T = {
         "hero_sub": "A free, open-source text editor for everyday text, code, configuration files, Markdown and data. Native on Windows, macOS and Linux.",
         "status": ["Ln 2, Col 10", "Markdown", "LF", "UTF-8"],
         "cta": "Download the nightly build", "src": "Source on GitHub",
-        "cta_note": "Pre-alpha, version 0.0.1. Free for everyone, every feature included.",
+        "cta_note": "Pre-alpha, version 0.1.0. Free for everyone, every feature included.",
         "intact_h": "Your files stay intact",
         "intact_p": "Open a file, change nothing, save it: the bytes are the same. Encodings and line endings are kept as they were, saves are atomic, and Sanain refuses to overwrite a file another program changed in the meantime. Unsaved text survives a crash.",
         "bytes_label": ["before ", "after  "],
