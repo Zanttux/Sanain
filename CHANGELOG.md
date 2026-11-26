@@ -5,6 +5,8 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Project website (English and Finnish) on GitHub Pages:
+  https://zanttux.github.io/Sanain/ (#86).
 - Embedded languages are highlighted: JavaScript and CSS inside HTML
   `<script>`/`<style>`, and CSS/HTML in tagged JavaScript templates (#101).
 - Language detection from the first line when the file name says nothing

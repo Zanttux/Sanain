@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sanain — the power of words</title>
+<meta name="description" content="Sanain is a free, open-source text editor for text, code, Markdown and data. Native, offline, no account.">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="alternate" hreflang="en" href="https://zanttux.github.io/Sanain/">
+<link rel="alternate" hreflang="fi" href="https://zanttux.github.io/Sanain/fi/">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <a class="brand" href="./"><img src="icon.svg" alt="">Sanain</a>
+  <nav class="top"><a href="#download">Download</a><a href="#features">Features</a><a href="#privacy">Privacy</a><a href="#made">How it&#x27;s made</a><a class="lang" href="fi/" hreflang="fi">Suomeksi</a></nav>
+</header>
+
+<div class="buffer" role="img" aria-label="The power of words. A free, open-source text editor for everyday text, code, configuration files, Markdown and data. Native on Windows, macOS and Linux.">
+  <div class="tabs"><span class="tab on">welcome.md</span><span class="tab">notes.txt</span><span class="tab">config.toml</span></div>
+  <pre><span class="gutter">1<br>2<br><br>3</span><code><span class="kw">#</span> The power
+of words.<span class="caret"></span>
+
+<span class="dim">A free, open-source text editor for everyday text, code, configuration files, Markdown and data. Native on Windows, macOS and Linux.</span></code></pre>
+  <div class="status"><span><b>Ln 2, Col 10</b></span><span>Markdown</span><span>LF</span><span>UTF-8</span></div>
+</div>
+<div class="cta">
+  <a class="btn" href="https://github.com/Zanttux/Sanain/releases/tag/nightly">Download the nightly build</a>
+  <a class="btn ghost" href="https://github.com/Zanttux/Sanain">Source on GitHub</a>
+  <span class="note">Pre-alpha, version 0.0.1. Free for everyone, every feature included.</span>
+</div>
+
+<section id="intact">
+  <h2>Your files stay intact</h2>
+  <p class="lede">Open a file, change nothing, save it: the bytes are the same. Encodings and line endings are kept as they were, saves are atomic, and Sanain refuses to overwrite a file another program changed in the meantime. Unsaved text survives a crash.</p>
+  <div class="bytes" aria-hidden="true">before   63 61 66 c3 a9 0d 0a   <span class="same">c a f é \r \n</span>   UTF-8 · CRLF
+after    63 61 66 c3 a9 0d 0a   <span class="same">c a f é \r \n</span>   UTF-8 · CRLF</div>
+</section>
+
+<section id="features">
+  <h2>What it does</h2>
+  <div class="grid"><div><h3>Editing</h3><p>Tabs and a split view, multiple cursors, macros, word wrap, folding, a command palette, and keyboard shortcuts you can change, with a Notepad++ preset.</p></div><div><h3>Find and replace</h3><p>Regular expressions, a preview before Replace All, search across a folder and Replace in Files, with the previous version of each file kept in local history.</p></div><div><h3>Markdown</h3><p>Source, split and preview with tables, task lists, coloured code blocks, local images and an outline. Nothing in a document runs or loads from the network.</p></div><div><h3>Data and logs</h3><p>JSON, XML and YAML trees and validation, a CSV grid, side-by-side comparison, and a log viewer that opens files of any size.</p></div><div><h3>Languages</h3><p>Highlighting for 18 programming languages, including languages inside others (JavaScript and CSS in HTML). The interface is in 26 languages.</p></div><div><h3>Comfort</h3><p>Light, dark, high-contrast and bundled terminal themes, your own font, session restore, portable mode for a USB stick.</p></div></div>
+</section>
+
+<section id="screens">
+  <h2>Screenshots</h2>
+  <div class="shots"><figure><img src="screenshots/editor.png" alt="Editor with tabs and syntax highlighting" loading="lazy" width="1200" height="800"><figcaption>Editor with tabs and syntax highlighting</figcaption></figure><figure><img src="screenshots/markdown.png" alt="Markdown source and preview" loading="lazy" width="1200" height="800"><figcaption>Markdown source and preview</figcaption></figure><figure><img src="screenshots/split.png" alt="Split editor" loading="lazy" width="1200" height="800"><figcaption>Split editor</figcaption></figure><figure><img src="screenshots/log.png" alt="Log viewer with a filter" loading="lazy" width="1200" height="800"><figcaption>Log viewer with a filter</figcaption></figure></div>
+</section>
+
+<section id="download">
+  <h2>Download</h2>
+  <p>Builds are made automatically from every change and published as the nightly pre-release. <a href="https://github.com/Zanttux/Sanain/releases/tag/nightly">github.com/Zanttux/Sanain/releases/tag/nightly</a></p>
+  <div class="table-scroll"><table class="dl"><thead><tr><th>System</th><th>Installer</th><th>Portable</th></tr></thead><tbody><tr><td>Windows 10/11 (x64)</td><td><code>sanain-…-windows-x86_64-setup.exe</code></td><td><code>sanain-…-windows-x86_64-portable.zip</code></td></tr><tr><td>macOS 11+ (Apple Silicon)</td><td><code>sanain-…-macos-aarch64.dmg</code></td><td><code>sanain-…-macos-aarch64-portable.zip</code></td></tr><tr><td>Linux (x86-64)</td><td><code>sanain_…_amd64.deb</code></td><td><code>sanain-…-linux-x86_64-portable.tar.gz</code></td></tr></tbody></table></div>
+  <p class="warn">These builds are not signed yet. macOS asks for confirmation the first time (right-click Sanain, then Open); Windows SmartScreen may warn. Each file has a SHA-256 checksum next to it. Sanain is tested by hand on macOS; Windows and Linux are built and tested automatically.</p>
+</section>
+
+<section id="privacy">
+  <h2>Privacy</h2>
+  <p>Offline by default. No account, no ads, no telemetry. File contents never leave your computer. The only network use is an update check you can turn on, which asks GitHub whether a newer version exists.</p>
+</section>
+
+<section id="made">
+  <h2>How it&#x27;s made</h2>
+  <p>AI-built. Human-led. Community-driven. Sanain is written by Claude, an AI model by Anthropic, working as the developer under the direction of the project&#x27;s founder, who decides what it becomes. Every change goes through automated tests on three operating systems before it is merged, and the work is public on GitHub.</p>
+</section>
+
+<section id="support">
+  <h2>Support</h2>
+  <p>Sanain is free, and stays free with every feature for everyone. Bug reports, ideas and translations are welcome on GitHub. <a href="https://github.com/Zanttux/Sanain/issues">Report a problem or suggest an idea</a></p>
+</section>
+</div>
+<footer><div class="wrap">Sanain is free software under the Mozilla Public License 2.0. <a href="https://github.com/Zanttux/Sanain">GitHub</a> · <a href="https://github.com/Zanttux/Sanain/blob/main/PRIVACY.md">PRIVACY.md</a></div></footer>
+</body>
+</html>

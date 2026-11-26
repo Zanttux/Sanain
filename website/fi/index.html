@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sanain — sanojen voima</title>
+<meta name="description" content="Sanain on maksuton avoimen lähdekoodin tekstieditori tekstille, koodille, Markdownille ja datalle. Natiivi, toimii ilman verkkoa, ei tiliä.">
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
+<link rel="alternate" hreflang="en" href="https://zanttux.github.io/Sanain/">
+<link rel="alternate" hreflang="fi" href="https://zanttux.github.io/Sanain/fi/">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <a class="brand" href="./"><img src="../icon.svg" alt="">Sanain</a>
+  <nav class="top"><a href="#download">Lataa</a><a href="#features">Ominaisuudet</a><a href="#privacy">Yksityisyys</a><a href="#made">Miten tehty</a><a class="lang" href="../" hreflang="en">In English</a></nav>
+</header>
+
+<div class="buffer" role="img" aria-label="Sanojen voima. Maksuton avoimen lähdekoodin tekstieditori arjen tekstille, koodille, asetustiedostoille, Markdownille ja datalle. Natiivi Windowsissa, macOS:ssä ja Linuxissa.">
+  <div class="tabs"><span class="tab on">tervetuloa.md</span><span class="tab">notes.txt</span><span class="tab">config.toml</span></div>
+  <pre><span class="gutter">1<br>2<br><br>3</span><code><span class="kw">#</span> Sanojen
+voima.<span class="caret"></span>
+
+<span class="dim">Maksuton avoimen lähdekoodin tekstieditori arjen tekstille, koodille, asetustiedostoille, Markdownille ja datalle. Natiivi Windowsissa, macOS:ssä ja Linuxissa.</span></code></pre>
+  <div class="status"><span><b>Rivi 2, sarake 7</b></span><span>Markdown</span><span>LF</span><span>UTF-8</span></div>
+</div>
+<div class="cta">
+  <a class="btn" href="https://github.com/Zanttux/Sanain/releases/tag/nightly">Lataa nightly-versio</a>
+  <a class="btn ghost" href="https://github.com/Zanttux/Sanain">Lähdekoodi GitHubissa</a>
+  <span class="note">Esiversio 0.0.1. Maksuton kaikille, kaikki ominaisuudet mukana.</span>
+</div>
+
+<section id="intact">
+  <h2>Tiedostosi pysyvät ehjinä</h2>
+  <p class="lede">Avaa tiedosto, älä muuta mitään, tallenna: tavut ovat samat. Merkistö ja rivinvaihdot säilyvät, tallennus on atominen, eikä Sanain kirjoita sellaisen tiedoston päälle, jota toinen ohjelma on sillä välin muuttanut. Tallentamaton teksti säilyy kaatumisen yli.</p>
+  <div class="bytes" aria-hidden="true">ennen    63 61 66 c3 a9 0d 0a   <span class="same">c a f é \r \n</span>   UTF-8 · CRLF
+jälkeen  63 61 66 c3 a9 0d 0a   <span class="same">c a f é \r \n</span>   UTF-8 · CRLF</div>
+</section>
+
+<section id="features">
+  <h2>Mitä se tekee</h2>
+  <div class="grid"><div><h3>Muokkaus</h3><p>Välilehdet ja jaettu näkymä, monta kursoria, makrot, rivitys, laskostus, komentopaletti ja muokattavat pikanäppäimet, myös Notepad++-esiasetus.</p></div><div><h3>Etsi ja korvaa</h3><p>Säännölliset lausekkeet, esikatselu ennen kaikkien korvaamista, haku kansiosta ja korvaus tiedostoissa; jokaisen tiedoston aiempi versio säilyy paikallisessa historiassa.</p></div><div><h3>Markdown</h3><p>Lähde, jaettu näkymä ja esikatselu: taulukot, tehtävälistat, väritetyt koodilohkot, paikalliset kuvat ja jäsennys. Mikään dokumentissa ei suorita koodia eikä lataa verkosta.</p></div><div><h3>Data ja lokit</h3><p>JSON-, XML- ja YAML-puut ja tarkistus, CSV-taulukko, rinnakkaisvertailu ja lokinäkymä, joka avaa minkä kokoiset tiedostot tahansa.</p></div><div><h3>Kielet</h3><p>Korostus 18 ohjelmointikielelle, myös kielille toisten sisällä (JavaScript ja CSS HTML:ssä). Käyttöliittymä 26 kielellä.</p></div><div><h3>Mukavuus</h3><p>Vaalea, tumma, suurikontrastinen ja terminaaliteemat, oma fontti, istunnon palautus, kannettava tila USB-tikulle.</p></div></div>
+</section>
+
+<section id="screens">
+  <h2>Kuvia</h2>
+  <div class="shots"><figure><img src="../screenshots/editor.png" alt="Editori, välilehdet ja syntaksikorostus" loading="lazy" width="1200" height="800"><figcaption>Editori, välilehdet ja syntaksikorostus</figcaption></figure><figure><img src="../screenshots/markdown.png" alt="Markdown-lähde ja esikatselu" loading="lazy" width="1200" height="800"><figcaption>Markdown-lähde ja esikatselu</figcaption></figure><figure><img src="../screenshots/split.png" alt="Jaettu editori" loading="lazy" width="1200" height="800"><figcaption>Jaettu editori</figcaption></figure><figure><img src="../screenshots/log.png" alt="Lokinäkymä ja suodatus" loading="lazy" width="1200" height="800"><figcaption>Lokinäkymä ja suodatus</figcaption></figure></div>
+</section>
+
+<section id="download">
+  <h2>Lataa</h2>
+  <p>Versiot rakennetaan automaattisesti jokaisesta muutoksesta ja julkaistaan nightly-esijulkaisuna. <a href="https://github.com/Zanttux/Sanain/releases/tag/nightly">github.com/Zanttux/Sanain/releases/tag/nightly</a></p>
+  <div class="table-scroll"><table class="dl"><thead><tr><th>Järjestelmä</th><th>Asennusohjelma</th><th>Kannettava</th></tr></thead><tbody><tr><td>Windows 10/11 (x64)</td><td><code>sanain-…-windows-x86_64-setup.exe</code></td><td><code>sanain-…-windows-x86_64-portable.zip</code></td></tr><tr><td>macOS 11+ (Apple Silicon)</td><td><code>sanain-…-macos-aarch64.dmg</code></td><td><code>sanain-…-macos-aarch64-portable.zip</code></td></tr><tr><td>Linux (x86-64)</td><td><code>sanain_…_amd64.deb</code></td><td><code>sanain-…-linux-x86_64-portable.tar.gz</code></td></tr></tbody></table></div>
+  <p class="warn">Versioita ei ole vielä allekirjoitettu. macOS kysyy vahvistusta ensimmäisellä kerralla (napsauta Sanainia hiiren oikealla ja valitse Avaa); Windowsin SmartScreen voi varoittaa. Jokaisen tiedoston vieressä on SHA-256-tarkistussumma. Sanainia testataan käsin macOS:ssä; Windows- ja Linux-versiot rakennetaan ja testataan automaattisesti.</p>
+</section>
+
+<section id="privacy">
+  <h2>Yksityisyys</h2>
+  <p>Toimii oletuksena ilman verkkoa. Ei tiliä, ei mainoksia, ei telemetriaa. Tiedostojen sisältö ei lähde koneeltasi. Ainoa verkon käyttö on päivitystarkistus, jonka voit ottaa käyttöön: se kysyy GitHubista, onko uudempaa versiota.</p>
+</section>
+
+<section id="made">
+  <h2>Miten Sanain tehdään</h2>
+  <p>Tekoälyn rakentama, ihmisen johtama, yhteisön kehittämä. Sanainin kirjoittaa Claude, Anthropicin tekoälymalli, kehittäjänä projektin perustajan ohjauksessa; perustaja päättää, mitä siitä tulee. Jokainen muutos käy automaattiset testit kolmella käyttöjärjestelmällä ennen yhdistämistä, ja työ on julkista GitHubissa.</p>
+</section>
+
+<section id="support">
+  <h2>Tuki</h2>
+  <p>Sanain on maksuton ja pysyy maksuttomana kaikkine ominaisuuksineen kaikille. Vikailmoitukset, ideat ja käännökset ovat tervetulleita GitHubissa. <a href="https://github.com/Zanttux/Sanain/issues">Ilmoita ongelmasta tai ehdota ideaa</a></p>
+</section>
+</div>
+<footer><div class="wrap">Sanain on vapaata ohjelmistoa Mozilla Public License 2.0 -lisenssillä. <a href="https://github.com/Zanttux/Sanain">GitHub</a> · <a href="https://github.com/Zanttux/Sanain/blob/main/PRIVACY.md">PRIVACY.md</a></div></footer>
+</body>
+</html>
