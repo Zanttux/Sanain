@@ -419,3 +419,5 @@ replace-files-failed = { $failed ->
     [one] 1 dosya değiştirilmedi:
    *[other] { $failed } dosya değiştirilmedi; ilki:
     } { $first }
+image-outside = Bu görüntü belgenin klasörünün dışında.
+image-allow = Bu klasördeki görüntüleri göster

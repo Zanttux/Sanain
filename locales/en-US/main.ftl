@@ -421,3 +421,5 @@ replace-files-failed = { $failed ->
     [one] 1 file was not changed:
    *[other] { $failed } files were not changed; first:
 } { $first }
+image-outside = This image is outside the document's folder.
+image-allow = Show images from this folder

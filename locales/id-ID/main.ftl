@@ -395,3 +395,5 @@ replace-files-done = { $count ->
 replace-files-failed = { $failed ->
    *[other] { $failed } berkas tidak diubah; yang pertama:
     } { $first }
+image-outside = Gambar ini berada di luar folder dokumen.
+image-allow = Tampilkan gambar dari folder ini

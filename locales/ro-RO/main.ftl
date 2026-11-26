@@ -443,3 +443,5 @@ replace-files-failed = { $failed ->
     [few] { $failed } fișiere nu au fost modificate; primul:
    *[other] { $failed } de fișiere nu au fost modificate; primul:
     } { $first }
+image-outside = Această imagine se află în afara dosarului documentului.
+image-allow = Afișează imaginile din acest dosar

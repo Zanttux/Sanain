@@ -395,3 +395,5 @@ replace-files-done = Đã thay thế { $count ->
 replace-files-failed = { $failed ->
    *[other] { $failed } tệp không được thay đổi; tệp đầu tiên:
     } { $first }
+image-outside = Hình ảnh này nằm ngoài thư mục của tài liệu.
+image-allow = Hiển thị hình ảnh từ thư mục này

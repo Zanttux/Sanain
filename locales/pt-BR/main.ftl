@@ -443,3 +443,5 @@ replace-files-failed = { $failed ->
     [many] { $failed } arquivos não foram alterados; primeiro:
    *[other] { $failed } arquivos não foram alterados; primeiro:
     } { $first }
+image-outside = Esta imagem está fora da pasta do documento.
+image-allow = Exibir imagens desta pasta

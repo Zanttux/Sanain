@@ -191,6 +191,9 @@ pub struct Shell {
     headings: Option<HeadingCache>,
     /// The Markdown outline side panel is shown.
     outline_open: bool,
+    /// Folders outside a document's own folder the user allowed images
+    /// from (this session only).
+    allowed_image_dirs: Vec<std::path::PathBuf>,
     /// Scroll the outline to the current heading on the next frame.
     outline_follow: bool,
     recent: sanain_app::recent::Recent,
@@ -351,6 +354,7 @@ impl Shell {
             about_open: false,
             headings: None,
             outline_open: false,
+            allowed_image_dirs: Vec::new(),
             outline_follow: false,
             recent: Default::default(),
             tab_indent: HashMap::new(),
@@ -2665,11 +2669,18 @@ impl Shell {
         let ctx = ui.ctx().clone();
         self.ctx = ctx.clone();
         let images = &self.images;
+        let allowed = &self.allowed_image_dirs;
         let image = |url: &str| {
             use crate::imagecache::ImageView;
             use sanain_app::images::ImageSource;
             match sanain_app::images::resolve(url, doc_dir.as_deref()) {
                 ImageSource::Local(path) => images.borrow_mut().get(&ctx, &path),
+                ImageSource::Outside(path) if allowed.iter().any(|d| path.starts_with(d)) => {
+                    images.borrow_mut().get(&ctx, &path)
+                }
+                ImageSource::Outside(path) => {
+                    ImageView::Ask(path.parent().map(Path::to_path_buf).unwrap_or(path))
+                }
                 ImageSource::Remote => ImageView::Note("image-remote"),
                 ImageSource::Blocked => ImageView::Note("image-blocked"),
             }
@@ -2700,8 +2711,10 @@ impl Shell {
                         );
                     });
             });
-        if let Some(preview::Event::LinkClicked(url)) = event {
-            self.follow_link(&url);
+        match event {
+            Some(preview::Event::LinkClicked(url)) => self.follow_link(&url),
+            Some(preview::Event::AllowImages(dir)) => self.allowed_image_dirs.push(dir),
+            None => {}
         }
     }
 

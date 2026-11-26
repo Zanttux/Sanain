@@ -37,6 +37,9 @@ impl ImageError {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ImageSource {
     Local(PathBuf),
+    /// An existing file outside the document's folder (canonical path):
+    /// shown only after the user allows its folder.
+    Outside(PathBuf),
     /// Remote images are never fetched.
     Remote,
     /// Outside the document's folder, or an unsupported scheme.
@@ -63,6 +66,7 @@ pub fn resolve(url: &str, doc_dir: Option<&Path>) -> ImageSource {
         (Ok(file), Ok(root)) if file.starts_with(&root) && file.is_file() => {
             ImageSource::Local(file)
         }
+        (Ok(file), Ok(_)) if file.is_file() => ImageSource::Outside(file),
         (Ok(_), Ok(_)) => ImageSource::Blocked,
         _ => ImageSource::Local(candidate), // missing: reported as unreadable
     }
@@ -154,7 +158,10 @@ mod tests {
             "../{}/x.png",
             outside.path().file_name().unwrap().to_string_lossy()
         );
-        assert_eq!(resolve(&escape, d), ImageSource::Blocked);
+        assert_eq!(
+            resolve(&escape, d),
+            ImageSource::Outside(outside.path().join("x.png").canonicalize().unwrap())
+        );
         assert_eq!(resolve("a.png", None), ImageSource::Blocked);
     }
 }

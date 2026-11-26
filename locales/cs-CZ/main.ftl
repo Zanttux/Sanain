@@ -467,3 +467,5 @@ replace-files-failed = { $failed ->
     [many] { $failed } souboru nebylo změněno; první:
    *[other] { $failed } souborů nebylo změněno; první:
     } { $first }
+image-outside = Tento obrázek je mimo složku dokumentu.
+image-allow = Zobrazit obrázky z této složky
