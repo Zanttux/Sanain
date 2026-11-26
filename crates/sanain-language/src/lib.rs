@@ -90,6 +90,37 @@ impl Lang {
         })
     }
 
+    /// Detect from a Markdown code fence info string (` ```rust `). Only the
+    /// first word counts; names and common aliases are accepted.
+    pub fn from_fence(info: &str) -> Option<Self> {
+        let tag = info
+            .split(|c: char| c.is_whitespace() || c == ',' || c == '{')
+            .next()?
+            .trim_start_matches('.')
+            .to_ascii_lowercase();
+        Some(match tag.as_str() {
+            "sh" | "bash" | "shell" | "zsh" | "console" | "shellsession" => Lang::Bash,
+            "c" | "h" => Lang::C,
+            "cpp" | "c++" | "cxx" | "cc" | "hpp" => Lang::Cpp,
+            "cs" | "csharp" | "c#" => Lang::CSharp,
+            "css" => Lang::Css,
+            "go" | "golang" => Lang::Go,
+            "html" | "htm" | "xhtml" => Lang::Html,
+            "java" => Lang::Java,
+            "js" | "javascript" | "jsx" | "mjs" | "cjs" | "node" => Lang::JavaScript,
+            "json" | "jsonc" | "json5" | "geojson" => Lang::Json,
+            "py" | "python" | "python3" | "py3" => Lang::Python,
+            "rb" | "ruby" => Lang::Ruby,
+            "rs" | "rust" => Lang::Rust,
+            "toml" => Lang::Toml,
+            "tsx" => Lang::Tsx,
+            "ts" | "typescript" => Lang::TypeScript,
+            "xml" | "svg" | "plist" | "xsl" | "xslt" => Lang::Xml,
+            "yaml" | "yml" => Lang::Yaml,
+            _ => return None,
+        })
+    }
+
     /// The line comment prefix, if the language has one.
     pub fn line_comment(self) -> Option<&'static str> {
         match self {
@@ -413,6 +444,22 @@ fn map_err(e: tree_sitter_highlight::Error) -> HighlightError {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn fence_tags() {
+        assert_eq!(Lang::from_fence("rust"), Some(Lang::Rust));
+        assert_eq!(Lang::from_fence("Python title=\"x\""), Some(Lang::Python));
+        assert_eq!(Lang::from_fence("js,linenos"), Some(Lang::JavaScript));
+        assert_eq!(
+            Lang::from_fence("{.yaml}"),
+            None,
+            "attribute syntax is not a tag"
+        );
+        assert_eq!(Lang::from_fence(".yaml"), Some(Lang::Yaml));
+        assert_eq!(Lang::from_fence("c#"), Some(Lang::CSharp));
+        assert_eq!(Lang::from_fence(""), None);
+        assert_eq!(Lang::from_fence("mermaid"), None);
+    }
     use super::*;
     use std::sync::atomic::Ordering;
 
