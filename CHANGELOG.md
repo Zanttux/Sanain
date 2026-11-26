@@ -5,6 +5,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased]
 
 ### Fixed
+- Windows: "Open with Sanain" from Explorer failed for every file
+  ("Windows cannot access the specified device, path or file"): the
+  registered command used a `\\?\` path. Run the installer again (or
+  `sanain --register`) to replace the old entries (#115).
 - Clicking × on a tab only activated it instead of closing the document
   (since drag-to-reorder was added) (#110).
 
