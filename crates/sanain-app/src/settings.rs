@@ -22,6 +22,34 @@ pub enum ThemeChoice {
     HighContrast,
 }
 
+/// Name of the marker file that turns on portable mode.
+pub const PORTABLE_MARKER: &str = "sanain-portable";
+
+/// Portable mode: with a `sanain-portable` file next to the executable (or
+/// next to Sanain.app on macOS), settings, recovery and history live in a
+/// `data` folder beside it instead of the user profile.
+pub fn portable_root() -> Option<PathBuf> {
+    let exe = std::env::current_exe().ok()?;
+    portable_root_for(&exe)
+}
+
+/// [`portable_root`] for a given executable path.
+pub fn portable_root_for(exe: &std::path::Path) -> Option<PathBuf> {
+    let dir = exe.parent()?;
+    // Sanain.app/Contents/MacOS/sanain → the folder holding Sanain.app.
+    let bundle_parent = dir
+        .parent()
+        .filter(|c| c.ends_with("Contents"))
+        .and_then(|c| c.parent())
+        .filter(|app| app.extension().is_some_and(|e| e == "app"))
+        .and_then(|app| app.parent());
+    [Some(dir), bundle_parent]
+        .into_iter()
+        .flatten()
+        .find(|d| d.join(PORTABLE_MARKER).is_file())
+        .map(|d| d.join("data"))
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Settings {
     /// Editor font size in points.
@@ -82,6 +110,9 @@ impl Settings {
         };
         if let Some(d) = env("SANAIN_CONFIG_DIR") {
             return Some(d);
+        }
+        if let Some(root) = portable_root() {
+            return Some(root.join("settings"));
         }
         if cfg!(target_os = "macos") {
             env("HOME").map(|h| h.join("Library/Application Support/Sanain"))
@@ -206,6 +237,22 @@ impl Settings {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn portable_marker() {
+        let d = tempfile::tempdir().unwrap();
+        let exe = d.path().join("sanain");
+        assert_eq!(portable_root_for(&exe), None);
+        std::fs::write(d.path().join(PORTABLE_MARKER), "").unwrap();
+        assert_eq!(portable_root_for(&exe), Some(d.path().join("data")));
+        let mac = d.path().join("Sanain.app/Contents/MacOS/sanain");
+        std::fs::create_dir_all(mac.parent().unwrap()).unwrap();
+        assert_eq!(
+            portable_root_for(&mac),
+            Some(d.path().join("data")),
+            "marker next to Sanain.app"
+        );
+    }
     use super::*;
 
     #[test]

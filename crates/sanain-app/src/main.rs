@@ -112,6 +112,7 @@ fn main() -> eframe::Result {
     // Crash recovery. SANAIN_RECOVERY_DIR overrides the location.
     let recovery_dir = std::env::var_os("SANAIN_RECOVERY_DIR")
         .map(PathBuf::from)
+        .or_else(|| sanain_app::settings::portable_root().map(|r| r.join("recovery")))
         .or_else(RecoveryStore::default_dir);
     // The session file lives next to the recovery directory.
     let session_file = recovery_dir
