@@ -90,6 +90,24 @@ impl Lang {
         })
     }
 
+    /// Tree-sitter injection query: where other languages are embedded.
+    fn injections_query(self) -> &'static str {
+        match self {
+            Lang::Html => tree_sitter_html::INJECTIONS_QUERY,
+            Lang::JavaScript => tree_sitter_javascript::INJECTIONS_QUERY,
+            _ => "",
+        }
+    }
+
+    /// Languages this one can embed (see [`Self::injections_query`]).
+    fn embedded(self) -> &'static [Lang] {
+        match self {
+            Lang::Html => &[Lang::JavaScript, Lang::Css],
+            Lang::JavaScript => &[Lang::Css, Lang::Html],
+            _ => &[],
+        }
+    }
+
     /// Detect from the start of a file whose name says nothing: a shebang
     /// (`#!/usr/bin/env python3`, `#!/bin/bash`), an XML declaration or an
     /// HTML doctype. `head` is the first few hundred characters.
@@ -398,8 +416,14 @@ impl Highlighter {
             .entry(lang)
             .or_insert_with(|| {
                 let (language, query) = lang.grammar();
-                let mut c =
-                    HighlightConfiguration::new(language, lang.name(), &query, "", "").ok()?;
+                let mut c = HighlightConfiguration::new(
+                    language,
+                    lang.name(),
+                    &query,
+                    lang.injections_query(),
+                    "",
+                )
+                .ok()?;
                 c.configure(&NAMES);
                 Some(c)
             })
@@ -422,12 +446,21 @@ impl Highlighter {
                 lang.name()
             )));
         }
+        // Languages that may be embedded (e.g. JavaScript in HTML) must be
+        // ready before highlighting borrows the configurations.
+        for l in lang.embedded() {
+            let _ = self.config(*l);
+        }
         let Self { configs, inner } = self;
         let Some(Some(config)) = configs.get(&lang) else {
             return Ok(Vec::new());
         };
         let events = inner
-            .highlight(config, source, None, cancel, |_| None)
+            .highlight(config, source, None, cancel, |name| {
+                Lang::from_fence(name)
+                    .and_then(|l| configs.get(&l))
+                    .and_then(Option::as_ref)
+            })
             .map_err(map_err)?;
         let mut spans: Vec<Span> = Vec::new();
         let mut stack: Vec<Style> = Vec::new();
@@ -475,6 +508,24 @@ fn map_err(e: tree_sitter_highlight::Error) -> HighlightError {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn embedded_languages_in_html() {
+        let src = "<p>x</p>\n<script>const n = 42;</script>\n<style>a { color: red; }</style>\n";
+        let mut h = Highlighter::new();
+        let spans = h.highlight(Lang::Html, src.as_bytes(), None).unwrap();
+        let at = |needle: &str| {
+            let i = src.find(needle).unwrap();
+            spans.iter().find(|s| s.range.contains(&i)).map(|s| s.style)
+        };
+        assert_eq!(
+            at("const"),
+            Some(Style::Keyword),
+            "JavaScript inside <script>"
+        );
+        assert_eq!(at("42"), Some(Style::Number));
+        assert!(at("color").is_some(), "CSS inside <style>");
+    }
 
     #[test]
     fn content_detection() {
