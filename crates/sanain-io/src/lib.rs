@@ -20,5 +20,6 @@ pub use encoding::{
     is_confident,
 };
 pub use file::{
-    Fingerprint, LoadError, Loaded, SaveError, SaveMode, load, load_as, save, write_atomic,
+    Fingerprint, LoadError, Loaded, SaveError, SaveMode, load, load_as, load_with_bytes, save,
+    write_atomic,
 };

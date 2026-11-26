@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use eframe::egui::{self, RichText, text::LayoutJob, text::TextFormat};
 use sanain_app::filesearch::{Event, Hit, Search, Stats};
-use sanain_core::search::Query;
+use sanain_core::search::{Matcher, Query};
 
 use crate::find::Tr;
 use crate::theme;
@@ -18,6 +18,9 @@ pub struct FolderPanel {
     pub replace: String,
     search: Option<Search>,
     hits: Vec<Hit>,
+    /// The matcher that produced `hits`; Replace in Files uses it, not
+    /// the query as edited since.
+    hits_matcher: Option<Matcher>,
     stats: Option<Stats>,
     error: Option<String>,
     focus: bool,
@@ -56,6 +59,10 @@ impl FolderPanel {
         files
     }
 
+    pub fn hits_matcher(&self) -> Option<Matcher> {
+        self.hits_matcher.clone()
+    }
+
     pub fn hit_count(&self) -> usize {
         self.hits.len()
     }
@@ -74,6 +81,7 @@ impl FolderPanel {
         };
         match self.query.compile() {
             Ok(Some(m)) => {
+                self.hits_matcher = Some(m.clone());
                 let ctx = ctx.clone();
                 self.search = Some(Search::start(root, m, move || ctx.request_repaint()));
             }

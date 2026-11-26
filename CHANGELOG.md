@@ -242,6 +242,16 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   or when changes are discarded.
 
 ### Fixed
+- Regular-expression find and replace split CRLF line endings: `.` and
+  `$` treated the CR as part of the line, so e.g. replacing `.*$` or
+  trailing spaces left a bare LF. Line breaks are now `\r\n`-aware.
+- Replace in Files used the pattern as edited after the search, not the
+  one that produced the shown results; it now uses the search's own.
+- Saving a hard-linked file could overwrite an existing
+  `.NAME.sanain-backup` (possibly the only good copy after an earlier
+  failed save); a free backup name is chosen now.
+- Replace in Files reads each file once (history gets exactly the
+  replaced version) and leaves non-UTF-8 files alone.
 - UTF-16 files without a BOM that contain only ASCII text opened as UTF-8
   with invisible NUL characters, so typed text was saved in the wrong
   encoding. They now open as UTF-16.

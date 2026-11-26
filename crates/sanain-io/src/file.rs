@@ -92,6 +92,12 @@ pub fn load_as(path: &Path, encoding: TextEncoding) -> Result<Loaded, LoadError>
 }
 
 pub fn load(path: &Path) -> Result<Loaded, LoadError> {
+    load_with_bytes(path).map(|(l, _)| l)
+}
+
+/// [`load`], also returning the bytes that were read (one read, so the
+/// bytes and the fingerprint describe the same file contents).
+pub fn load_with_bytes(path: &Path) -> Result<(Loaded, Vec<u8>), LoadError> {
     let io_err = |source| LoadError::Io {
         path: path.to_owned(),
         source,
@@ -102,11 +108,15 @@ pub fn load(path: &Path) -> Result<Loaded, LoadError> {
         path: path.to_owned(),
         source,
     })?;
-    Ok(Loaded {
-        text,
-        encoding,
-        fingerprint: Fingerprint::of(&bytes, &meta),
-    })
+    let fingerprint = Fingerprint::of(&bytes, &meta);
+    Ok((
+        Loaded {
+            text,
+            encoding,
+            fingerprint,
+        },
+        bytes,
+    ))
 }
 
 /// Atomically write `text` to `path` and return the new fingerprint.
@@ -199,7 +209,19 @@ fn write_in_place(
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_default();
-    let backup = target.with_file_name(format!(".{name}.sanain-backup"));
+    // Never replace an existing file (e.g. the backup of an earlier failed
+    // save, which may hold the only good copy).
+    let backup = (0..100)
+        .map(|i| {
+            let suffix = if i == 0 {
+                String::new()
+            } else {
+                format!("-{i}")
+            };
+            target.with_file_name(format!(".{name}.sanain-backup{suffix}"))
+        })
+        .find(|p| fs::symlink_metadata(p).is_err())
+        .ok_or_else(|| io::Error::new(io::ErrorKind::AlreadyExists, "too many backups"))?;
     write_atomic(&backup, old, perms)?;
     let result = (|| {
         let mut f = fs::OpenOptions::new()

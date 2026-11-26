@@ -64,6 +64,9 @@ impl Query {
         let re = RegexBuilder::new(&pattern)
             .case_insensitive(!self.case_sensitive)
             .multi_line(true)
+            // `$`, `^` and `.` treat `\r\n` as one line break, so a pattern
+            // like `\s+$` or `.*` never consumes the CR of a CRLF file.
+            .crlf(true)
             .size_limit(PATTERN_SIZE_LIMIT)
             .build()
             .map_err(|e| SearchError::InvalidPattern(e.to_string()))?;
@@ -242,6 +245,36 @@ impl Matches {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn regex_keeps_crlf() {
+        let q = |p: &str| {
+            Query {
+                pattern: p.into(),
+                regex: true,
+                ..Default::default()
+            }
+            .compile()
+            .unwrap()
+            .unwrap()
+        };
+        let text = "foo bar  \r\nx  \r\n";
+        let run = |p: &str, with: &str| {
+            let rope = ropey::Rope::from_str(text);
+            let (tx, _) = q(p).replace_all(&rope, with);
+            let mut doc = crate::Document::from_saved_text(text);
+            doc.apply(&tx).unwrap();
+            doc.text()
+        };
+        assert_eq!(
+            run(r"[ \t]+$", ""),
+            "foo bar\r\nx\r\n",
+            "trailing spaces, CRLF kept"
+        );
+        // `\s` includes line breaks, but a CR is never split from its LF.
+        assert!(!run(r"\s+$", "").replace("\r\n", "").contains(['\r', '\n']));
+        assert_eq!(run("foo.*$", "Z"), "Z\r\nx  \r\n");
+    }
     use super::*;
     use crate::Document;
 
