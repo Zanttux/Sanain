@@ -386,6 +386,29 @@ mod tests {
     use crate::panes::{Direction, DividerId};
     use std::fs;
 
+    /// Reopening a tab in another encoding replaces its document; caches
+    /// keyed by revision (structured views, highlighting) must not see the
+    /// new text as the one they were built from (CSV edit offsets from the
+    /// old text corrupted the new one).
+    #[test]
+    fn reopen_with_encoding_gets_a_new_revision() {
+        let dir = tempfile::tempdir().unwrap();
+        let p = dir.path().join("t.csv");
+        fs::write(&p, "name,city\n\u{c4}iti,Espoo\nBob,Turku\n").unwrap();
+        let mut ws = Workspace::new(None);
+        let i = ws
+            .open_as(
+                &p,
+                sanain_io::TextEncoding::Legacy(encoding_rs::WINDOWS_1252),
+            )
+            .unwrap();
+        let before = ws.tabs()[i].editor.document().revision();
+        let i = ws.open_as(&p, sanain_io::TextEncoding::Utf8).unwrap();
+        let after = ws.tabs()[i].editor.document().revision();
+        assert_ne!(before, after);
+        assert!(ws.tabs()[i].editor.document().text().contains("\u{c4}iti"));
+    }
+
     #[test]
     fn open_replaces_blank_tab_and_dedupes() {
         let dir = tempfile::tempdir().unwrap();
