@@ -76,6 +76,9 @@ pub enum MenuAction {
     RecordMacro,
     PlayMacro,
     PlayMacroTimes,
+    SaveMacro,
+    PlaySavedMacro,
+    DeleteSavedMacro,
     CompareSaved,
     CompareClipboard,
     CompareFile,
@@ -97,7 +100,7 @@ pub enum MenuAction {
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 87] = [
+    pub const ALL: [MenuAction; 90] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -167,6 +170,9 @@ impl MenuAction {
         Self::RecordMacro,
         Self::PlayMacro,
         Self::PlayMacroTimes,
+        Self::SaveMacro,
+        Self::PlaySavedMacro,
+        Self::DeleteSavedMacro,
         Self::CompareSaved,
         Self::CompareClipboard,
         Self::CompareFile,
@@ -259,6 +265,9 @@ impl MenuAction {
             Self::RecordMacro => "tools.record-macro",
             Self::PlayMacro => "tools.play-macro",
             Self::PlayMacroTimes => "tools.play-macro-times",
+            Self::SaveMacro => "tools.save-macro",
+            Self::PlaySavedMacro => "tools.play-saved-macro",
+            Self::DeleteSavedMacro => "tools.delete-saved-macro",
             Self::CompareSaved => "tools.compare-saved",
             Self::CompareClipboard => "tools.compare-clipboard",
             Self::CompareFile => "tools.compare-file",
@@ -357,6 +366,9 @@ impl MenuAction {
             Self::RecordMacro => "tools-record-macro",
             Self::PlayMacro => "tools-play-macro",
             Self::PlayMacroTimes => "tools-play-macro-times",
+            Self::SaveMacro => "tools-save-macro",
+            Self::PlaySavedMacro => "tools-play-saved-macro",
+            Self::DeleteSavedMacro => "tools-delete-saved-macro",
             Self::CompareSaved => "tools-compare-saved",
             Self::CompareClipboard => "tools-compare-clipboard",
             Self::CompareFile => "tools-compare-file",
@@ -491,6 +503,9 @@ impl MenuAction {
             | Self::CompareClipboard
             | Self::CompareFile
             | Self::PlayMacroTimes
+            | Self::SaveMacro
+            | Self::PlaySavedMacro
+            | Self::DeleteSavedMacro
             | Self::Outline => return None,
         };
         Some(KeyboardShortcut::new(mods, key))
@@ -592,6 +607,9 @@ const TOOLS_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::RecordMacro),
     Some(MenuAction::PlayMacro),
     Some(MenuAction::PlayMacroTimes),
+    Some(MenuAction::SaveMacro),
+    Some(MenuAction::PlaySavedMacro),
+    Some(MenuAction::DeleteSavedMacro),
     None,
     Some(MenuAction::JsonValidate),
     Some(MenuAction::JsonFormat),
@@ -900,6 +918,9 @@ mod native {
             | MenuAction::CompareClipboard
             | MenuAction::CompareFile
             | MenuAction::PlayMacroTimes
+            | MenuAction::SaveMacro
+            | MenuAction::PlaySavedMacro
+            | MenuAction::DeleteSavedMacro
             | MenuAction::Outline => return None,
         };
         Some(KeyAccelerator::new(m, k))

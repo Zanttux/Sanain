@@ -18,6 +18,12 @@ pub enum Mode {
     Recent,
     /// How many times to play the recorded macro.
     MacroTimes,
+    /// Name for saving the recorded macro.
+    MacroSave,
+    /// Pick a saved macro to play.
+    MacroPlaySaved,
+    /// Pick a saved macro to delete.
+    MacroDeleteSaved,
 }
 
 /// One runnable entry as shown in the palette.
