@@ -461,3 +461,5 @@ settings-font = Police
 settings-font-default = Police à chasse fixe intégrée
 settings-font-loading = Recherche des polices installées…
 settings-font-missing = La police { $font } est introuvable ; la police intégrée est utilisée.
+settings-theme-more = Plus de thèmes
+settings-theme-user-note = Vos propres thèmes : fichiers .theme dans le dossier { $folder } (voir docs/THEMES.md).

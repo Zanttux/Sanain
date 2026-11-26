@@ -413,3 +413,5 @@ settings-font = 字体
 settings-font-default = 内置等宽字体
 settings-font-loading = 正在查找已安装的字体…
 settings-font-missing = 未找到字体 { $font }，正在使用内置字体。
+settings-theme-more = 更多主题
+settings-theme-user-note = 自定义主题：{ $folder } 文件夹中的 .theme 文件（参见 docs/THEMES.md）。

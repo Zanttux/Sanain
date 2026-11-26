@@ -440,3 +440,5 @@ settings-font = Fontti
 settings-font-default = Sisäänrakennettu tasaväli
 settings-font-loading = Haetaan asennettuja fontteja…
 settings-font-missing = Fonttia { $font } ei löytynyt; käytetään sisäänrakennettua fonttia.
+settings-theme-more = Lisää teemoja
+settings-theme-user-note = Omat teemat: .theme-tiedostot kansiossa { $folder } (ks. docs/THEMES.md).

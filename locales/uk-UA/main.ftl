@@ -485,3 +485,5 @@ settings-font = Шрифт
 settings-font-default = Вбудований моноширинний
 settings-font-loading = Пошук встановлених шрифтів…
 settings-font-missing = Шрифт { $font } не знайдено; використовується вбудований шрифт.
+settings-theme-more = Інші теми
+settings-theme-user-note = Власні теми: файли .theme у теці { $folder } (див. docs/THEMES.md).

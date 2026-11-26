@@ -18,6 +18,7 @@ mod preview;
 mod shell;
 mod structured;
 mod theme;
+mod themes;
 mod view;
 
 use std::path::PathBuf;

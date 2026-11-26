@@ -485,3 +485,5 @@ settings-font = Czcionka
 settings-font-default = Wbudowana o stałej szerokości
 settings-font-loading = Wyszukiwanie zainstalowanych czcionek…
 settings-font-missing = Nie znaleziono czcionki { $font }; używana jest czcionka wbudowana.
+settings-theme-more = Więcej motywów
+settings-theme-user-note = Własne motywy: pliki .theme w folderze { $folder } (zob. docs/THEMES.md).

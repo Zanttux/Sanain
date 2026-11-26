@@ -1,9 +1,27 @@
-//! Brand tokens (assets/brand/tokens.json) applied to egui's visuals.
-//! The app follows the system light/dark preference.
+//! Colour themes applied to egui's visuals. The Sanain themes use the brand
+//! tokens (assets/brand/tokens.json) and follow the system light/dark
+//! preference; bundled and user themes (see [`themes`]) replace them.
 
 use eframe::egui::{self, Color32, Theme};
 
+/// Syntax colours of a theme (see [`syntax`]).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Syntax {
+    pub keyword: Color32,
+    pub string: Color32,
+    pub escape: Color32,
+    pub comment: Color32,
+    pub number: Color32,
+    pub function: Color32,
+    pub type_: Color32,
+    pub tag: Color32,
+    pub attribute: Color32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Palette {
+    /// Dark background (egui's dark style is used as the base).
+    pub dark: bool,
     pub canvas: Color32,
     pub surface: Color32,
     pub text: Color32,
@@ -12,9 +30,41 @@ pub struct Palette {
     pub border: Color32,
     pub error: Color32,
     pub warning: Color32,
+    pub syntax: Syntax,
 }
 
+const fn hex(v: u32) -> Color32 {
+    Color32::from_rgb((v >> 16) as u8, (v >> 8) as u8, v as u8)
+}
+
+/// Sanain dark syntax colours (WCAG AA on the dark canvas, 2026-11-25).
+const SANAIN_DARK_SYNTAX: Syntax = Syntax {
+    keyword: hex(0xE6A46A),
+    string: hex(0x9DCC8F),
+    escape: hex(0xE3D08A),
+    comment: hex(0x84919B),
+    number: hex(0xD9A8D2),
+    function: hex(0x8FC6E8),
+    type_: hex(0xE3D08A),
+    tag: hex(0xE6A46A),
+    attribute: hex(0xB9C6CF),
+};
+
+/// Sanain light syntax colours (WCAG AA on the light canvas).
+const SANAIN_LIGHT_SYNTAX: Syntax = Syntax {
+    keyword: hex(0x9A4A0B),
+    string: hex(0x2F6F2A),
+    escape: hex(0x7A5A00),
+    comment: hex(0x5E6B74),
+    number: hex(0x8A3D7A),
+    function: hex(0x1F5E8C),
+    type_: hex(0x7A5A00),
+    tag: hex(0x9A4A0B),
+    attribute: hex(0x3E4C55),
+};
+
 pub const LIGHT: Palette = Palette {
+    dark: false,
     canvas: Color32::from_rgb(0xF7, 0xF9, 0xF8),
     surface: Color32::from_rgb(0xFF, 0xFF, 0xFF),
     text: Color32::from_rgb(0x18, 0x23, 0x2A),
@@ -23,9 +73,11 @@ pub const LIGHT: Palette = Palette {
     border: Color32::from_rgb(0xD4, 0xDD, 0xD9),
     error: Color32::from_rgb(0xB4, 0x23, 0x18),
     warning: Color32::from_rgb(0x8A, 0x52, 0x00),
+    syntax: SANAIN_LIGHT_SYNTAX,
 };
 
 pub const DARK: Palette = Palette {
+    dark: true,
     canvas: Color32::from_rgb(0x14, 0x17, 0x1B),
     surface: Color32::from_rgb(0x20, 0x25, 0x2C),
     text: Color32::from_rgb(0xE8, 0xED, 0xF0),
@@ -34,10 +86,12 @@ pub const DARK: Palette = Palette {
     border: Color32::from_rgb(0x3B, 0x46, 0x50),
     error: Color32::from_rgb(0xFF, 0x91, 0x8A),
     warning: Color32::from_rgb(0xF6, 0xC6, 0x6D),
+    syntax: SANAIN_DARK_SYNTAX,
 };
 
 /// High-contrast palette: pure black/white with a yellow accent.
 pub const HIGH_CONTRAST: Palette = Palette {
+    dark: true,
     canvas: Color32::from_rgb(0x00, 0x00, 0x00),
     surface: Color32::from_rgb(0x0A, 0x0A, 0x0A),
     text: Color32::from_rgb(0xFF, 0xFF, 0xFF),
@@ -46,11 +100,18 @@ pub const HIGH_CONTRAST: Palette = Palette {
     border: Color32::from_rgb(0xFF, 0xFF, 0xFF),
     error: Color32::from_rgb(0xFF, 0x8A, 0x8A),
     warning: Color32::from_rgb(0xFF, 0xD6, 0x0A),
+    syntax: SANAIN_DARK_SYNTAX,
 };
 
 static HIGH_CONTRAST_ON: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
+/// A bundled or user theme replacing the Sanain themes, if chosen.
+static OVERRIDE: std::sync::RwLock<Option<&'static Palette>> = std::sync::RwLock::new(None);
+
 pub fn palette(ctx: &egui::Context) -> &'static Palette {
+    if let Some(p) = OVERRIDE.read().ok().and_then(|o| *o) {
+        return p;
+    }
     match ctx.theme() {
         Theme::Dark if HIGH_CONTRAST_ON.load(std::sync::atomic::Ordering::Relaxed) => {
             &HIGH_CONTRAST
@@ -73,6 +134,26 @@ pub fn set_high_contrast(ctx: &egui::Context, on: bool) {
         // A clearly visible keyboard focus ring.
         s.visuals.selection.stroke.width = if on { 2.0 } else { 1.0 };
     });
+}
+
+/// Use `p` (a bundled or user theme) instead of the Sanain themes, or go
+/// back to them with `None`.
+pub fn set_override(ctx: &egui::Context, p: Option<&'static Palette>) {
+    if let Ok(mut o) = OVERRIDE.write() {
+        *o = p;
+    }
+    match p {
+        Some(p) => {
+            let t = if p.dark { Theme::Dark } else { Theme::Light };
+            apply(ctx, t, p);
+            ctx.set_theme(if p.dark {
+                egui::ThemePreference::Dark
+            } else {
+                egui::ThemePreference::Light
+            });
+        }
+        None => install(ctx),
+    }
 }
 
 pub fn install(ctx: &egui::Context) {
@@ -104,27 +185,21 @@ fn apply(ctx: &egui::Context, theme: Theme, p: &Palette) {
     }
 }
 
-/// Syntax colours, kept apart from brand colours (docs/BRAND.md). Each
-/// foreground meets WCAG 2.2 AA (>= 4.5:1) on the editor canvas: dark
-/// 5.6-15.2:1, light 5.2-15.1:1 (computed 2026-11-25). Selection and
-/// search-highlight backgrounds are not yet verified.
+/// Syntax colour for `style` in palette `p`. Variables use the text
+/// colour, operators and punctuation the muted colour.
 pub fn syntax(p: &Palette, style: sanain_language::Style) -> Color32 {
     use sanain_language::Style as S;
-    let dark = p.canvas == DARK.canvas || p.canvas == HIGH_CONTRAST.canvas;
-    let rgb = |d: [u8; 3], l: [u8; 3]| {
-        let c = if dark { d } else { l };
-        Color32::from_rgb(c[0], c[1], c[2])
-    };
+    let c = &p.syntax;
     match style {
-        S::Keyword => rgb([0xE6, 0xA4, 0x6A], [0x9A, 0x4A, 0x0B]),
-        S::String => rgb([0x9D, 0xCC, 0x8F], [0x2F, 0x6F, 0x2A]),
-        S::Escape => rgb([0xE3, 0xD0, 0x8A], [0x7A, 0x5A, 0x00]),
-        S::Comment => rgb([0x84, 0x91, 0x9B], [0x5E, 0x6B, 0x74]),
-        S::Number | S::Constant => rgb([0xD9, 0xA8, 0xD2], [0x8A, 0x3D, 0x7A]),
-        S::Function => rgb([0x8F, 0xC6, 0xE8], [0x1F, 0x5E, 0x8C]),
-        S::Type => rgb([0xE3, 0xD0, 0x8A], [0x7A, 0x5A, 0x00]),
-        S::Tag => rgb([0xE6, 0xA4, 0x6A], [0x9A, 0x4A, 0x0B]),
-        S::Attribute | S::Property => rgb([0xB9, 0xC6, 0xCF], [0x3E, 0x4C, 0x55]),
+        S::Keyword => c.keyword,
+        S::String => c.string,
+        S::Escape => c.escape,
+        S::Comment => c.comment,
+        S::Number | S::Constant => c.number,
+        S::Function => c.function,
+        S::Type => c.type_,
+        S::Tag => c.tag,
+        S::Attribute | S::Property => c.attribute,
         S::Variable => p.text,
         S::Operator | S::Punctuation => p.muted,
     }

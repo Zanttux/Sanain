@@ -437,3 +437,5 @@ settings-font = Γραμματοσειρά
 settings-font-default = Ενσωματωμένη σταθερού πλάτους
 settings-font-loading = Αναζήτηση εγκατεστημένων γραμματοσειρών…
 settings-font-missing = Η γραμματοσειρά { $font } δεν βρέθηκε· χρησιμοποιείται η ενσωματωμένη γραμματοσειρά.
+settings-theme-more = Περισσότερα θέματα
+settings-theme-user-note = Δικά σας θέματα: αρχεία .theme στον φάκελο { $folder } (δείτε docs/THEMES.md).
