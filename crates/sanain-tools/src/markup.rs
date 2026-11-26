@@ -230,6 +230,20 @@ fn line_breaks(s: &str) -> usize {
 /// are kept. Malformed XML is an error, never partial output, and so is
 /// output far larger than the input (very deep nesting).
 pub fn format_xml(text: &str, indent: &str) -> Result<String, TreeError> {
+    // quick-xml skips a leading U+FEFF, which would shift every offset below
+    // (corrupt output or a panic on a char boundary): format the rest and
+    // put it back.
+    if let Some(rest) = text.strip_prefix('\u{feff}') {
+        return match format_xml(rest, indent) {
+            Ok(out) => Ok(format!("\u{feff}{out}")),
+            Err(mut e) => {
+                if e.line == 1 {
+                    e.column += 1;
+                }
+                Err(e)
+            }
+        };
+    }
     use quick_xml::events::Event;
     let mut reader = quick_xml::Reader::from_str(text);
     reader.config_mut().check_end_names = true;
@@ -283,7 +297,11 @@ pub fn format_xml(text: &str, indent: &str) -> Result<String, TreeError> {
             Event::Text(t) => {
                 let raw = &text[start..end];
                 debug_assert_eq!(raw.len(), t.len());
-                if raw.trim().is_empty() {
+                // Only XML whitespace is layout; U+00A0 and the like are text.
+                if raw
+                    .trim_matches(|c| matches!(c, ' ' | '\t' | '\r' | '\n'))
+                    .is_empty()
+                {
                     Piece::Space
                 } else {
                     Piece::Content
@@ -554,6 +572,20 @@ mod tests {
         assert!(e.message.contains("<a>"), "{e:?}");
         assert!(format_xml("<a></a></b>", "  ").is_err());
         assert!(format_xml("<a><!-- x </a>", "  ").is_err());
+    }
+
+    #[test]
+    fn format_xml_keeps_bom_and_non_xml_whitespace() {
+        let out = format_xml("\u{feff}<a><b\u{e9}/></a>", "  ").unwrap();
+        assert_eq!(out, "\u{feff}<a>\n  <b\u{e9}/>\n</a>");
+        assert_eq!(format_xml(&out, "  ").unwrap(), out);
+        for ws in ["\u{a0}", "\u{3000}", "\u{85}", "\u{2028}"] {
+            let src = format!("<a><b/>{ws}<c/></a>");
+            let out = format_xml(&src, "  ").unwrap();
+            assert!(out.contains(ws), "{ws:?} kept: {out:?}");
+        }
+        let e = format_xml("\u{feff}<a></b>", "  ").unwrap_err();
+        assert_eq!(e.line, 1);
     }
 
     #[test]

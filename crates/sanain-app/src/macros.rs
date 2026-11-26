@@ -95,9 +95,41 @@ impl MacroStore {
             .unwrap_or_default()
     }
 
+    /// Write `dir/macros`. If the file there holds anything this version
+    /// could not read (a newer format, a damaged or hand-edited macro, bad
+    /// bytes), it is first copied to `macros.N.bak` so saving never loses
+    /// macros silently.
     pub fn save(&self, dir: &Path) -> io::Result<()> {
         fs::create_dir_all(dir)?;
+        let path = dir.join(FILE);
+        if path.exists() && !Self::fully_readable(&path) {
+            let backup = (1..=1000)
+                .map(|n| dir.join(format!("{FILE}.{n}.bak")))
+                .find(|p| !p.exists())
+                .ok_or_else(|| io::Error::other("too many macro backups"))?;
+            fs::copy(&path, &backup)?;
+        }
         sanain_io::write_atomic(&dir.join(FILE), self.encode().as_bytes(), None).map(|_| ())
+    }
+
+    /// Whether every macro in the file at `path` is understood, so
+    /// rewriting it from a loaded store loses nothing.
+    fn fully_readable(path: &Path) -> bool {
+        let Ok(bytes) = fs::read(path) else {
+            return false;
+        };
+        let Ok(text) = String::from_utf8(bytes) else {
+            return false;
+        };
+        if text.len() > MAX_BYTES {
+            return false;
+        }
+        let mut lines = text.lines();
+        if lines.next().map(str::trim) != Some(HEADER) {
+            return false;
+        }
+        let blocks = lines.filter(|l| l.starts_with("macro ")).count();
+        Self::decode(&text).macros.len() == blocks
     }
 
     pub fn decode(text: &str) -> Self {
@@ -602,6 +634,32 @@ mod tests {
         s.remove("x");
         s.save(&dir).unwrap();
         assert!(MacroStore::load(&dir).is_empty());
+    }
+
+    #[test]
+    fn saving_over_an_unreadable_file_keeps_a_backup() {
+        let d = tempfile::tempdir().unwrap();
+        let dir = d.path();
+        let mut s = MacroStore::default();
+        s.insert("x", &every_step()).unwrap();
+        // Readable file: rewritten without a backup.
+        s.save(dir).unwrap();
+        s.save(dir).unwrap();
+        assert!(!dir.join("macros.1.bak").exists());
+        // A damaged macro, then a newer format: each is kept in a backup.
+        for (n, text) in [
+            (
+                1,
+                "sanain-macros 1\nmacro good\ncut\nend\nmacro bad\nfly\nend\n",
+            ),
+            (2, "sanain-macros 2\nmacro future\nwarp\nend\n"),
+        ] {
+            std::fs::write(dir.join("macros"), text).unwrap();
+            s.save(dir).unwrap();
+            let bak = dir.join(format!("macros.{n}.bak"));
+            assert_eq!(std::fs::read_to_string(&bak).unwrap(), text);
+        }
+        assert_eq!(MacroStore::load(dir), s);
     }
 
     #[test]
