@@ -224,6 +224,8 @@ pub struct Shell {
     headings: Option<HeadingCache>,
     /// The Markdown outline side panel is shown.
     outline_open: bool,
+    /// Languages chosen by hand per tab (`None` = plain text).
+    lang_override: HashMap<TabId, Option<Lang>>,
     /// Section shown in Settings.
     settings_tab: SettingsTab,
     /// Filter text of the shortcut list in Settings.
@@ -399,6 +401,7 @@ impl Shell {
             about_open: false,
             headings: None,
             outline_open: false,
+            lang_override: HashMap::new(),
             settings_tab: SettingsTab::General,
             shortcut_filter: String::new(),
             font_families: None,
@@ -3111,8 +3114,22 @@ impl Shell {
         }
     }
 
-    fn language(ed: &Editor) -> Option<Lang> {
-        ed.file().and_then(|f| Lang::from_path(&f.path))
+    /// Language of a tab: the user's choice, else the file name, else the
+    /// first line of the text.
+    fn language(&self, id: TabId, ed: &Editor) -> Option<Lang> {
+        if let Some(choice) = self.lang_override.get(&id) {
+            return *choice;
+        }
+        ed.file()
+            .and_then(|f| Lang::from_path(&f.path))
+            .or_else(|| {
+                if Self::is_markdown(ed) {
+                    return None;
+                }
+                let rope = ed.document().rope();
+                let end = rope.len_chars().min(512);
+                Lang::from_content(&rope.slice(..end).to_string())
+            })
     }
 
     /// Ask for highlighting of the active tab if its text changed, and
@@ -3123,7 +3140,9 @@ impl Shell {
         }
         let tab = self.ws.active();
         let rev = tab.editor.document().revision();
-        match Self::language(&tab.editor) {
+        let lang = self.language(tab.id, &tab.editor);
+        let tab = self.ws.active();
+        match lang {
             Some(lang) if self.requested.get(&tab.id) != Some(&rev) => {
                 self.syntax
                     .submit(tab.id, rev, lang, tab.editor.document().rope().clone());
@@ -3137,7 +3156,7 @@ impl Shell {
         // Results arrive from another thread; check back shortly while
         // the active tab is waiting for fresh spans.
         let fresh = self.spans.get(&tab.id).is_some_and(|(r, _)| *r == rev);
-        if Self::language(&tab.editor).is_some() && !fresh {
+        if lang.is_some() && !fresh {
             ctx.request_repaint_after(std::time::Duration::from_millis(16));
         }
     }
@@ -3638,7 +3657,10 @@ impl Shell {
             MenuAction::IndentLines => editor_cmd(Command::IndentLines(tab_indent)),
             MenuAction::OutdentLines => editor_cmd(Command::OutdentLines(tab_width)),
             MenuAction::ToggleComment => {
-                match Self::language(self.editor()).and_then(|l| l.line_comment()) {
+                match self
+                    .language(self.ws.active().id, self.editor())
+                    .and_then(|l| l.line_comment())
+                {
                     Some(prefix) => editor_cmd(Command::ToggleComment(prefix.to_owned())),
                     None => {
                         self.status = Some((self.t("comment-unsupported", &[]), false));
@@ -3868,8 +3890,14 @@ impl Shell {
         }
     }
 
-    fn status_bar(&self, ui: &mut egui::Ui) {
+    fn status_bar(&mut self, ui: &mut egui::Ui) {
         let p = theme::palette(ui.ctx());
+        let id = self.ws.active().id;
+        let mut choice: Option<Option<Option<Lang>>> = None;
+        let auto_l = self.t("language-auto", &[]);
+        let plain_l = self.t("language-plain", &[]);
+        let tip = self.t("language-choose", &[]);
+        let current_choice = self.lang_override.get(&id).copied();
         let editor = self.editor();
         ui.horizontal(|ui| {
             if editor.is_recording() {
@@ -3901,12 +3929,46 @@ impl Shell {
                     LineEnding::Lf | LineEnding::None => "line-ending-lf",
                 };
                 ui.colored_label(p.muted, self.t(le, &[]));
-                let lang = match Self::language(editor) {
+                let lang = match self.language(id, editor) {
                     Some(l) => l.name().to_owned(),
-                    None if Self::is_markdown(editor) => "Markdown".to_owned(),
-                    None => self.t("language-plain", &[]),
+                    None if Self::is_markdown(editor) && current_choice.is_none() => {
+                        "Markdown".to_owned()
+                    }
+                    None => plain_l.clone(),
                 };
-                ui.colored_label(p.muted, lang);
+                // Click the language to choose another one for this tab.
+                ui.menu_button(egui::RichText::new(lang).color(p.muted), |ui| {
+                    if ui
+                        .selectable_label(current_choice.is_none(), &auto_l)
+                        .clicked()
+                    {
+                        choice = Some(None);
+                        ui.close();
+                    }
+                    if ui
+                        .selectable_label(current_choice == Some(None), &plain_l)
+                        .clicked()
+                    {
+                        choice = Some(Some(None));
+                        ui.close();
+                    }
+                    ui.separator();
+                    egui::ScrollArea::vertical()
+                        .max_height(320.0)
+                        .show(ui, |ui| {
+                            for l in Lang::ALL {
+                                if ui
+                                    .selectable_label(current_choice == Some(Some(l)), l.name())
+                                    .clicked()
+                                {
+                                    choice = Some(Some(Some(l)));
+                                    ui.close();
+                                }
+                            }
+                        });
+                })
+                .response
+                .on_hover_text(&tip);
                 let sels = editor.selections();
                 if sels.len() > 1 {
                     let n = sels.len() as i64;
@@ -3924,6 +3986,18 @@ impl Shell {
                 ui.colored_label(p.muted, pos);
             });
         });
+        match choice {
+            Some(None) => {
+                self.lang_override.remove(&id);
+            }
+            Some(Some(l)) => {
+                self.lang_override.insert(id, l);
+            }
+            None => return,
+        }
+        // Highlight again with the new language.
+        self.requested.remove(&id);
+        self.spans.remove(&id);
     }
 
     fn dialogs(&mut self, ctx: &egui::Context) {

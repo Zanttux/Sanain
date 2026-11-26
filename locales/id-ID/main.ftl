@@ -415,3 +415,5 @@ settings-font-loading = Mencari font yang terpasang…
 settings-font-missing = Font { $font } tidak ditemukan; menggunakan font bawaan.
 settings-theme-more = Tema lainnya
 settings-theme-user-note = Tema Anda sendiri: file .theme di folder { $folder } (lihat docs/THEMES.md).
+language-auto = Deteksi Otomatis
+language-choose = Pilih bahasa untuk tab ini

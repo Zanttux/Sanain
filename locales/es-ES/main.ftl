@@ -439,3 +439,5 @@ settings-font-loading = Buscando tipos de letra instalados…
 settings-font-missing = No se encontró el tipo de letra { $font }; se usa el tipo de letra integrado.
 settings-theme-more = Más temas
 settings-theme-user-note = Temas propios: archivos .theme en la carpeta { $folder } (ver docs/THEMES.md).
+language-auto = Detectar automáticamente
+language-choose = Elegir el lenguaje de esta pestaña

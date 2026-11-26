@@ -441,3 +441,5 @@ settings-font-loading = Looking for installed fonts…
 settings-font-missing = The font { $font } was not found; using the built-in font.
 settings-theme-more = More themes
 settings-theme-user-note = Your own themes: .theme files in { $folder } (see docs/THEMES.md).
+language-auto = Detect automatically
+language-choose = Choose the language of this tab

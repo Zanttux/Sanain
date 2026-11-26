@@ -5,6 +5,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Language detection from the first line when the file name says nothing
+  (shebangs for shell, Python, Node, Ruby; XML declaration; HTML
+  doctype), and a status-bar menu to choose the language of a tab by
+  hand (#100).
 - Installers and portable builds: Windows per-user setup (no admin rights,
   Start menu, optional Open With), macOS `.dmg`, Linux `.deb`, and portable
   archives that keep settings and data next to the program (#98).

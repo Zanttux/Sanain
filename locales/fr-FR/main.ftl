@@ -463,3 +463,5 @@ settings-font-loading = Recherche des polices installées…
 settings-font-missing = La police { $font } est introuvable ; la police intégrée est utilisée.
 settings-theme-more = Plus de thèmes
 settings-theme-user-note = Vos propres thèmes : fichiers .theme dans le dossier { $folder } (voir docs/THEMES.md).
+language-auto = Détecter automatiquement
+language-choose = Choisir le langage de cet onglet
