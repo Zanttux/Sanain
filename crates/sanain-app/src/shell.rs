@@ -1087,9 +1087,13 @@ impl Shell {
             self.dialog = Some(Dialog::Error(e.to_string()));
             return;
         }
-        let suggested = (bytes.len() as u64 <= GUESS_LIMIT)
-            .then(|| sanain_io::guess(&bytes))
-            .flatten();
+        // Larger files: guess from the start; opening still checks that
+        // the whole file decodes and round-trips exactly.
+        let suggested = if bytes.len() as u64 <= GUESS_LIMIT {
+            sanain_io::guess(&bytes)
+        } else {
+            sanain_io::guess_head(&bytes[..64 * 1024])
+        };
         if let Some(enc) = suggested.filter(|e| sanain_io::is_confident(*e))
             && self.ws.open_as(path, enc).is_ok()
         {
