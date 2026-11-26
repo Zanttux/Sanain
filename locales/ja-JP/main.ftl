@@ -375,3 +375,6 @@ tools-play-macro-times = マクロを指定回数再生…
 macro-times-hint = 回数
 macro-times-note = 1～{ $max }
 macro-times-invalid = 1～{ $max } の数値を入力してください。
+view-outline = アウトライン
+outline-empty = このドキュメントには見出しがありません。
+outline-close = アウトラインを閉じる

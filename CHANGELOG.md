@@ -5,6 +5,8 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- View › Outline: a side panel with the headings of a Markdown document;
+  the current section is highlighted and a click jumps to the heading.
 - Encoding suggestions for non-UTF-8 files larger than 16 MB (guessed from
   the start of the file).
 - Tools › Play Macro Multiple Times…: replay the recorded macro up to

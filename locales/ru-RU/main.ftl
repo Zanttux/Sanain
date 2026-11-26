@@ -432,3 +432,6 @@ tools-play-macro-times = Воспроизвести макрос несколь�
 macro-times-hint = Количество повторов
 macro-times-note = От 1 до { $max }
 macro-times-invalid = Введите число от 1 до { $max }.
+view-outline = Структура
+outline-empty = В этом документе нет заголовков.
+outline-close = Закрыть структуру

@@ -394,3 +394,6 @@ tools-play-macro-times = Makro mehrfach abspielen…
 macro-times-hint = Anzahl der Wiederholungen
 macro-times-note = Von 1 bis { $max }
 macro-times-invalid = Geben Sie eine Zahl von 1 bis { $max } ein.
+view-outline = Gliederung
+outline-empty = Keine Überschriften in diesem Dokument.
+outline-close = Gliederung schließen

@@ -413,3 +413,6 @@ tools-play-macro-times = Exécuter la macro plusieurs fois…
 macro-times-hint = Nombre de fois
 macro-times-note = De 1 à { $max }
 macro-times-invalid = Saisissez un nombre de 1 à { $max }.
+view-outline = Plan
+outline-empty = Aucun titre dans ce document.
+outline-close = Fermer le plan

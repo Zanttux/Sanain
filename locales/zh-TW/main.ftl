@@ -375,3 +375,6 @@ tools-play-macro-times = 多次播放巨集…
 macro-times-hint = 次數
 macro-times-note = 1 到 { $max }
 macro-times-invalid = 請輸入 1 到 { $max } 之間的數字。
+view-outline = 大綱
+outline-empty = 此文件中沒有標題。
+outline-close = 關閉大綱

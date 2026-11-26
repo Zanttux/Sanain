@@ -375,3 +375,6 @@ tools-play-macro-times = 매크로 여러 번 재생…
 macro-times-hint = 반복 횟수
 macro-times-note = 1~{ $max }
 macro-times-invalid = 1~{ $max } 사이의 숫자를 입력하세요.
+view-outline = 개요
+outline-empty = 이 문서에는 제목이 없습니다.
+outline-close = 개요 닫기

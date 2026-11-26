@@ -375,3 +375,6 @@ tools-play-macro-times = Putar Makro Beberapa Kali…
 macro-times-hint = Jumlah kali
 macro-times-note = Dari 1 hingga { $max }
 macro-times-invalid = Masukkan angka dari 1 hingga { $max }.
+view-outline = Kerangka
+outline-empty = Tidak ada judul dalam dokumen ini.
+outline-close = Tutup Kerangka

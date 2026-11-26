@@ -413,3 +413,6 @@ tools-play-macro-times = Reproduzir macro várias vezes…
 macro-times-hint = Número de vezes
 macro-times-note = De 1 a { $max }
 macro-times-invalid = Digite um número de 1 a { $max }.
+view-outline = Estrutura de tópicos
+outline-empty = Não há títulos neste documento.
+outline-close = Fechar estrutura de tópicos

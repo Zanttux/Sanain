@@ -186,6 +186,10 @@ pub struct Shell {
     about_open: bool,
     /// Markdown headings for Go to Heading, per tab and revision.
     headings: Option<HeadingCache>,
+    /// The Markdown outline side panel is shown.
+    outline_open: bool,
+    /// Scroll the outline to the current heading on the next frame.
+    outline_follow: bool,
     recent: sanain_app::recent::Recent,
     /// `.editorconfig` indentation per tab, keyed by the file it was read for.
     tab_indent: HashMap<TabId, (Option<std::path::PathBuf>, sanain_app::editorconfig::Indent)>,
@@ -343,6 +347,8 @@ impl Shell {
             replace_preview: None,
             about_open: false,
             headings: None,
+            outline_open: false,
+            outline_follow: false,
             recent: Default::default(),
             tab_indent: HashMap::new(),
             split: None,
@@ -1528,18 +1534,7 @@ impl Shell {
                 }
             }
             Mode::Headings => {
-                // Parse once per revision, not every frame the list is open.
-                let key = (self.ws.active().id, self.editor().document().revision());
-                if self.headings.as_ref().map(|(k, _)| *k) != Some(key) {
-                    let text = self.editor().document().text();
-                    let outline = sanain_markdown::outline(&sanain_markdown::parse(&text));
-                    self.headings = Some((key, outline));
-                }
-                let outline = self
-                    .headings
-                    .as_ref()
-                    .map(|(_, o)| o.clone())
-                    .unwrap_or_default();
+                let outline = self.outline();
                 let entries: Vec<Entry<usize>> = outline
                     .into_iter()
                     .map(|(level, title, line)| Entry {
@@ -1634,6 +1629,97 @@ impl Shell {
             self.active_view(id).reveal();
         }
         if !self.palette.open {
+            self.focus_active();
+        }
+    }
+
+    /// Markdown headings (level, title, 1-based line) of the active tab,
+    /// parsed once per revision.
+    fn outline(&mut self) -> Vec<(u8, String, usize)> {
+        let key = (self.ws.active().id, self.editor().document().revision());
+        if self.headings.as_ref().map(|(k, _)| *k) != Some(key) {
+            let text = self.editor().document().text();
+            let outline = sanain_markdown::outline(&sanain_markdown::parse(&text));
+            self.headings = Some((key, outline));
+        }
+        self.headings
+            .as_ref()
+            .map(|(_, o)| o.clone())
+            .unwrap_or_default()
+    }
+
+    /// The Markdown outline side panel (View › Outline).
+    fn outline_panel(&mut self, ui: &mut egui::Ui) {
+        if !self.outline_open || !Self::is_markdown(self.editor()) || self.log.is_some() {
+            return;
+        }
+        let outline = self.outline();
+        let rope = self.editor().document().rope();
+        let caret = self
+            .editor()
+            .selections()
+            .primary()
+            .head
+            .min(rope.len_chars());
+        let caret_line = rope.char_to_line(caret) + 1;
+        // The section the caret is in: the last heading at or above it.
+        let current = outline.iter().rposition(|(_, _, line)| *line <= caret_line);
+        let title = self.t("view-outline", &[]);
+        let empty = self.t("outline-empty", &[]);
+        let close_label = self.t("outline-close", &[]);
+        let p = theme::palette(ui.ctx());
+        let mut jump = None;
+        let mut close = false;
+        egui::Panel::left("outline")
+            .resizable(true)
+            .default_size(220.0)
+            .frame(
+                egui::Frame::NONE
+                    .fill(p.surface)
+                    .inner_margin(egui::Margin::same(8)),
+            )
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.strong(title.trim_end_matches('…'));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui
+                            .small_button("×")
+                            .on_hover_text(close_label.as_str())
+                            .clicked()
+                        {
+                            close = true;
+                        }
+                    });
+                });
+                ui.separator();
+                if outline.is_empty() {
+                    ui.colored_label(p.muted, empty);
+                    return;
+                }
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    for (i, (level, text, line)) in outline.iter().enumerate() {
+                        ui.horizontal(|ui| {
+                            ui.add_space(f32::from(level.saturating_sub(1)) * 12.0);
+                            let r = ui.selectable_label(Some(i) == current, text);
+                            if Some(i) == current && self.outline_follow {
+                                r.scroll_to_me(None);
+                            }
+                            if r.clicked() {
+                                jump = Some(*line);
+                            }
+                        });
+                    }
+                });
+            });
+        self.outline_follow = false;
+        if close {
+            self.outline_open = false;
+            self.focus_active();
+        }
+        if let Some(line) = jump {
+            self.editor_mut().go_to(line.saturating_sub(1), 0);
+            let id = self.ws.active().id;
+            self.active_view(id).reveal();
             self.focus_active();
         }
     }
@@ -3062,6 +3148,11 @@ impl Shell {
                 self.palette.open(crate::palette::Mode::Headings);
                 return;
             }
+            MenuAction::Outline => {
+                self.outline_open = !self.outline_open;
+                self.outline_follow = true;
+                return;
+            }
             MenuAction::WordWrap => {
                 self.settings.word_wrap = !self.settings.word_wrap;
                 self.save_settings();
@@ -3701,6 +3792,7 @@ impl eframe::App for Shell {
                 None => {}
             }
         }
+        self.outline_panel(ui);
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE.fill(p.canvas))
             .show(ui, |ui| {

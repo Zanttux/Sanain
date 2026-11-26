@@ -394,3 +394,6 @@ tools-play-macro-times = Macro meerdere keren afspelen…
 macro-times-hint = Aantal keren
 macro-times-note = Van 1 tot en met { $max }
 macro-times-invalid = Voer een getal in van 1 tot en met { $max }.
+view-outline = Overzicht
+outline-empty = Geen koppen in dit document.
+outline-close = Sluit overzicht

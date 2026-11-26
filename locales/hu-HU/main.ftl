@@ -394,3 +394,6 @@ tools-play-macro-times = Makró lejátszása többször…
 macro-times-hint = Ismétlések száma
 macro-times-note = 1 és { $max } között
 macro-times-invalid = Adjon meg egy számot 1 és { $max } között.
+view-outline = Vázlat
+outline-empty = Ebben a dokumentumban nincsenek címsorok.
+outline-close = Vázlat bezárása

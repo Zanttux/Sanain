@@ -68,6 +68,7 @@ pub enum MenuAction {
     AddCursorAbove,
     AddCursorBelow,
     WordWrap,
+    Outline,
     GoToLine,
     GoToHeading,
     SelectNextOccurrence,
@@ -95,7 +96,7 @@ pub enum MenuAction {
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 85] = [
+    pub const ALL: [MenuAction; 86] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -157,6 +158,7 @@ impl MenuAction {
         Self::AddCursorAbove,
         Self::AddCursorBelow,
         Self::WordWrap,
+        Self::Outline,
         Self::GoToLine,
         Self::GoToHeading,
         Self::SelectNextOccurrence,
@@ -247,6 +249,7 @@ impl MenuAction {
             Self::AddCursorAbove => "edit.add-cursor-above",
             Self::AddCursorBelow => "edit.add-cursor-below",
             Self::WordWrap => "view.word-wrap",
+            Self::Outline => "view.outline",
             Self::GoToLine => "edit.go-to-line",
             Self::GoToHeading => "edit.go-to-heading",
             Self::SelectNextOccurrence => "edit.select-next-occurrence",
@@ -343,6 +346,7 @@ impl MenuAction {
             Self::AddCursorAbove => "edit-add-cursor-above",
             Self::AddCursorBelow => "edit-add-cursor-below",
             Self::WordWrap => "view-word-wrap",
+            Self::Outline => "view-outline",
             Self::GoToLine => "edit-go-to-line",
             Self::GoToHeading => "edit-go-to-heading",
             Self::SelectNextOccurrence => "edit-select-next-occurrence",
@@ -481,7 +485,8 @@ impl MenuAction {
             | Self::CompareSaved
             | Self::CompareClipboard
             | Self::CompareFile
-            | Self::PlayMacroTimes => return None,
+            | Self::PlayMacroTimes
+            | Self::Outline => return None,
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -612,6 +617,7 @@ const VIEW_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::Unfold),
     Some(MenuAction::UnfoldAll),
     Some(MenuAction::WordWrap),
+    Some(MenuAction::Outline),
     Some(MenuAction::SplitEditor),
     None,
     Some(MenuAction::ZoomIn),
@@ -886,7 +892,8 @@ mod native {
             | MenuAction::CompareSaved
             | MenuAction::CompareClipboard
             | MenuAction::CompareFile
-            | MenuAction::PlayMacroTimes => return None,
+            | MenuAction::PlayMacroTimes
+            | MenuAction::Outline => return None,
         };
         Some(KeyAccelerator::new(m, k))
     }

@@ -375,3 +375,6 @@ tools-play-macro-times = 多次回放宏…
 macro-times-hint = 次数
 macro-times-note = 1 到 { $max }
 macro-times-invalid = 请输入 1 到 { $max } 之间的数字。
+view-outline = 大纲
+outline-empty = 此文档中没有标题。
+outline-close = 关闭大纲
