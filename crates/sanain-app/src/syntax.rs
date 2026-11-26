@@ -1,6 +1,6 @@
 //! Background syntax highlighting. The UI thread submits a document
 //! snapshot tagged with its revision; a worker thread highlights it and
-//! sends back char-range spans. Newer submissions cancel running work, and
+//! sends back char-range spans and syntax fold ranges. Newer submissions cancel running work, and
 //! results for old revisions are recognisable by their revision tag.
 
 use std::collections::HashMap;
@@ -38,6 +38,10 @@ pub struct Highlighted {
     pub tab: TabId,
     pub revision: Revision,
     pub spans: Vec<CharSpan>,
+    /// Fold ranges in document lines (see
+    /// [`sanain_language::Highlighter::folds`]), or `None` when the syntax
+    /// tree cannot provide them and indentation folding applies.
+    pub folds: Option<Vec<Range<usize>>>,
 }
 
 #[derive(Debug)]
@@ -117,13 +121,31 @@ fn run(jobs: Receiver<Request>, out: Sender<Highlighted>, cancel: Arc<AtomicUsiz
         };
         cancel.store(0, Ordering::Relaxed);
         let text = req.rope.to_string();
-        match highlighter.highlight(req.lang, text.as_bytes(), Some(&cancel)) {
-            Ok(spans) => {
+        let result = highlighter
+            .highlight(req.lang, text.as_bytes(), Some(&cancel))
+            .and_then(|spans| {
+                let folds = match highlighter.folds(req.lang, text.as_bytes(), Some(&cancel)) {
+                    // Tree-sitter counts lines by `\n` only; skip syntax
+                    // folds when the document also breaks lines elsewhere
+                    // (lone `\r`, Unicode separators).
+                    Ok(f) if req.rope.len_lines() == line_count(&text) => Some(f),
+                    Ok(_) => None,
+                    Err(HighlightError::Cancelled) => return Err(HighlightError::Cancelled),
+                    Err(HighlightError::Failed(e)) => {
+                        eprintln!("sanain: folding failed: {e}");
+                        None
+                    }
+                };
+                Ok((spans, folds))
+            });
+        match result {
+            Ok((spans, folds)) => {
                 let spans = to_char_spans(&text, spans);
                 let result = Highlighted {
                     tab: req.tab,
                     revision: req.revision,
                     spans,
+                    folds,
                 };
                 if out.send(result).is_err() {
                     return;
@@ -136,6 +158,11 @@ fn run(jobs: Receiver<Request>, out: Sender<Highlighted>, cancel: Arc<AtomicUsiz
             Err(HighlightError::Failed(e)) => eprintln!("sanain: highlighting failed: {e}"),
         }
     }
+}
+
+/// Lines as Tree-sitter counts them.
+fn line_count(text: &str) -> usize {
+    text.bytes().filter(|&b| b == b'\n').count() + 1
 }
 
 /// Convert ascending byte-range spans into char ranges in one pass.
@@ -183,6 +210,31 @@ mod tests {
         assert_eq!((h.tab, h.revision), (7, Revision(3)));
         let kw = h.spans.iter().find(|s| s.style == Style::Keyword).unwrap();
         assert_eq!(kw.range, 4..6);
+    }
+
+    #[test]
+    fn folds_come_with_spans() {
+        let w = SyntaxWorker::start();
+        w.submit(1, Revision(1), Lang::Json, "{\n}\n".into());
+        assert_eq!(wait(&w).folds, Some(vec![]), "nothing to hide");
+        w.submit(
+            1,
+            Revision(2),
+            Lang::Json,
+            "{\n  \"a\": 1,\n  \"b\": 2\n}\n".into(),
+        );
+        assert_eq!(
+            wait(&w).folds.as_deref(),
+            Some(std::slice::from_ref(&(0..3)))
+        );
+        // A lone CR is a line break for the editor but not for Tree-sitter.
+        w.submit(
+            1,
+            Revision(3),
+            Lang::Json,
+            "{\r  \"a\": 1,\n  \"b\": 2\n}\n".into(),
+        );
+        assert_eq!(wait(&w).folds, None);
     }
 
     #[test]

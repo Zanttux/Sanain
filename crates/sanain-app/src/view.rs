@@ -747,9 +747,7 @@ impl EditorView {
                     );
                 }
                 let folded = editor.is_folded(line);
-                if seg.start == 0
-                    && (folded || sanain_core::folding::is_fold_start(rope, line, tab))
-                {
+                if seg.start == 0 && (folded || editor.is_fold_start(line, tab)) {
                     painter.text(
                         pos2(text_x - 0.9 * char_w, y),
                         Align2::CENTER_TOP,
