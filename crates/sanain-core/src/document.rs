@@ -7,6 +7,19 @@ use crate::transaction::{EditError, Transaction};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Revision(pub u64);
 
+impl Revision {
+    /// The first revision of a new document. Every document gets its own
+    /// range of 2^32 revisions, so a document that replaces another under
+    /// the same tab (revert, reopen with another encoding) never repeats
+    /// its predecessor's revisions and caches keyed by revision cannot be
+    /// mistaken for fresh. Edits still count up by one.
+    pub fn fresh() -> Self {
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static NEXT: AtomicU64 = AtomicU64::new(1);
+        Revision(NEXT.fetch_add(1, Ordering::Relaxed) << 32)
+    }
+}
+
 /// Line-ending style observed in a text.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LineEnding {
@@ -98,7 +111,7 @@ impl Document {
     pub fn new() -> Self {
         Self {
             rope: Rope::new(),
-            revision: Revision(0),
+            revision: Revision::fresh(),
             undo: Vec::new(),
             redo: Vec::new(),
             next_id: 0,
@@ -327,14 +340,28 @@ mod tests {
     }
 
     #[test]
+    fn a_new_document_never_repeats_another_documents_revisions() {
+        let mut a = Document::from_saved_text("one");
+        let b = Document::from_saved_text("one");
+        assert_ne!(a.revision(), b.revision());
+        let start = a.revision();
+        let mut tx = Transaction::new();
+        tx.push(Change::insert(0, "x"));
+        a.apply(&tx).unwrap();
+        assert_eq!(a.revision(), Revision(start.0 + 1), "edits count by one");
+        assert_ne!(Document::new().revision(), start);
+    }
+
+    #[test]
     fn invalid_transaction_leaves_document_untouched() {
         let mut doc = Document::from_saved_text("abc");
+        let start = doc.revision();
         let mut tx = Transaction::new();
         tx.push(Change::insert(0, "x")).push(Change::delete(2..99));
         let err = doc.apply(&tx).unwrap_err();
         assert!(matches!(err, EditError::OutOfBounds { len: 4, .. }));
         assert_eq!(doc.text(), "abc");
-        assert_eq!(doc.revision(), Revision(0));
+        assert_eq!(doc.revision(), start);
         assert!(!doc.can_undo());
     }
 

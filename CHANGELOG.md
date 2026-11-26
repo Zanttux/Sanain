@@ -106,6 +106,7 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   Editing is off for read-only files.
 
 ### Fixed
+- Editing a CSV grid or a JSON, XML or YAML tree right after Revert or Reopen with Encoding no longer applies positions from the previous text (which could merge cells or corrupt the file): every document now has its own revisions, so views built from the old text are rebuilt.
 - Saving a hard-linked file (saved in place on Linux and macOS) on a
   full disk no longer leaves the file truncated: the old contents and
   modification time are written back, the temporary backup is removed
