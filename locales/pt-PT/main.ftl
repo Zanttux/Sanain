@@ -379,3 +379,15 @@ edit-toggle-comment = Alternar comentário de linha
 edit-indent = Avançar linhas
 edit-outdent = Recuar linhas
 comment-unsupported = Este tipo de ficheiro não tem comentários de linha.
+tab-close-others = Fechar outros separadores
+tab-close-all = Fechar todos os separadores
+file-copy-path = Copiar caminho do ficheiro
+file-reveal-macos = Mostrar no Finder
+file-reveal-windows = Mostrar no Explorador de Ficheiros
+file-reveal-other = Mostrar no gestor de ficheiros
+status-path-copied = Caminho do ficheiro copiado.
+tabs-kept-unsaved = { $count ->
+    [one] 1 separador com alterações não guardadas foi mantido aberto.
+    [many] { $count } separadores com alterações não guardadas foram mantidos abertos.
+   *[other] { $count } separadores com alterações não guardadas foram mantidos abertos.
+    }

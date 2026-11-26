@@ -361,3 +361,14 @@ edit-toggle-comment = Zeilenkommentar umschalten
 edit-indent = Zeilen einrücken
 edit-outdent = Zeileneinzug verringern
 comment-unsupported = Dieser Dateityp hat keine Zeilenkommentare.
+tab-close-others = Andere Tabs schließen
+tab-close-all = Alle Tabs schließen
+file-copy-path = Dateipfad kopieren
+file-reveal-macos = Im Finder anzeigen
+file-reveal-windows = Im Explorer anzeigen
+file-reveal-other = Im Dateimanager anzeigen
+status-path-copied = Dateipfad kopiert.
+tabs-kept-unsaved = { $count ->
+    [one] 1 Tab mit ungespeicherten Änderungen wurde offen gelassen.
+   *[other] { $count } Tabs mit ungespeicherten Änderungen wurden offen gelassen.
+    }

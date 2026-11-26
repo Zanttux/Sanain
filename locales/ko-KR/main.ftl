@@ -343,3 +343,13 @@ edit-toggle-comment = 줄 주석 전환
 edit-indent = 줄 들여쓰기
 edit-outdent = 줄 내어쓰기
 comment-unsupported = 이 파일 형식에는 줄 주석이 없습니다.
+tab-close-others = 다른 탭 닫기
+tab-close-all = 모든 탭 닫기
+file-copy-path = 파일 경로 복사
+file-reveal-macos = Finder에서 보기
+file-reveal-windows = 파일 탐색기에서 보기
+file-reveal-other = 파일 관리자에서 보기
+status-path-copied = 파일 경로를 복사했습니다.
+tabs-kept-unsaved = { $count ->
+   *[other] 저장하지 않은 변경 사항이 있는 탭 { $count }개를 열어 두었습니다.
+    }

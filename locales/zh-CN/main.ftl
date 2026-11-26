@@ -343,3 +343,13 @@ edit-toggle-comment = 切换行注释
 edit-indent = 缩进行
 edit-outdent = 减少行缩进
 comment-unsupported = 此文件类型不支持行注释。
+tab-close-others = 关闭其他标签页
+tab-close-all = 关闭所有标签页
+file-copy-path = 复制文件路径
+file-reveal-macos = 在访达中显示
+file-reveal-windows = 在资源管理器中显示
+file-reveal-other = 在文件管理器中显示
+status-path-copied = 已复制文件路径。
+tabs-kept-unsaved = { $count ->
+   *[other] 已保留 { $count } 个含未保存更改的标签页。
+    }

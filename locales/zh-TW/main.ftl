@@ -343,3 +343,13 @@ edit-toggle-comment = 切換行註解
 edit-indent = 縮排行
 edit-outdent = 減少行縮排
 comment-unsupported = 此檔案類型不支援行註解。
+tab-close-others = 關閉其他標籤頁
+tab-close-all = 關閉所有標籤頁
+file-copy-path = 複製檔案路徑
+file-reveal-macos = 在 Finder 中顯示
+file-reveal-windows = 在檔案總管中顯示
+file-reveal-other = 在檔案管理員中顯示
+status-path-copied = 已複製檔案路徑。
+tabs-kept-unsaved = { $count ->
+   *[other] 已保留 { $count } 個含未儲存變更的標籤頁。
+    }

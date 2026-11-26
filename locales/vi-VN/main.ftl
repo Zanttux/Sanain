@@ -343,3 +343,13 @@ edit-toggle-comment = Bật/tắt chú thích dòng
 edit-indent = Thụt lề dòng
 edit-outdent = Giảm thụt lề dòng
 comment-unsupported = Loại tệp này không có chú thích dòng.
+tab-close-others = Đóng các thẻ khác
+tab-close-all = Đóng tất cả thẻ
+file-copy-path = Sao chép đường dẫn tệp
+file-reveal-macos = Hiển thị trong Finder
+file-reveal-windows = Hiển thị trong File Explorer
+file-reveal-other = Hiển thị trong trình quản lý tệp
+status-path-copied = Đã sao chép đường dẫn tệp.
+tabs-kept-unsaved = { $count ->
+   *[other] Đã giữ mở { $count } thẻ có thay đổi chưa lưu.
+    }

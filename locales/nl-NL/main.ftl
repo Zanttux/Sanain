@@ -361,3 +361,14 @@ edit-toggle-comment = Schakel regelcommentaar in/uit
 edit-indent = Laat regels inspringen
 edit-outdent = Verklein inspringing van regels
 comment-unsupported = Dit bestandstype heeft geen regelcommentaar.
+tab-close-others = Sluit andere tabbladen
+tab-close-all = Sluit alle tabbladen
+file-copy-path = Kopieer bestandspad
+file-reveal-macos = Toon in Finder
+file-reveal-windows = Weergeven in Verkenner
+file-reveal-other = Toon in bestandsbeheer
+status-path-copied = Bestandspad gekopieerd.
+tabs-kept-unsaved = { $count ->
+    [one] 1 tabblad met niet-opgeslagen wijzigingen is open gelaten.
+   *[other] { $count } tabbladen met niet-opgeslagen wijzigingen zijn open gelaten.
+    }

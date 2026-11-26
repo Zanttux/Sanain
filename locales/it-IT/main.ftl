@@ -361,3 +361,14 @@ edit-toggle-comment = Attiva/disattiva commento riga
 edit-indent = Aumenta rientro righe
 edit-outdent = Riduci rientro righe
 comment-unsupported = Questo tipo di file non ha commenti di riga.
+tab-close-others = Chiudi le altre schede
+tab-close-all = Chiudi tutte le schede
+file-copy-path = Copia percorso file
+file-reveal-macos = Mostra nel Finder
+file-reveal-windows = Mostra in Esplora file
+file-reveal-other = Mostra nel file manager
+status-path-copied = Percorso del file copiato.
+tabs-kept-unsaved = { $count ->
+    [one] 1 scheda con modifiche non salvate è stata lasciata aperta.
+   *[other] { $count } schede con modifiche non salvate sono state lasciate aperte.
+    }

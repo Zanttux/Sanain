@@ -512,6 +512,81 @@ impl Shell {
         }
     }
 
+    /// Close every tab except `keep` (or all), leaving pinned tabs and tabs
+    /// with unsaved changes open; the status bar says how many stayed.
+    fn close_many(&mut self, keep: Option<TabId>, ctx: &egui::Context) {
+        let ids: Vec<(TabId, bool)> = self
+            .ws
+            .tabs()
+            .iter()
+            .filter(|t| Some(t.id) != keep && !t.pinned)
+            .map(|t| (t.id, t.editor.document().is_dirty()))
+            .collect();
+        let mut kept = 0i64;
+        for (id, dirty) in ids {
+            if dirty {
+                kept += 1;
+            } else {
+                self.proceed(Then::CloseTab(id), ctx);
+            }
+        }
+        if let Some(i) = keep.and_then(|id| self.ws.position(id)) {
+            self.ws.activate(i);
+        }
+        self.status = (kept > 0).then(|| {
+            (
+                self.t("tabs-kept-unsaved", &[("count", kept.into())]),
+                false,
+            )
+        });
+        self.focus_active();
+    }
+
+    /// Put a tab's file path on the clipboard.
+    fn copy_path(&mut self, id: TabId) {
+        let Some(path) = self
+            .ws
+            .position(id)
+            .and_then(|i| self.ws.tabs()[i].editor.file().map(|f| f.path.clone()))
+        else {
+            return;
+        };
+        let text = path.to_string_lossy().into_owned();
+        if arboard::Clipboard::new()
+            .and_then(|mut c| c.set_text(text))
+            .is_ok()
+        {
+            self.status = Some((self.t("status-path-copied", &[]), false));
+        }
+    }
+
+    /// Show a tab's file in the system file manager.
+    fn reveal(&mut self, id: TabId) {
+        let Some(path) = self
+            .ws
+            .position(id)
+            .and_then(|i| self.ws.tabs()[i].editor.file().map(|f| f.path.clone()))
+        else {
+            return;
+        };
+        let spawned = if cfg!(target_os = "macos") {
+            std::process::Command::new("open")
+                .arg("-R")
+                .arg(&path)
+                .spawn()
+        } else if cfg!(windows) {
+            let mut arg = std::ffi::OsString::from("/select,");
+            arg.push(&path);
+            std::process::Command::new("explorer").arg(arg).spawn()
+        } else {
+            let dir = path.parent().unwrap_or(&path).to_owned();
+            std::process::Command::new("xdg-open").arg(dir).spawn()
+        };
+        if let Err(e) = spawned {
+            self.status = Some((e.to_string(), true));
+        }
+    }
+
     /// Quit, asking about each unsaved tab in turn.
     fn request_quit(&mut self, ctx: &egui::Context) {
         // Record open files before the quit flow starts closing tabs.
@@ -2398,7 +2473,10 @@ impl Shell {
                 }
                 MenuAction::ClearHistory => self.history.is_some(),
                 MenuAction::GoToHeading => Self::is_markdown(self.editor()),
-                MenuAction::CompareSaved | MenuAction::Revert => self.editor().file().is_some(),
+                MenuAction::CompareSaved
+                | MenuAction::Revert
+                | MenuAction::CopyPath
+                | MenuAction::Reveal => self.editor().file().is_some(),
                 MenuAction::PlayMacro => {
                     !self.macro_cmds.is_empty() && !self.editor().is_recording()
                 }
@@ -2635,6 +2713,25 @@ impl Shell {
                 self.settings_open = true;
                 return;
             }
+            MenuAction::CloseOthers => {
+                let id = self.ws.active().id;
+                self.close_many(Some(id), ctx);
+                return;
+            }
+            MenuAction::CloseAll => {
+                self.close_many(None, ctx);
+                return;
+            }
+            MenuAction::CopyPath => {
+                let id = self.ws.active().id;
+                self.copy_path(id);
+                return;
+            }
+            MenuAction::Reveal => {
+                let id = self.ws.active().id;
+                self.reveal(id);
+                return;
+            }
             MenuAction::OpenRecent => {
                 self.palette.open(crate::palette::Mode::Recent);
                 return;
@@ -2844,6 +2941,13 @@ impl Shell {
         let mut activate = None;
         let mut close = None;
         let mut pin: Option<(usize, bool)> = None;
+        let mut tab_cmd: Option<(TabId, MenuAction)> = None;
+        let (close_others_l, close_all_l, copy_path_l, reveal_l) = (
+            self.t("tab-close-others", &[]),
+            self.t("tab-close-all", &[]),
+            self.t("file-copy-path", &[]),
+            self.t(crate::menu::REVEAL_LABEL, &[]),
+        );
         let mut rects: Vec<egui::Rect> = Vec::new();
         let mut dragging: Option<usize> = None;
         let mut dropped: Option<usize> = None;
@@ -2961,6 +3065,25 @@ impl Shell {
                                 close = Some(tab.id);
                                 ui.close();
                             }
+                            if ui.button(&close_others_l).clicked() {
+                                tab_cmd = Some((tab.id, MenuAction::CloseOthers));
+                                ui.close();
+                            }
+                            if ui.button(&close_all_l).clicked() {
+                                tab_cmd = Some((tab.id, MenuAction::CloseAll));
+                                ui.close();
+                            }
+                            if tab.editor.file().is_some() {
+                                ui.separator();
+                                if ui.button(&copy_path_l).clicked() {
+                                    tab_cmd = Some((tab.id, MenuAction::CopyPath));
+                                    ui.close();
+                                }
+                                if ui.button(&reveal_l).clicked() {
+                                    tab_cmd = Some((tab.id, MenuAction::Reveal));
+                                    ui.close();
+                                }
+                            }
                         });
                     }
                 });
@@ -2987,6 +3110,13 @@ impl Shell {
         }
         if let Some((i, on)) = pin {
             self.ws.set_pinned(i, on);
+        }
+        match tab_cmd {
+            Some((id, MenuAction::CloseOthers)) => self.close_many(Some(id), ctx),
+            Some((_, MenuAction::CloseAll)) => self.close_many(None, ctx),
+            Some((id, MenuAction::CopyPath)) => self.copy_path(id),
+            Some((id, MenuAction::Reveal)) => self.reveal(id),
+            _ => {}
         }
         if let Some(i) = activate {
             self.ws.activate(i);

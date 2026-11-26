@@ -5,6 +5,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Tabs: Close Other Tabs and Close All Tabs (pinned tabs and tabs with
+  unsaved changes stay open), Copy File Path, and Show in Finder /
+  Explorer / File Manager, in the tab context menu and the File menu.
 - Enter keeps the current line's indentation, and the bracket matching
   the one next to the cursor is outlined.
 - Indent and outdent lines: Tab with a multi-line selection indents it,

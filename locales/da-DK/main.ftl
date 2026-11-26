@@ -361,3 +361,14 @@ edit-toggle-comment = Slå linjekommentar til/fra
 edit-indent = Indryk linjer
 edit-outdent = Fjern indrykning af linjer
 comment-unsupported = Denne filtype har ingen linjekommentarer.
+tab-close-others = Luk andre faner
+tab-close-all = Luk alle faner
+file-copy-path = Kopiér filsti
+file-reveal-macos = Vis i Finder
+file-reveal-windows = Vis i Stifinder
+file-reveal-other = Vis i filhåndtering
+status-path-copied = Filstien blev kopieret.
+tabs-kept-unsaved = { $count ->
+    [one] 1 fane med ikke-gemte ændringer blev holdt åben.
+   *[other] { $count } faner med ikke-gemte ændringer blev holdt åbne.
+    }

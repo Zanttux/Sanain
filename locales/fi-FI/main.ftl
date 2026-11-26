@@ -361,3 +361,14 @@ edit-toggle-comment = Kommentoi rivit / poista kommentointi
 edit-indent = Sisennä rivit
 edit-outdent = Poista rivien sisennys
 comment-unsupported = Tällä tiedostotyypillä ei ole rivikommentteja.
+tab-close-others = Sulje muut välilehdet
+tab-close-all = Sulje kaikki välilehdet
+file-copy-path = Kopioi tiedostopolku
+file-reveal-macos = Näytä Finderissa
+file-reveal-windows = Näytä Resurssienhallinnassa
+file-reveal-other = Näytä tiedostonhallinnassa
+status-path-copied = Tiedostopolku kopioitiin.
+tabs-kept-unsaved = { $count ->
+    [one] 1 välilehti, jossa on tallentamattomia muutoksia, jätettiin auki.
+   *[other] { $count } välilehteä, joissa on tallentamattomia muutoksia, jätettiin auki.
+    }
