@@ -421,3 +421,11 @@ replace-files-failed = { $failed ->
     } { $first }
 image-outside = Dette bildet ligger utenfor dokumentets mappe.
 image-allow = Vis bilder fra denne mappen
+cli-help-integration =
+    Integrasjon med filbehandleren (bare for gjeldende bruker):
+      sanain --register           legg Sanain til i «Åpne med» (Linux, Windows)
+      sanain --unregister         fjern den igjen
+cli-registered = Sanain ble lagt til i «Åpne med». { $place }
+cli-unregistered = Sanain ble fjernet fra «Åpne med».
+cli-register-failed = Integrasjonen med filbehandleren kunne ikke endres: { $reason }
+cli-register-macos = Finder-integrasjon på macOS er ikke tilgjengelig ennå. Åpne filer fra Sanain (Fil › Åpne, dra og slipp) eller fra kommandolinjen.

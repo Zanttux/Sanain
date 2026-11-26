@@ -397,3 +397,11 @@ replace-files-failed = { $failed ->
     } { $first }
 image-outside = この画像は書類のフォルダの外にあります。
 image-allow = このフォルダの画像を表示
+cli-help-integration =
+    ファイルマネージャーとの統合（現在のユーザーのみ）:
+      sanain --register           Sanain を「プログラムから開く」に追加（Linux、Windows）
+      sanain --unregister         再び削除
+cli-registered = Sanain を「プログラムから開く」に追加しました。{ $place }
+cli-unregistered = Sanain を「プログラムから開く」から削除しました。
+cli-register-failed = ファイルマネージャーとの統合を変更できませんでした: { $reason }
+cli-register-macos = macOS での Finder 統合はまだ利用できません。Sanain から（ファイル › 開く、ドラッグ＆ドロップ）またはコマンドラインからファイルを開いてください。

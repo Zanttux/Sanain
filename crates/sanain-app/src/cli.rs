@@ -18,6 +18,10 @@ pub enum Parsed {
     Run(Cli),
     Version,
     Help,
+    /// `--register`: add Sanain to the file manager's Open With.
+    Register,
+    /// `--unregister`: undo `--register`.
+    Unregister,
     /// The offending argument.
     Unknown(String),
     /// `--diff` without two paths.
@@ -37,6 +41,8 @@ pub fn parse(args: impl IntoIterator<Item = OsString>) -> Parsed {
                 }
                 "--version" | "-V" => return Parsed::Version,
                 "--help" | "-h" => return Parsed::Help,
+                "--register" => return Parsed::Register,
+                "--unregister" => return Parsed::Unregister,
                 "--diff" | "-d" => {
                     let (Some(l), Some(r)) = (args.next(), args.next()) else {
                         return Parsed::DiffNeedsTwo;
@@ -81,6 +87,8 @@ mod tests {
         assert_eq!(p(&["--diff", "old"]), Parsed::DiffNeedsTwo);
         assert_eq!(p(&["--version"]), Parsed::Version);
         assert_eq!(p(&["-h"]), Parsed::Help);
+        assert_eq!(p(&["--register"]), Parsed::Register);
+        assert_eq!(p(&["--unregister"]), Parsed::Unregister);
         assert_eq!(p(&["--nope"]), Parsed::Unknown("--nope".into()));
         assert_eq!(
             p(&["--", "--nope", "-"]),

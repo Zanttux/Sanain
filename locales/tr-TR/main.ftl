@@ -421,3 +421,11 @@ replace-files-failed = { $failed ->
     } { $first }
 image-outside = Bu görüntü belgenin klasörünün dışında.
 image-allow = Bu klasördeki görüntüleri göster
+cli-help-integration =
+    Dosya yöneticisi tümleştirmesi (yalnızca geçerli kullanıcı):
+      sanain --register           Sanain'i "Birlikte Aç" menüsüne ekle (Linux, Windows)
+      sanain --unregister         yeniden kaldır
+cli-registered = Sanain "Birlikte Aç" menüsüne eklendi. { $place }
+cli-unregistered = Sanain "Birlikte Aç" menüsünden kaldırıldı.
+cli-register-failed = Dosya yöneticisi tümleştirmesi değiştirilemedi: { $reason }
+cli-register-macos = macOS'ta Finder tümleştirmesi henüz kullanılamıyor. Dosyaları Sanain'den (Dosya › Aç, sürükle ve bırak) veya komut satırından açın.

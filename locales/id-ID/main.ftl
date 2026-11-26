@@ -397,3 +397,11 @@ replace-files-failed = { $failed ->
     } { $first }
 image-outside = Gambar ini berada di luar folder dokumen.
 image-allow = Tampilkan gambar dari folder ini
+cli-help-integration =
+    Integrasi dengan pengelola berkas (hanya pengguna saat ini):
+      sanain --register           tambahkan Sanain ke "Buka Dengan" (Linux, Windows)
+      sanain --unregister         hapus lagi dari sana
+cli-registered = Sanain telah ditambahkan ke "Buka Dengan". { $place }
+cli-unregistered = Sanain telah dihapus dari "Buka Dengan".
+cli-register-failed = Integrasi pengelola berkas tidak dapat diubah: { $reason }
+cli-register-macos = Integrasi Finder di macOS belum tersedia. Buka berkas dari Sanain (Berkas › Buka, seret dan lepas) atau dari baris perintah.

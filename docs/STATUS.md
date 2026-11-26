@@ -128,6 +128,9 @@ Solo-owner policy: PRs need passing CI, no approving review is required
 because nobody independent exists; no fake approvals.
 
 ## Next
+- Shell integration (#78): Linux desktop entry and Windows Explorer keys
+  via `--register` done (Windows registry round trip tested on CI only);
+  macOS Finder needs Apple-event handling (ADR for a small unsafe shim).
 - Windows and Linux runtime smoke test (needs a machine or VM): open,
   edit, save, menus, shortcuts on non-US layouts.
 - Manual screen-reader (VoiceOver) and IME pass on macOS.

@@ -424,3 +424,11 @@ replace-files-failed = { $failed ->
 } { $first }
 image-outside = Kuva on dokumentin kansion ulkopuolella.
 image-allow = Näytä tämän kansion kuvat
+cli-help-integration =
+    Liittäminen tiedostonhallintaan (vain nykyiselle käyttäjälle):
+      sanain --register           lisää Sanain "Avaa sovelluksella" -valikkoon (Linux, Windows)
+      sanain --unregister         poista se sieltä
+cli-registered = Sanain lisättiin "Avaa sovelluksella" -valikkoon. { $place }
+cli-unregistered = Sanain poistettiin "Avaa sovelluksella" -valikosta.
+cli-register-failed = Tiedostonhallinnan liitosta ei voitu muuttaa: { $reason }
+cli-register-macos = Finder-liitos ei ole vielä käytettävissä macOS:ssä. Avaa tiedostot Sanainista (Tiedosto › Avaa, vedä ja pudota) tai komentoriviltä.

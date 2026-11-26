@@ -397,3 +397,11 @@ replace-files-failed = { $failed ->
     } { $first }
 image-outside = Hình ảnh này nằm ngoài thư mục của tài liệu.
 image-allow = Hiển thị hình ảnh từ thư mục này
+cli-help-integration =
+    Tích hợp với trình quản lý tệp (chỉ người dùng hiện tại):
+      sanain --register           thêm Sanain vào "Mở bằng" (Linux, Windows)
+      sanain --unregister         gỡ lại khỏi đó
+cli-registered = Đã thêm Sanain vào "Mở bằng". { $place }
+cli-unregistered = Đã gỡ Sanain khỏi "Mở bằng".
+cli-register-failed = Không thể thay đổi tích hợp với trình quản lý tệp: { $reason }
+cli-register-macos = Tích hợp Finder trên macOS chưa khả dụng. Hãy mở tệp từ Sanain (Tệp › Mở, kéo và thả) hoặc từ dòng lệnh.

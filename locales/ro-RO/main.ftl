@@ -445,3 +445,11 @@ replace-files-failed = { $failed ->
     } { $first }
 image-outside = Această imagine se află în afara dosarului documentului.
 image-allow = Afișează imaginile din acest dosar
+cli-help-integration =
+    Integrare cu managerul de fișiere (doar pentru utilizatorul curent):
+      sanain --register           adaugă Sanain la „Deschide cu” (Linux, Windows)
+      sanain --unregister         îl elimină din nou
+cli-registered = Sanain a fost adăugat la „Deschide cu”. { $place }
+cli-unregistered = Sanain a fost eliminat din „Deschide cu”.
+cli-register-failed = Integrarea cu managerul de fișiere nu a putut fi modificată: { $reason }
+cli-register-macos = Integrarea cu Finder pe macOS nu este încă disponibilă. Deschideți fișierele din Sanain (Fișier › Deschide, glisare și plasare) sau din linia de comandă.
