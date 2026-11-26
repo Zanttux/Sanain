@@ -397,3 +397,25 @@ macro-times-invalid = Voer een getal in van 1 tot en met { $max }.
 view-outline = Overzicht
 outline-empty = Geen koppen in dit document.
 outline-close = Sluit overzicht
+folder-replace-placeholder = Vervang door
+folder-replace-run = Vervang in bestanden…
+replace-files-title = { $count ->
+    [one] 1 overeenkomst
+   *[other] { $count } overeenkomsten
+    } in { $files ->
+    [one] 1 bestand
+   *[other] { $files } bestanden
+    } vervangen?
+replace-files-body = Bestanden die in een tabblad open zijn, worden daar gewijzigd en dat kan ongedaan worden gemaakt; sla ze zelf op. Andere bestanden worden nu opgeslagen en hun vorige inhoud blijft bewaard in de lokale geschiedenis als die is ingeschakeld. Een bestand dat intussen op schijf is gewijzigd, wordt overgeslagen.
+replace-files-confirm = Vervang
+replace-files-done = { $count ->
+    [one] 1 overeenkomst
+   *[other] { $count } overeenkomsten
+    } vervangen in { $files ->
+    [one] 1 bestand
+   *[other] { $files } bestanden
+    } (open in tabbladen: { $open }, niet opgeslagen).
+replace-files-failed = { $failed ->
+    [one] 1 bestand is niet gewijzigd:
+   *[other] { $failed } bestanden zijn niet gewijzigd; eerste:
+    } { $first }

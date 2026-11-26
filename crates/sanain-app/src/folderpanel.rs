@@ -14,6 +14,8 @@ pub struct FolderPanel {
     pub open: bool,
     pub root: Option<PathBuf>,
     pub query: Query,
+    /// Replacement text for Replace in Files.
+    pub replace: String,
     search: Option<Search>,
     hits: Vec<Hit>,
     stats: Option<Stats>,
@@ -25,6 +27,8 @@ pub struct FolderPanel {
 pub enum PanelEvent {
     ChooseFolder,
     OpenHit(Hit),
+    /// Replace the matches in the files of the current results.
+    ReplaceInFiles,
     Close,
 }
 
@@ -41,7 +45,27 @@ impl FolderPanel {
         self.search.is_some()
     }
 
-    fn start(&mut self, ctx: &egui::Context) {
+    /// Files in the current results, in order, each once.
+    pub fn hit_files(&self) -> Vec<PathBuf> {
+        let mut files: Vec<PathBuf> = Vec::new();
+        for h in &self.hits {
+            if files.last() != Some(&h.path) {
+                files.push(h.path.clone());
+            }
+        }
+        files
+    }
+
+    pub fn hit_count(&self) -> usize {
+        self.hits.len()
+    }
+
+    /// Whether the last search stopped at a limit (results incomplete).
+    fn truncated(&self) -> bool {
+        self.stats.is_some_and(|s| s.truncated)
+    }
+
+    pub fn start(&mut self, ctx: &egui::Context) {
         self.hits.clear();
         self.stats = None;
         self.error = None;
@@ -168,6 +192,28 @@ impl FolderPanel {
                 };
                 ui.label(status);
             });
+        });
+        ui.horizontal(|ui| {
+            ui.add(
+                egui::TextEdit::singleline(&mut self.replace)
+                    .id_salt("sanain-folder-replace")
+                    .hint_text(t("folder-replace-placeholder", None, None))
+                    .desired_width(260.0),
+            );
+            // Incomplete results (a limit was hit) would leave matches behind.
+            let ready = !self.running()
+                && !self.hits.is_empty()
+                && self.error.is_none()
+                && !self.truncated();
+            if ui
+                .add_enabled(
+                    ready,
+                    egui::Button::new(t("folder-replace-run", None, None)),
+                )
+                .clicked()
+            {
+                event = Some(PanelEvent::ReplaceInFiles);
+            }
         });
         ui.separator();
         let root = self.root.clone();

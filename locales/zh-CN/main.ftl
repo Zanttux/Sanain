@@ -378,3 +378,20 @@ macro-times-invalid = 请输入 1 到 { $max } 之间的数字。
 view-outline = 大纲
 outline-empty = 此文档中没有标题。
 outline-close = 关闭大纲
+folder-replace-placeholder = 替换为
+folder-replace-run = 在文件中替换…
+replace-files-title = 要替换 { $files ->
+   *[other] { $files } 个文件中
+    }的 { $count ->
+   *[other] { $count } 个匹配项
+    }吗？
+replace-files-body = 在标签页中打开的文件会在标签页中更改，并且可以撤销；请自行保存这些文件。其他文件会立即保存，如果已启用本地历史记录，其先前内容会保留在本地历史记录中。在此期间已在磁盘上更改的文件将被跳过。
+replace-files-confirm = 替换
+replace-files-done = 已替换 { $files ->
+   *[other] { $files } 个文件中
+    }的 { $count ->
+   *[other] { $count } 个匹配项
+    }（在标签页中打开：{ $open } 个，未保存）。
+replace-files-failed = { $failed ->
+   *[other] { $failed } 个文件未更改；第一个：
+    } { $first }

@@ -378,3 +378,20 @@ macro-times-invalid = Nhập một số từ 1 đến { $max }.
 view-outline = Dàn ý
 outline-empty = Tài liệu này không có tiêu đề.
 outline-close = Đóng dàn ý
+folder-replace-placeholder = Thay bằng
+folder-replace-run = Thay thế trong tệp…
+replace-files-title = Thay thế { $count ->
+   *[other] { $count } kết quả khớp
+    } trong { $files ->
+   *[other] { $files } tệp
+    }?
+replace-files-body = Các tệp đang mở trong thẻ sẽ được thay đổi tại đó và có thể hoàn tác; hãy tự lưu các tệp này. Các tệp khác được lưu ngay, và nội dung trước đó được giữ trong lịch sử cục bộ nếu tính năng này đang bật. Tệp đã thay đổi trên đĩa trong lúc đó sẽ bị bỏ qua.
+replace-files-confirm = Thay thế
+replace-files-done = Đã thay thế { $count ->
+   *[other] { $count } kết quả khớp
+    } trong { $files ->
+   *[other] { $files } tệp
+    } (đang mở trong thẻ: { $open }, chưa lưu).
+replace-files-failed = { $failed ->
+   *[other] { $failed } tệp không được thay đổi; tệp đầu tiên:
+    } { $first }

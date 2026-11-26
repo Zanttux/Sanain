@@ -378,3 +378,20 @@ macro-times-invalid = Masukkan angka dari 1 hingga { $max }.
 view-outline = Kerangka
 outline-empty = Tidak ada judul dalam dokumen ini.
 outline-close = Tutup Kerangka
+folder-replace-placeholder = Ganti dengan
+folder-replace-run = Ganti di Berkas…
+replace-files-title = Ganti { $count ->
+   *[other] { $count } kecocokan
+    } dalam { $files ->
+   *[other] { $files } berkas
+    }?
+replace-files-body = Berkas yang terbuka di tab diubah di sana dan perubahannya dapat dibatalkan; simpan sendiri berkas tersebut. Berkas lain disimpan sekarang, dan isi sebelumnya disimpan di riwayat lokal jika fitur itu aktif. Berkas yang berubah di disk sementara itu akan dilewati.
+replace-files-confirm = Ganti
+replace-files-done = { $count ->
+   *[other] { $count } kecocokan diganti
+    } dalam { $files ->
+   *[other] { $files } berkas
+    } ({ $open } terbuka di tab, belum disimpan).
+replace-files-failed = { $failed ->
+   *[other] { $failed } berkas tidak diubah; yang pertama:
+    } { $first }

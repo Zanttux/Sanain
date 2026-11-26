@@ -435,3 +435,35 @@ macro-times-invalid = Введите число от 1 до { $max }.
 view-outline = Структура
 outline-empty = В этом документе нет заголовков.
 outline-close = Закрыть структуру
+folder-replace-placeholder = Заменить на
+folder-replace-run = Заменить в файлах…
+replace-files-title = Заменить { $count ->
+    [one] { $count } совпадение
+    [few] { $count } совпадения
+    [many] { $count } совпадений
+   *[other] { $count } совпадения
+    } в { $files ->
+    [one] { $files } файле
+    [few] { $files } файлах
+    [many] { $files } файлах
+   *[other] { $files } файла
+    }?
+replace-files-body = Файлы, открытые во вкладке, изменяются там, и изменение можно отменить; сохраните их сами. Остальные файлы сохраняются сразу, а их прежнее содержимое остаётся в локальной истории, если она включена. Файл, который за это время изменился на диске, пропускается.
+replace-files-confirm = Заменить
+replace-files-done = { $count ->
+    [one] Заменено { $count } совпадение
+    [few] Заменено { $count } совпадения
+    [many] Заменено { $count } совпадений
+   *[other] Заменено { $count } совпадения
+    } в { $files ->
+    [one] { $files } файле
+    [few] { $files } файлах
+    [many] { $files } файлах
+   *[other] { $files } файла
+    } (открыто во вкладках: { $open }, не сохранено).
+replace-files-failed = { $failed ->
+    [one] { $failed } файл не изменён:
+    [few] { $failed } файла не изменены; первый:
+    [many] { $failed } файлов не изменены; первый:
+   *[other] { $failed } файла не изменены; первый:
+    } { $first }

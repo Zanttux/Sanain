@@ -416,3 +416,30 @@ macro-times-invalid = Introduza um número de 1 a { $max }.
 view-outline = Estrutura
 outline-empty = Não existem títulos neste documento.
 outline-close = Fechar estrutura
+folder-replace-placeholder = Substituir por
+folder-replace-run = Substituir nos ficheiros…
+replace-files-title = Substituir { $count ->
+    [one] { $count } correspondência
+    [many] { $count } correspondências
+   *[other] { $count } correspondências
+    } em { $files ->
+    [one] { $files } ficheiro
+    [many] { $files } ficheiros
+   *[other] { $files } ficheiros
+    }?
+replace-files-body = Os ficheiros abertos num separador são alterados aí e a alteração pode ser anulada; guarde-os manualmente. Os restantes ficheiros são guardados agora e o conteúdo anterior é mantido no histórico local, se estiver ativado. Um ficheiro que tenha sido alterado no disco entretanto é ignorado.
+replace-files-confirm = Substituir
+replace-files-done = { $count ->
+    [one] { $count } correspondência substituída
+    [many] { $count } correspondências substituídas
+   *[other] { $count } correspondências substituídas
+    } em { $files ->
+    [one] { $files } ficheiro
+    [many] { $files } ficheiros
+   *[other] { $files } ficheiros
+    } (abertos em separadores: { $open }, não guardados).
+replace-files-failed = { $failed ->
+    [one] { $failed } ficheiro não foi alterado:
+    [many] { $failed } ficheiros não foram alterados; primeiro:
+   *[other] { $failed } ficheiros não foram alterados; primeiro:
+    } { $first }

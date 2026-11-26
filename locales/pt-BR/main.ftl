@@ -416,3 +416,30 @@ macro-times-invalid = Digite um número de 1 a { $max }.
 view-outline = Estrutura de tópicos
 outline-empty = Não há títulos neste documento.
 outline-close = Fechar estrutura de tópicos
+folder-replace-placeholder = Substituir por
+folder-replace-run = Substituir nos arquivos…
+replace-files-title = Substituir { $count ->
+    [one] { $count } ocorrência
+    [many] { $count } ocorrências
+   *[other] { $count } ocorrências
+    } em { $files ->
+    [one] { $files } arquivo
+    [many] { $files } arquivos
+   *[other] { $files } arquivos
+    }?
+replace-files-body = Os arquivos abertos em uma aba são alterados nela e a alteração pode ser desfeita; salve-os você mesmo. Os outros arquivos são salvos agora, e o conteúdo anterior é mantido no histórico local quando ele está ativado. Um arquivo que foi alterado no disco nesse meio-tempo é ignorado.
+replace-files-confirm = Substituir
+replace-files-done = { $count ->
+    [one] { $count } ocorrência substituída
+    [many] { $count } ocorrências substituídas
+   *[other] { $count } ocorrências substituídas
+    } em { $files ->
+    [one] { $files } arquivo
+    [many] { $files } arquivos
+   *[other] { $files } arquivos
+    } (abertos em abas: { $open }, não salvos).
+replace-files-failed = { $failed ->
+    [one] { $failed } arquivo não foi alterado:
+    [many] { $failed } arquivos não foram alterados; primeiro:
+   *[other] { $failed } arquivos não foram alterados; primeiro:
+    } { $first }

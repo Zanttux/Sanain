@@ -9,6 +9,7 @@ pub mod images;
 pub mod keymap;
 pub mod recent;
 pub mod recovery;
+pub mod replacefiles;
 pub mod session;
 pub mod settings;
 pub mod syntax;
