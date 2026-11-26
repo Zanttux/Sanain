@@ -172,6 +172,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Uavsluttet anførselstegn som starter på linje { $line }
 csv-truncated = Viser de første 200 000 radene
+csv-edit-cell = Rediger celle
+csv-insert-row-below = Sett inn rad under
+csv-delete-row = Slett rad
+csv-read-only = Skrivebeskyttet fil: rutenettet kan ikke redigeres
 json-more = … { $count } til
 dialog-open-link-title = Vil du åpne denne lenken i nettleseren?
 button-open = Åpne

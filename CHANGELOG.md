@@ -34,6 +34,19 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   shows the source with the usual note. `direction` inside a subgraph
   is accepted and ignored.
 
+- Editing in the CSV/TSV grid: double-click a cell, or select it and
+  press Enter or F2, to edit it inline. Enter commits, Escape cancels,
+  Tab commits and edits the next cell; arrow keys move the selection and
+  Delete clears a cell. Right-click a cell or row number for Insert Row
+  Below and Delete Row. Each change is one undoable edit of the text
+  that replaces only that field's characters: other fields, their
+  quoting, line endings (CRLF, LF, CR) and a missing final newline stay
+  byte for byte. A value is quoted only when it holds the delimiter, a
+  quote or a line break, or when the field was already quoted; inner
+  quotes are doubled. A cell past the end of a short row is added with
+  delimiters. Editing is off for read-only files and while a quote is
+  unterminated. Inserting or deleting columns is not offered.
+
 ## [0.2.0] — 2026-11-26
 
 Milestone M2 (tabs, sessions, recovery, search): crash and conflict tests

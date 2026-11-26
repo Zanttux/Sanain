@@ -184,6 +184,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Neukončené uvozovky začínající na řádku { $line }
 csv-truncated = Zobrazuje se prvních 200 000 řádků
+csv-edit-cell = Upravit buňku
+csv-insert-row-below = Vložit řádek pod
+csv-delete-row = Odstranit řádek
+csv-read-only = Soubor jen pro čtení: mřížku nelze upravovat
 json-more = … a { $count } dalších
 dialog-open-link-title = Otevřít tento odkaz ve webovém prohlížeči?
 button-open = Otevřít

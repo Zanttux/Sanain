@@ -178,6 +178,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Ghilimele neînchise începând de la linia { $line }
 csv-truncated = Se afișează primele 200.000 de rânduri
+csv-edit-cell = Editează celula
+csv-insert-row-below = Inserează rând dedesubt
+csv-delete-row = Șterge rândul
+csv-read-only = Fișier doar în citire: grila nu poate fi editată
 json-more = … încă { $count }
 dialog-open-link-title = Deschideți acest link în browserul web?
 button-open = Deschide

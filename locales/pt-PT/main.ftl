@@ -178,6 +178,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Aspas não fechadas a partir da linha { $line }
 csv-truncated = A mostrar as primeiras 200 000 linhas
+csv-edit-cell = Editar célula
+csv-insert-row-below = Inserir linha abaixo
+csv-delete-row = Eliminar linha
+csv-read-only = Ficheiro só de leitura: a grelha não pode ser editada
 json-more = … mais { $count }
 dialog-open-link-title = Abrir esta ligação no navegador?
 button-open = Abrir

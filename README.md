@@ -51,7 +51,7 @@ Fast by design. Powerful when needed. Simple by default.
 - **Data files:** syntax highlighting for 22 languages, JSON
   validate/format/minify that keeps your numbers and keys as written,
   XML and YAML validation, read-only trees for JSON, XML and YAML
-  (entities and aliases are never expanded), a CSV grid, side-by-side
+  (entities and aliases are never expanded), an editable CSV grid, side-by-side
   comparison with another tab, any file, the saved version or the
   clipboard (changed characters highlighted, whitespace optionally
   ignored), and text tools (sort, deduplicate,

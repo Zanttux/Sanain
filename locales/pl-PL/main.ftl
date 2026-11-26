@@ -184,6 +184,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Niezamknięty cudzysłów zaczynający się w wierszu { $line }
 csv-truncated = Wyświetlane jest pierwsze 200 000 wierszy
+csv-edit-cell = Edytuj komórkę
+csv-insert-row-below = Wstaw wiersz poniżej
+csv-delete-row = Usuń wiersz
+csv-read-only = Plik tylko do odczytu: siatki nie można edytować
 json-more = … i { $count } więcej
 dialog-open-link-title = Otworzyć ten link w przeglądarce internetowej?
 button-open = Otwórz

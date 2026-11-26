@@ -172,6 +172,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Oavslutat citattecken från rad { $line }
 csv-truncated = Visar de första 200 000 raderna
+csv-edit-cell = Redigera cell
+csv-insert-row-below = Infoga rad nedanför
+csv-delete-row = Ta bort rad
+csv-read-only = Skrivskyddad fil: rutnätet kan inte redigeras
 json-more = … { $count } till
 dialog-open-link-title = Vill du öppna länken i webbläsaren?
 button-open = Öppna

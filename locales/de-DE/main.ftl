@@ -172,6 +172,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Nicht abgeschlossenes Anführungszeichen ab Zeile { $line }
 csv-truncated = Die ersten 200.000 Zeilen werden angezeigt
+csv-edit-cell = Zelle bearbeiten
+csv-insert-row-below = Zeile darunter einfügen
+csv-delete-row = Zeile löschen
+csv-read-only = Schreibgeschützte Datei: Das Raster kann nicht bearbeitet werden
 json-more = … { $count } weitere
 dialog-open-link-title = Diesen Link im Webbrowser öffnen?
 button-open = Öffnen

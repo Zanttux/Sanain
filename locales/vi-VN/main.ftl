@@ -166,6 +166,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Dấu ngoặc kép chưa đóng bắt đầu từ dòng { $line }
 csv-truncated = Đang hiện 200.000 hàng đầu tiên
+csv-edit-cell = Sửa ô
+csv-insert-row-below = Chèn hàng bên dưới
+csv-delete-row = Xóa hàng
+csv-read-only = Tệp chỉ đọc: không thể sửa lưới
 json-more = … còn { $count } mục
 dialog-open-link-title = Mở liên kết này trong trình duyệt web?
 button-open = Mở

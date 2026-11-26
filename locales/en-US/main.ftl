@@ -171,6 +171,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Unterminated quote starting on line { $line }
 csv-truncated = Showing the first 200,000 rows
+csv-edit-cell = Edit Cell
+csv-insert-row-below = Insert Row Below
+csv-delete-row = Delete Row
+csv-read-only = Read-only file: the grid can't be edited
 json-more = … { $count } more
 dialog-open-link-title = Open this link in your web browser?
 button-open = Open
