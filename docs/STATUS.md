@@ -42,7 +42,7 @@ M1 in progress.
 | E08 | Partial | Source/split/preview, GFM blocks and inlines, front matter, caret-following preview, raw HTML inert, source bytes unchanged (hash checked). Links: web with confirmation, local files, anchors, unsafe schemes blocked. Local images inside the document folder (limits enforced; remote never fetched). Go to Heading (filterable heading list). Not yet: permission flow for images outside the folder, Mermaid, persistent outline panel, syntax colours in code blocks |
 | E10 | Partial | Two-tab side-by-side line diff (time-bounded), apply hunk in either direction as one undo, stale-revision check. Compare with the saved file or the clipboard (read-only right side). Intraline highlight of changed characters (pairs with at least 40 % in common, lines up to 2 000 chars). Not yet: whitespace options, arbitrary files as sources |
 | E15 | Partial | Search across a folder (background, cancellable, bounded), results open at the match. Keyboard macros: record/stop, play at the cursor, each run one undo step (grouped undo in core); mouse placement not recorded. Not yet: replace across files, saved/named macros, run N times |
-| E13 | Partial | Log viewer: background indexing and filtering (cancellable), follow/tail, truncation detection, auto-open at 256 MB. UTF-8 only (lossy display); tested on macOS with a 302 MB file |
+| E13 | Partial | Log viewer: background indexing and filtering (cancellable), follow/tail, truncation detection, auto-open at 256 MB, level colours, Go to Line. UTF-8 only (lossy display); tested on macOS with a 302 MB file |
 | E14 | Done | Local history: copy per save (50 versions / 30 days / 10 MB cap, owner-only files), list, open, restore as one undo step, disable, purge. Tested on macOS |
 | L10n | Partial | 26 UI languages (en-US canonical; fi-FI draft; 24 machine translations by Claude awaiting native review). Every message formats in every locale (test). RTL languages not shipped |
 | E05 | Partial | UTF-8, UTF-8 BOM, UTF-16 LE/BE BOM, 17 legacy encodings by explicit choice (exact round trip enforced), explicit encoding and LF/CRLF conversion. UTF-16 LE/BE without BOM detected (zero-byte pattern, exact decode) and opened directly; legacy encodings suggested by chardetng in the picker (user confirms, exact round trip still required). Not yet: detection for files over 16 MB |
@@ -97,6 +97,6 @@ because nobody independent exists; no fake approvals.
 ## Next
 - Line/column mapping, vertical movement, word movement, line operations.
 - Hard-link-safe save strategy.
-- Log viewer next steps (E13): jump to line, level highlighting, encodings other than UTF-8, very long files beyond ~16 M lines (f32 scroll precision).
+- Log viewer next steps (E13): encodings other than UTF-8, very long files beyond ~16 M lines (f32 scroll precision).
 - Manual IME and screen-reader pass on macOS; Windows and Linux GUI smoke
   test (needs hardware or VM access).
