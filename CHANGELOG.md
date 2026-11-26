@@ -64,6 +64,26 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   straight away. Editing is off for read-only files; documents the
   validator rejects show the error instead of a tree.
 
+- Editing in the XML tree, with the same interactions as the JSON tree:
+  double-click an element or attribute name, an attribute value or an
+  element's text (or select it and press Enter or F2) to edit it inline;
+  Enter commits, Escape cancels, Up and Down move the selection and
+  Delete removes the selected element or attribute. Right-click for
+  Edit Value / Edit Text, Rename, Add Attribute, Add Child, Add After
+  and Delete. Each change is one undoable edit that touches only that
+  node's characters: an attribute keeps its quote style (`&`, `<` and
+  the quote are escaped), text is escaped (`&`, `<`, `>`) and stays
+  CDATA when it was and can, renaming an element changes its start and
+  end tag together, deleting an element on its own line removes that
+  line, and new elements (`<element/>`, renamed straight away) copy the
+  siblings' line ending and indentation. Entity and character
+  references, comments, the declaration, CRLF and indentation elsewhere
+  stay byte for byte. Names follow the XML Name rules (at most one
+  colon); an invalid name, a duplicate attribute or a change that would
+  make the document invalid XML shows an inline error and changes
+  nothing. Entities are still never expanded. Editing is off for
+  read-only files; the YAML tree stays read-only.
+
 ### Fixed
 - Saving a hard-linked file (saved in place on Linux and macOS) on a
   full disk no longer leaves the file truncated: the old contents and

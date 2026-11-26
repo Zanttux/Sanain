@@ -136,8 +136,8 @@ fn grid_id(id: TabId) -> egui::Id {
     egui::Id::unique(("sanain-csv-grid", id))
 }
 
-/// Keyboard focus id of a tab's JSON tree.
-fn json_tree_id(id: TabId) -> egui::Id {
+/// Keyboard focus id of a tab's JSON or XML tree.
+fn tree_id(id: TabId) -> egui::Id {
     egui::Id::unique(("sanain-json-tree", id))
 }
 
@@ -150,7 +150,12 @@ enum Structured {
         Result<sanain_tools::json::Doc, sanain_tools::json::JsonError>,
         bool,
     ),
-    /// XML or YAML as a tree; the message id names the format.
+    /// The editable tree, and whether its file is read-only on disk.
+    Xml(
+        Result<sanain_tools::xml::Doc, sanain_tools::markup::TreeError>,
+        bool,
+    ),
+    /// YAML as a read-only tree; the message id names the format.
     Tree(
         &'static str,
         Result<sanain_tools::json::Node, sanain_tools::markup::TreeError>,
@@ -318,7 +323,7 @@ pub struct Shell {
     structured_cache: HashMap<TabId, (Revision, Option<char>, Structured)>,
     csv_delimiter: HashMap<TabId, char>,
     csv_grids: HashMap<TabId, crate::structured::GridState>,
-    json_trees: HashMap<TabId, crate::structured::TreeState>,
+    trees: HashMap<TabId, crate::structured::TreeState>,
     compare_pick: bool,
     md_modes: HashMap<TabId, MdMode>,
     md_cache: HashMap<TabId, (Revision, std::sync::Arc<Vec<sanain_markdown::Block>>)>,
@@ -488,7 +493,7 @@ impl Shell {
             structured_cache: HashMap::new(),
             csv_delimiter: HashMap::new(),
             csv_grids: HashMap::new(),
-            json_trees: HashMap::new(),
+            trees: HashMap::new(),
             compare_pick: false,
             md_modes: HashMap::new(),
             md_cache: HashMap::new(),
@@ -822,7 +827,7 @@ impl Shell {
                     self.structured_cache.remove(&id);
                     self.csv_delimiter.remove(&id);
                     self.csv_grids.remove(&id);
-                    self.json_trees.remove(&id);
+                    self.trees.remove(&id);
                 }
             }
             Then::Quit => {
@@ -2754,9 +2759,7 @@ impl Shell {
             });
             let data = match kind {
                 DataKind::Json => Structured::Json(sanain_tools::json::doc(&text), read_only),
-                DataKind::Xml => {
-                    Structured::Tree("format-xml", sanain_tools::markup::xml_tree(&text))
-                }
+                DataKind::Xml => Structured::Xml(sanain_tools::xml::doc(&text), read_only),
                 DataKind::Yaml => {
                     Structured::Tree("format-yaml", sanain_tools::markup::yaml_tree(&text))
                 }
@@ -2778,6 +2781,7 @@ impl Shell {
         let mut pick = None;
         let mut grid_actions = Vec::new();
         let mut tree_actions = Vec::new();
+        let mut xml_actions = Vec::new();
         match data {
             Structured::Csv(table, read_only) => {
                 egui::Frame::NONE
@@ -2848,10 +2852,44 @@ impl Shell {
                     invalid_value: tr(l10n, "json-invalid-value", &[]),
                     duplicate_key: tr(l10n, "json-duplicate-key", &[]),
                 };
-                let state = self.json_trees.entry(id).or_default();
+                let state = self.trees.entry(id).or_default();
                 tree_actions = crate::structured::json(
                     ui,
-                    json_tree_id(id),
+                    tree_id(id),
+                    doc,
+                    p,
+                    !*read_only,
+                    state,
+                    &labels,
+                    &more,
+                );
+            }
+            Structured::Xml(Ok(doc), read_only) => {
+                let more = |n: usize| tr(l10n, "json-more", &[("count", (n as i64).into())]);
+                if *read_only {
+                    egui::Frame::NONE
+                        .fill(p.surface)
+                        .inner_margin(egui::Margin::symmetric(8, 6))
+                        .show(ui, |ui| {
+                            ui.colored_label(p.muted, tr(l10n, "json-read-only", &[]));
+                        });
+                }
+                let labels = crate::structured::XmlLabels {
+                    edit_value: tr(l10n, "xml-edit-value", &[]),
+                    edit_text: tr(l10n, "xml-edit-text", &[]),
+                    rename: tr(l10n, "xml-rename", &[]),
+                    add_attribute: tr(l10n, "xml-add-attribute", &[]),
+                    add_child: tr(l10n, "xml-add-child", &[]),
+                    add_after: tr(l10n, "xml-add-after", &[]),
+                    delete: tr(l10n, "xml-delete", &[]),
+                    invalid_name: tr(l10n, "xml-invalid-name", &[]),
+                    duplicate_attribute: tr(l10n, "xml-duplicate-attribute", &[]),
+                    not_well_formed: tr(l10n, "xml-not-well-formed", &[]),
+                };
+                let state = self.trees.entry(id).or_default();
+                xml_actions = crate::structured::xml(
+                    ui,
+                    tree_id(id),
                     doc,
                     p,
                     !*read_only,
@@ -2876,7 +2914,12 @@ impl Shell {
                 );
                 ui.colored_label(p.error, msg);
             }
-            Structured::Tree(format, Err(e)) => {
+            Structured::Tree(_, Err(e)) | Structured::Xml(Err(e), _) => {
+                let format = match data {
+                    Structured::Xml(..) => "format-xml",
+                    Structured::Tree(f, _) => f,
+                    _ => "",
+                };
                 let msg = tr(
                     l10n,
                     "tools-tree-error",
@@ -2901,6 +2944,125 @@ impl Shell {
         for a in tree_actions {
             self.apply_tree_action(id, a);
         }
+        for a in xml_actions {
+            self.apply_xml_action(id, a);
+        }
+    }
+
+    /// Apply an XML tree change to the tab's text as one undoable edit
+    /// (renaming an element changes both its tags in that one step).
+    fn apply_xml_action(&mut self, id: TabId, action: crate::structured::TreeAction) {
+        use crate::structured::{Field, TreeAction};
+        use sanain_tools::xml::Kind;
+        let Some((rev, _, Structured::Xml(Ok(doc), false))) = self.structured_cache.get(&id) else {
+            return;
+        };
+        let Some(i) = self.ws.position(id) else {
+            return;
+        };
+        if self.ws.tabs()[i].editor.document().revision() != *rev {
+            return;
+        }
+        // The edits, the node to select afterwards, and for a new node the
+        // kind to find at the inserted text (its name field opens).
+        let (edits, select, added) = match &action {
+            TreeAction::SetValue { path, text } => (
+                doc.find(path)
+                    .and_then(|n| doc.set_value(n, text).ok().flatten()),
+                Some(path.clone()),
+                None,
+            ),
+            TreeAction::RenameKey { path, name } => (
+                doc.find(path)
+                    .and_then(|n| doc.rename(n, name).ok().flatten()),
+                Some(path.clone()),
+                None,
+            ),
+            TreeAction::Delete(path) => {
+                let n = doc.find(path);
+                // Select the next sibling, else the previous one, else the parent.
+                let siblings = n
+                    .and_then(|n| doc.items[n].parent)
+                    .map_or(0, |p| doc.items[p].children.len());
+                let mut sel = path.clone();
+                match sel.last_mut() {
+                    Some(k) if *k + 1 < siblings => {}
+                    Some(k) if *k > 0 => *k -= 1,
+                    _ => {
+                        sel.pop();
+                    }
+                }
+                (n.and_then(|n| doc.delete(n).ok()), Some(sel), None)
+            }
+            TreeAction::AddAttribute(path) => {
+                // On an attribute: add to its element.
+                let e = doc.find(path).map(|n| match doc.items[n].kind {
+                    Kind::Attribute => doc.items[n].parent.unwrap_or(n),
+                    _ => n,
+                });
+                let edits = e.and_then(|e| {
+                    let name = doc.unique_attribute(e, "attribute");
+                    doc.add_attribute(e, &name, "").ok()
+                });
+                (edits, None, Some(Kind::Attribute))
+            }
+            TreeAction::AddAfter(path) => (
+                doc.find(path)
+                    .and_then(|n| doc.add_after(n, "element").ok()),
+                None,
+                Some(Kind::Element),
+            ),
+            TreeAction::AddInside(path) => (
+                doc.find(path)
+                    .and_then(|n| doc.add_child(n, "element").ok()),
+                None,
+                Some(Kind::Element),
+            ),
+        };
+        let Some(edits) = edits.filter(|e| !e.is_empty()) else {
+            return;
+        };
+        // Where the new node starts: the inserted attribute's leading space,
+        // or the new element's `<`.
+        let at = edits.first().map(|e| {
+            let skip = match added {
+                Some(Kind::Element) => e.text.find('<').unwrap_or(0),
+                _ => 0,
+            };
+            e.range.start + e.text[..skip].chars().count()
+        });
+        let Some(tab) = self.ws.tab_mut(i) else {
+            return;
+        };
+        if let [e] = edits.as_slice() {
+            tab.editor.replace_range(e.range.clone(), &e.text);
+        } else {
+            let mut tx = sanain_core::Transaction::new();
+            for e in edits.iter().rev() {
+                tx.push(sanain_core::Change::replace(
+                    e.range.clone(),
+                    e.text.clone(),
+                ));
+            }
+            tab.editor.apply_replacement(&tx);
+        }
+        let mut select = select;
+        let mut open = None;
+        if let (Some(kind), Some(at)) = (added, at) {
+            let text = tab.editor.document().text();
+            if let Ok(new) = sanain_tools::xml::doc(&text)
+                && let Some(n) = (0..new.items.len())
+                    .find(|&n| new.items[n].kind == kind && new.items[n].spans.whole.start == at)
+            {
+                let path = new.path_of(n);
+                select = Some(path.clone());
+                open = Some((path, Field::Key));
+            }
+        }
+        let state = self.trees.entry(id).or_default();
+        state.selected = select;
+        state.selected_field = open.as_ref().map(|(_, f)| *f);
+        state.pending = open;
     }
 
     /// Apply a JSON tree change to the tab's text as one undoable edit,
@@ -2977,6 +3139,7 @@ impl Shell {
                     Some((sel, field)),
                 )
             }
+            TreeAction::AddAttribute(_) => return,
         };
         let Some(edit) = edit else {
             return;
@@ -2984,7 +3147,7 @@ impl Shell {
         if let Some(tab) = self.ws.tab_mut(i) {
             tab.editor.replace_range(edit.range, &edit.text);
         }
-        let state = self.json_trees.entry(id).or_default();
+        let state = self.trees.entry(id).or_default();
         state.selected = select;
         state.selected_field = open.as_ref().map(|(_, f)| *f);
         state.pending = open;
@@ -3798,7 +3961,7 @@ impl Shell {
         let active = self.ws.active().id;
         let editor = self.views.get(&active).and_then(|v| v.widget_id);
         ctx.memory(|m| m.focused())
-            .is_some_and(|f| Some(f) != editor && f != grid_id(active) && f != json_tree_id(active))
+            .is_some_and(|f| Some(f) != editor && f != grid_id(active) && f != tree_id(active))
     }
 
     fn dispatch(&mut self, action: MenuAction, ctx: &egui::Context) {

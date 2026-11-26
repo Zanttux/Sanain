@@ -1,5 +1,5 @@
-//! Structured views: an editable CSV grid, an editable JSON tree and
-//! read-only XML/YAML trees. The source stays authoritative: edits come back
+//! Structured views: an editable CSV grid, editable JSON and XML trees and
+//! a read-only YAML tree. The source stays authoritative: edits come back
 //! as [`GridAction`]s and [`TreeAction`]s that the caller applies to the
 //! text as ordinary undoable edits.
 
@@ -7,6 +7,7 @@ use eframe::egui::{self, RichText};
 use egui_extras::{Column, TableBuilder};
 use sanain_tools::csv::Table;
 use sanain_tools::json::{self, Node};
+use sanain_tools::xml;
 
 use crate::theme::Palette;
 
@@ -354,15 +355,47 @@ pub fn csv(
     actions
 }
 
-/// Which part of a JSON node the inline field edits.
+/// Which part of a tree node the inline field edits: a JSON key or an XML
+/// element or attribute name; a JSON scalar, an XML attribute value or
+/// element text.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Field {
     Key,
     Value,
 }
 
-/// Selection and inline editor of one tab's JSON tree. Nodes are named by
-/// their path of child positions, which survives re-parsing the text.
+/// Why the inline field's text was refused.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FieldError {
+    InvalidValue,
+    DuplicateKey,
+    InvalidName,
+    DuplicateAttribute,
+    NotWellFormed,
+}
+
+impl From<json::EditError> for FieldError {
+    fn from(e: json::EditError) -> Self {
+        match e {
+            json::EditError::DuplicateKey => Self::DuplicateKey,
+            _ => Self::InvalidValue,
+        }
+    }
+}
+
+impl From<xml::EditError> for FieldError {
+    fn from(e: xml::EditError) -> Self {
+        match e {
+            xml::EditError::InvalidName => Self::InvalidName,
+            xml::EditError::DuplicateName => Self::DuplicateAttribute,
+            _ => Self::NotWellFormed,
+        }
+    }
+}
+
+/// Selection and inline editor of one tab's JSON or XML tree. Nodes are
+/// named by their path of child positions, which survives re-parsing the
+/// text.
 #[derive(Debug, Default)]
 pub struct TreeState {
     pub selected: Option<Vec<usize>>,
@@ -381,7 +414,7 @@ pub struct NodeEdit {
     pub field: Field,
     pub text: String,
     /// Why the last commit was refused.
-    pub error: Option<json::EditError>,
+    pub error: Option<FieldError>,
     /// Move keyboard focus into the field on the next frame.
     focus: bool,
     /// Reset the caret (a newly opened field).
@@ -389,19 +422,7 @@ pub struct NodeEdit {
 }
 
 impl TreeState {
-    /// Open the inline field on a node, if that part of it is editable:
-    /// a scalar's value as JSON text, or a member's key decoded.
-    pub fn start_edit(&mut self, doc: &json::Doc, path: &[usize], field: Field) -> bool {
-        let Some(i) = doc.find(path) else {
-            return false;
-        };
-        let text = match field {
-            Field::Value => match doc.items[i].kind {
-                json::Kind::String | json::Kind::Literal => doc.value_text(i).map(str::to_owned),
-                _ => None,
-            },
-            Field::Key => doc.key(i),
-        };
+    fn open(&mut self, path: &[usize], field: Field, text: Option<String>) -> bool {
         let Some(text) = text else {
             return false;
         };
@@ -417,6 +438,22 @@ impl TreeState {
         true
     }
 
+    /// Open the inline field on a node, if that part of it is editable:
+    /// a scalar's value as JSON text, or a member's key decoded.
+    pub fn start_edit(&mut self, doc: &json::Doc, path: &[usize], field: Field) -> bool {
+        let Some(i) = doc.find(path) else {
+            return false;
+        };
+        let text = match field {
+            Field::Value => match doc.items[i].kind {
+                json::Kind::String | json::Kind::Literal => doc.value_text(i).map(str::to_owned),
+                _ => None,
+            },
+            Field::Key => doc.key(i),
+        };
+        self.open(path, field, text)
+    }
+
     /// Edit what Enter or F2 means for a node: the part last clicked if
     /// editable, else a scalar's value, else its key.
     fn start_default_edit(&mut self, doc: &json::Doc, path: &[usize]) {
@@ -427,6 +464,31 @@ impl TreeState {
         }
         if !self.start_edit(doc, path, Field::Value) {
             self.start_edit(doc, path, Field::Key);
+        }
+    }
+
+    /// Open the inline field on an XML node: an element's or attribute's
+    /// name, an attribute's value or the text of a text-only element or a
+    /// text node (decoded).
+    pub fn start_xml_edit(&mut self, doc: &xml::Doc, path: &[usize], field: Field) -> bool {
+        let Some(i) = doc.find(path) else {
+            return false;
+        };
+        let text = match field {
+            Field::Value => doc.value(i),
+            Field::Key => doc.name(i).map(str::to_owned),
+        };
+        self.open(path, field, text)
+    }
+
+    fn start_default_xml_edit(&mut self, doc: &xml::Doc, path: &[usize]) {
+        if let Some(f) = self.selected_field
+            && self.start_xml_edit(doc, path, f)
+        {
+            return;
+        }
+        if !self.start_xml_edit(doc, path, Field::Value) {
+            self.start_xml_edit(doc, path, Field::Key);
         }
     }
 
@@ -450,15 +512,25 @@ impl TreeState {
     }
 }
 
-/// A change made in the JSON tree, for the caller to apply to the text as
-/// one undoable edit through [`json::Doc`].
+/// A change made in the JSON or XML tree, for the caller to apply to the
+/// text as one undoable edit through [`json::Doc`] or [`xml::Doc`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TreeAction {
-    SetValue { path: Vec<usize>, text: String },
-    RenameKey { path: Vec<usize>, name: String },
+    SetValue {
+        path: Vec<usize>,
+        text: String,
+    },
+    /// Rename a JSON key, or an XML element or attribute.
+    RenameKey {
+        path: Vec<usize>,
+        name: String,
+    },
     Delete(Vec<usize>),
     AddAfter(Vec<usize>),
+    /// Add a JSON member or element, or an XML child element.
     AddInside(Vec<usize>),
+    /// Add an XML attribute to the element (or the attribute's element).
+    AddAttribute(Vec<usize>),
 }
 
 /// Localized labels of the JSON tree's menu and errors.
@@ -472,32 +544,43 @@ pub struct TreeLabels {
     pub duplicate_key: String,
 }
 
-/// The editable JSON tree. With `editable`, double-clicking a key or a
-/// scalar value (or Enter/F2 on the selected node) edits it inline: Enter
-/// commits, Escape cancels, and a refused value shows why without changing
-/// anything. Up and Down move the selection while `id` has focus; Delete
-/// removes the selected node; right-click offers every operation.
-#[allow(clippy::too_many_arguments)]
-pub fn json(
+/// Localized labels of the XML tree's menu and errors.
+pub struct XmlLabels {
+    pub edit_value: String,
+    pub edit_text: String,
+    pub rename: String,
+    pub add_attribute: String,
+    pub add_child: String,
+    pub add_after: String,
+    pub delete: String,
+    pub invalid_name: String,
+    pub duplicate_attribute: String,
+    pub not_well_formed: String,
+}
+
+/// What the tree's keys asked for on the selected node.
+enum KeyAct {
+    Edit(Vec<usize>),
+    Delete(Vec<usize>),
+}
+
+/// Shared start of a tree frame: drop the field when it cannot apply,
+/// expand the parents of a pending node, then the keys while `id` has
+/// focus: Up and Down move the selection, Enter or F2 edits and Delete
+/// deletes (when `editable`).
+fn tree_frame(
     ui: &mut egui::Ui,
     id: egui::Id,
-    doc: &json::Doc,
-    p: &Palette,
     editable: bool,
     state: &mut TreeState,
-    labels: &TreeLabels,
-    more: &dyn Fn(usize) -> String,
-) -> Vec<TreeAction> {
-    let mut actions = Vec::new();
+    exists: &dyn Fn(&[usize]) -> bool,
+    open: &dyn Fn(&mut TreeState, &[usize], Field),
+) -> Option<KeyAct> {
     if !editable {
         state.editing = None;
         state.pending = None;
     }
-    if state
-        .editing
-        .as_ref()
-        .is_some_and(|e| doc.find(&e.path).is_none())
-    {
+    if state.editing.as_ref().is_some_and(|e| !exists(&e.path)) {
         state.editing = None;
     }
     if let Some((path, field)) = state.pending.take() {
@@ -512,8 +595,9 @@ pub fn json(
             c.set_open(true);
             c.store(ui.ctx());
         }
-        state.start_edit(doc, &path, field);
+        open(state, &path, field);
     }
+    let mut act = None;
     let focus = ui.interact(ui.max_rect(), id, egui::Sense::focusable_noninteractive());
     if focus.has_focus() && state.editing.is_none() {
         ui.memory_mut(|m| {
@@ -537,11 +621,136 @@ pub fn json(
         }
         if editable && let Some(sel) = state.selected.clone() {
             if pressed(Key::Enter) || pressed(Key::F2) {
-                state.start_default_edit(doc, &sel);
+                act = Some(KeyAct::Edit(sel));
             } else if pressed(Key::Delete) && !sel.is_empty() {
-                actions.push(TreeAction::Delete(sel));
+                act = Some(KeyAct::Delete(sel));
             }
         }
+    }
+    act
+}
+
+/// Selection and double-click editing of a label: returns whether a
+/// double-click asked to edit `field`.
+fn select_on_click(
+    ui: &egui::Ui,
+    id: egui::Id,
+    state: &mut TreeState,
+    r: &egui::Response,
+    path: &[usize],
+    field: Field,
+) -> bool {
+    if r.clicked() || r.secondary_clicked() {
+        state.selected = Some(path.to_vec());
+        state.selected_field = Some(field);
+        ui.memory_mut(|m| m.request_focus(id));
+    }
+    r.double_clicked()
+}
+
+/// The inline field of the node being edited. `check` tells whether the
+/// text changes anything (or why it is refused); a commit that changes
+/// something comes back as (path, field, text).
+fn edit_field(
+    ui: &mut egui::Ui,
+    id: egui::Id,
+    p: &Palette,
+    state: &mut TreeState,
+    message: &dyn Fn(FieldError) -> String,
+    check: &dyn Fn(Field, &str) -> Result<bool, FieldError>,
+) -> Option<(Vec<usize>, Field, String)> {
+    let ed = state.editing.as_mut()?;
+    let editor_id = id.with("node-editor");
+    if ed.fresh {
+        egui::text_edit::TextEditState::default().store(ui.ctx(), editor_id);
+        ed.fresh = false;
+    }
+    let width = (ed.text.chars().count() as f32 + 4.0) * 9.0;
+    let resp = ui.add(
+        egui::TextEdit::singleline(&mut ed.text)
+            .id(editor_id)
+            .font(egui::TextStyle::Monospace)
+            .desired_width(width.clamp(120.0, 600.0)),
+    );
+    if ed.focus {
+        resp.request_focus();
+        ed.focus = false;
+    }
+    if let Some(e) = ed.error {
+        ui.colored_label(p.error, message(e));
+    }
+    if !resp.lost_focus() {
+        return None;
+    }
+    let esc = ui.input(|i| i.key_pressed(egui::Key::Escape));
+    let enter = ui.input(|i| i.key_pressed(egui::Key::Enter));
+    if esc {
+        state.editing = None;
+        ui.memory_mut(|m| m.request_focus(id));
+        return None;
+    }
+    let mut out = None;
+    match check(ed.field, &ed.text) {
+        Ok(changed) => {
+            if let (true, Some(ed)) = (changed, state.editing.take()) {
+                out = Some((ed.path, ed.field, ed.text));
+            } else {
+                state.editing = None;
+            }
+            if enter {
+                ui.memory_mut(|m| m.request_focus(id));
+            }
+        }
+        Err(e) => {
+            // Keep the field and say why; Enter keeps typing in it.
+            ed.error = Some(e);
+            ed.focus = enter;
+        }
+    }
+    out
+}
+
+/// A clickable monospace label, highlighted when its row is selected.
+fn label(
+    ui: &mut egui::Ui,
+    text: String,
+    color: egui::Color32,
+    selected: bool,
+    p: &Palette,
+) -> egui::Response {
+    let mut t = RichText::new(text).monospace().color(color);
+    if selected {
+        t = t.background_color(p.accent.gamma_multiply(0.25));
+    }
+    ui.add(egui::Label::new(t).sense(egui::Sense::click()))
+}
+
+/// The editable JSON tree. With `editable`, double-clicking a key or a
+/// scalar value (or Enter/F2 on the selected node) edits it inline: Enter
+/// commits, Escape cancels, and a refused value shows why without changing
+/// anything. Up and Down move the selection while `id` has focus; Delete
+/// removes the selected node; right-click offers every operation.
+#[allow(clippy::too_many_arguments)]
+pub fn json(
+    ui: &mut egui::Ui,
+    id: egui::Id,
+    doc: &json::Doc,
+    p: &Palette,
+    editable: bool,
+    state: &mut TreeState,
+    labels: &TreeLabels,
+    more: &dyn Fn(usize) -> String,
+) -> Vec<TreeAction> {
+    let mut actions = Vec::new();
+    let exists = |path: &[usize]| doc.find(path).is_some();
+    let open = |s: &mut TreeState, path: &[usize], f| {
+        s.start_edit(doc, path, f);
+    };
+    let act = tree_frame(ui, id, editable, state, &exists, &open);
+    match act {
+        Some(KeyAct::Edit(sel)) => state.start_default_edit(doc, &sel),
+        Some(KeyAct::Delete(sel)) => actions.push(TreeAction::Delete(sel)),
+        None => {}
     }
     let mut visible = Vec::new();
     egui::ScrollArea::both().auto_shrink(false).show(ui, |ui| {
@@ -622,13 +831,6 @@ impl TreeCx<'_> {
         let (doc, p) = (self.doc, self.p);
         let it = &doc.items[i];
         let selected = self.state.selected.as_deref() == Some(path);
-        let style = |t: RichText| {
-            if selected {
-                t.background_color(p.accent.gamma_multiply(0.25))
-            } else {
-                t
-            }
-        };
         let editing = |f: Field| {
             self.state
                 .editing
@@ -642,20 +844,10 @@ impl TreeCx<'_> {
             self.field(ui, i);
             ui.label(RichText::new(":").monospace().color(p.muted));
         } else if let Some(k) = doc.key_text(i) {
-            let r = ui.add(
-                egui::Label::new(style(
-                    RichText::new(format!("{k}:")).monospace().color(p.muted),
-                ))
-                .sense(egui::Sense::click()),
-            );
+            let r = label(ui, format!("{k}:"), p.muted, selected, p);
             self.interact(ui, &r, i, path, Field::Key);
         } else if let Some(n) = index {
-            let r = ui.add(
-                egui::Label::new(style(
-                    RichText::new(format!("{n}:")).monospace().color(p.muted),
-                ))
-                .sense(egui::Sense::click()),
-            );
+            let r = label(ui, format!("{n}:"), p.muted, selected, p);
             self.interact(ui, &r, i, path, Field::Value);
         }
         // The value part.
@@ -675,10 +867,7 @@ impl TreeCx<'_> {
             } else {
                 p.text
             };
-            let r = ui.add(
-                egui::Label::new(style(RichText::new(text).monospace().color(color)))
-                    .sense(egui::Sense::click()),
-            );
+            let r = label(ui, text, color, selected, p);
             self.interact(ui, &r, i, path, Field::Value);
         }
     }
@@ -692,12 +881,8 @@ impl TreeCx<'_> {
         path: &[usize],
         field: Field,
     ) {
-        if r.clicked() || r.secondary_clicked() {
-            self.state.selected = Some(path.to_vec());
-            self.state.selected_field = Some(field);
-            ui.memory_mut(|m| m.request_focus(self.id));
-        }
-        if self.editable && r.double_clicked() && !self.state.start_edit(self.doc, path, field) {
+        let double = select_on_click(ui, self.id, self.state, r, path, field);
+        if self.editable && double && !self.state.start_edit(self.doc, path, field) {
             self.state.start_default_edit(self.doc, path);
         }
         if !self.editable {
@@ -729,76 +914,265 @@ impl TreeCx<'_> {
 
     /// The inline field of the node being edited.
     fn field(&mut self, ui: &mut egui::Ui, i: usize) {
-        let Some(ed) = &mut self.state.editing else {
-            return;
+        let (doc, labels) = (self.doc, self.labels);
+        let message = |e: FieldError| match e {
+            FieldError::DuplicateKey => labels.duplicate_key.clone(),
+            _ => labels.invalid_value.clone(),
         };
-        let editor_id = self.id.with("node-editor");
-        if ed.fresh {
-            egui::text_edit::TextEditState::default().store(ui.ctx(), editor_id);
-            ed.fresh = false;
-        }
-        let width = (ed.text.chars().count() as f32 + 4.0) * 9.0;
-        let resp = ui.add(
-            egui::TextEdit::singleline(&mut ed.text)
-                .id(editor_id)
-                .font(egui::TextStyle::Monospace)
-                .desired_width(width.clamp(120.0, 600.0)),
-        );
-        if ed.focus {
-            resp.request_focus();
-            ed.focus = false;
-        }
-        if let Some(e) = ed.error {
-            let msg = match e {
-                json::EditError::DuplicateKey => &self.labels.duplicate_key,
-                _ => &self.labels.invalid_value,
+        let check = |f: Field, text: &str| {
+            let r = match f {
+                Field::Value => doc.check_value(i, text),
+                Field::Key => doc.check_key(i, text),
             };
-            ui.colored_label(self.p.error, msg);
-        }
-        if !resp.lost_focus() {
-            return;
-        }
-        let esc = ui.input(|i| i.key_pressed(egui::Key::Escape));
-        let enter = ui.input(|i| i.key_pressed(egui::Key::Enter));
-        if esc {
-            self.state.editing = None;
-            ui.memory_mut(|m| m.request_focus(self.id));
-            return;
-        }
-        let check = match ed.field {
-            Field::Value => self.doc.check_value(i, &ed.text),
-            Field::Key => self.doc.check_key(i, &ed.text),
+            r.map(|c| c.is_some()).map_err(FieldError::from)
         };
-        match check {
-            Ok(change) => {
-                if let (Some(_), Some(ed)) = (change, self.state.editing.take()) {
-                    self.actions.push(match ed.field {
-                        Field::Value => TreeAction::SetValue {
-                            path: ed.path,
-                            text: ed.text,
-                        },
-                        Field::Key => TreeAction::RenameKey {
-                            path: ed.path,
-                            name: ed.text,
-                        },
-                    });
-                } else {
-                    self.state.editing = None;
-                }
-                if enter {
-                    ui.memory_mut(|m| m.request_focus(self.id));
-                }
-            }
-            Err(e) => {
-                // Keep the field and say why; Enter keeps typing in it.
-                ed.error = Some(e);
-                ed.focus = enter;
-            }
+        if let Some((path, field, text)) =
+            edit_field(ui, self.id, self.p, self.state, &message, &check)
+        {
+            self.actions.push(match field {
+                Field::Value => TreeAction::SetValue { path, text },
+                Field::Key => TreeAction::RenameKey { path, name: text },
+            });
         }
     }
 }
 
-/// A read-only tree (XML, YAML).
+/// Whether the tree offers Delete for an XML node: attributes and elements
+/// other than the root.
+fn xml_deletable(doc: &xml::Doc, i: usize) -> bool {
+    let it = &doc.items[i];
+    match it.kind {
+        xml::Kind::Attribute => true,
+        xml::Kind::Element => it.parent.is_some_and(|p| p != 0),
+        _ => false,
+    }
+}
+
+/// The editable XML tree: elements with their attributes (`@name`), text
+/// (of text-only elements, or `#text` nodes in mixed content) and child
+/// elements. Interaction is as in [`json`]: double-click a name, value or
+/// text (or Enter/F2) to edit it inline, Up/Down/Delete keys, and a
+/// context menu with every operation. Comments, processing instructions
+/// and the declaration are not shown and never change.
+#[allow(clippy::too_many_arguments)]
+pub fn xml(
+    ui: &mut egui::Ui,
+    id: egui::Id,
+    doc: &xml::Doc,
+    p: &Palette,
+    editable: bool,
+    state: &mut TreeState,
+    labels: &XmlLabels,
+    more: &dyn Fn(usize) -> String,
+) -> Vec<TreeAction> {
+    let mut actions = Vec::new();
+    let exists = |path: &[usize]| doc.find(path).is_some();
+    let open = |s: &mut TreeState, path: &[usize], f| {
+        s.start_xml_edit(doc, path, f);
+    };
+    let act = tree_frame(ui, id, editable, state, &exists, &open);
+    match act {
+        Some(KeyAct::Edit(sel)) => state.start_default_xml_edit(doc, &sel),
+        Some(KeyAct::Delete(sel)) if doc.find(&sel).is_some_and(|i| xml_deletable(doc, i)) => {
+            actions.push(TreeAction::Delete(sel));
+        }
+        _ => {}
+    }
+    let mut visible = Vec::new();
+    egui::ScrollArea::both().auto_shrink(false).show(ui, |ui| {
+        let mut cx = XmlCx {
+            doc,
+            p,
+            id,
+            editable,
+            state,
+            labels,
+            more,
+            actions: &mut actions,
+            visible: &mut visible,
+        };
+        let mut path = Vec::new();
+        for (k, &c) in doc.items[0].children.iter().enumerate() {
+            path.push(k);
+            cx.node(ui, c, &mut path, 0);
+            path.pop();
+        }
+    });
+    state.visible = visible;
+    actions
+}
+
+struct XmlCx<'a> {
+    doc: &'a xml::Doc,
+    p: &'a Palette,
+    id: egui::Id,
+    editable: bool,
+    state: &'a mut TreeState,
+    labels: &'a XmlLabels,
+    more: &'a dyn Fn(usize) -> String,
+    actions: &'a mut Vec<TreeAction>,
+    visible: &'a mut Vec<Vec<usize>>,
+}
+
+impl XmlCx<'_> {
+    fn node(&mut self, ui: &mut egui::Ui, i: usize, path: &mut Vec<usize>, depth: usize) {
+        self.visible.push(path.clone());
+        if self.doc.items[i].children.is_empty() || depth >= MAX_TREE_DEPTH {
+            ui.horizontal(|ui| self.row(ui, i, path));
+            return;
+        }
+        let open_id = self.id.with(("node", path.as_slice()));
+        let state = egui::collapsing_header::CollapsingState::load_with_default_open(
+            ui.ctx(),
+            open_id,
+            depth < 2,
+        );
+        let header = state.show_header(ui, |ui| self.row(ui, i, path));
+        header.body(|ui| {
+            let children = &self.doc.items[i].children;
+            for (k, &c) in children.iter().take(MAX_CHILDREN).enumerate() {
+                path.push(k);
+                self.node(ui, c, path, depth + 1);
+                path.pop();
+            }
+            if children.len() > MAX_CHILDREN {
+                ui.label(
+                    RichText::new((self.more)(children.len() - MAX_CHILDREN)).color(self.p.muted),
+                );
+            }
+        });
+    }
+
+    /// One line: `<name>` and its text, `@name = "value"`, or `#text`.
+    fn row(&mut self, ui: &mut egui::Ui, i: usize, path: &[usize]) {
+        let (doc, p) = (self.doc, self.p);
+        let it = &doc.items[i];
+        let selected = self.state.selected.as_deref() == Some(path);
+        let editing = |f: Field| {
+            self.state
+                .editing
+                .as_ref()
+                .is_some_and(|e| e.field == f && e.path == path)
+        };
+        let (editing_key, editing_value) = (editing(Field::Key), editing(Field::Value));
+        let name = doc.name(i).unwrap_or_default();
+        match it.kind {
+            xml::Kind::Element => {
+                if editing_key {
+                    self.field(ui, i);
+                } else {
+                    let r = label(ui, format!("<{name}>"), p.accent, selected, p);
+                    self.interact(ui, &r, i, path, Field::Key);
+                }
+            }
+            xml::Kind::Attribute => {
+                if editing_key {
+                    self.field(ui, i);
+                } else {
+                    let r = label(ui, format!("@{name}"), p.muted, selected, p);
+                    self.interact(ui, &r, i, path, Field::Key);
+                }
+                ui.label(RichText::new("=").monospace().color(p.muted));
+            }
+            _ => {
+                let r = label(ui, "#text".into(), p.muted, selected, p);
+                self.interact(ui, &r, i, path, Field::Value);
+            }
+        }
+        let has_value = it.kind != xml::Kind::Element || it.text_only;
+        if !has_value {
+            return;
+        }
+        if editing_value {
+            self.field(ui, i);
+            return;
+        }
+        let value = doc.value(i).unwrap_or_default();
+        let text = if it.kind == xml::Kind::Attribute {
+            format!("\"{value}\"")
+        } else {
+            value
+        };
+        let r = label(ui, text, p.text, selected, p);
+        self.interact(ui, &r, i, path, Field::Value);
+    }
+
+    fn interact(
+        &mut self,
+        ui: &egui::Ui,
+        r: &egui::Response,
+        i: usize,
+        path: &[usize],
+        field: Field,
+    ) {
+        let double = select_on_click(ui, self.id, self.state, r, path, field);
+        if self.editable && double && !self.state.start_xml_edit(self.doc, path, field) {
+            self.state.start_default_xml_edit(self.doc, path);
+        }
+        if !self.editable {
+            return;
+        }
+        let (doc, labels) = (self.doc, self.labels);
+        let it = &doc.items[i];
+        let element = it.kind == xml::Kind::Element;
+        r.context_menu(|ui| {
+            let edit = match it.kind {
+                xml::Kind::Attribute => Some(&labels.edit_value),
+                xml::Kind::Text => Some(&labels.edit_text),
+                _ => it.text_only.then_some(&labels.edit_text),
+            };
+            if let Some(edit) = edit
+                && ui.button(edit).clicked()
+            {
+                self.state.start_xml_edit(doc, path, Field::Value);
+            }
+            if it.kind != xml::Kind::Text && ui.button(&labels.rename).clicked() {
+                self.state.start_xml_edit(doc, path, Field::Key);
+            }
+            if it.kind != xml::Kind::Text && ui.button(&labels.add_attribute).clicked() {
+                self.actions.push(TreeAction::AddAttribute(path.to_vec()));
+            }
+            if element && ui.button(&labels.add_child).clicked() {
+                self.actions.push(TreeAction::AddInside(path.to_vec()));
+            }
+            if element && xml_deletable(doc, i) && ui.button(&labels.add_after).clicked() {
+                self.actions.push(TreeAction::AddAfter(path.to_vec()));
+            }
+            if xml_deletable(doc, i) {
+                ui.separator();
+                if ui.button(&labels.delete).clicked() {
+                    self.actions.push(TreeAction::Delete(path.to_vec()));
+                }
+            }
+        });
+    }
+
+    fn field(&mut self, ui: &mut egui::Ui, i: usize) {
+        let (doc, labels) = (self.doc, self.labels);
+        let message = |e: FieldError| match e {
+            FieldError::InvalidName => labels.invalid_name.clone(),
+            FieldError::DuplicateAttribute => labels.duplicate_attribute.clone(),
+            _ => labels.not_well_formed.clone(),
+        };
+        let check = |f: Field, text: &str| {
+            let r = match f {
+                Field::Value => doc.set_value(i, text),
+                Field::Key => doc.rename(i, text),
+            };
+            r.map(|c| c.is_some()).map_err(FieldError::from)
+        };
+        if let Some((path, field, text)) =
+            edit_field(ui, self.id, self.p, self.state, &message, &check)
+        {
+            self.actions.push(match field {
+                Field::Value => TreeAction::SetValue { path, text },
+                Field::Key => TreeAction::RenameKey { path, name: text },
+            });
+        }
+    }
+}
+
+/// A read-only tree (YAML).
 pub fn tree(ui: &mut egui::Ui, root: &Node, p: &Palette, more: &dyn Fn(usize) -> String) {
     egui::ScrollArea::both().auto_shrink(false).show(ui, |ui| {
         node(ui, None, root, p, 0, "$".to_owned(), more);
@@ -953,5 +1327,60 @@ mod tests {
         assert_eq!(t.selected, Some(vec![1]), "clamped at the end");
         t.step(-5);
         assert_eq!(t.selected, Some(vec![]));
+    }
+
+    #[test]
+    fn xml_fields_start_with_names_and_decoded_values() {
+        let doc = xml::doc("<r a=\"x &amp; y\"><t>1 &lt; 2</t><m>t <b/></m><e/></r>").unwrap();
+        let mut t = TreeState::default();
+        assert!(t.start_xml_edit(&doc, &[0, 0], Field::Value));
+        assert_eq!(t.editing.as_ref().map(|e| e.text.as_str()), Some("x & y"));
+        assert!(t.start_xml_edit(&doc, &[0, 0], Field::Key));
+        assert_eq!(t.editing.as_ref().map(|e| e.text.as_str()), Some("a"));
+        t.selected_field = None;
+        t.start_default_xml_edit(&doc, &[0, 1]);
+        assert_eq!(
+            t.editing.as_ref().map(|e| (e.field, e.text.as_str())),
+            Some((Field::Value, "1 < 2")),
+            "a text-only element edits its text"
+        );
+        t.start_default_xml_edit(&doc, &[0, 2]);
+        assert_eq!(
+            t.editing.as_ref().map(|e| (e.field, e.text.as_str())),
+            Some((Field::Key, "m")),
+            "mixed content: the name"
+        );
+        assert!(t.start_xml_edit(&doc, &[0, 2, 0], Field::Value), "#text");
+        assert!(!t.start_xml_edit(&doc, &[0, 2, 0], Field::Key));
+        assert!(t.start_xml_edit(&doc, &[0, 3], Field::Value), "<e/> text");
+        assert!(xml_deletable(&doc, doc.find(&[0, 3]).unwrap()));
+        assert!(!xml_deletable(&doc, doc.find(&[0]).unwrap()), "the root");
+        assert!(!xml_deletable(&doc, doc.find(&[0, 2, 0]).unwrap()));
+    }
+
+    #[test]
+    fn xml_tree_strings_exist_in_every_locale() {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../locales");
+        let mut seen = 0;
+        for entry in std::fs::read_dir(dir).expect("locales") {
+            let path = entry.expect("entry").path().join("main.ftl");
+            let ftl = std::fs::read_to_string(&path).expect("main.ftl");
+            for id in [
+                "xml-edit-value",
+                "xml-edit-text",
+                "xml-rename",
+                "xml-add-attribute",
+                "xml-add-child",
+                "xml-add-after",
+                "xml-delete",
+                "xml-invalid-name",
+                "xml-duplicate-attribute",
+                "xml-not-well-formed",
+            ] {
+                assert!(ftl.contains(&format!("\n{id} = ")), "{id} in {path:?}");
+            }
+            seen += 1;
+        }
+        assert_eq!(seen, 26);
     }
 }

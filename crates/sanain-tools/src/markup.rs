@@ -26,7 +26,7 @@ pub struct TreeError {
     pub message: String,
 }
 
-fn position(text: &str, byte: usize) -> (usize, usize) {
+pub(crate) fn position(text: &str, byte: usize) -> (usize, usize) {
     let mut end = byte.min(text.len());
     while !text.is_char_boundary(end) {
         end -= 1;
@@ -37,7 +37,7 @@ fn position(text: &str, byte: usize) -> (usize, usize) {
     (line, column)
 }
 
-fn too_large(text: &str, byte: usize) -> TreeError {
+pub(crate) fn too_large(text: &str, byte: usize) -> TreeError {
     let (line, column) = position(text, byte);
     TreeError {
         line,
