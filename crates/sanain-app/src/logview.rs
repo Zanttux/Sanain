@@ -61,6 +61,8 @@ pub struct LogView {
     /// A line to scroll to on the next frame (Go to Line).
     pub jump: Option<usize>,
     pub error: Option<String>,
+    /// Display encoding, detected from the start of the file.
+    pub encoding: &'static logfile::Encoding,
     last_poll: Instant,
     ctx: egui::Context,
 }
@@ -130,6 +132,7 @@ fn spawn_filter(
     first_line: usize,
     len: u64,
     include_partial: bool,
+    enc: &'static logfile::Encoding,
     matcher: Matcher,
     epoch: u64,
     tx: Sender<Msg>,
@@ -150,6 +153,7 @@ fn spawn_filter(
                     len,
                     MAX_LINE,
                     include_partial,
+                    enc,
                     &stop,
                     |l| matcher.find_in_str(l).next().is_some(),
                     |lines, pos| {
@@ -184,11 +188,14 @@ fn spawn_filter(
 
 impl LogView {
     pub fn open(path: &Path, ctx: &egui::Context) -> std::io::Result<Self> {
-        let file = File::open(path)?;
+        let mut file = File::open(path)?;
         let meta = file.metadata()?;
         if !meta.is_file() {
             return Err(std::io::Error::other("not a file"));
         }
+        let mut head = Vec::new();
+        (&mut file).take(64 * 1024).read_to_end(&mut head)?;
+        let encoding = logfile::detect(&head);
         let (tx, rx) = channel();
         let mut v = Self {
             path: path.to_owned(),
@@ -206,6 +213,7 @@ impl LogView {
             bad_pattern: false,
             jump: None,
             error: None,
+            encoding,
             last_poll: Instant::now(),
             ctx: ctx.clone(),
         };
@@ -365,6 +373,7 @@ impl LogView {
                 first_line,
                 indexed - f.done,
                 complete,
+                self.encoding,
                 f.matcher.clone(),
                 self.epoch,
                 self.tx.clone(),
@@ -403,7 +412,13 @@ impl LogView {
         };
         let mut out = Vec::with_capacity(lines.len());
         for l in lines {
-            match logfile::read_lines(&mut self.file, &self.index, l..l + 1, MAX_LINE) {
+            match logfile::read_lines(
+                &mut self.file,
+                &self.index,
+                l..l + 1,
+                MAX_LINE,
+                self.encoding,
+            ) {
                 Ok(mut v) if !v.is_empty() => {
                     let (text, cut) = v.remove(0);
                     out.push((l, text, cut));

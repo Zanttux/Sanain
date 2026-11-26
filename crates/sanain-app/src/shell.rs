@@ -1955,6 +1955,12 @@ impl Shell {
         let lines = log.line_count() as i64;
         let tr_ = |id: &str, args: &[(&str, FluentValue<'static>)]| tr(&self.l10n, id, args);
         let count = tr_("log-lines", &[("count", lines.into())]);
+        let enc_label = if log.encoding == sanain_io::logfile::UTF_8 {
+            "UTF-8".to_owned()
+        } else {
+            let id = format!("enc-{}", log.encoding.name().to_ascii_lowercase());
+            format!("{} ({})", tr_(&id, &[]), log.encoding.name())
+        };
         let progress = log
             .progress()
             .map(|pc| tr_("log-indexing", &[("percent", i64::from(pc).into())]));
@@ -1978,6 +1984,7 @@ impl Shell {
                 ui.horizontal(|ui| {
                     ui.label(&name);
                     ui.colored_label(p.muted, &count);
+                    ui.colored_label(p.muted, &enc_label);
                     if let Some(pr) = &progress {
                         ui.colored_label(p.muted, pr);
                     }

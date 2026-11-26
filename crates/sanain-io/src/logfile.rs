@@ -4,12 +4,15 @@
 //! A [`LineIndex`] records where each line starts. It is built in chunks so
 //! a background thread can index while the UI shows what is known so far,
 //! and extended when the file grows. Lines are read from disk on demand and
-//! decoded for display only (lossy UTF-8); this module never writes.
+//! decoded for display only (lossy, in the encoding [`detect`]ed from the
+//! start of the file); this module never writes.
 
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Read, Seek, SeekFrom};
 use std::ops::Range;
 use std::sync::atomic::{AtomicBool, Ordering};
+
+pub use encoding_rs::{Encoding, UTF_8};
 
 /// Bytes read per indexing step.
 pub const CHUNK: usize = 4 * 1024 * 1024;
@@ -99,16 +102,47 @@ impl LineIndex {
     }
 }
 
+/// Text encoding for display, judged from the first bytes of the file:
+/// UTF-8 if they are valid UTF-8 (a character cut at the end is allowed),
+/// otherwise an ASCII-compatible legacy encoding guessed from byte
+/// statistics, so `\n` still ends lines. UTF-16 is not handled here.
+pub fn detect(head: &[u8]) -> &'static Encoding {
+    match std::str::from_utf8(head) {
+        Ok(_) => UTF_8,
+        Err(e) if e.error_len().is_none() => UTF_8,
+        Err(_) => {
+            let mut d = chardetng::EncodingDetector::new(chardetng::Iso2022JpDetection::Deny);
+            d.feed(head, false);
+            let enc = d.guess(None, chardetng::Utf8Detection::Deny);
+            if enc.is_ascii_compatible() {
+                enc
+            } else {
+                UTF_8
+            }
+        }
+    }
+}
+
 /// Text of one line for display: at most `max_bytes` bytes, line break
 /// removed, invalid UTF-8 replaced. The flag tells whether it was cut.
 pub fn display_line(bytes: &[u8], max_bytes: usize) -> (String, bool) {
+    display_line_in(bytes, max_bytes, UTF_8)
+}
+
+/// [`display_line`] decoding with `enc` (malformed bytes replaced).
+pub fn display_line_in(bytes: &[u8], max_bytes: usize, enc: &'static Encoding) -> (String, bool) {
     let cut = bytes.len() > max_bytes;
     let mut b = &bytes[..bytes.len().min(max_bytes)];
     if !cut {
         b = b.strip_suffix(b"\n").unwrap_or(b);
         b = b.strip_suffix(b"\r").unwrap_or(b);
     }
-    (String::from_utf8_lossy(b).into_owned(), cut)
+    let text = if enc == UTF_8 {
+        String::from_utf8_lossy(b).into_owned()
+    } else {
+        enc.decode_without_bom_handling(b).0.into_owned()
+    };
+    (text, cut)
 }
 
 /// Read `lines` of `file` for display (see [`display_line`]).
@@ -117,6 +151,7 @@ pub fn read_lines(
     index: &LineIndex,
     lines: Range<usize>,
     max_bytes: usize,
+    enc: &'static Encoding,
 ) -> io::Result<Vec<(String, bool)>> {
     let mut out = Vec::with_capacity(lines.len());
     let mut buf = Vec::new();
@@ -128,7 +163,7 @@ pub fn read_lines(
         file.seek(SeekFrom::Start(r.start))?;
         buf.clear();
         file.by_ref().take(want).read_to_end(&mut buf)?;
-        out.push(display_line(&buf, max_bytes));
+        out.push(display_line_in(&buf, max_bytes, enc));
     }
     Ok(out)
 }
@@ -147,6 +182,7 @@ pub fn filter_lines(
     len: u64,
     max_bytes: usize,
     include_partial: bool,
+    enc: &'static Encoding,
     cancel: &AtomicBool,
     mut keep: impl FnMut(&str) -> bool,
     mut found: impl FnMut(Vec<usize>, u64),
@@ -175,12 +211,12 @@ pub fn filter_lines(
         // pass, so a growing file is not matched on half a line.
         if !buf.ends_with(b"\n") && n <= max_bytes {
             pos -= n as u64;
-            if include_partial && keep(&display_line(&buf, max_bytes).0) {
+            if include_partial && keep(&display_line_in(&buf, max_bytes, enc).0) {
                 batch.push(line);
             }
             break;
         }
-        if keep(&display_line(&buf, max_bytes).0) {
+        if keep(&display_line_in(&buf, max_bytes, enc).0) {
             batch.push(line);
         }
         line += 1;
@@ -246,6 +282,23 @@ pub fn level(line: &str) -> Option<Level> {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn detects_and_decodes_legacy_logs() {
+        assert_eq!(detect("plain ascii\nä€\n".as_bytes()), UTF_8);
+        let mut cut = "abc ä".as_bytes().to_vec();
+        cut.pop();
+        assert_eq!(detect(&cut), UTF_8, "a character cut at the end is fine");
+        let line = "2026-11-26 ОШИБКА: диск заполнен, повторите попытку позже\n";
+        let cp1251 = encoding_rs::WINDOWS_1251
+            .encode(&line.repeat(50))
+            .0
+            .into_owned();
+        let enc = detect(&cp1251);
+        assert_eq!(enc, encoding_rs::WINDOWS_1251);
+        let first = &cp1251[..cp1251.iter().position(|b| *b == b'\n').unwrap() + 1];
+        assert_eq!(display_line_in(first, 1000, enc).0, line.trim_end());
+    }
     use super::*;
     use std::io::Cursor;
 
@@ -315,7 +368,7 @@ mod tests {
         std::fs::write(&p, b"one\r\ntw\xffo\nthree-long-line\nlast").unwrap();
         let i = index(&std::fs::read(&p).unwrap());
         let mut f = File::open(&p).unwrap();
-        let lines = read_lines(&mut f, &i, 0..10, 5).unwrap();
+        let lines = read_lines(&mut f, &i, 0..10, 5, UTF_8).unwrap();
         assert_eq!(
             lines,
             vec![
@@ -339,6 +392,7 @@ mod tests {
             text.len() as u64,
             100,
             false,
+            UTF_8,
             &no,
             |l| l.contains("err"),
             |b, pos| {
@@ -358,6 +412,7 @@ mod tests {
                 99,
                 100,
                 false,
+                UTF_8,
                 &yes,
                 |_| true,
                 |_, _| {}
@@ -371,6 +426,7 @@ mod tests {
             99,
             100,
             true,
+            UTF_8,
             &no,
             |l| l.contains("err"),
             |b, pos| {
@@ -393,6 +449,7 @@ mod tests {
             text.len() as u64,
             64,
             false,
+            UTF_8,
             &AtomicBool::new(false),
             |l| l.contains("needle") || l.len() > 64,
             |b, _| got.extend(b),
