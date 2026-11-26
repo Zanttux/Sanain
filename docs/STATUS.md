@@ -1,7 +1,25 @@
 # Status
 
-Updated 2026-11-25. Version 0.0.1. M0 complete except trademark search.
-M1 in progress.
+Updated 2026-11-26. Version 0.0.1 (pre-alpha, no release published).
+M0 complete except trademark search. M1 feature work largely done; next
+are cross-platform verification and release readiness.
+
+## Summary for the owner
+- 59 pull requests merged; every one passed CI on Linux, Windows and
+  macOS plus the dependency check (cargo-deny, third-party notices).
+  195 automated tests pass.
+- Sanain is a usable everyday editor on macOS: tabs and split view,
+  multiple cursors, macros, word wrap, find/replace with preview and
+  folder search, Markdown preview, data views (JSON/XML/YAML/CSV),
+  comparison, local history, crash recovery, a log viewer for huge
+  files, 18 highlighted languages and 26 UI languages (24 of them
+  unreviewed machine translations).
+- Robustness checked by stress tests: 147 MB file, 2.7 MB single line,
+  full disk, missing permissions, random binary data, deeply nested JSON.
+- Not verified yet: running on Windows and Linux (CI builds and tests
+  only), screen readers (VoiceOver, NVDA, Orca) and IME input by a person.
+- Needs you before a public release: code-signing certificates and the
+  decision to publish (see "Owner-only items").
 
 ## Done
 - Environment: macOS 27.2.1 arm64 (Apple M5), Rust 1.100.0 via rustup,
@@ -11,9 +29,10 @@ M1 in progress.
 - Workspace at 0.0.1: `sanain-core`, `sanain-io`, `sanain-i18n`.
   First vertical slice (open UTF-8 file → edit → undo → atomic save →
   reopen → bytes verified) passes as an automated test.
-- Checks on this machine: `cargo fmt --check` clean;
+- Checks on this machine (2026-11-26): `cargo fmt --check` clean;
   `cargo clippy --workspace --all-targets --locked -D warnings` clean;
-  `cargo test --workspace --locked` 45 passed, 0 failed.
+  `cargo test --workspace --locked` 195 passed, 0 failed; `cargo deny
+  --locked check` clean.
 - Multi-cursor selections and grapheme-aware editing commands.
 - First egui editor window (`cargo run -p sanain-app -- file`). Verified
   by hand on macOS with synthetic keystrokes: typing, Backspace, arrows,
@@ -103,8 +122,11 @@ Solo-owner policy: PRs need passing CI, no approving review is required
 because nobody independent exists; no fake approvals.
 
 ## Next
-- Line/column mapping, vertical movement, word movement, line operations.
-- Hard-link-safe save strategy.
-- Log viewer next steps (E13): encodings other than UTF-8, very long files beyond ~16 M lines (f32 scroll precision).
-- Manual IME and screen-reader pass on macOS; Windows and Linux GUI smoke
-  test (needs hardware or VM access).
+- Windows and Linux runtime smoke test (needs a machine or VM): open,
+  edit, save, menus, shortcuts on non-US layouts.
+- Manual screen-reader (VoiceOver) and IME pass on macOS.
+- Hard-link-safe save strategy (hard links still split on save).
+- Release preparation for 0.1.0: installer/bundle per platform, notices
+  file, release notes; publishing waits for the owner (signing).
+- Smaller: incremental word wrap (lift the 1 M-character limit), log
+  viewer for non-UTF-8 files, Mermaid diagrams in Markdown preview.
