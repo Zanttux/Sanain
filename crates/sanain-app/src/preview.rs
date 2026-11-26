@@ -29,6 +29,8 @@ pub struct Style<'a> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Event {
     LinkClicked(String),
+    /// Allow images from this folder (for this session).
+    AllowImages(std::path::PathBuf),
 }
 
 /// Byte ranges in a layout job's text that belong to a link target.
@@ -97,7 +99,7 @@ fn block(ui: &mut egui::Ui, b: &Block, st: &Style<'_>, depth: usize, ev: &mut Op
         BlockKind::Paragraph(inlines) if is_image_paragraph(inlines) => {
             for i in inlines {
                 if let Inline::Image { url, alt } = i {
-                    image(ui, url, alt, st);
+                    image(ui, url, alt, st, ev);
                 }
             }
         }
@@ -253,7 +255,7 @@ fn is_image_paragraph(inlines: &[Inline]) -> bool {
     any
 }
 
-fn image(ui: &mut egui::Ui, url: &str, alt: &str, st: &Style<'_>) {
+fn image(ui: &mut egui::Ui, url: &str, alt: &str, st: &Style<'_>, ev: &mut Option<Event>) {
     use crate::imagecache::ImageView;
     match (st.image)(url) {
         ImageView::Ready(tex) => {
@@ -268,6 +270,24 @@ fn image(ui: &mut egui::Ui, url: &str, alt: &str, st: &Style<'_>) {
         }
         ImageView::Loading => {
             ui.spinner();
+        }
+        ImageView::Ask(folder) => {
+            let label = if alt.is_empty() { url } else { alt };
+            ui.horizontal_wrapped(|ui| {
+                ui.label(
+                    RichText::new(format!("[{label}] {}", (st.untranslated)("image-outside")))
+                        .color(st.p.muted)
+                        .italics(),
+                );
+                let button = (st.untranslated)("image-allow");
+                if ui
+                    .button(button)
+                    .on_hover_text(folder.display().to_string())
+                    .clicked()
+                {
+                    *ev = Some(Event::AllowImages(folder));
+                }
+            });
         }
         ImageView::Note(id) => {
             let label = if alt.is_empty() { url } else { alt };

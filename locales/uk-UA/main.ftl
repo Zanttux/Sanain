@@ -467,3 +467,5 @@ replace-files-failed = { $failed ->
     [many] { $failed } файлів не змінено; перший:
    *[other] { $failed } файла не змінено; перший:
     } { $first }
+image-outside = Це зображення розташоване поза текою документа.
+image-allow = Показати зображення з цієї теки

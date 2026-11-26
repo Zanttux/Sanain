@@ -395,3 +395,5 @@ replace-files-done = 已替换 { $files ->
 replace-files-failed = { $failed ->
    *[other] { $failed } 个文件未更改；第一个：
     } { $first }
+image-outside = 此图像位于文稿所在文件夹之外。
+image-allow = 显示此文件夹中的图像

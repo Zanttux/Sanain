@@ -5,6 +5,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Markdown preview: images outside the document's folder (such as
+  `../assets/a.png`) can be shown after allowing their folder for the
+  session; before, they were always blocked.
 - Log viewer: UTF-16 logs (with or without a byte order mark), as written
   by many Windows programs, are indexed, shown and filtered correctly.
 - Replace in Files: replace the matches of a folder search in all result

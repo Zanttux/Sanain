@@ -395,3 +395,5 @@ replace-files-done = { $files ->
 replace-files-failed = { $failed ->
    *[other] { $failed } 個のファイルは変更されませんでした。最初のファイル:
     } { $first }
+image-outside = この画像は書類のフォルダの外にあります。
+image-allow = このフォルダの画像を表示

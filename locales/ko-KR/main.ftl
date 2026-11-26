@@ -395,3 +395,5 @@ replace-files-done = { $files ->
 replace-files-failed = { $failed ->
    *[other] 파일 { $failed }개를 변경하지 못했습니다. 첫 번째 파일:
     } { $first }
+image-outside = 이 이미지는 문서의 폴더 밖에 있습니다.
+image-allow = 이 폴더의 이미지 표시

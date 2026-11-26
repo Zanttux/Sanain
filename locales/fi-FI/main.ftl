@@ -422,3 +422,5 @@ replace-files-failed = { $failed ->
     [one] 1 tiedostoa ei muutettu:
    *[other] { $failed } tiedostoa jäi muuttamatta; ensimmäinen:
 } { $first }
+image-outside = Kuva on dokumentin kansion ulkopuolella.
+image-allow = Näytä tämän kansion kuvat

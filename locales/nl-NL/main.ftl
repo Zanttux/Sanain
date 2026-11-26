@@ -419,3 +419,5 @@ replace-files-failed = { $failed ->
     [one] 1 bestand is niet gewijzigd:
    *[other] { $failed } bestanden zijn niet gewijzigd; eerste:
     } { $first }
+image-outside = Deze afbeelding staat buiten de map van het document.
+image-allow = Afbeeldingen uit deze map tonen

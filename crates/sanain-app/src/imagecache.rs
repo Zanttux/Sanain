@@ -15,6 +15,9 @@ pub enum ImageView {
     Loading,
     /// Localization ID of a short explanation shown instead of the image.
     Note(&'static str),
+    /// Outside the document's folder: ask before showing images from
+    /// this folder.
+    Ask(PathBuf),
 }
 
 type Key = (PathBuf, Option<SystemTime>);

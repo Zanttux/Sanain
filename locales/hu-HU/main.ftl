@@ -419,3 +419,5 @@ replace-files-failed = { $failed ->
     [one] 1 fájl nem módosult:
    *[other] { $failed } fájl nem módosult; az első:
     } { $first }
+image-outside = Ez a kép a dokumentum mappáján kívül található.
+image-allow = Képek megjelenítése ebből a mappából

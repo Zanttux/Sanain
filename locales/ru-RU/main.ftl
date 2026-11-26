@@ -467,3 +467,5 @@ replace-files-failed = { $failed ->
     [many] { $failed } файлов не изменены; первый:
    *[other] { $failed } файла не изменены; первый:
     } { $first }
+image-outside = Это изображение находится вне папки документа.
+image-allow = Показать изображения из этой папки

@@ -419,3 +419,5 @@ replace-files-failed = { $failed ->
     [one] 1 Datei wurde nicht geändert:
    *[other] { $failed } Dateien wurden nicht geändert; erste:
     } { $first }
+image-outside = Dieses Bild liegt außerhalb des Ordners des Dokuments.
+image-allow = Bilder aus diesem Ordner anzeigen
