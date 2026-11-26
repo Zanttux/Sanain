@@ -197,8 +197,12 @@ fn hard_link_count(_: &Path) -> u64 {
 }
 
 /// Overwrite `target` in place (same inode), after writing `old` to a
-/// backup next to it. The backup is removed on success; if the overwrite
-/// fails, it stays and the error names it.
+/// backup next to it. The backup is removed on success. If the overwrite
+/// fails (e.g. the disk is full), the old contents and modification time
+/// are written back in place, so the file is unchanged, the backup is
+/// removed and the error keeps its kind. Only if that restore fails too
+/// does the backup stay; the error then names it and is no longer
+/// reported as e.g. disk-full, since the file is not unchanged.
 fn write_in_place(
     target: &Path,
     old: &[u8],
@@ -222,25 +226,42 @@ fn write_in_place(
         })
         .find(|p| fs::symlink_metadata(p).is_err())
         .ok_or_else(|| io::Error::new(io::ErrorKind::AlreadyExists, "too many backups"))?;
+    let modified = fs::metadata(target)?.modified().ok();
     write_atomic(&backup, old, perms)?;
-    let result = (|| {
+    let overwrite = |data: &[u8]| -> io::Result<fs::File> {
         let mut f = fs::OpenOptions::new()
             .write(true)
             .truncate(true)
             .open(target)?;
-        f.write_all(bytes)?;
+        f.write_all(data)?;
         f.sync_all()?;
-        f.metadata()
-    })();
-    match result {
+        Ok(f)
+    };
+    match overwrite(bytes).and_then(|f| f.metadata()) {
         Ok(meta) => {
             let _ = fs::remove_file(&backup);
             Ok(meta)
         }
-        Err(e) => Err(io::Error::new(
-            e.kind(),
-            format!("{e}; the previous contents are in {}", backup.display()),
-        )),
+        Err(e) => {
+            // Truncating freed the old contents' space, so they fit again.
+            // Restoring the time too keeps the editor's fingerprint valid.
+            let restored = overwrite(old).and_then(|f| {
+                if let Some(t) = modified {
+                    f.set_modified(t)?;
+                }
+                f.sync_all()
+            });
+            match restored {
+                Ok(()) => {
+                    let _ = fs::remove_file(&backup);
+                    Err(e)
+                }
+                Err(_) => Err(io::Error::other(format!(
+                    "{e}; the file may be incomplete and its previous contents are in {}",
+                    backup.display()
+                ))),
+            }
+        }
     }
 }
 

@@ -107,7 +107,9 @@ impl MacroStore {
                 .map(|n| dir.join(format!("{FILE}.{n}.bak")))
                 .find(|p| !p.exists())
                 .ok_or_else(|| io::Error::other("too many macro backups"))?;
-            fs::copy(&path, &backup)?;
+            // Via a temporary file, so a copy cut short (e.g. by a full
+            // disk) never leaves a half-written backup behind.
+            sanain_io::write_atomic(&backup, &fs::read(&path)?, None)?;
         }
         sanain_io::write_atomic(&dir.join(FILE), self.encode().as_bytes(), None).map(|_| ())
     }
