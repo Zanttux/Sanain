@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Generate website/index.html (English) and website/fi/index.html (Finnish)
-from one template, so both languages keep the same structure.
+"""Generate website/index.html (English only, owner decision #105).
 Run: python3 website/build.py"""
 import html
 import os
@@ -11,7 +10,7 @@ NIGHTLY = REPO + "/releases/tag/nightly"
 
 T = {
     "en": {
-        "lang": "en", "root": "", "other": "fi/", "other_label": "Suomeksi",
+        "lang": "en", "root": "",
         "title": "Sanain — the power of words",
         "desc": "Sanain is a free, open-source text editor for text, code, Markdown and data. Native, offline, no account.",
         "nav": ["Download", "Features", "Privacy", "How it's made"],
@@ -52,50 +51,8 @@ T = {
         "support_p": "Sanain is free, and stays free with every feature for everyone. Bug reports, ideas and translations are welcome on GitHub.",
         "issues": "Report a problem or suggest an idea",
         "footer": "Sanain is free software under the Mozilla Public License 2.0.",
-    },
-    "fi": {
-        "lang": "fi", "root": "../", "other": "../", "other_label": "In English",
-        "title": "Sanain — sanojen voima",
-        "desc": "Sanain on maksuton avoimen lähdekoodin tekstieditori tekstille, koodille, Markdownille ja datalle. Natiivi, toimii ilman verkkoa, ei tiliä.",
-        "nav": ["Lataa", "Ominaisuudet", "Yksityisyys", "Miten tehty"],
-        "tab": "tervetuloa.md",
-        "hero_l1": "Sanojen", "hero_l2": "voima.",
-        "hero_sub": "Maksuton avoimen lähdekoodin tekstieditori arjen tekstille, koodille, asetustiedostoille, Markdownille ja datalle. Natiivi Windowsissa, macOS:ssä ja Linuxissa.",
-        "status": ["Rivi 2, sarake 7", "Markdown", "LF", "UTF-8"],
-        "cta": "Lataa nightly-versio", "src": "Lähdekoodi GitHubissa",
-        "cta_note": "Esiversio 0.0.1. Maksuton kaikille, kaikki ominaisuudet mukana.",
-        "intact_h": "Tiedostosi pysyvät ehjinä",
-        "intact_p": "Avaa tiedosto, älä muuta mitään, tallenna: tavut ovat samat. Merkistö ja rivinvaihdot säilyvät, tallennus on atominen, eikä Sanain kirjoita sellaisen tiedoston päälle, jota toinen ohjelma on sillä välin muuttanut. Tallentamaton teksti säilyy kaatumisen yli.",
-        "bytes_label": ["ennen  ", "jälkeen"],
-        "feat_h": "Mitä se tekee",
-        "feats": [
-            ("Muokkaus", "Välilehdet ja jaettu näkymä, monta kursoria, makrot, rivitys, laskostus, komentopaletti ja muokattavat pikanäppäimet, myös Notepad++-esiasetus."),
-            ("Etsi ja korvaa", "Säännölliset lausekkeet, esikatselu ennen kaikkien korvaamista, haku kansiosta ja korvaus tiedostoissa; jokaisen tiedoston aiempi versio säilyy paikallisessa historiassa."),
-            ("Markdown", "Lähde, jaettu näkymä ja esikatselu: taulukot, tehtävälistat, väritetyt koodilohkot, paikalliset kuvat ja jäsennys. Mikään dokumentissa ei suorita koodia eikä lataa verkosta."),
-            ("Data ja lokit", "JSON-, XML- ja YAML-puut ja tarkistus, CSV-taulukko, rinnakkaisvertailu ja lokinäkymä, joka avaa minkä kokoiset tiedostot tahansa."),
-            ("Kielet", "Korostus 18 ohjelmointikielelle, myös kielille toisten sisällä (JavaScript ja CSS HTML:ssä). Käyttöliittymä 26 kielellä."),
-            ("Mukavuus", "Vaalea, tumma, suurikontrastinen ja terminaaliteemat, oma fontti, istunnon palautus, kannettava tila USB-tikulle."),
-        ],
-        "shots_h": "Kuvia",
-        "shots": [("editor.png", "Editori, välilehdet ja syntaksikorostus"), ("markdown.png", "Markdown-lähde ja esikatselu"), ("split.png", "Jaettu editori"), ("log.png", "Lokinäkymä ja suodatus")],
-        "dl_h": "Lataa",
-        "dl_p": "Versiot rakennetaan automaattisesti jokaisesta muutoksesta ja julkaistaan nightly-esijulkaisuna.",
-        "dl_head": ["Järjestelmä", "Asennusohjelma", "Kannettava"],
-        "dl_rows": [
-            ("Windows 10/11 (x64)", "sanain-…-windows-x86_64-setup.exe", "sanain-…-windows-x86_64-portable.zip"),
-            ("macOS 11+ (Apple Silicon)", "sanain-…-macos-aarch64.dmg", "sanain-…-macos-aarch64-portable.zip"),
-            ("Linux (x86-64)", "sanain_…_amd64.deb", "sanain-…-linux-x86_64-portable.tar.gz"),
-        ],
-        "dl_warn": "Versioita ei ole vielä allekirjoitettu. macOS kysyy vahvistusta ensimmäisellä kerralla (napsauta Sanainia hiiren oikealla ja valitse Avaa); Windowsin SmartScreen voi varoittaa. Jokaisen tiedoston vieressä on SHA-256-tarkistussumma. Sanainia testataan käsin macOS:ssä; Windows- ja Linux-versiot rakennetaan ja testataan automaattisesti.",
-        "priv_h": "Yksityisyys",
-        "priv_p": "Toimii oletuksena ilman verkkoa. Ei tiliä, ei mainoksia, ei telemetriaa. Tiedostojen sisältö ei lähde koneeltasi. Ainoa verkon käyttö on päivitystarkistus, jonka voit ottaa käyttöön: se kysyy GitHubista, onko uudempaa versiota.",
-        "made_h": "Miten Sanain tehdään",
-        "made_p": "Tekoälyn rakentama, ihmisen johtama, yhteisön kehittämä. Sanainin kirjoittaa Claude, Anthropicin tekoälymalli, kehittäjänä projektin perustajan ohjauksessa; perustaja päättää, mitä siitä tulee. Jokainen muutos käy automaattiset testit kolmella käyttöjärjestelmällä ennen yhdistämistä, ja työ on julkista GitHubissa.",
-        "support_h": "Tuki",
-        "support_p": "Sanain on maksuton ja pysyy maksuttomana kaikkine ominaisuuksineen kaikille. Vikailmoitukset, ideat ja käännökset ovat tervetulleita GitHubissa.",
-        "issues": "Ilmoita ongelmasta tai ehdota ideaa",
-        "footer": "Sanain on vapaata ohjelmistoa Mozilla Public License 2.0 -lisenssillä.",
-    },
+    }
+
 }
 
 def e(s):
@@ -121,15 +78,13 @@ def page(t):
 <title>{e(t['title'])}</title>
 <meta name="description" content="{e(t['desc'])}">
 <link rel="icon" href="{r}icon.svg" type="image/svg+xml">
-<link rel="alternate" hreflang="en" href="https://zanttux.github.io/Sanain/">
-<link rel="alternate" hreflang="fi" href="https://zanttux.github.io/Sanain/fi/">
 <link rel="stylesheet" href="{r}style.css">
 </head>
 <body>
 <div class="wrap">
 <header class="top">
   <a class="brand" href="./"><img src="{r}icon.svg" alt="">Sanain</a>
-  <nav class="top">{nav}<a class="lang" href="{t['other']}" hreflang="{'fi' if t['lang']=='en' else 'en'}">{e(t['other_label'])}</a></nav>
+  <nav class="top">{nav}</nav>
 </header>
 
 <div class="buffer" role="img" aria-label="{e(t['hero_l1'] + ' ' + t['hero_l2'] + ' ' + t['hero_sub'])}">
@@ -190,7 +145,7 @@ def page(t):
 </html>
 """
 
-for key, out in (("en", "index.html"), ("fi", "fi/index.html")):
+for key, out in (("en", "index.html"),):
     path = os.path.join(HERE, out)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
