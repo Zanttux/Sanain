@@ -1,3 +1,4 @@
+//! Windows: embed the application icon (packaging/windows/sanain.rc).
 //! macOS: embed an Info.plist in the executable (`__TEXT,__info_plist`), so
 //! a binary run outside the app bundle (e.g. `cargo run`) still has the
 //! bundle name "Sanain" in the menu bar instead of the file name. Inside
@@ -5,6 +6,15 @@
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
+    #[cfg(windows)]
+    if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows") {
+        // Icon shown by Explorer, the taskbar pin and the installer.
+        println!("cargo:rerun-if-changed=../../packaging/windows/sanain.rc");
+        println!("cargo:rerun-if-changed=../../packaging/icons/sanain.ico");
+        embed_resource::compile("../../packaging/windows/sanain.rc", embed_resource::NONE)
+            .manifest_optional()
+            .expect("embed the Windows icon");
+    }
     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() != Ok("macos") {
         return;
     }

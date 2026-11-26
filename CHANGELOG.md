@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+- Windows: the icon is embedded in sanain.exe, so Explorer, shortcuts and
+  pinned taskbar items show it.
+
 ## [0.1.0] — 2026-11-26
 
 First tagged pre-release: milestone M1 (core editing, files, search,
