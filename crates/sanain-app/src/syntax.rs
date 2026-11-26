@@ -29,7 +29,8 @@ struct Request {
     tab: TabId,
     revision: Revision,
     lang: Lang,
-    text: String,
+    /// Converted to a string on the worker thread.
+    rope: ropey::Rope,
 }
 
 #[derive(Debug)]
@@ -68,8 +69,8 @@ impl SyntaxWorker {
     }
 
     /// Queue a snapshot for highlighting; cancels work in progress.
-    pub fn submit(&self, tab: TabId, revision: Revision, lang: Lang, text: String) {
-        if text.len() > MAX_BYTES {
+    pub fn submit(&self, tab: TabId, revision: Revision, lang: Lang, rope: ropey::Rope) {
+        if rope.len_bytes() > MAX_BYTES {
             return;
         }
         self.cancel.store(1, Ordering::Relaxed);
@@ -77,7 +78,7 @@ impl SyntaxWorker {
             tab,
             revision,
             lang,
-            text,
+            rope,
         });
     }
 
@@ -115,9 +116,10 @@ fn run(jobs: Receiver<Request>, out: Sender<Highlighted>, cancel: Arc<AtomicUsiz
             continue;
         };
         cancel.store(0, Ordering::Relaxed);
-        match highlighter.highlight(req.lang, req.text.as_bytes(), Some(&cancel)) {
+        let text = req.rope.to_string();
+        match highlighter.highlight(req.lang, text.as_bytes(), Some(&cancel)) {
             Ok(spans) => {
-                let spans = to_char_spans(&req.text, spans);
+                let spans = to_char_spans(&text, spans);
                 let result = Highlighted {
                     tab: req.tab,
                     revision: req.revision,
@@ -187,7 +189,7 @@ mod tests {
     fn latest_submission_wins() {
         let w = SyntaxWorker::start();
         let big = "fn f() {}\n".repeat(20_000);
-        w.submit(1, Revision(1), Lang::Rust, big);
+        w.submit(1, Revision(1), Lang::Rust, ropey::Rope::from_str(&big));
         w.submit(1, Revision(2), Lang::Rust, "fn g() {}".into());
         let t = Instant::now();
         let mut last = None;

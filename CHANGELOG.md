@@ -215,6 +215,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   or when changes are discarded.
 
 ### Fixed
+- Fewer whole-document copies on the UI thread: syntax highlighting got a
+  copy on every keystroke (even for files too large to highlight), the
+  comparison copied both documents every frame, and Go to Heading parsed
+  the document every frame while open.
 - Crash-recovery checkpoints copied the whole document on the UI thread;
   the copy now happens on the writer thread (large files no longer pause
   every few seconds while edited).
