@@ -393,3 +393,7 @@ status-saved-all = { $count ->
     [many] Збережено { $count } файлів.
    *[other] Збережено { $count } файлу.
     }
+edit-toggle-comment = Закоментувати/розкоментувати рядки
+edit-indent = Збільшити відступ рядків
+edit-outdent = Зменшити відступ рядків
+comment-unsupported = Цей тип файлів не підтримує рядкові коментарі.

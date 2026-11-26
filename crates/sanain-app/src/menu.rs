@@ -80,10 +80,13 @@ pub enum MenuAction {
     OpenRecent,
     SaveAll,
     Revert,
+    ToggleComment,
+    IndentLines,
+    OutdentLines,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 73] = [
+    pub const ALL: [MenuAction; 76] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -157,6 +160,9 @@ impl MenuAction {
         Self::OpenRecent,
         Self::SaveAll,
         Self::Revert,
+        Self::ToggleComment,
+        Self::IndentLines,
+        Self::OutdentLines,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -235,6 +241,9 @@ impl MenuAction {
             Self::OpenRecent => "file.open-recent",
             Self::SaveAll => "file.save-all",
             Self::Revert => "file.revert",
+            Self::ToggleComment => "edit.toggle-comment",
+            Self::IndentLines => "edit.indent",
+            Self::OutdentLines => "edit.outdent",
         }
     }
 
@@ -319,6 +328,9 @@ impl MenuAction {
             Self::OpenRecent => "file-open-recent",
             Self::SaveAll => "file-save-all",
             Self::Revert => "file-revert",
+            Self::ToggleComment => "edit-toggle-comment",
+            Self::IndentLines => "edit-indent",
+            Self::OutdentLines => "edit-outdent",
         }
     }
 
@@ -370,6 +382,9 @@ impl MenuAction {
             Self::SplitEditor => (cmd, Key::Backslash),
             Self::GoToHeading => (cmd_shift, Key::O),
             Self::SelectNextOccurrence => (cmd, Key::D),
+            Self::ToggleComment => (cmd, Key::Slash),
+            Self::IndentLines => (cmd, Key::CloseBracket),
+            Self::OutdentLines => (cmd, Key::OpenBracket),
             Self::RecordMacro => (cmd_shift, Key::R),
             Self::PlayMacro => (cmd_shift, Key::M),
             Self::MoveLineUp => (Modifiers::ALT, Key::ArrowUp),
@@ -559,6 +574,9 @@ const EDIT_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::GoToLine),
     Some(MenuAction::GoToHeading),
     None,
+    Some(MenuAction::ToggleComment),
+    Some(MenuAction::IndentLines),
+    Some(MenuAction::OutdentLines),
     Some(MenuAction::DuplicateLine),
     Some(MenuAction::DeleteLine),
     Some(MenuAction::MoveLineUp),
@@ -731,6 +749,9 @@ mod native {
             MenuAction::SplitEditor => (cmd, ch("\\")),
             MenuAction::GoToHeading => (cmd_shift, ch("o")),
             MenuAction::SelectNextOccurrence => (cmd, ch("d")),
+            MenuAction::ToggleComment => (cmd, ch("/")),
+            MenuAction::IndentLines => (cmd, ch("]")),
+            MenuAction::OutdentLines => (cmd, ch("[")),
             MenuAction::RecordMacro => (cmd_shift, ch("r")),
             MenuAction::PlayMacro => (cmd_shift, ch("m")),
             MenuAction::AddCursorAbove => (cmd | Modifiers::ALT, Key::Named(NamedKey::ArrowUp)),

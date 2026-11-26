@@ -357,3 +357,7 @@ status-saved-all = { $count ->
     [one] 1 file salvato.
    *[other] { $count } file salvati.
     }
+edit-toggle-comment = Attiva/disattiva commento riga
+edit-indent = Aumenta rientro righe
+edit-outdent = Riduci rientro righe
+comment-unsupported = Questo tipo di file non ha commenti di riga.

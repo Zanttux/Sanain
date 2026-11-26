@@ -767,6 +767,19 @@ impl EditorView {
                 match key {
                     Key::Enter if !m.command => Command::NewLine,
                     Key::Escape if editor.selections().len() > 1 => Command::SingleSelection,
+                    // Tab with a selection over several lines indents them;
+                    // Shift+Tab outdents the caret's or the selected lines.
+                    Key::Tab if !m.command && !m.shift && spans_lines(editor) => {
+                        Command::IndentLines(indent.to_owned())
+                    }
+                    Key::Tab if !m.command && m.shift => {
+                        let width = if indent == "\t" {
+                            4
+                        } else {
+                            indent.len().max(1)
+                        };
+                        Command::OutdentLines(width)
+                    }
                     Key::Tab if !m.command && !m.shift => Command::Insert(indent.to_owned()),
                     Key::ArrowUp if m.alt && m.shift => Command::DuplicateLine,
                     Key::ArrowDown if m.alt && m.shift => Command::DuplicateLine,
@@ -803,6 +816,15 @@ impl EditorView {
 
 /// Build a layout job for one line's text (starting at document char
 /// `start`), colouring the parts covered by syntax spans.
+/// Whether any selection covers more than one line.
+fn spans_lines(editor: &Editor) -> bool {
+    let rope = editor.document().rope();
+    editor
+        .selections()
+        .iter()
+        .any(|s| rope.char_to_line(s.range().start) != rope.char_to_line(s.range().end))
+}
+
 fn line_job(
     text: String,
     start: usize,

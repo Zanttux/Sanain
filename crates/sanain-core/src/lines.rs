@@ -1,5 +1,6 @@
 //! Whole-line operations over the lines touched by each selection:
-//! delete, duplicate and move up/down. Each produces one transaction.
+//! delete, duplicate, move up/down, indent/outdent and line comments. Each
+//! produces one transaction.
 
 use std::ops::Range;
 
@@ -222,6 +223,99 @@ pub fn move_lines(rope: &Rope, sels: &Selections, down: bool) -> (Transaction, S
     apply_blocks(sels, edits)
 }
 
+/// Per-line edits (in document order) as one transaction; selections
+/// follow the text.
+fn line_edits(sels: &Selections, edits: Vec<(Range<usize>, String)>) -> (Transaction, Selections) {
+    let mut tx = Transaction::new();
+    for (r, t) in edits.into_iter().rev() {
+        tx.push(Change::replace(r, t));
+    }
+    let next = sels
+        .iter()
+        .map(|s| Selection::new(tx.map_pos(s.anchor), tx.map_pos(s.head)))
+        .collect();
+    (tx, Selections::new(next, 0, usize::MAX))
+}
+
+/// Lines touched by the selections (each once), with their start char and
+/// content (without the line break).
+fn touched_lines(rope: &Rope, sels: &Selections) -> Vec<(usize, String)> {
+    blocks(rope, sels)
+        .into_iter()
+        .flat_map(|(a, b)| a..=b)
+        .map(|l| {
+            let start = rope.line_to_char(l);
+            (
+                start,
+                rope.slice(start..line_content_end(rope, l)).to_string(),
+            )
+        })
+        .collect()
+}
+
+/// Insert `indent` at the start of every non-blank touched line.
+pub fn indent_lines(rope: &Rope, sels: &Selections, indent: &str) -> (Transaction, Selections) {
+    let edits = touched_lines(rope, sels)
+        .into_iter()
+        .filter(|(_, t)| !t.trim().is_empty())
+        .map(|(start, _)| (start..start, indent.to_owned()))
+        .collect();
+    line_edits(sels, edits)
+}
+
+/// Remove one level of indentation (a tab, or up to `tab` spaces) from the
+/// start of every touched line.
+pub fn outdent_lines(rope: &Rope, sels: &Selections, tab: usize) -> (Transaction, Selections) {
+    let edits = touched_lines(rope, sels)
+        .into_iter()
+        .filter_map(|(start, t)| {
+            let n = if t.starts_with('\t') {
+                1
+            } else {
+                t.chars().take(tab.max(1)).take_while(|c| *c == ' ').count()
+            };
+            (n > 0).then(|| (start..start + n, String::new()))
+        })
+        .collect();
+    line_edits(sels, edits)
+}
+
+/// Comment the touched lines out with `prefix` (e.g. `//`), or, if every
+/// non-blank one already is, remove the prefix (and one following space).
+/// The prefix goes at the smallest indentation so the block stays aligned.
+pub fn toggle_comment(rope: &Rope, sels: &Selections, prefix: &str) -> (Transaction, Selections) {
+    let lines: Vec<(usize, String)> = touched_lines(rope, sels)
+        .into_iter()
+        .filter(|(_, t)| !t.trim().is_empty())
+        .collect();
+    let indent_of = |t: &str| t.chars().take_while(|c| *c == ' ' || *c == '\t').count();
+    let all_commented = !lines.is_empty()
+        && lines
+            .iter()
+            .all(|(_, t)| t.trim_start_matches([' ', '\t']).starts_with(prefix));
+    let edits = if all_commented {
+        lines
+            .iter()
+            .map(|(start, t)| {
+                let at = start + indent_of(t);
+                let rest: String = t
+                    .chars()
+                    .skip(indent_of(t) + prefix.chars().count())
+                    .collect();
+                let n = prefix.chars().count() + usize::from(rest.starts_with(' '));
+                (at..at + n, String::new())
+            })
+            .collect()
+    } else {
+        let col = lines.iter().map(|(_, t)| indent_of(t)).min().unwrap_or(0);
+        lines
+            .iter()
+            .map(|(start, _)| (start + col..start + col, format!("{prefix} ")))
+            .collect()
+    };
+    line_edits(sels, edits)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -242,6 +336,45 @@ mod tests {
             assert_eq!(doc.text(), text, "undo restores");
         }
         (out, next.iter().copied().collect())
+    }
+
+    fn apply(
+        text: &str,
+        sel: (usize, usize),
+        f: impl Fn(&Rope, &Selections) -> (Transaction, Selections),
+    ) -> (String, Selection) {
+        let mut rope = Rope::from_str(text);
+        let sels = Selections::single(Selection::new(sel.0, sel.1));
+        let (tx, next) = f(&rope, &sels);
+        tx.apply(&mut rope).unwrap();
+        (rope.to_string(), next.primary())
+    }
+
+    #[test]
+    fn indent_and_outdent_selected_lines() {
+        let text = "a\n\n  b\nc\n";
+        let (t, s) = apply(text, (0, 7), |r, s| indent_lines(r, s, "    "));
+        assert_eq!(
+            t, "    a\n\n      b\nc\n",
+            "blank line untouched, c not selected"
+        );
+        assert_eq!((s.anchor, s.head), (4, 15));
+        let (t, _) = apply(&t, (0, 15), |r, s| outdent_lines(r, s, 4));
+        assert_eq!(t, "a\n\n  b\nc\n");
+        let (t, _) = apply("\tx\n  y\n", (0, 6), |r, s| outdent_lines(r, s, 4));
+        assert_eq!(t, "x\ny\n");
+    }
+
+    #[test]
+    fn toggles_line_comments_at_common_indent() {
+        let src = "fn f() {\n    let a = 1;\n\n        b();\n}\n";
+        let (t, _) = apply(src, (9, 38), |r, s| toggle_comment(r, s, "//"));
+        assert_eq!(t, "fn f() {\n    // let a = 1;\n\n    //     b();\n}\n");
+        let len = t.chars().count();
+        let (back, _) = apply(&t, (9, len - 2), |r, s| toggle_comment(r, s, "//"));
+        assert_eq!(back, src, "toggling twice restores the text");
+        let (t, _) = apply("x = 1\n# y\n", (0, 9), |r, s| toggle_comment(r, s, "#"));
+        assert_eq!(t, "# x = 1\n# # y\n", "mixed: comment all");
     }
 
     #[test]

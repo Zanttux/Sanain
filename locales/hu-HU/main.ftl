@@ -357,3 +357,7 @@ status-saved-all = { $count ->
     [one] 1 fájl mentve.
    *[other] { $count } fájl mentve.
     }
+edit-toggle-comment = Sorkomment be/ki
+edit-indent = Sorok behúzása
+edit-outdent = Sorok behúzásának csökkentése
+comment-unsupported = Ez a fájltípus nem támogatja a sorkommenteket.

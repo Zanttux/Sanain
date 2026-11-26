@@ -339,3 +339,7 @@ status-saved-all = { $count ->
     [0] Tidak ada yang perlu disimpan.
    *[other] { $count } berkas disimpan.
     }
+edit-toggle-comment = Alihkan Komentar Baris
+edit-indent = Indentasi Baris
+edit-outdent = Kurangi Indentasi Baris
+comment-unsupported = Jenis file ini tidak memiliki komentar baris.

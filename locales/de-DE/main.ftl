@@ -357,3 +357,7 @@ status-saved-all = { $count ->
     [one] 1 Datei gesichert.
    *[other] { $count } Dateien gesichert.
     }
+edit-toggle-comment = Zeilenkommentar umschalten
+edit-indent = Zeilen einrücken
+edit-outdent = Zeileneinzug verringern
+comment-unsupported = Dieser Dateityp hat keine Zeilenkommentare.

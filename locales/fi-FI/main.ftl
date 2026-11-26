@@ -357,3 +357,7 @@ status-saved-all = { $count ->
     [one] 1 tiedosto tallennettiin.
    *[other] { $count } tiedostoa tallennettiin.
     }
+edit-toggle-comment = Kommentoi rivit / poista kommentointi
+edit-indent = Sisennä rivit
+edit-outdent = Poista rivien sisennys
+comment-unsupported = Tällä tiedostotyypillä ei ole rivikommentteja.

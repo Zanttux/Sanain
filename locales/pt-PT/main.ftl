@@ -375,3 +375,7 @@ status-saved-all = { $count ->
     [many] { $count } de ficheiros guardados.
    *[other] { $count } ficheiros guardados.
     }
+edit-toggle-comment = Alternar comentário de linha
+edit-indent = Avançar linhas
+edit-outdent = Recuar linhas
+comment-unsupported = Este tipo de ficheiro não tem comentários de linha.
