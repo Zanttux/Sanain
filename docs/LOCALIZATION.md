@@ -13,7 +13,7 @@ CI: parse all FTL, reject duplicate IDs and incompatible variables, report missi
 |---|---|
 | Canonical | en-US |
 | Draft by Claude, native review pending | fi-FI |
-| Machine translation by Claude, native review pending | cs-CZ, da-DK, de-DE, el-GR, es-ES, fr-FR, hu-HU, id-ID, it-IT, ja-JP, ko-KR, nb-NO, nl-NL, pl-PL, pt-BR, pt-PT, ro-RO, ru-RU, sv-SE, tr-TR, uk-UA, vi-VN, zh-CN, zh-TW |
+| Machine translation by Claude, accepted for now (D24), native review welcome | cs-CZ, da-DK, de-DE, el-GR, es-ES, fr-FR, hu-HU, id-ID, it-IT, ja-JP, ko-KR, nb-NO, nl-NL, pl-PL, pt-BR, pt-PT, ro-RO, ru-RU, sv-SE, tr-TR, uk-UA, vi-VN, zh-CN, zh-TW |
 | Not shipped yet | Right-to-left languages (Arabic, Hebrew, Persian, Urdu): the editor's RTL layout and bidirectional caret movement are not verified |
 
 Every non-English file starts with a comment stating it is not yet

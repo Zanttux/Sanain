@@ -33,9 +33,12 @@ current platform in `target/dist/` (macOS: `Sanain.app` in a zip;
 Windows: zip; Linux: tar.gz) with LICENSE, README, CHANGELOG, the
 third-party notices and a `.sha256` file. The `Package` workflow runs it
 on Linux, Windows and macOS for `v*` tags and on manual dispatch, and
-keeps the archives as workflow artifacts for 14 days; it publishes
-nothing. Still missing before a public release: signing and
-notarization, an SBOM, and a Linux desktop entry and icon.
+keeps the archives as workflow artifacts for 14 days. Since 2026-11-26
+(D23) it also runs on every push to main and publishes them: a `publish`
+job (the only one with `contents: write`, pushes only) replaces the
+`nightly` pre-release, or creates a pre-release for a `v*` tag, with the
+archives and `SHA256SUMS`. Still missing for a stable release: signing
+and notarization, an SBOM, and a Linux desktop entry and icon.
 
 CI builds releases from tagged commits with the lockfile and produces
 checksums, SBOM, notices and release notes. The owner approves publishing.

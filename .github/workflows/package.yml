@@ -1,10 +1,13 @@
 name: Package
 
-# Builds unsigned archives for testing and release preparation. Nothing is
-# published: a GitHub release needs the owner's approval (docs/RELEASE.md).
+# Builds unsigned archives on Linux, Windows and macOS. Every push to main
+# replaces the "nightly" pre-release; a v* tag creates a pre-release for
+# that version (owner decision D23, docs/RELEASE.md). Unsigned until
+# signing certificates exist.
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     tags: ["v*"]
   # Keep the packaging itself tested when it changes.
   pull_request:
@@ -17,6 +20,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: package-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   package:
@@ -45,3 +52,42 @@ jobs:
           path: target/dist/*
           if-no-files-found: error
           retention-days: 14
+
+  # Privileged job, separate from the builds; runs only for pushes to this
+  # repository (never for pull requests).
+  publish:
+    name: publish
+    needs: package
+    if: github.event_name == 'push' && github.repository == 'Zanttux/Sanain'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create or replace the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          REF_NAME: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -eu
+          ls -l dist
+          cat dist/*.sha256 > dist/SHA256SUMS
+          notes="Unsigned development build of Sanain from commit ${SHA}.
+          Not signed or notarized: macOS asks for confirmation on first open
+          (right-click > Open), Windows SmartScreen may warn. Checksums in
+          SHA256SUMS. Machine translations are unreviewed. See CHANGELOG.md."
+          if [ "$REF_TYPE" = tag ]; then
+            tag="$REF_NAME"; title="Sanain $REF_NAME (unsigned pre-release)"
+          else
+            tag=nightly; title="Sanain nightly (unsigned)"
+            gh release delete nightly --repo "$REPO" --cleanup-tag --yes || true
+          fi
+          gh release create "$tag" dist/* --repo "$REPO" --target "$SHA" \
+            --prerelease --title "$title" --notes "$notes"
