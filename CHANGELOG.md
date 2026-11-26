@@ -2,7 +2,14 @@
 
 All notable changes are listed here. Versions follow Semantic Versioning.
 
-## [Unreleased] — 0.0.1
+## [Unreleased]
+
+## [0.1.0] — 2026-11-26
+
+First tagged pre-release: milestone M1 (core editing, files, search,
+Markdown, data views, packaging). Unsigned builds for Windows, macOS and
+Linux (installers and portable archives). Machine translations are
+accepted for now (D24). Changes since the start of the project:
 
 ### Added
 - Project website (English) on GitHub Pages:

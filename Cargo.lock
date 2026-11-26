@@ -3340,7 +3340,7 @@ dependencies = [
 
 [[package]]
 name = "sanain-app"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "arboard",
  "eframe",
@@ -3364,7 +3364,7 @@ dependencies = [
 
 [[package]]
 name = "sanain-core"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "proptest",
  "regex",
@@ -3376,7 +3376,7 @@ dependencies = [
 
 [[package]]
 name = "sanain-i18n"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "fluent-bundle",
  "fluent-syntax",
@@ -3385,7 +3385,7 @@ dependencies = [
 
 [[package]]
 name = "sanain-io"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "chardetng",
  "encoding_rs",
@@ -3397,7 +3397,7 @@ dependencies = [
 
 [[package]]
 name = "sanain-language"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "thiserror 2.0.21",
  "tree-sitter",
@@ -3424,14 +3424,14 @@ dependencies = [
 
 [[package]]
 name = "sanain-markdown"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "comrak",
 ]
 
 [[package]]
 name = "sanain-tools"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "proptest",
  "quick-xml 0.42.0",
