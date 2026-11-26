@@ -47,7 +47,7 @@ Fast by design. Powerful when needed. Simple by default.
   reproduce the file exactly.
 - **Markdown:** source, split and preview, with tables, task lists,
   coloured code blocks, local images, safe links and Mermaid
-  flowcharts drawn natively, plus an Outline panel. Nothing in a document runs or loads from the network.
+  flowcharts (with subgraphs) and sequence diagrams drawn natively, plus an Outline panel. Nothing in a document runs or loads from the network.
 - **Data files:** syntax highlighting for 22 languages, JSON
   validate/format/minify that keeps your numbers and keys as written,
   XML and YAML validation, read-only trees for JSON, XML and YAML
