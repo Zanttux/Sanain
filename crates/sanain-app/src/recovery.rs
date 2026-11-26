@@ -19,9 +19,18 @@ use crate::Editor;
 pub const INTERVAL: Duration = Duration::from_secs(2);
 
 enum Job {
-    Write(String, Snapshot),
+    /// The text travels as a rope snapshot (an O(1) clone) and becomes a
+    /// string on the writer thread, so a checkpoint of a large document
+    /// does not stall the UI.
+    Write(String, PendingSnapshot),
     Remove(String),
     Flush(Sender<()>),
+}
+
+struct PendingSnapshot {
+    path: Option<std::path::PathBuf>,
+    encoding: sanain_io::TextEncoding,
+    rope: ropey::Rope,
 }
 
 #[derive(Debug)]
@@ -55,7 +64,14 @@ impl Recovery {
             .spawn(move || {
                 for job in rx {
                     let result = match &job {
-                        Job::Write(id, s) => store.write(id, s),
+                        Job::Write(id, p) => store.write(
+                            id,
+                            &Snapshot {
+                                path: p.path.clone(),
+                                encoding: p.encoding,
+                                text: p.rope.to_string(),
+                            },
+                        ),
                         Job::Remove(id) => store.remove(id),
                         Job::Flush(done) => {
                             let _ = done.send(());
@@ -96,10 +112,10 @@ impl Recovery {
         if now < due {
             return Some(due - now);
         }
-        let snapshot = Snapshot {
+        let snapshot = PendingSnapshot {
             path: editor.file().map(|f| f.path.clone()),
             encoding: editor.encoding(),
-            text: doc.text(),
+            rope: doc.rope().clone(),
         };
         let _ = self.jobs.send(Job::Write(self.id.clone(), snapshot));
         self.written = Some(doc.revision());
