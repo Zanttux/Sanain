@@ -375,3 +375,7 @@ status-saved-all = { $count ->
     [many] { $count } de fichiers enregistrés.
    *[other] { $count } fichiers enregistrés.
     }
+edit-toggle-comment = Basculer le commentaire de ligne
+edit-indent = Mettre les lignes en retrait
+edit-outdent = Retirer le retrait des lignes
+comment-unsupported = Ce type de fichier n’a pas de commentaires de ligne.

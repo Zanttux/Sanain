@@ -393,3 +393,7 @@ status-saved-all = { $count ->
     [many] Zapisano { $count } plików.
    *[other] Zapisano { $count } pliku.
     }
+edit-toggle-comment = Przełącz komentarz wiersza
+edit-indent = Zwiększ wcięcie wierszy
+edit-outdent = Zmniejsz wcięcie wierszy
+comment-unsupported = Ten typ pliku nie obsługuje komentarzy wierszowych.

@@ -339,3 +339,7 @@ status-saved-all = { $count ->
     [0] 沒有需要儲存的內容。
    *[other] 已儲存 { $count } 個檔案。
     }
+edit-toggle-comment = 切換行註解
+edit-indent = 縮排行
+edit-outdent = 減少行縮排
+comment-unsupported = 此檔案類型不支援行註解。

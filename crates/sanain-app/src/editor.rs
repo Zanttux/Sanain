@@ -62,6 +62,12 @@ pub enum Command {
     SetSelections(Vec<(usize, usize)>),
     /// Keep only the primary selection.
     SingleSelection,
+    /// Indent the selected lines by the given text.
+    IndentLines(String),
+    /// Remove one indentation level (tab or up to N spaces).
+    OutdentLines(usize),
+    /// Comment out or uncomment the selected lines with this prefix.
+    ToggleComment(String),
     /// With an empty selection, select the word at the caret; otherwise
     /// add the next occurrence of the selected text (wrapping around).
     SelectNextOccurrence,
@@ -401,6 +407,18 @@ impl Editor {
                 (None, Selections::new(items, p, len))
             }
             Command::SingleSelection => (None, Selections::single(self.sels.primary())),
+            Command::IndentLines(indent) => {
+                let (tx, s) = lines::indent_lines(rope, &self.sels, &indent);
+                (Some(tx), s)
+            }
+            Command::OutdentLines(tab) => {
+                let (tx, s) = lines::outdent_lines(rope, &self.sels, tab);
+                (Some(tx), s)
+            }
+            Command::ToggleComment(prefix) => {
+                let (tx, s) = lines::toggle_comment(rope, &self.sels, &prefix);
+                (Some(tx), s)
+            }
             Command::SelectNextOccurrence => {
                 let primary = self.sels.primary();
                 let len = rope.len_chars();

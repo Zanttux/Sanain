@@ -375,3 +375,7 @@ status-saved-all = { $count ->
     [few] Au fost salvate { $count } fișiere.
    *[other] Au fost salvate { $count } de fișiere.
     }
+edit-toggle-comment = Comută comentariul de linie
+edit-indent = Indentează liniile
+edit-outdent = Anulează indentarea liniilor
+comment-unsupported = Acest tip de fișier nu are comentarii de linie.

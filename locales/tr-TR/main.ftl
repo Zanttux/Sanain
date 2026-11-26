@@ -357,3 +357,7 @@ status-saved-all = { $count ->
     [one] 1 dosya kaydedildi.
    *[other] { $count } dosya kaydedildi.
     }
+edit-toggle-comment = Satır Yorumunu Aç/Kapat
+edit-indent = Satırları Girintile
+edit-outdent = Satır Girintisini Azalt
+comment-unsupported = Bu dosya türünde satır yorumu yok.

@@ -393,3 +393,7 @@ status-saved-all = { $count ->
     [many] Сохранено { $count } файлов.
    *[other] Сохранено { $count } файла.
     }
+edit-toggle-comment = Закомментировать/раскомментировать строки
+edit-indent = Увеличить отступ строк
+edit-outdent = Уменьшить отступ строк
+comment-unsupported = Этот тип файлов не поддерживает строчные комментарии.

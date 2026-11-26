@@ -90,6 +90,23 @@ impl Lang {
         })
     }
 
+    /// The line comment prefix, if the language has one.
+    pub fn line_comment(self) -> Option<&'static str> {
+        match self {
+            Lang::C
+            | Lang::CSharp
+            | Lang::Cpp
+            | Lang::Go
+            | Lang::Java
+            | Lang::JavaScript
+            | Lang::Rust
+            | Lang::Tsx
+            | Lang::TypeScript => Some("//"),
+            Lang::Bash | Lang::Python | Lang::Ruby | Lang::Toml | Lang::Yaml => Some("#"),
+            Lang::Css | Lang::Html | Lang::Json | Lang::Xml => None,
+        }
+    }
+
     /// Display name. Language names are proper nouns and not translated.
     pub fn name(self) -> &'static str {
         match self {

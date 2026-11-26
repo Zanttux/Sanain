@@ -393,3 +393,7 @@ status-saved-all = { $count ->
     [many] Uloženo { $count } souboru.
    *[other] Uloženo { $count } souborů.
     }
+edit-toggle-comment = Přepnout řádkový komentář
+edit-indent = Odsadit řádky
+edit-outdent = Zrušit odsazení řádků
+comment-unsupported = Tento typ souboru nemá řádkové komentáře.

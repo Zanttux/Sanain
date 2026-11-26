@@ -357,3 +357,7 @@ status-saved-all = { $count ->
     [one] 1 fil har sparats.
    *[other] { $count } filer har sparats.
     }
+edit-toggle-comment = Växla radkommentar
+edit-indent = Öka indrag för rader
+edit-outdent = Minska indrag för rader
+comment-unsupported = Den här filtypen har inga radkommentarer.

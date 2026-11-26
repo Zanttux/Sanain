@@ -339,3 +339,7 @@ status-saved-all = { $count ->
     [0] 保存するものはありません。
    *[other] { $count } 個のファイルを保存しました。
     }
+edit-toggle-comment = 行コメントの切り替え
+edit-indent = 行のインデント
+edit-outdent = 行のインデント解除
+comment-unsupported = このファイル形式には行コメントがありません。

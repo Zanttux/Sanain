@@ -357,3 +357,7 @@ status-saved-all = { $count ->
     [one] Αποθηκεύτηκε 1 αρχείο.
    *[other] Αποθηκεύτηκαν { $count } αρχεία.
     }
+edit-toggle-comment = Εναλλαγή σχολίου γραμμής
+edit-indent = Εσοχή γραμμών
+edit-outdent = Αφαίρεση εσοχής γραμμών
+comment-unsupported = Αυτός ο τύπος αρχείου δεν έχει σχόλια γραμμής.

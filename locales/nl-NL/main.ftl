@@ -357,3 +357,7 @@ status-saved-all = { $count ->
     [one] 1 bestand bewaard.
    *[other] { $count } bestanden bewaard.
     }
+edit-toggle-comment = Schakel regelcommentaar in/uit
+edit-indent = Laat regels inspringen
+edit-outdent = Verklein inspringing van regels
+comment-unsupported = Dit bestandstype heeft geen regelcommentaar.

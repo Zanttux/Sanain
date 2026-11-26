@@ -357,3 +357,7 @@ status-saved-all = { $count ->
     [one] 1 fil er lagret.
    *[other] { $count } filer er lagret.
     }
+edit-toggle-comment = Slå linjekommentar av/på
+edit-indent = Rykk inn linjer
+edit-outdent = Fjern innrykk for linjer
+comment-unsupported = Denne filtypen har ingen linjekommentarer.

@@ -2796,6 +2796,19 @@ impl Shell {
             MenuAction::Redo => editor_cmd(Command::Redo),
             MenuAction::SelectAll => editor_cmd(Command::SelectAll),
             MenuAction::DuplicateLine => editor_cmd(Command::DuplicateLine),
+            MenuAction::IndentLines => editor_cmd(Command::IndentLines(self.settings.indent())),
+            MenuAction::OutdentLines => {
+                editor_cmd(Command::OutdentLines(usize::from(self.settings.tab_width)))
+            }
+            MenuAction::ToggleComment => {
+                match Self::language(self.editor()).and_then(|l| l.line_comment()) {
+                    Some(prefix) => editor_cmd(Command::ToggleComment(prefix.to_owned())),
+                    None => {
+                        self.status = Some((self.t("comment-unsupported", &[]), false));
+                        None
+                    }
+                }
+            }
             MenuAction::SelectNextOccurrence => editor_cmd(Command::SelectNextOccurrence),
             MenuAction::AddCursorAbove => editor_cmd(Command::AddCaretVertical { down: false }),
             MenuAction::AddCursorBelow => editor_cmd(Command::AddCaretVertical { down: true }),

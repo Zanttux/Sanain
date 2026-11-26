@@ -5,6 +5,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Indent and outdent lines: Tab with a multi-line selection indents it,
+  Shift+Tab outdents; also Edit > Indent/Outdent Lines (Cmd/Ctrl+] and
+  [). Edit > Toggle Line Comment (Cmd/Ctrl+/) for languages with line
+  comments (// or #), placed at the block's common indentation.
 - File > Open Recent (Cmd/Ctrl+Shift+E, the last 20 files), Save All
   (Cmd/Ctrl+Option/Alt+S) and Revert to Saved (asks first when there are
   unsaved changes). Files dropped onto the window open in tabs.

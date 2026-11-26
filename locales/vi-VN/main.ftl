@@ -339,3 +339,7 @@ status-saved-all = { $count ->
     [0] Không có gì để lưu.
    *[other] Đã lưu { $count } tệp.
     }
+edit-toggle-comment = Bật/tắt chú thích dòng
+edit-indent = Thụt lề dòng
+edit-outdent = Giảm thụt lề dòng
+comment-unsupported = Loại tệp này không có chú thích dòng.

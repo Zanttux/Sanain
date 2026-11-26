@@ -356,3 +356,7 @@ status-saved-all = { $count ->
     [one] Saved 1 file.
    *[other] Saved { $count } files.
     }
+edit-toggle-comment = Toggle Line Comment
+edit-indent = Indent Lines
+edit-outdent = Outdent Lines
+comment-unsupported = This file type has no line comments.

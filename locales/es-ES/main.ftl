@@ -357,3 +357,7 @@ status-saved-all = { $count ->
     [one] Se ha guardado 1 archivo.
    *[other] Se han guardado { $count } archivos.
     }
+edit-toggle-comment = Alternar comentario de línea
+edit-indent = Aumentar sangría de líneas
+edit-outdent = Reducir sangría de líneas
+comment-unsupported = Este tipo de archivo no tiene comentarios de línea.
