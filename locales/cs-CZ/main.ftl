@@ -416,3 +416,12 @@ find-searching = Hledání…
 compare-ignore-whitespace = Ignorovat mezery
 tools-compare-file = Porovnat se souborem…
 compare-file-failed = Nelze porovnat se souborem { $name }: { $reason }
+cli-help =
+    Použití:
+      sanain [SOUBOR…]            otevřít soubory
+      sanain --diff LEVÝ PRAVÝ    porovnat dva soubory vedle sebe
+      sanain --version            zobrazit verzi
+      sanain --help               zobrazit tuto nápovědu
+    Před názvy souborů začínajícími pomlčkou použijte --.
+cli-unknown-option = Neznámá volba { $option }.
+cli-diff-needs-two = --diff vyžaduje dva soubory: sanain --diff LEVÝ PRAVÝ

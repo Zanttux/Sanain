@@ -378,3 +378,12 @@ find-searching = Aranıyor…
 compare-ignore-whitespace = Boşlukları yok say
 tools-compare-file = Dosyayla Karşılaştır…
 compare-file-failed = { $name } ile karşılaştırılamadı: { $reason }
+cli-help =
+    Kullanım:
+      sanain [DOSYA…]          dosyaları aç
+      sanain --diff SOL SAĞ    iki dosyayı yan yana karşılaştır
+      sanain --version         sürümü göster
+      sanain --help            bu yardımı göster
+    Tire ile başlayan dosya adlarından önce -- kullanın.
+cli-unknown-option = Bilinmeyen seçenek { $option }.
+cli-diff-needs-two = --diff iki dosya gerektirir: sanain --diff SOL SAĞ

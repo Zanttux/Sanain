@@ -378,3 +378,12 @@ find-searching = Keresés…
 compare-ignore-whitespace = Szóközök figyelmen kívül hagyása
 tools-compare-file = Összehasonlítás fájllal…
 compare-file-failed = Nem sikerült összehasonlítani a(z) { $name } fájllal: { $reason }
+cli-help =
+    Használat:
+      sanain [FÁJL…]            fájlok megnyitása
+      sanain --diff BAL JOBB    két fájl összehasonlítása egymás mellett
+      sanain --version          a verzió megjelenítése
+      sanain --help             ennek a súgónak a megjelenítése
+    Kötőjellel kezdődő fájlnevek előtt használja a -- jelet.
+cli-unknown-option = Ismeretlen kapcsoló: { $option }.
+cli-diff-needs-two = A --diff két fájlt igényel: sanain --diff BAL JOBB

@@ -378,3 +378,12 @@ find-searching = Haetaan…
 compare-ignore-whitespace = Ohita tyhjätila
 tools-compare-file = Vertaa tiedostoon…
 compare-file-failed = Vertailu tiedostoon { $name } ei onnistunut: { $reason }
+cli-help =
+    Käyttö:
+      sanain [TIEDOSTO…]           avaa tiedostot
+      sanain --diff VASEN OIKEA    vertaa kahta tiedostoa rinnakkain
+      sanain --version             näytä versio
+      sanain --help                näytä tämä ohje
+    Kirjoita -- ennen tiedostonimiä, jotka alkavat viivalla.
+cli-unknown-option = Tuntematon valitsin { $option }.
+cli-diff-needs-two = --diff tarvitsee kaksi tiedostoa: sanain --diff VASEN OIKEA

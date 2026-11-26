@@ -5,6 +5,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Command line: `sanain --diff LEFT RIGHT` opens two files side by side;
+  `--version` and `--help`; unknown options are reported instead of being
+  opened as files (`--` ends options).
 - Tools › Compare with File…: compare the current document with any file.
 - Comparison: "Ignore whitespace" option, so indentation and line-ending
   differences no longer hide the real changes.

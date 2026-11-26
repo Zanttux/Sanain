@@ -359,3 +359,12 @@ find-searching = Mencari…
 compare-ignore-whitespace = Abaikan spasi
 tools-compare-file = Bandingkan dengan Berkas…
 compare-file-failed = Tidak dapat membandingkan dengan { $name }: { $reason }
+cli-help =
+    Penggunaan:
+      sanain [BERKAS…]            buka berkas
+      sanain --diff KIRI KANAN    bandingkan dua berkas berdampingan
+      sanain --version            tampilkan versi
+      sanain --help               tampilkan bantuan ini
+    Gunakan -- sebelum nama berkas yang diawali tanda hubung.
+cli-unknown-option = Opsi tidak dikenal { $option }.
+cli-diff-needs-two = --diff memerlukan dua berkas: sanain --diff KIRI KANAN

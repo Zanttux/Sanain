@@ -397,3 +397,12 @@ find-searching = Se caută…
 compare-ignore-whitespace = Ignoră spațiile albe
 tools-compare-file = Compară cu un fișier…
 compare-file-failed = Nu s-a putut compara cu { $name }: { $reason }
+cli-help =
+    Utilizare:
+      sanain [FIȘIER…]                deschide fișiere
+      sanain --diff STÂNGA DREAPTA    compară două fișiere unul lângă altul
+      sanain --version                afișează versiunea
+      sanain --help                   afișează acest ajutor
+    Folosiți -- înaintea numelor de fișiere care încep cu o cratimă.
+cli-unknown-option = Opțiune necunoscută { $option }.
+cli-diff-needs-two = --diff necesită două fișiere: sanain --diff STÂNGA DREAPTA

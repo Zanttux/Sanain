@@ -397,3 +397,12 @@ find-searching = Pesquisando…
 compare-ignore-whitespace = Ignorar espaços em branco
 tools-compare-file = Comparar com um arquivo…
 compare-file-failed = Não foi possível comparar com { $name }: { $reason }
+cli-help =
+    Uso:
+      sanain [ARQUIVO…]                 abrir arquivos
+      sanain --diff ESQUERDA DIREITA    comparar dois arquivos lado a lado
+      sanain --version                  mostrar a versão
+      sanain --help                     mostrar esta ajuda
+    Use -- antes de nomes de arquivo que começam com hífen.
+cli-unknown-option = Opção desconhecida { $option }.
+cli-diff-needs-two = --diff precisa de dois arquivos: sanain --diff ESQUERDA DIREITA

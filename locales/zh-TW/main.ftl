@@ -359,3 +359,12 @@ find-searching = 正在搜尋…
 compare-ignore-whitespace = 忽略空白
 tools-compare-file = 與檔案比較…
 compare-file-failed = 無法與 { $name } 比較：{ $reason }
+cli-help =
+    用法：
+      sanain [檔案…]         開啟檔案
+      sanain --diff 左 右    並排比較兩個檔案
+      sanain --version       顯示版本
+      sanain --help          顯示此說明
+    以連字號開頭的檔案名稱前請使用 --。
+cli-unknown-option = 未知的選項 { $option }。
+cli-diff-needs-two = --diff 需要兩個檔案：sanain --diff 左 右

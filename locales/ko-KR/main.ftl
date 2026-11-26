@@ -359,3 +359,12 @@ find-searching = 검색 중…
 compare-ignore-whitespace = 공백 무시
 tools-compare-file = 파일과 비교…
 compare-file-failed = { $name }와(과) 비교할 수 없습니다: { $reason }
+cli-help =
+    사용법:
+      sanain [파일…]               파일 열기
+      sanain --diff 왼쪽 오른쪽    두 파일을 나란히 비교
+      sanain --version             버전 표시
+      sanain --help                이 도움말 표시
+    대시로 시작하는 파일 이름 앞에는 --를 사용하세요.
+cli-unknown-option = 알 수 없는 옵션 { $option }.
+cli-diff-needs-two = --diff에는 두 파일이 필요합니다: sanain --diff 왼쪽 오른쪽
