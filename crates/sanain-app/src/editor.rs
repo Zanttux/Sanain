@@ -71,6 +71,8 @@ pub enum Command {
     /// With an empty selection, select the word at the caret; otherwise
     /// add the next occurrence of the selected text (wrapping around).
     SelectNextOccurrence,
+    /// Move the newest selection to the next occurrence of its text.
+    SkipOccurrence,
     PlaceCaret {
         at: usize,
         extend: bool,
@@ -262,6 +264,12 @@ impl Editor {
 
     /// Run a command. Returns text for the clipboard (Cut) if any.
     pub fn execute(&mut self, cmd: Command) -> Option<String> {
+        // With nothing selected, Skip first selects the word like Select Next.
+        let cmd = if cmd == Command::SkipOccurrence && self.sels.primary().range().is_empty() {
+            Command::SelectNextOccurrence
+        } else {
+            cmd
+        };
         if let Some(rec) = &mut self.macro_rec
             && cmd.is_recordable()
         {
@@ -418,6 +426,37 @@ impl Editor {
             Command::ToggleComment(prefix) => {
                 let (tx, s) = lines::toggle_comment(rope, &self.sels, &prefix);
                 (Some(tx), s)
+            }
+            Command::SkipOccurrence => {
+                let primary = self.sels.primary();
+                let len = rope.len_chars();
+                let needle: Vec<char> = rope.slice(primary.range()).chars().collect();
+                let n = needle.len();
+                let end = primary.range().end;
+                let others = |start: usize| {
+                    self.sels
+                        .iter()
+                        .any(|s| *s != primary && s.range().start == start)
+                };
+                let matches_at = |start: usize| {
+                    start + n <= len
+                        && rope
+                            .slice(start..start + n)
+                            .chars()
+                            .eq(needle.iter().copied())
+                };
+                let start = (end..len)
+                    .chain(0..primary.range().start)
+                    .find(|&s| matches_at(s) && !others(s))?;
+                let mut items: Vec<Selection> = self
+                    .sels
+                    .iter()
+                    .copied()
+                    .filter(|s| *s != primary)
+                    .collect();
+                items.push(Selection::new(start, start + n));
+                let p = items.len() - 1;
+                (None, Selections::new(items, p, len))
             }
             Command::SelectNextOccurrence => {
                 let primary = self.sels.primary();
@@ -880,6 +919,36 @@ mod tests {
             "alpha\n- beta;\ngamma\n",
             "one run, one undo"
         );
+    }
+
+    #[test]
+    fn skip_occurrence() {
+        let mut ed = Editor::new();
+        ed.execute(Command::Insert("ab x ab y ab z ab".into()));
+        ed.execute(Command::PlaceCaret {
+            at: 0,
+            extend: false,
+        });
+        ed.execute(Command::SkipOccurrence);
+        assert_eq!(
+            ed.copy().as_deref(),
+            Some("ab"),
+            "empty selection: select word"
+        );
+        ed.execute(Command::SelectNextOccurrence); // ab at 5
+        ed.execute(Command::SkipOccurrence); // 5 -> 10
+        ed.execute(Command::SelectNextOccurrence); // + 15
+        let starts: Vec<usize> = ed.selections().iter().map(|s| s.range().start).collect();
+        assert_eq!(
+            starts,
+            vec![0, 10, 15],
+            "the skipped occurrence is not selected"
+        );
+        ed.execute(Command::SkipOccurrence); // 15 wraps past taken 0 and 10 -> 5
+        let starts: Vec<usize> = ed.selections().iter().map(|s| s.range().start).collect();
+        assert_eq!(starts, vec![0, 5, 10]);
+        ed.execute(Command::Insert("Q".into()));
+        assert_eq!(ed.document().text(), "Q x Q y Q z ab");
     }
 
     #[test]

@@ -389,3 +389,4 @@ cli-unknown-option = Bilinmeyen seçenek { $option }.
 cli-diff-needs-two = --diff iki dosya gerektirir: sanain --diff SOL SAĞ
 window-move-tab-left = Sekmeyi Sola Taşı
 window-move-tab-right = Sekmeyi Sağa Taşı
+edit-skip-occurrence = Sonraki Eşleşmeye Atla

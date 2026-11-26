@@ -71,6 +71,7 @@ pub enum MenuAction {
     GoToLine,
     GoToHeading,
     SelectNextOccurrence,
+    SkipOccurrence,
     RecordMacro,
     PlayMacro,
     CompareSaved,
@@ -93,7 +94,7 @@ pub enum MenuAction {
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 83] = [
+    pub const ALL: [MenuAction; 84] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -158,6 +159,7 @@ impl MenuAction {
         Self::GoToLine,
         Self::GoToHeading,
         Self::SelectNextOccurrence,
+        Self::SkipOccurrence,
         Self::RecordMacro,
         Self::PlayMacro,
         Self::CompareSaved,
@@ -246,6 +248,7 @@ impl MenuAction {
             Self::GoToLine => "edit.go-to-line",
             Self::GoToHeading => "edit.go-to-heading",
             Self::SelectNextOccurrence => "edit.select-next-occurrence",
+            Self::SkipOccurrence => "edit.skip-occurrence",
             Self::RecordMacro => "tools.record-macro",
             Self::PlayMacro => "tools.play-macro",
             Self::CompareSaved => "tools.compare-saved",
@@ -340,6 +343,7 @@ impl MenuAction {
             Self::GoToLine => "edit-go-to-line",
             Self::GoToHeading => "edit-go-to-heading",
             Self::SelectNextOccurrence => "edit-select-next-occurrence",
+            Self::SkipOccurrence => "edit-skip-occurrence",
             Self::RecordMacro => "tools-record-macro",
             Self::PlayMacro => "tools-play-macro",
             Self::CompareSaved => "tools-compare-saved",
@@ -410,6 +414,7 @@ impl MenuAction {
             Self::SplitEditor => (cmd, Key::Backslash),
             Self::GoToHeading => (cmd_shift, Key::O),
             Self::SelectNextOccurrence => (cmd, Key::D),
+            Self::SkipOccurrence => (cmd_shift, Key::D),
             Self::ToggleComment => (cmd, Key::Slash),
             Self::IndentLines => (cmd, Key::CloseBracket),
             Self::OutdentLines => (cmd, Key::OpenBracket),
@@ -637,6 +642,7 @@ const EDIT_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::AddCursorAbove),
     Some(MenuAction::AddCursorBelow),
     Some(MenuAction::SelectNextOccurrence),
+    Some(MenuAction::SkipOccurrence),
 ];
 
 /// Draw the in-window menu bar. Returns the chosen action, if any.
@@ -801,6 +807,7 @@ mod native {
             MenuAction::SplitEditor => (cmd, ch("\\")),
             MenuAction::GoToHeading => (cmd_shift, ch("o")),
             MenuAction::SelectNextOccurrence => (cmd, ch("d")),
+            MenuAction::SkipOccurrence => (cmd_shift, ch("d")),
             MenuAction::ToggleComment => (cmd, ch("/")),
             MenuAction::IndentLines => (cmd, ch("]")),
             MenuAction::OutdentLines => (cmd, ch("[")),

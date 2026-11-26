@@ -427,3 +427,4 @@ cli-unknown-option = Nieznana opcja { $option }.
 cli-diff-needs-two = --diff wymaga dwóch plików: sanain --diff LEWY PRAWY
 window-move-tab-left = Przenieś kartę w lewo
 window-move-tab-right = Przenieś kartę w prawo
+edit-skip-occurrence = Przeskocz do następnego wystąpienia

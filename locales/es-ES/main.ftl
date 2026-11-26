@@ -389,3 +389,4 @@ cli-unknown-option = Opción desconocida { $option }.
 cli-diff-needs-two = --diff necesita dos archivos: sanain --diff IZQUIERDA DERECHA
 window-move-tab-left = Mover pestaña a la izquierda
 window-move-tab-right = Mover pestaña a la derecha
+edit-skip-occurrence = Saltar a la siguiente coincidencia
