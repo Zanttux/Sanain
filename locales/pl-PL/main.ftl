@@ -410,3 +410,5 @@ tabs-kept-unsaved = { $count ->
     [many] { $count } kart z niezapisanymi zmianami pozostało otwartych.
    *[other] { $count } karty z niezapisanymi zmianami pozostało otwartych.
     }
+status-indent-tabs = Tabulatory
+status-indent-spaces = Spacje: { $count }

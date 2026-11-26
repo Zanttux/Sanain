@@ -391,3 +391,5 @@ tabs-kept-unsaved = { $count ->
     [many] { $count } onglets avec des modifications non enregistrées sont restés ouverts.
    *[other] { $count } onglets avec des modifications non enregistrées sont restés ouverts.
     }
+status-indent-tabs = Tabulations
+status-indent-spaces = Espaces: { $count }

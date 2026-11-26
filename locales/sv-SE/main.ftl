@@ -372,3 +372,5 @@ tabs-kept-unsaved = { $count ->
     [one] 1 flik med osparade ändringar hölls öppen.
    *[other] { $count } flikar med osparade ändringar hölls öppna.
     }
+status-indent-tabs = Tabbar
+status-indent-spaces = Blanksteg: { $count }

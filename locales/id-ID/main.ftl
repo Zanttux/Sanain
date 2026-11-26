@@ -353,3 +353,5 @@ status-path-copied = Jalur file disalin.
 tabs-kept-unsaved = { $count ->
    *[other] { $count } tab dengan perubahan yang belum disimpan tetap dibuka.
     }
+status-indent-tabs = Tab
+status-indent-spaces = Spasi: { $count }

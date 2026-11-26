@@ -353,3 +353,5 @@ status-path-copied = Đã sao chép đường dẫn tệp.
 tabs-kept-unsaved = { $count ->
    *[other] Đã giữ mở { $count } thẻ có thay đổi chưa lưu.
     }
+status-indent-tabs = Tab
+status-indent-spaces = Khoảng trắng: { $count }

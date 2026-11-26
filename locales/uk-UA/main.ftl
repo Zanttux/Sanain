@@ -410,3 +410,5 @@ tabs-kept-unsaved = { $count ->
     [many] { $count } вкладок з незбереженими змінами залишено відкритими.
    *[other] { $count } вкладки з незбереженими змінами залишено відкритими.
     }
+status-indent-tabs = Табуляція
+status-indent-spaces = Пробіли: { $count }

@@ -391,3 +391,5 @@ tabs-kept-unsaved = { $count ->
     [many] { $count } separadores com alterações não guardadas foram mantidos abertos.
    *[other] { $count } separadores com alterações não guardadas foram mantidos abertos.
     }
+status-indent-tabs = Tabulações
+status-indent-spaces = Espaços: { $count }

@@ -372,3 +372,5 @@ tabs-kept-unsaved = { $count ->
     [one] 1 välilehti, jossa on tallentamattomia muutoksia, jätettiin auki.
    *[other] { $count } välilehteä, joissa on tallentamattomia muutoksia, jätettiin auki.
     }
+status-indent-tabs = Sarkaimet
+status-indent-spaces = Välilyönnit: { $count }

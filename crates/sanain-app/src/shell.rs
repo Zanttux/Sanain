@@ -174,6 +174,8 @@ pub struct Shell {
     replace_preview: Option<ReplacePreview>,
     about_open: bool,
     recent: sanain_app::recent::Recent,
+    /// `.editorconfig` indentation per tab, keyed by the file it was read for.
+    tab_indent: HashMap<TabId, (Option<std::path::PathBuf>, sanain_app::editorconfig::Indent)>,
     /// Split editor: the tabs shown in the left and right panes, and which
     /// pane has focus (its tab is the active tab).
     split: Option<([TabId; 2], usize)>,
@@ -234,6 +236,36 @@ impl Shell {
         return self.native_menu.is_some();
         #[cfg(not(target_os = "macos"))]
         false
+    }
+
+    /// Indentation text and width for a tab: `.editorconfig` where it
+    /// configures them, otherwise the editor settings.
+    fn tab_indent(&mut self, id: TabId) -> (String, usize) {
+        let path = self
+            .ws
+            .position(id)
+            .and_then(|i| self.ws.tabs()[i].editor.file().map(|f| f.path.clone()));
+        let fresh = self.tab_indent.get(&id).is_some_and(|(p, _)| *p == path);
+        if !fresh {
+            let indent = path
+                .as_deref()
+                .map(sanain_app::editorconfig::indent_for)
+                .unwrap_or_default();
+            self.tab_indent.insert(id, (path, indent));
+        }
+        let indent = self
+            .tab_indent
+            .get(&id)
+            .map(|(_, i)| *i)
+            .unwrap_or_default();
+        let width = indent.size.unwrap_or(usize::from(self.settings.tab_width));
+        (
+            indent.text(
+                !self.settings.insert_spaces,
+                usize::from(self.settings.tab_width),
+            ),
+            width,
+        )
     }
 
     /// Remember a file in Open Recent.
@@ -298,6 +330,7 @@ impl Shell {
             replace_preview: None,
             about_open: false,
             recent: Default::default(),
+            tab_indent: HashMap::new(),
             split: None,
             right_views: HashMap::new(),
             log: None,
@@ -2219,12 +2252,15 @@ impl Shell {
         };
         let name = self.t("editor-accessible-name", &[]);
         let interactive = self.dialog.is_none();
-        let opts = ViewOptions {
-            font_size: self.settings.font_size,
-            indent: self.settings.indent(),
-            tab_width: usize::from(self.settings.tab_width),
-            wrap: self.settings.word_wrap,
-        };
+        let pane_opts = panes.map(|id| {
+            let (indent, tab_width) = self.tab_indent(id);
+            ViewOptions {
+                font_size: self.settings.font_size,
+                indent,
+                tab_width,
+                wrap: self.settings.word_wrap,
+            }
+        });
         let p = theme::palette(ui.ctx());
         let mut touched = None;
         ui.columns(2, |cols| {
@@ -2266,7 +2302,7 @@ impl Shell {
                 }
                 ui.push_id((id, pane), |ui| {
                     ui.add_enabled_ui(interactive, |ui| {
-                        if view.show(ui, editor, &name, highlights, syntax, &opts) {
+                        if view.show(ui, editor, &name, highlights, syntax, &pane_opts[pane]) {
                             touched = Some(pane);
                         }
                     });
@@ -2291,6 +2327,7 @@ impl Shell {
         let name = self.t("editor-accessible-name", &[]);
         let interactive = self.dialog.is_none();
         let id = self.ws.active().id;
+        let (indent, tab_width) = self.tab_indent(id);
         let view = self.views.entry(id).or_default();
         let editor = &mut self.ws.active_mut().editor;
         // Spans from an older revision are kept until fresh ones arrive;
@@ -2298,8 +2335,8 @@ impl Shell {
         let syntax: &[CharSpan] = self.spans.get(&id).map_or(&[], |(_, s)| s);
         let opts = ViewOptions {
             font_size: self.settings.font_size,
-            indent: self.settings.indent(),
-            tab_width: usize::from(self.settings.tab_width),
+            indent,
+            tab_width,
             wrap: self.settings.word_wrap,
         };
         let highlights: &[std::ops::Range<usize>] = if self.find.open {
@@ -2529,6 +2566,7 @@ impl Shell {
             }
         }
         let editor_cmd = |cmd| Some(cmd);
+        let (tab_indent, tab_width) = self.tab_indent(self.ws.active().id);
         let cmd = match action {
             MenuAction::New => {
                 self.ws.new_tab();
@@ -2893,10 +2931,8 @@ impl Shell {
             MenuAction::Redo => editor_cmd(Command::Redo),
             MenuAction::SelectAll => editor_cmd(Command::SelectAll),
             MenuAction::DuplicateLine => editor_cmd(Command::DuplicateLine),
-            MenuAction::IndentLines => editor_cmd(Command::IndentLines(self.settings.indent())),
-            MenuAction::OutdentLines => {
-                editor_cmd(Command::OutdentLines(usize::from(self.settings.tab_width)))
-            }
+            MenuAction::IndentLines => editor_cmd(Command::IndentLines(tab_indent)),
+            MenuAction::OutdentLines => editor_cmd(Command::OutdentLines(tab_width)),
             MenuAction::ToggleComment => {
                 match Self::language(self.editor()).and_then(|l| l.line_comment()) {
                     Some(prefix) => editor_cmd(Command::ToggleComment(prefix.to_owned())),
@@ -3140,6 +3176,19 @@ impl Shell {
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.colored_label(p.muted, editor.encoding().name());
+                if let Some((_, ind)) = self.tab_indent.get(&self.ws.active().id) {
+                    let label = match ind.text(
+                        !self.settings.insert_spaces,
+                        usize::from(self.settings.tab_width),
+                    ) {
+                        t if t == "\t" => self.t("status-indent-tabs", &[]),
+                        t => self.t(
+                            "status-indent-spaces",
+                            &[("count", (t.len() as i64).into())],
+                        ),
+                    };
+                    ui.colored_label(p.muted, label);
+                }
                 let le = match editor.line_ending() {
                     LineEnding::CrLf => "line-ending-crlf",
                     LineEnding::Cr => "line-ending-cr",

@@ -353,3 +353,5 @@ status-path-copied = 已复制文件路径。
 tabs-kept-unsaved = { $count ->
    *[other] 已保留 { $count } 个含未保存更改的标签页。
     }
+status-indent-tabs = 制表符
+status-indent-spaces = 空格: { $count }

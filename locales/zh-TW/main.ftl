@@ -353,3 +353,5 @@ status-path-copied = 已複製檔案路徑。
 tabs-kept-unsaved = { $count ->
    *[other] 已保留 { $count } 個含未儲存變更的標籤頁。
     }
+status-indent-tabs = 定位字元
+status-indent-spaces = 空格: { $count }
