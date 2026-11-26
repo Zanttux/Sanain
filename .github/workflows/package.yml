@@ -32,7 +32,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          # Oldest supported Ubuntu: binaries built here need only an older
+          # glibc, so they run on more distributions.
+          - os: ubuntu-22.04
             python: python3
           - os: windows-latest
             python: python
