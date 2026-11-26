@@ -4,14 +4,44 @@
 //!
 //! - macOS: files opened from Finder (Open With, double click, drag onto
 //!   the Dock icon, `open -a Sanain file`) arrive as an `odoc` Apple
-//!   event, not as program arguments. [`install_open_documents`] handles
+//!   event, not as program arguments. [`prepare_open_documents`] handles
 //!   that event and [`take_opened_files`] hands the paths to the app.
+//! - Windows: [`attach_parent_console`] makes CLI output visible in the
+//!   invoking console without allocating a console window.
 
 use std::path::PathBuf;
 use std::sync::Mutex;
 
 static OPENED: Mutex<Vec<PathBuf>> = Mutex::new(Vec::new());
 static WAKE: Mutex<Option<Box<dyn Fn() + Send>>> = Mutex::new(None);
+
+/// Attach to the parent's console for CLI commands that print and exit.
+/// Returns true only when attachment succeeds; returns false on other
+/// platforms, when there is no parent console, or when already attached.
+/// Never allocates a console window. Do not call on the normal GUI path.
+///
+/// On Windows, attachment sets the standard handles for a process without
+/// a console, so Rust's `println!`/`eprintln!` (which use `GetStdHandle`)
+/// work normally. Output may appear after the shell prompt because the
+/// shell does not wait for GUI-subsystem programs; this is not an error.
+pub fn attach_parent_console() -> bool {
+    #[cfg(windows)]
+    {
+        use windows_sys::Win32::System::Console::{ATTACH_PARENT_PROCESS, AttachConsole};
+
+        // SAFETY: ATTACH_PARENT_PROCESS is a valid process selector. This
+        // call takes no pointers and requires no owned resources; failure
+        // (including an existing attachment) is reported by a zero result.
+        #[allow(unsafe_code)]
+        unsafe {
+            AttachConsole(ATTACH_PARENT_PROCESS) != 0
+        }
+    }
+    #[cfg(not(windows))]
+    {
+        false
+    }
+}
 
 /// Files the system asked Sanain to open since the last call.
 pub fn take_opened_files() -> Vec<PathBuf> {
@@ -192,6 +222,12 @@ mod macos {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(not(windows))]
+    #[test]
+    fn parent_console_is_noop() {
+        assert!(!attach_parent_console());
+    }
 
     #[test]
     fn file_urls() {

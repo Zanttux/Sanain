@@ -5,6 +5,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased]
 
 ### Fixed
+- Windows release builds show `--help`, `--version`, `--register`,
+  `--unregister` and CLI usage errors in the parent console. Output may
+  appear after the shell prompt (normal Windows behaviour); GUI launches
+  still do not open a console window.
 - Right-clicking the right half of the last selected glyph preserves the
   selection. Double-clicking punctuation or whitespace between words
   selects that run instead of a neighbouring word (#113, #114).
