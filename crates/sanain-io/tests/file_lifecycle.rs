@@ -247,3 +247,47 @@ fn legacy_file_reopens_edits_and_refuses_unencodable() {
         "untouched"
     );
 }
+
+#[cfg(unix)]
+#[test]
+fn save_keeps_hard_links_together() {
+    use std::os::unix::fs::MetadataExt;
+    let dir = tempfile::tempdir().unwrap();
+    let a = dir.path().join("a.txt");
+    let b = dir.path().join("b.txt");
+    fs::write(&a, "old\n").unwrap();
+    fs::hard_link(&a, &b).unwrap();
+    let ino = fs::metadata(&a).unwrap().ino();
+    let loaded = load(&a).unwrap();
+    save(
+        &a,
+        "new contents\n",
+        TextEncoding::Utf8,
+        SaveMode::Expect(&loaded.fingerprint),
+    )
+    .unwrap();
+    assert_eq!(
+        fs::read_to_string(&b).unwrap(),
+        "new contents\n",
+        "other name sees the save"
+    );
+    assert_eq!(fs::metadata(&a).unwrap().ino(), ino, "same inode");
+    assert_eq!(fs::metadata(&a).unwrap().nlink(), 2);
+    let leftovers: Vec<_> = fs::read_dir(dir.path())
+        .unwrap()
+        .filter_map(Result::ok)
+        .map(|e| e.file_name().to_string_lossy().into_owned())
+        .filter(|n| n.contains("sanain"))
+        .collect();
+    assert!(leftovers.is_empty(), "backup removed: {leftovers:?}");
+    // A second save still works (fingerprint matches the in-place write).
+    let loaded = load(&a).unwrap();
+    save(
+        &a,
+        "again\n",
+        TextEncoding::Utf8,
+        SaveMode::Expect(&loaded.fingerprint),
+    )
+    .unwrap();
+    assert_eq!(fs::read_to_string(&b).unwrap(), "again\n");
+}

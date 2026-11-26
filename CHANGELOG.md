@@ -215,6 +215,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   or when changes are discarded.
 
 ### Fixed
+- Saving a file with several hard links (macOS, Linux) replaced it with a
+  new file, so the other names kept the old contents. Such files are now
+  overwritten in place, after a backup copy of the old contents is
+  written next to them (removed when the save succeeds).
 - Fewer whole-document copies on the UI thread: syntax highlighting got a
   copy on every keystroke (even for files too large to highlight), the
   comparison copied both documents every frame, and Go to Heading parsed
