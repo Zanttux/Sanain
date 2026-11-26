@@ -9,6 +9,8 @@
 use comrak::nodes::{AstNode, ListType, NodeValue, TableAlignment};
 use comrak::{Arena, Options, parse_document};
 
+pub mod mermaid;
+
 pub const MAX_DEPTH: usize = 48;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

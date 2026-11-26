@@ -4,6 +4,20 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+- Mermaid flowcharts in the Markdown preview, drawn natively (no
+  JavaScript, web view or network): `flowchart`/`graph` in all four
+  directions, rectangle, rounded, stadium, diamond and circle nodes,
+  solid, dotted, thick and invisible links with labels (`|text|` or
+  `-- text -->`), chains, `&` groups, quoted labels, `<br>` line breaks
+  and `%%` comments. Layered layout; cycles and self-links are drawn;
+  diagrams shrink to fit the preview and use the theme colours.
+  `style`, `classDef`, `class`, `linkStyle` and `click` lines are
+  ignored, so diagram links never open. Other diagram types, subgraphs
+  and other unsupported syntax show the source with a short note, as do
+  diagrams over the size limits (16 KB of text, 150 nodes, 300 links).
+  (#136)
+
 ## [0.2.0] — 2026-11-26
 
 Milestone M2 (tabs, sessions, recovery, search): crash and conflict tests
