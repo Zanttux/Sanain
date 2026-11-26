@@ -444,3 +444,4 @@ settings-theme-more = Lisää teemoja
 settings-theme-user-note = Omat teemat: .theme-tiedostot kansiossa { $folder } (ks. docs/THEMES.md).
 language-auto = Tunnista automaattisesti
 language-choose = Valitse tämän välilehden kieli
+tools-xml-format = Muotoile XML

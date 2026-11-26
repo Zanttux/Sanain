@@ -441,3 +441,4 @@ settings-theme-more = Diğer temalar
 settings-theme-user-note = Kendi temalarınız: { $folder } klasöründeki .theme dosyaları (bkz. docs/THEMES.md).
 language-auto = Otomatik Algıla
 language-choose = Bu sekmenin dilini seçin
+tools-xml-format = XML'i Biçimlendir

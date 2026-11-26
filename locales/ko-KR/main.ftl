@@ -417,3 +417,4 @@ settings-theme-more = 테마 더 보기
 settings-theme-user-note = 사용자 테마: { $folder } 폴더의 .theme 파일 (docs/THEMES.md 참조)
 language-auto = 자동 감지
 language-choose = 이 탭의 언어 선택
+tools-xml-format = XML 서식 지정

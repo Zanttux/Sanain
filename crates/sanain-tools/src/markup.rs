@@ -12,6 +12,10 @@ use crate::json::Node;
 /// Upper bound on tree nodes built from one document.
 pub const MAX_NODES: usize = 2_000_000;
 
+/// Smallest output cap of [`format_xml`]; the cap grows with the input.
+/// Indentation grows with depth squared, so deep nesting must stop here.
+const MIN_FORMAT_OUTPUT: usize = 16 << 20;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TreeError {
     /// 1-based.
@@ -176,6 +180,227 @@ pub fn xml_tree(text: &str) -> Result<Node, TreeError> {
     Ok(Node::Object(root.members))
 }
 
+/// One parsed piece of an XML document, by byte span in the input.
+#[derive(Clone, Copy)]
+enum Piece {
+    /// Start tag; index of its end tag and whether the whole element is
+    /// copied as written.
+    Open {
+        close: usize,
+        verbatim: bool,
+    },
+    Close,
+    /// Copied as written on a line of its own: empty element, comment,
+    /// processing instruction, declaration, DOCTYPE.
+    Item,
+    /// Whitespace-only text between tags.
+    Space,
+    /// Text with content, CDATA or an entity reference: mixed content.
+    Content,
+}
+
+/// An open element while scanning: its piece index and what it holds.
+struct Scan {
+    open: usize,
+    content: bool,
+    markup: bool,
+    preserve: bool,
+}
+
+fn preserves_space(e: &quick_xml::events::BytesStart<'_>) -> bool {
+    e.attributes()
+        .with_checks(false)
+        .flatten()
+        .any(|a| a.key.as_ref() == "xml:space" && a.value.as_ref() == "preserve")
+}
+
+fn line_breaks(s: &str) -> usize {
+    s.matches('\n').count().max(s.matches('\r').count())
+}
+
+/// Re-indent XML without changing its meaning.
+///
+/// Only whitespace between tags in element-only content changes: each
+/// child goes on its own line, nested by `indent`. An element holding text,
+/// CDATA, entity references or `xml:space="preserve"`, and any element
+/// without child markup, is copied byte for byte from its start tag to its
+/// end tag. Tags, comments, processing instructions, the declaration and
+/// DOCTYPE are copied as written; one blank line between siblings is kept.
+/// The line ending style, leading indentation and final newline of `text`
+/// are kept. Malformed XML is an error, never partial output, and so is
+/// output far larger than the input (very deep nesting).
+pub fn format_xml(text: &str, indent: &str) -> Result<String, TreeError> {
+    use quick_xml::events::Event;
+    let mut reader = quick_xml::Reader::from_str(text);
+    reader.config_mut().check_end_names = true;
+    let err = |reader: &quick_xml::Reader<&[u8]>, message: String| {
+        let (line, column) = position(text, reader.error_position() as usize);
+        TreeError {
+            line,
+            column,
+            message,
+        }
+    };
+    let mut pieces: Vec<(Piece, usize, usize)> = Vec::new();
+    let mut stack: Vec<Scan> = Vec::new();
+    let mut top_content = false;
+    loop {
+        let start = reader.buffer_position() as usize;
+        let event = reader
+            .read_event()
+            .map_err(|e| err(&reader, e.to_string()))?;
+        let end = reader.buffer_position() as usize;
+        if pieces.len() >= MAX_NODES {
+            return Err(too_large(text, start));
+        }
+        let piece = match event {
+            Event::Start(e) => {
+                if let Some(parent) = stack.last_mut() {
+                    parent.markup = true;
+                }
+                stack.push(Scan {
+                    open: pieces.len(),
+                    content: false,
+                    markup: false,
+                    preserve: preserves_space(&e),
+                });
+                Piece::Open {
+                    close: 0,
+                    verbatim: false,
+                }
+            }
+            Event::End(_) => {
+                let Some(scan) = stack.pop() else {
+                    return Err(err(&reader, "unexpected closing tag".into()));
+                };
+                let close = pieces.len();
+                pieces[scan.open].0 = Piece::Open {
+                    close,
+                    verbatim: scan.content || scan.preserve || !scan.markup,
+                };
+                Piece::Close
+            }
+            Event::Text(t) => {
+                let raw = &text[start..end];
+                debug_assert_eq!(raw.len(), t.len());
+                if raw.trim().is_empty() {
+                    Piece::Space
+                } else {
+                    Piece::Content
+                }
+            }
+            Event::CData(_) | Event::GeneralRef(_) => Piece::Content,
+            Event::Eof => break,
+            _ => {
+                if let Some(parent) = stack.last_mut() {
+                    parent.markup = true;
+                }
+                Piece::Item
+            }
+        };
+        if let Piece::Content = piece {
+            match stack.last_mut() {
+                Some(parent) => parent.content = true,
+                None => top_content = true,
+            }
+        }
+        pieces.push((piece, start, end));
+    }
+    if let Some(scan) = stack.last() {
+        let tag = &text[pieces[scan.open].1 + 1..pieces[scan.open].2];
+        let name = tag
+            .split(|c: char| c.is_whitespace() || c == '>' || c == '/')
+            .next()
+            .unwrap_or("");
+        let (line, column) = position(text, text.len());
+        return Err(TreeError {
+            line,
+            column,
+            message: format!("unclosed element <{name}>"),
+        });
+    }
+    // Text outside any element (a selected fragment): nothing is safe to move.
+    if top_content || text.trim().is_empty() {
+        return Ok(text.to_owned());
+    }
+
+    let nl = crate::dominant_break(text);
+    let lead_len = text.len() - text.trim_start().len();
+    let lead = &text[..lead_len];
+    // Indentation of the first tag's line, used as the base for every line.
+    let base = lead.rsplit(['\n', '\r']).next().unwrap_or("");
+    let mut out = String::with_capacity(text.len() + text.len() / 4);
+    out.push_str(lead);
+    let mut depth = 0usize;
+    let mut first = true;
+    let mut has_sibling = false;
+    let mut blank = false;
+    let new_line = |out: &mut String, depth: usize, blank: bool| {
+        if blank {
+            out.push_str(nl);
+        }
+        out.push_str(nl);
+        out.push_str(base);
+        for _ in 0..depth {
+            out.push_str(indent);
+        }
+    };
+    let limit = text.len().saturating_mul(8).max(MIN_FORMAT_OUTPUT);
+    let mut i = 0;
+    while i < pieces.len() {
+        let (piece, start, end) = pieces[i];
+        if out.len() > limit {
+            return Err(too_large(text, start));
+        }
+        match piece {
+            Piece::Space => {
+                if has_sibling && line_breaks(&text[start..end]) >= 2 {
+                    blank = true;
+                }
+            }
+            Piece::Close => {
+                depth -= 1;
+                new_line(&mut out, depth, false);
+                out.push_str(&text[start..end]);
+                has_sibling = true;
+                blank = false;
+            }
+            Piece::Content => unreachable!("content is inside verbatim elements"),
+            Piece::Item | Piece::Open { .. } => {
+                if !first {
+                    new_line(&mut out, depth, blank);
+                }
+                first = false;
+                blank = false;
+                match piece {
+                    Piece::Open {
+                        close,
+                        verbatim: true,
+                    } => {
+                        out.push_str(&text[start..pieces[close].2]);
+                        i = close;
+                        has_sibling = true;
+                    }
+                    Piece::Open { .. } => {
+                        out.push_str(&text[start..end]);
+                        depth += 1;
+                        has_sibling = false;
+                    }
+                    _ => {
+                        out.push_str(&text[start..end]);
+                        has_sibling = true;
+                    }
+                }
+            }
+        }
+        i += 1;
+    }
+    if text.ends_with(['\n', '\r']) {
+        out.push_str(nl);
+    }
+    Ok(out)
+}
+
 enum Frame {
     Seq(Vec<Node>),
     /// Members so far and the key waiting for its value.
@@ -264,6 +489,81 @@ mod tests {
             Node::Scalar(s) => s,
             _ => panic!("not a scalar: {n:?}"),
         }
+    }
+
+    fn fmt(src: &str) -> String {
+        let out = format_xml(src, "  ").unwrap();
+        assert_eq!(format_xml(&out, "  ").unwrap(), out, "idempotent");
+        out
+    }
+
+    #[test]
+    fn format_xml_nests_elements() {
+        let src = "<?xml version=\"1.0\"?>\n<a><b><c>1</c><d/></b>\n\n\n<e x='1'  y=\"&quot;q&amp;\"></e></a>\n";
+        assert_eq!(
+            fmt(src),
+            "<?xml version=\"1.0\"?>\n<a>\n  <b>\n    <c>1</c>\n    <d/>\n  </b>\n\n  <e x='1'  y=\"&quot;q&amp;\"></e>\n</a>\n"
+        );
+        assert_eq!(
+            format_xml("<a><b/></a>", "\t").unwrap(),
+            "<a>\n\t<b/>\n</a>"
+        );
+    }
+
+    #[test]
+    fn format_xml_keeps_comments_pis_and_doctype() {
+        let src =
+            "<!DOCTYPE r [<!ENTITY e \"x\">]><!-- top --><r><?pi  data ?><!--\n  c\n--><s/></r>";
+        assert_eq!(
+            fmt(src),
+            "<!DOCTYPE r [<!ENTITY e \"x\">]>\n<!-- top -->\n<r>\n  <?pi  data ?>\n  <!--\n  c\n-->\n  <s/>\n</r>"
+        );
+    }
+
+    #[test]
+    fn format_xml_leaves_mixed_content_and_cdata() {
+        let src = "<r><p>Some <b>bold</b>   <i> x </i>\n tail</p><q><![CDATA[ <a>  </a> ]]><z/></q><t>&e;<u/></t><s xml:space=\"preserve\"> <v/> </s><w>  </w></r>";
+        assert_eq!(
+            fmt(src),
+            "<r>\n  <p>Some <b>bold</b>   <i> x </i>\n tail</p>\n  <q><![CDATA[ <a>  </a> ]]><z/></q>\n  <t>&e;<u/></t>\n  <s xml:space=\"preserve\"> <v/> </s>\n  <w>  </w>\n</r>"
+        );
+        // Text outside elements: unchanged.
+        assert_eq!(fmt("x <a><b/></a>"), "x <a><b/></a>");
+    }
+
+    #[test]
+    fn format_xml_keeps_empty_element_style_and_crlf() {
+        let src = "<a>\r\n<b/><c></c>\r\n    <d >\r\n<e/></d></a>\r\n";
+        assert_eq!(
+            fmt(src),
+            "<a>\r\n  <b/>\r\n  <c></c>\r\n  <d >\r\n    <e/>\r\n  </d>\r\n</a>\r\n"
+        );
+        assert_eq!(fmt("<a><b/></a>"), "<a>\n  <b/>\n</a>");
+    }
+
+    #[test]
+    fn format_xml_keeps_base_indentation_of_a_selection() {
+        assert_eq!(fmt("    <a><b/></a>"), "    <a>\n      <b/>\n    </a>");
+    }
+
+    #[test]
+    fn format_xml_rejects_malformed_input() {
+        let e = format_xml("<a>\n  <b></c>\n</a>", "  ").unwrap_err();
+        assert_eq!(e.line, 2, "{e:?}");
+        let e = format_xml("<a><b></b>", "  ").unwrap_err();
+        assert!(e.message.contains("<a>"), "{e:?}");
+        assert!(format_xml("<a></a></b>", "  ").is_err());
+        assert!(format_xml("<a><!-- x </a>", "  ").is_err());
+    }
+
+    #[test]
+    fn format_xml_handles_deep_nesting_and_empty_input() {
+        let nest = |n| format!("{}<x/>{}", "<a>".repeat(n), "</a>".repeat(n));
+        assert!(format_xml(&nest(1_000), " ").is_ok());
+        let e = format_xml(&nest(50_000), " ").unwrap_err();
+        assert_eq!(e.message, "too large");
+        assert_eq!(fmt(""), "");
+        assert_eq!(fmt("  \n"), "  \n");
     }
 
     #[test]

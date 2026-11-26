@@ -441,3 +441,4 @@ settings-theme-more = Flere temaer
 settings-theme-user-note = Egne temaer: .theme-filer i { $folder } (se docs/THEMES.md).
 language-auto = Oppdag automatisk
 language-choose = Velg språket for denne fanen
+tools-xml-format = Formater XML

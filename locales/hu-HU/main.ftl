@@ -441,3 +441,4 @@ settings-theme-more = További témák
 settings-theme-user-note = Saját témák: .theme fájlok ebben a mappában: { $folder } (lásd: docs/THEMES.md).
 language-auto = Automatikus felismerés
 language-choose = Válassza ki ennek a lapnak a nyelvét
+tools-xml-format = XML formázása

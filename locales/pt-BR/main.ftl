@@ -465,3 +465,4 @@ settings-theme-more = Mais temas
 settings-theme-user-note = Seus próprios temas: arquivos .theme na pasta { $folder } (consulte docs/THEMES.md).
 language-auto = Detectar automaticamente
 language-choose = Escolher a linguagem desta aba
+tools-xml-format = Formatar XML

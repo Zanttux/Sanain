@@ -417,3 +417,4 @@ settings-theme-more = Thêm chủ đề
 settings-theme-user-note = Chủ đề của riêng bạn: tệp .theme trong thư mục { $folder } (xem docs/THEMES.md).
 language-auto = Tự động nhận diện
 language-choose = Chọn ngôn ngữ cho tab này
+tools-xml-format = Định dạng XML

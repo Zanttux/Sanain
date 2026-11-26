@@ -82,6 +82,7 @@ pub enum MenuAction {
     SplitEditor,
     About,
     XmlValidate,
+    XmlFormat,
     YamlValidate,
     OpenRecent,
     SaveAll,
@@ -96,7 +97,7 @@ pub enum MenuAction {
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 86] = [
+    pub const ALL: [MenuAction; 87] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -172,6 +173,7 @@ impl MenuAction {
         Self::SplitEditor,
         Self::About,
         Self::XmlValidate,
+        Self::XmlFormat,
         Self::YamlValidate,
         Self::OpenRecent,
         Self::SaveAll,
@@ -263,6 +265,7 @@ impl MenuAction {
             Self::SplitEditor => "view.split-editor",
             Self::About => "app.about",
             Self::XmlValidate => "tools.xml-validate",
+            Self::XmlFormat => "tools.xml-format",
             Self::YamlValidate => "tools.yaml-validate",
             Self::OpenRecent => "file.open-recent",
             Self::SaveAll => "file.save-all",
@@ -360,6 +363,7 @@ impl MenuAction {
             Self::SplitEditor => "view-split-editor",
             Self::About => "app-about",
             Self::XmlValidate => "tools-xml-validate",
+            Self::XmlFormat => "tools-xml-format",
             Self::YamlValidate => "tools-yaml-validate",
             Self::OpenRecent => "file-open-recent",
             Self::SaveAll => "file-save-all",
@@ -476,6 +480,7 @@ impl MenuAction {
             | Self::WordWrap
             | Self::About
             | Self::XmlValidate
+            | Self::XmlFormat
             | Self::YamlValidate
             | Self::Revert
             | Self::CloseOthers
@@ -592,6 +597,7 @@ const TOOLS_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::JsonFormat),
     Some(MenuAction::JsonMinify),
     Some(MenuAction::XmlValidate),
+    Some(MenuAction::XmlFormat),
     Some(MenuAction::YamlValidate),
     None,
     Some(MenuAction::SortLines),
@@ -883,6 +889,7 @@ mod native {
             | MenuAction::WordWrap
             | MenuAction::About
             | MenuAction::XmlValidate
+            | MenuAction::XmlFormat
             | MenuAction::YamlValidate
             | MenuAction::Revert
             | MenuAction::CloseOthers
