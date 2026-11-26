@@ -794,6 +794,7 @@ impl Shell {
                     self.pane_views.retain(|(_, t), _| *t != id);
                     self.spans.remove(&id);
                     self.requested.remove(&id);
+                    self.syntax.forget(id);
                     self.md_cache.remove(&id);
                     self.md_modes.remove(&id);
                     self.md_synced.retain(|(t, _), _| *t != id);

@@ -13,6 +13,9 @@ use std::sync::atomic::AtomicUsize;
 use tree_sitter_highlight::{HighlightConfiguration, HighlightEvent};
 
 mod folds;
+mod incremental;
+
+pub use incremental::Syntax;
 
 /// PHP's own injections plus the HTML around `<?php … ?>`, highlighted as
 /// one combined HTML document.
@@ -498,8 +501,12 @@ pub struct Highlighter {
     /// Markdown's inline grammar, injected into its block grammar.
     md_inline: Option<Option<HighlightConfiguration>>,
     inner: tree_sitter_highlight::Highlighter,
-    /// Parser for folding (the highlighter keeps its own).
+    /// Parser for folding and [`Self::analyze`] (the highlighter keeps
+    /// its own).
     parser: tree_sitter::Parser,
+    /// Query cursor and capture styles for [`Self::analyze`].
+    cursor: tree_sitter::QueryCursor,
+    styles: HashMap<Lang, Vec<Option<Style>>>,
 }
 
 impl std::fmt::Debug for Highlighter {
@@ -521,6 +528,8 @@ impl Highlighter {
             md_inline: None,
             inner: tree_sitter_highlight::Highlighter::new(),
             parser: tree_sitter::Parser::new(),
+            cursor: tree_sitter::QueryCursor::new(),
+            styles: HashMap::new(),
         }
     }
 

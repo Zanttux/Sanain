@@ -1,9 +1,9 @@
 //! Syntax-aware folding: foldable line ranges from the Tree-sitter tree.
 
-use std::ops::{ControlFlow, Range};
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::ops::Range;
+use std::sync::atomic::AtomicUsize;
 
-use tree_sitter::{Node, ParseOptions, Parser};
+use tree_sitter::{Node, Parser};
 
 use crate::{HighlightError, Lang};
 
@@ -74,7 +74,7 @@ fn foldable(lang: Lang, kind: &str) -> bool {
 /// `range.start` is the line the fold starts on (it stays visible) and
 /// the hidden lines are `range.start + 1..range.end`. Sorted by start,
 /// at most one fold per start line (the outermost).
-fn collect(lang: Lang, root: Node<'_>, source: &[u8]) -> Vec<Range<usize>> {
+pub(crate) fn collect(lang: Lang, root: Node<'_>, source: &[u8]) -> Vec<Range<usize>> {
     let starts: Vec<usize> = std::iter::once(0)
         .chain(
             source
@@ -92,6 +92,8 @@ fn collect(lang: Lang, root: Node<'_>, source: &[u8]) -> Vec<Range<usize>> {
     let trimmed = |l: usize| line(l).trim_ascii();
 
     let mut out: Vec<Range<usize>> = Vec::new();
+    // Whether each node kind folds, decided once per kind.
+    let mut kinds: Vec<Option<bool>> = vec![None; root.language().node_kind_count()];
     let mut cursor = root.walk();
     'walk: loop {
         let node = cursor.node();
@@ -111,7 +113,15 @@ fn collect(lang: Lang, root: Node<'_>, source: &[u8]) -> Vec<Range<usize>> {
         };
         // The root (a whole module or document) does not fold.
         let nested = cursor.depth() > 0;
-        if last > first && nested && node.is_named() && foldable(lang, node.kind()) {
+        if last > first
+            && nested
+            && node.is_named()
+            && match kinds.get_mut(usize::from(node.kind_id())) {
+                Some(Some(f)) => *f,
+                Some(slot) => *slot.insert(foldable(lang, node.kind())),
+                None => foldable(lang, node.kind()),
+            }
+        {
             let closing = {
                 let t = trimmed(last);
                 matches!(t.first(), Some(b'}' | b']' | b')'))
@@ -161,31 +171,8 @@ pub(crate) fn folds(
     source: &[u8],
     cancel: Option<&AtomicUsize>,
 ) -> Result<Vec<Range<usize>>, HighlightError> {
-    parser
-        .set_language(language)
-        .map_err(|e| HighlightError::Failed(e.to_string()))?;
-    let mut cancelled = false;
-    let mut progress = |_: &tree_sitter::ParseState| {
-        if cancel.is_some_and(|c| c.load(Ordering::Relaxed) != 0) {
-            cancelled = true;
-            ControlFlow::Break(())
-        } else {
-            ControlFlow::Continue(())
-        }
-    };
-    let len = source.len();
-    let tree = parser.parse_with_options(
-        &mut |i, _| if i < len { &source[i..] } else { &[] },
-        None,
-        Some(ParseOptions::new().progress_callback(&mut progress)),
-    );
-    // The parser keeps partial state after an interruption.
-    parser.reset();
-    match tree {
-        Some(tree) => Ok(collect(lang, tree.root_node(), source)),
-        None if cancelled => Err(HighlightError::Cancelled),
-        None => Err(HighlightError::Failed("parsing failed".into())),
-    }
+    let tree = crate::incremental::parse(parser, language, source, None, cancel)?;
+    Ok(collect(lang, tree.root_node(), source))
 }
 
 #[cfg(test)]
