@@ -377,3 +377,19 @@ about-source = Zdrojový kód a hlášení chyb na GitHubu
 tools-xml-validate = Ověřit XML
 tools-yaml-validate = Ověřit YAML
 tools-markup-valid = { $format } je platný
+file-open-recent = Otevřít nedávné…
+file-save-all = Uložit vše
+file-revert = Vrátit k uloženému
+recent-hint = Pište pro filtrování nedávných souborů
+recent-none = Zatím žádné nedávné soubory.
+revert-title = Zahodit změny v souboru { $name }?
+revert-body = Soubor bude znovu načten z disku. Neuložené změny budou ztraceny a nelze je vrátit zpět.
+revert-confirm = Zahodit a znovu načíst
+revert-done = Soubor { $name } byl znovu načten z disku.
+status-saved-all = { $count ->
+    [0] Není co uložit.
+    [one] Uložen 1 soubor.
+    [few] Uloženy { $count } soubory.
+    [many] Uloženo { $count } souboru.
+   *[other] Uloženo { $count } souborů.
+    }

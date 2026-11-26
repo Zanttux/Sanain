@@ -326,3 +326,16 @@ about-source = Mã nguồn và báo lỗi trên GitHub
 tools-xml-validate = Kiểm tra XML
 tools-yaml-validate = Kiểm tra YAML
 tools-markup-valid = { $format } hợp lệ
+file-open-recent = Mở gần đây…
+file-save-all = Lưu tất cả
+file-revert = Hoàn nguyên về bản đã lưu
+recent-hint = Nhập để lọc các tệp gần đây
+recent-none = Chưa có tệp gần đây nào.
+revert-title = Hủy các thay đổi trong { $name }?
+revert-body = Tệp được tải lại từ đĩa. Các thay đổi chưa lưu sẽ bị mất và không thể hoàn tác.
+revert-confirm = Hủy và tải lại
+revert-done = Đã tải lại { $name } từ đĩa.
+status-saved-all = { $count ->
+    [0] Không có gì để lưu.
+   *[other] Đã lưu { $count } tệp.
+    }

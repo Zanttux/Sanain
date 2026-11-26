@@ -77,10 +77,13 @@ pub enum MenuAction {
     About,
     XmlValidate,
     YamlValidate,
+    OpenRecent,
+    SaveAll,
+    Revert,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 70] = [
+    pub const ALL: [MenuAction; 73] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -151,6 +154,9 @@ impl MenuAction {
         Self::About,
         Self::XmlValidate,
         Self::YamlValidate,
+        Self::OpenRecent,
+        Self::SaveAll,
+        Self::Revert,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -226,6 +232,9 @@ impl MenuAction {
             Self::About => "app.about",
             Self::XmlValidate => "tools.xml-validate",
             Self::YamlValidate => "tools.yaml-validate",
+            Self::OpenRecent => "file.open-recent",
+            Self::SaveAll => "file.save-all",
+            Self::Revert => "file.revert",
         }
     }
 
@@ -307,6 +316,9 @@ impl MenuAction {
             Self::About => "app-about",
             Self::XmlValidate => "tools-xml-validate",
             Self::YamlValidate => "tools-yaml-validate",
+            Self::OpenRecent => "file-open-recent",
+            Self::SaveAll => "file-save-all",
+            Self::Revert => "file-revert",
         }
     }
 
@@ -341,6 +353,8 @@ impl MenuAction {
             Self::Open => (cmd, Key::O),
             Self::Save => (cmd, Key::S),
             Self::SaveAs => (cmd_shift, Key::S),
+            Self::SaveAll => (cmd.plus(Modifiers::ALT), Key::S),
+            Self::OpenRecent => (cmd_shift, Key::E),
             Self::Quit => (cmd, Key::Q),
             Self::Undo => (cmd, Key::Z),
             Self::Redo => (cmd_shift, Key::Z),
@@ -405,6 +419,7 @@ impl MenuAction {
             | Self::About
             | Self::XmlValidate
             | Self::YamlValidate
+            | Self::Revert
             | Self::CompareSaved
             | Self::CompareClipboard => return None,
         };
@@ -459,10 +474,13 @@ pub type Label<'a> = &'a dyn Fn(&str) -> String;
 const FILE_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::New),
     Some(MenuAction::Open),
+    Some(MenuAction::OpenRecent),
     Some(MenuAction::OpenLog),
     None,
     Some(MenuAction::Save),
     Some(MenuAction::SaveAs),
+    Some(MenuAction::SaveAll),
+    Some(MenuAction::Revert),
     Some(MenuAction::SaveWithEncoding),
     Some(MenuAction::ReopenWithEncoding),
     None,
@@ -695,6 +713,8 @@ mod native {
             MenuAction::Open => (cmd, ch("o")),
             MenuAction::Save => (cmd, ch("s")),
             MenuAction::SaveAs => (cmd_shift, ch("s")),
+            MenuAction::SaveAll => (cmd | Modifiers::ALT, ch("s")),
+            MenuAction::OpenRecent => (cmd_shift, ch("e")),
             MenuAction::Quit => (cmd, ch("q")),
             MenuAction::Undo => (cmd, ch("z")),
             MenuAction::Redo => (cmd_shift, ch("z")),
@@ -764,6 +784,7 @@ mod native {
             | MenuAction::About
             | MenuAction::XmlValidate
             | MenuAction::YamlValidate
+            | MenuAction::Revert
             | MenuAction::CompareSaved
             | MenuAction::CompareClipboard => return None,
         };

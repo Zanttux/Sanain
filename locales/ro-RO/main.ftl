@@ -360,3 +360,18 @@ about-source = Cod sursă și probleme pe GitHub
 tools-xml-validate = Validează XML
 tools-yaml-validate = Validează YAML
 tools-markup-valid = { $format } este valid
+file-open-recent = Deschide recente…
+file-save-all = Salvează tot
+file-revert = Revino la versiunea salvată
+recent-hint = Tastează pentru a filtra fișierele recente
+recent-none = Încă nu există fișiere recente.
+revert-title = Renunți la modificările din { $name }?
+revert-body = Fișierul este reîncărcat de pe disc. Modificările nesalvate se pierd și nu pot fi anulate.
+revert-confirm = Renunță și reîncarcă
+revert-done = { $name } a fost reîncărcat de pe disc.
+status-saved-all = { $count ->
+    [0] Nimic de salvat.
+    [one] A fost salvat 1 fișier.
+    [few] Au fost salvate { $count } fișiere.
+   *[other] Au fost salvate { $count } de fișiere.
+    }

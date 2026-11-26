@@ -343,3 +343,17 @@ about-source = Forráskód és hibajegyek a GitHubon
 tools-xml-validate = XML ellenőrzése
 tools-yaml-validate = YAML ellenőrzése
 tools-markup-valid = A { $format } érvényes
+file-open-recent = Legutóbbi megnyitása…
+file-save-all = Összes mentése
+file-revert = Visszaállítás a mentett változatra
+recent-hint = Gépeljen a legutóbbi fájlok szűréséhez
+recent-none = Még nincsenek legutóbbi fájlok.
+revert-title = Elveti a(z) { $name } módosításait?
+revert-body = A fájl újra betöltődik a lemezről. A nem mentett módosítások elvesznek, és nem vonhatók vissza.
+revert-confirm = Elvetés és újratöltés
+revert-done = A(z) { $name } újra betöltve a lemezről.
+status-saved-all = { $count ->
+    [0] Nincs mit menteni.
+    [one] 1 fájl mentve.
+   *[other] { $count } fájl mentve.
+    }

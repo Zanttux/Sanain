@@ -326,3 +326,16 @@ about-source = GitHub의 소스 코드 및 이슈
 tools-xml-validate = XML 검사
 tools-yaml-validate = YAML 검사
 tools-markup-valid = 유효한 { $format }입니다
+file-open-recent = 최근 항목 열기…
+file-save-all = 모두 저장
+file-revert = 저장된 상태로 되돌리기
+recent-hint = 입력하여 최근 파일 필터링
+recent-none = 아직 최근 파일이 없습니다.
+revert-title = { $name }의 변경 사항을 버리시겠습니까?
+revert-body = 파일을 디스크에서 다시 불러옵니다. 저장하지 않은 변경 사항은 사라지며 실행 취소할 수 없습니다.
+revert-confirm = 버리고 다시 불러오기
+revert-done = 디스크에서 { $name }을(를) 다시 불러왔습니다.
+status-saved-all = { $count ->
+    [0] 저장할 항목이 없습니다.
+   *[other] 파일 { $count }개를 저장했습니다.
+    }

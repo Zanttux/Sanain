@@ -342,3 +342,17 @@ about-source = Source code and issues on GitHub
 tools-xml-validate = Validate XML
 tools-yaml-validate = Validate YAML
 tools-markup-valid = Valid { $format }.
+file-open-recent = Open Recent…
+file-save-all = Save All
+file-revert = Revert to Saved
+recent-hint = Type to filter recent files
+recent-none = No recent files yet.
+revert-title = Discard changes to { $name }?
+revert-body = The file is reloaded from disk. Unsaved changes are lost and cannot be undone.
+revert-confirm = Discard and Reload
+revert-done = Reloaded { $name } from disk.
+status-saved-all = { $count ->
+    [0] Nothing to save.
+    [one] Saved 1 file.
+   *[other] Saved { $count } files.
+    }

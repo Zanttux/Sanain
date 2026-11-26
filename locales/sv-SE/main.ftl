@@ -343,3 +343,17 @@ about-source = Källkod och ärenden på GitHub
 tools-xml-validate = Validera XML
 tools-yaml-validate = Validera YAML
 tools-markup-valid = { $format } är giltig
+file-open-recent = Öppna senaste…
+file-save-all = Spara alla
+file-revert = Återgå till sparad version
+recent-hint = Skriv för att filtrera senaste filer
+recent-none = Inga senaste filer ännu.
+revert-title = Vill du ignorera ändringarna i { $name }?
+revert-body = Filen läses in på nytt från disken. Osparade ändringar går förlorade och kan inte ångras.
+revert-confirm = Ignorera och läs in igen
+revert-done = { $name } har lästs in på nytt från disken.
+status-saved-all = { $count ->
+    [0] Inget att spara.
+    [one] 1 fil har sparats.
+   *[other] { $count } filer har sparats.
+    }

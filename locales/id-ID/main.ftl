@@ -326,3 +326,16 @@ about-source = Kode sumber dan laporan masalah di GitHub
 tools-xml-validate = Validasi XML
 tools-yaml-validate = Validasi YAML
 tools-markup-valid = { $format } valid
+file-open-recent = Buka Terbaru…
+file-save-all = Simpan Semua
+file-revert = Kembalikan ke Versi Tersimpan
+recent-hint = Ketik untuk memfilter berkas terbaru
+recent-none = Belum ada berkas terbaru.
+revert-title = Buang perubahan pada { $name }?
+revert-body = Berkas dimuat ulang dari disk. Perubahan yang belum disimpan akan hilang dan tidak dapat diurungkan.
+revert-confirm = Buang dan Muat Ulang
+revert-done = { $name } dimuat ulang dari disk.
+status-saved-all = { $count ->
+    [0] Tidak ada yang perlu disimpan.
+   *[other] { $count } berkas disimpan.
+    }

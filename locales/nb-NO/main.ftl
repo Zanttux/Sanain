@@ -343,3 +343,17 @@ about-source = Kildekode og feilrapporter på GitHub
 tools-xml-validate = Valider XML
 tools-yaml-validate = Valider YAML
 tools-markup-valid = { $format } er gyldig
+file-open-recent = Åpne nylig brukt…
+file-save-all = Lagre alle
+file-revert = Tilbakestill til lagret versjon
+recent-hint = Skriv for å filtrere nylig brukte filer
+recent-none = Ingen nylig brukte filer ennå.
+revert-title = Forkaste endringene i { $name }?
+revert-body = Filen lastes inn på nytt fra disken. Ulagrede endringer går tapt og kan ikke angres.
+revert-confirm = Forkast og last inn på nytt
+revert-done = { $name } er lastet inn på nytt fra disken.
+status-saved-all = { $count ->
+    [0] Ingenting å lagre.
+    [one] 1 fil er lagret.
+   *[other] { $count } filer er lagret.
+    }

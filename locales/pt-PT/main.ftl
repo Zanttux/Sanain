@@ -360,3 +360,18 @@ about-source = Código-fonte e problemas no GitHub
 tools-xml-validate = Validar XML
 tools-yaml-validate = Validar YAML
 tools-markup-valid = O { $format } é válido
+file-open-recent = Abrir recente…
+file-save-all = Guardar tudo
+file-revert = Reverter para a versão guardada
+recent-hint = Escreva para filtrar os ficheiros recentes
+recent-none = Ainda não há ficheiros recentes.
+revert-title = Descartar as alterações em { $name }?
+revert-body = O ficheiro é recarregado do disco. As alterações não guardadas perdem-se e não podem ser anuladas.
+revert-confirm = Descartar e recarregar
+revert-done = { $name } foi recarregado do disco.
+status-saved-all = { $count ->
+    [0] Nada para guardar.
+    [one] 1 ficheiro guardado.
+    [many] { $count } de ficheiros guardados.
+   *[other] { $count } ficheiros guardados.
+    }
