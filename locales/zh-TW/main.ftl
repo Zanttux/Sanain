@@ -397,3 +397,11 @@ replace-files-failed = { $failed ->
     } { $first }
 image-outside = 此影像位於文件所在檔案夾之外。
 image-allow = 顯示此檔案夾中的影像
+cli-help-integration =
+    與檔案管理器整合（僅限目前使用者）：
+      sanain --register           將 Sanain 加入「開啟檔案」（Linux、Windows）
+      sanain --unregister         再次移除
+cli-registered = 已將 Sanain 加入「開啟檔案」。{ $place }
+cli-unregistered = 已從「開啟檔案」中移除 Sanain。
+cli-register-failed = 無法變更檔案管理器整合：{ $reason }
+cli-register-macos = macOS 上的 Finder 整合尚無法使用。請在 Sanain 中（檔案 › 打開、拖放）或透過命令列開啟檔案。

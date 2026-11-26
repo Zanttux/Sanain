@@ -69,8 +69,16 @@ fn main() -> eframe::Result {
     // Help and usage errors need the localizer; print and exit.
     match &parsed {
         sanain_app::cli::Parsed::Help => {
-            println!("{}", l10n.get("cli-help"));
+            println!(
+                "{}\n{}",
+                l10n.get("cli-help"),
+                l10n.get("cli-help-integration")
+            );
             return Ok(());
+        }
+        sanain_app::cli::Parsed::Register | sanain_app::cli::Parsed::Unregister => {
+            let register = parsed == sanain_app::cli::Parsed::Register;
+            std::process::exit(shell_registration(&l10n, register));
         }
         sanain_app::cli::Parsed::Unknown(arg) => {
             let mut args = sanain_i18n::FluentArgs::new();
@@ -163,4 +171,53 @@ fn main() -> eframe::Result {
             Ok(Box::new(shell))
         }),
     )
+}
+
+/// `--register` / `--unregister`: prints the outcome, returns the exit code.
+fn shell_registration(l10n: &Localizer, register: bool) -> i32 {
+    use sanain_app::shellreg;
+    let plain = |s: String| s.replace(['\u{2068}', '\u{2069}'], "");
+    let fmt = |id: &str, k: &str, v: String| {
+        let mut a = sanain_i18n::FluentArgs::new();
+        a.set(k, v);
+        plain(l10n.format(id, Some(&a)))
+    };
+    if cfg!(target_os = "macos") {
+        println!("{}", l10n.get("cli-register-macos"));
+        return 0;
+    }
+    let exe = match std::env::current_exe().and_then(|p| p.canonicalize()) {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!(
+                "sanain: {}",
+                fmt("cli-register-failed", "reason", e.to_string())
+            );
+            return 1;
+        }
+    };
+    let result: std::io::Result<String> = if cfg!(windows) {
+        shellreg::windows_apply(&exe, register).map(|()| String::new())
+    } else if register {
+        shellreg::register_freedesktop(&exe, None).map(|p| p.display().to_string())
+    } else {
+        shellreg::unregister_freedesktop(None).map(|_| String::new())
+    };
+    match result {
+        Ok(place) if register => {
+            println!("{}", fmt("cli-registered", "place", place));
+            0
+        }
+        Ok(_) => {
+            println!("{}", l10n.get("cli-unregistered"));
+            0
+        }
+        Err(e) => {
+            eprintln!(
+                "sanain: {}",
+                fmt("cli-register-failed", "reason", e.to_string())
+            );
+            1
+        }
+    }
 }

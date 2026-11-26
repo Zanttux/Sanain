@@ -421,3 +421,11 @@ replace-files-failed = { $failed ->
     } { $first }
 image-outside = Αυτή η εικόνα βρίσκεται εκτός του φακέλου του εγγράφου.
 image-allow = Εμφάνιση εικόνων από αυτόν τον φάκελο
+cli-help-integration =
+    Ενσωμάτωση στη διαχείριση αρχείων (μόνο για τον τρέχοντα χρήστη):
+      sanain --register           προσθήκη του Sanain στο «Άνοιγμα με» (Linux, Windows)
+      sanain --unregister         αφαίρεσή του ξανά
+cli-registered = Το Sanain προστέθηκε στο «Άνοιγμα με». { $place }
+cli-unregistered = Το Sanain αφαιρέθηκε από το «Άνοιγμα με».
+cli-register-failed = Δεν ήταν δυνατή η αλλαγή της ενσωμάτωσης στη διαχείριση αρχείων: { $reason }
+cli-register-macos = Η ενσωμάτωση στο Finder στο macOS δεν είναι ακόμη διαθέσιμη. Ανοίξτε αρχεία από το Sanain (Αρχείο › Άνοιγμα, μεταφορά και απόθεση) ή από τη γραμμή εντολών.

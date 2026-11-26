@@ -469,3 +469,11 @@ replace-files-failed = { $failed ->
     } { $first }
 image-outside = Tento obrázek je mimo složku dokumentu.
 image-allow = Zobrazit obrázky z této složky
+cli-help-integration =
+    Integrace se správcem souborů (jen pro aktuálního uživatele):
+      sanain --register           přidat Sanain do nabídky „Otevřít v aplikaci“ (Linux, Windows)
+      sanain --unregister         znovu jej odebrat
+cli-registered = Sanain byl přidán do nabídky „Otevřít v aplikaci“. { $place }
+cli-unregistered = Sanain byl odebrán z nabídky „Otevřít v aplikaci“.
+cli-register-failed = Integraci se správcem souborů nebylo možné změnit: { $reason }
+cli-register-macos = Integrace s Finderem v macOS zatím není k dispozici. Otevírejte soubory ze Sanainu (Soubor › Otevřít, přetažení) nebo z příkazového řádku.

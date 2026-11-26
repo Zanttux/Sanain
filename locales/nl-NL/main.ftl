@@ -421,3 +421,11 @@ replace-files-failed = { $failed ->
     } { $first }
 image-outside = Deze afbeelding staat buiten de map van het document.
 image-allow = Afbeeldingen uit deze map tonen
+cli-help-integration =
+    Integratie met het bestandsbeheer (alleen huidige gebruiker):
+      sanain --register           Sanain toevoegen aan ‘Openen met’ (Linux, Windows)
+      sanain --unregister         weer verwijderen
+cli-registered = Sanain is toegevoegd aan ‘Openen met’. { $place }
+cli-unregistered = Sanain is verwijderd uit ‘Openen met’.
+cli-register-failed = De integratie met het bestandsbeheer kon niet worden gewijzigd: { $reason }
+cli-register-macos = Finder-integratie op macOS is nog niet beschikbaar. Open bestanden vanuit Sanain (Bestand › Open, slepen en neerzetten) of vanaf de opdrachtregel.

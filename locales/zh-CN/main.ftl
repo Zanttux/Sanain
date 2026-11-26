@@ -397,3 +397,11 @@ replace-files-failed = { $failed ->
     } { $first }
 image-outside = 此图像位于文稿所在文件夹之外。
 image-allow = 显示此文件夹中的图像
+cli-help-integration =
+    与文件管理器集成（仅限当前用户）：
+      sanain --register           将 Sanain 添加到“打开方式”（Linux、Windows）
+      sanain --unregister         再次移除
+cli-registered = 已将 Sanain 添加到“打开方式”。{ $place }
+cli-unregistered = 已从“打开方式”中移除 Sanain。
+cli-register-failed = 无法更改文件管理器集成：{ $reason }
+cli-register-macos = macOS 上的访达集成尚不可用。请在 Sanain 中（文件 › 打开、拖放）或通过命令行打开文件。

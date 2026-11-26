@@ -421,3 +421,11 @@ replace-files-failed = { $failed ->
     } { $first }
 image-outside = Den här bilden ligger utanför dokumentets mapp.
 image-allow = Visa bilder från den här mappen
+cli-help-integration =
+    Integrering med filhanteraren (endast aktuell användare):
+      sanain --register           lägg till Sanain i ”Öppna med” (Linux, Windows)
+      sanain --unregister         ta bort det igen
+cli-registered = Sanain lades till i ”Öppna med”. { $place }
+cli-unregistered = Sanain togs bort från ”Öppna med”.
+cli-register-failed = Integreringen med filhanteraren kunde inte ändras: { $reason }
+cli-register-macos = Finder-integrering i macOS är inte tillgänglig ännu. Öppna filer från Sanain (Arkiv › Öppna, dra och släpp) eller från kommandoraden.

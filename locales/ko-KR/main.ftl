@@ -397,3 +397,11 @@ replace-files-failed = { $failed ->
     } { $first }
 image-outside = 이 이미지는 문서의 폴더 밖에 있습니다.
 image-allow = 이 폴더의 이미지 표시
+cli-help-integration =
+    파일 관리자 통합 (현재 사용자만):
+      sanain --register           "연결 프로그램"에 Sanain 추가 (Linux, Windows)
+      sanain --unregister         다시 제거
+cli-registered = Sanain을 "연결 프로그램"에 추가했습니다. { $place }
+cli-unregistered = Sanain을 "연결 프로그램"에서 제거했습니다.
+cli-register-failed = 파일 관리자 통합을 변경할 수 없습니다: { $reason }
+cli-register-macos = macOS의 Finder 통합은 아직 사용할 수 없습니다. Sanain에서(파일 › 열기, 끌어서 놓기) 또는 명령줄에서 파일을 여세요.

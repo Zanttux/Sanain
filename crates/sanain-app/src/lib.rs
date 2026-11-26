@@ -12,6 +12,7 @@ pub mod recovery;
 pub mod replacefiles;
 pub mod session;
 pub mod settings;
+pub mod shellreg;
 pub mod syntax;
 pub mod update;
 pub mod workspace;

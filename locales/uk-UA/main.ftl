@@ -469,3 +469,11 @@ replace-files-failed = { $failed ->
     } { $first }
 image-outside = Це зображення розташоване поза текою документа.
 image-allow = Показати зображення з цієї теки
+cli-help-integration =
+    Інтеграція з файловим менеджером (лише для поточного користувача):
+      sanain --register           додати Sanain до «Відкрити за допомогою» (Linux, Windows)
+      sanain --unregister         знову вилучити його
+cli-registered = Sanain додано до «Відкрити за допомогою». { $place }
+cli-unregistered = Sanain вилучено з «Відкрити за допомогою».
+cli-register-failed = Не вдалося змінити інтеграцію з файловим менеджером: { $reason }
+cli-register-macos = Інтеграція з Finder у macOS поки що недоступна. Відкривайте файли з Sanain (Файл › Відкрити, перетягування) або з командного рядка.

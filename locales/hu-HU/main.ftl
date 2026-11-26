@@ -421,3 +421,11 @@ replace-files-failed = { $failed ->
     } { $first }
 image-outside = Ez a kép a dokumentum mappáján kívül található.
 image-allow = Képek megjelenítése ebből a mappából
+cli-help-integration =
+    Integráció a fájlkezelővel (csak az aktuális felhasználónak):
+      sanain --register           a Sanain hozzáadása a „Megnyitás ezzel” menühöz (Linux, Windows)
+      sanain --unregister         eltávolítás onnan
+cli-registered = A Sanain bekerült a „Megnyitás ezzel” menübe. { $place }
+cli-unregistered = A Sanain kikerült a „Megnyitás ezzel” menüből.
+cli-register-failed = A fájlkezelő-integrációt nem sikerült módosítani: { $reason }
+cli-register-macos = A Finder-integráció macOS-en még nem érhető el. Nyissa meg a fájlokat a Sanainből (Fájl › Megnyitás, húzással) vagy a parancssorból.

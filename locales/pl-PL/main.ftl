@@ -469,3 +469,11 @@ replace-files-failed = { $failed ->
     } { $first }
 image-outside = Ten obraz znajduje się poza folderem dokumentu.
 image-allow = Pokaż obrazy z tego folderu
+cli-help-integration =
+    Integracja z menedżerem plików (tylko bieżący użytkownik):
+      sanain --register           dodaj Sanain do menu „Otwórz za pomocą” (Linux, Windows)
+      sanain --unregister         usuń go ponownie
+cli-registered = Dodano Sanain do menu „Otwórz za pomocą”. { $place }
+cli-unregistered = Usunięto Sanain z menu „Otwórz za pomocą”.
+cli-register-failed = Nie można zmienić integracji z menedżerem plików: { $reason }
+cli-register-macos = Integracja z Finderem w systemie macOS nie jest jeszcze dostępna. Otwieraj pliki z poziomu Sanain (Plik › Otwórz, przeciągnij i upuść) lub z wiersza poleceń.

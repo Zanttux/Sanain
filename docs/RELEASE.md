@@ -48,6 +48,7 @@ downloads or installs anything itself. Automatic installation waits for
 signed releases, a signed update manifest, rollback and a threat model;
 those need signing keys and owner approval (docs/AUTONOMY.md).
 
-CLI: `sanain [FILE…]`, `sanain --diff LEFT RIGHT`, `--version`, `--help`
+CLI: `sanain [FILE…]`, `sanain --diff LEFT RIGHT`, `--version`, `--help`,
+`--register`/`--unregister` (file manager Open With, per user)
 (`--` ends options). Proposed: `--new`; `--tail` later. No shell interpolation of paths. Importing Notepad++
 settings requires consent and never modifies the originals.

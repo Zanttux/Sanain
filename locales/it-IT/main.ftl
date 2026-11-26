@@ -421,3 +421,11 @@ replace-files-failed = { $failed ->
     } { $first }
 image-outside = Questa immagine si trova fuori dalla cartella del documento.
 image-allow = Mostra le immagini di questa cartella
+cli-help-integration =
+    Integrazione con il file manager (solo per l’utente corrente):
+      sanain --register           aggiunge Sanain ad «Apri con» (Linux, Windows)
+      sanain --unregister         lo rimuove di nuovo
+cli-registered = Sanain è stato aggiunto ad «Apri con». { $place }
+cli-unregistered = Sanain è stato rimosso da «Apri con».
+cli-register-failed = Impossibile modificare l’integrazione con il file manager: { $reason }
+cli-register-macos = L’integrazione con il Finder su macOS non è ancora disponibile. Apri i file da Sanain (File › Apri, trascina e rilascia) o dalla riga di comando.

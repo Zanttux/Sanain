@@ -39,7 +39,8 @@ Fast by design. Powerful when needed. Simple by default.
   any file can be compared with its saved version.
 - **Files:** Open Recent, Save All, Revert to Saved, drag and drop,
   Copy File Path, Show in Finder/Explorer. Command line:
-  `sanain FILE…`, `sanain --diff LEFT RIGHT`, `--help`.
+  `sanain FILE…`, `sanain --diff LEFT RIGHT`, `--help`, and
+  `sanain --register` to appear in "Open With" (Linux, Windows).
 - **Encodings:** UTF-8 and UTF-16 (with or without a byte order mark,
   detected), plus legacy encodings such as Windows-1252, ISO-8859-15 and
   Shift_JIS, suggested from the file's contents and used only when they
