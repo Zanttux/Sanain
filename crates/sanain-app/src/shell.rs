@@ -1351,7 +1351,10 @@ impl Shell {
         use crate::palette::Mode;
         let target = match self.palette.mode {
             Mode::GoToLine => {
-                let lines = self.editor().document().rope().len_lines() as i64;
+                let lines = match &self.log {
+                    Some(log) => log.line_count() as i64,
+                    None => self.editor().document().rope().len_lines() as i64,
+                };
                 let hint = self.t("goto-line-hint", &[]);
                 let note = self.t("goto-line-note", &[("count", lines.into())]);
                 match self.palette.show_input(ctx, &hint, &note) {
@@ -1394,7 +1397,11 @@ impl Shell {
             }
             Mode::Commands => None,
         };
-        if let Some((line, col)) = target {
+        if let (Some((line, _)), Some(log)) = (target, &mut self.log)
+            && self.palette.mode == Mode::GoToLine
+        {
+            log.jump = Some(line);
+        } else if let Some((line, col)) = target {
             self.editor_mut().go_to(line, col);
             let id = self.ws.active().id;
             self.active_view(id).reveal();
@@ -1651,7 +1658,10 @@ impl Shell {
         // Rows are exactly `row_h` apart, so offsets are simple products.
         ui.spacing_mut().item_spacing.y = 0.0;
         let mut area = egui::ScrollArea::both().auto_shrink(false);
-        if follow {
+        if let Some(line) = log.jump.take() {
+            log.follow = false;
+            area = area.vertical_scroll_offset(log.row_of_line(line) as f32 * row_h);
+        } else if follow {
             // Like `tail -f`: stay at the end; turn Follow off to scroll.
             let end = rows as f32 * row_h - ui.available_height() + row_h;
             area = area.vertical_scroll_offset(end.max(0.0));
@@ -1668,10 +1678,16 @@ impl Shell {
                             .color(p.muted),
                     );
                     ui.add_space(10.0);
+                    let color = match sanain_io::logfile::level(&text) {
+                        Some(sanain_io::logfile::Level::Error) => p.error,
+                        Some(sanain_io::logfile::Level::Warn) => p.warning,
+                        Some(sanain_io::logfile::Level::Debug) => p.muted,
+                        _ => p.text,
+                    };
                     let shown = if cut { format!("{text}…") } else { text };
                     ui.add(
                         egui::Label::new(
-                            egui::RichText::new(shown).font(font.clone()).color(p.text),
+                            egui::RichText::new(shown).font(font.clone()).color(color),
                         )
                         .wrap_mode(egui::TextWrapMode::Extend)
                         .selectable(true),

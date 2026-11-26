@@ -216,6 +216,34 @@ fn read_line_capped(r: &mut impl BufRead, buf: &mut Vec<u8>, max: usize) -> io::
     }
 }
 
+/// Severity of a log line, for colouring.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Level {
+    Error,
+    Warn,
+    Info,
+    Debug,
+}
+
+/// The level named near the start of a log line (first 8 words, case
+/// insensitive): `ERROR`, `[warn]`, `level=debug`, `E/`... Words later in
+/// the message do not count, so "failed with error" in a message body is
+/// not mistaken for the level.
+pub fn level(line: &str) -> Option<Level> {
+    let head: String = line.chars().take(200).collect();
+    head.split(|c: char| !c.is_ascii_alphanumeric())
+        .filter(|w| !w.is_empty())
+        .take(8)
+        .find_map(|w| match w.to_ascii_uppercase().as_str() {
+            "ERROR" | "ERR" | "FATAL" | "CRITICAL" | "CRIT" | "PANIC" | "SEVERE" | "EMERG"
+            | "ALERT" => Some(Level::Error),
+            "WARN" | "WARNING" => Some(Level::Warn),
+            "INFO" | "NOTICE" => Some(Level::Info),
+            "DEBUG" | "TRACE" | "VERBOSE" | "FINE" => Some(Level::Debug),
+            _ => None,
+        })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -228,6 +256,26 @@ mod tests {
                 .unwrap()
         );
         i
+    }
+
+    #[test]
+    fn detects_levels_near_the_start() {
+        assert_eq!(
+            level("2026-11-25T10:00:00Z ERROR worker failed"),
+            Some(Level::Error)
+        );
+        assert_eq!(level("[warn] disk almost full"), Some(Level::Warn));
+        assert_eq!(level("ts=1 level=debug msg=hi"), Some(Level::Debug));
+        assert_eq!(
+            level("Nov 25 10:00 host app[12]: INFO started"),
+            Some(Level::Info)
+        );
+        assert_eq!(level("plain line"), None);
+        assert_eq!(
+            level("2026-11-25 10:00:00 request 1 2 3 4 5 handled after an error"),
+            None,
+            "words late in the message are not the level"
+        );
     }
 
     #[test]

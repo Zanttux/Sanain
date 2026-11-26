@@ -58,6 +58,8 @@ pub struct LogView {
     pub regex: bool,
     pub follow: bool,
     pub bad_pattern: bool,
+    /// A line to scroll to on the next frame (Go to Line).
+    pub jump: Option<usize>,
     pub error: Option<String>,
     last_poll: Instant,
     ctx: egui::Context,
@@ -202,6 +204,7 @@ impl LogView {
             regex: false,
             follow: false,
             bad_pattern: false,
+            jump: None,
             error: None,
             last_poll: Instant::now(),
             ctx: ctx.clone(),
@@ -380,6 +383,15 @@ impl LogView {
         match &self.filter {
             Some(f) => f.lines.len(),
             None => self.index.line_count(),
+        }
+    }
+
+    /// The display row of document line `line` (with a filter: the first
+    /// matching line at or after it).
+    pub fn row_of_line(&self, line: usize) -> usize {
+        match &self.filter {
+            Some(f) => f.lines.partition_point(|&l| l < line),
+            None => line,
         }
     }
 
