@@ -82,7 +82,28 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   colon); an invalid name, a duplicate attribute or a change that would
   make the document invalid XML shows an inline error and changes
   nothing. Entities are still never expanded. Editing is off for
-  read-only files; the YAML tree stays read-only.
+  read-only files.
+
+- Editing in the YAML tree, with the same interactions as the JSON and
+  XML trees: double-click a key or a scalar value (or press Enter or F2)
+  to edit it inline, Up/Down/Delete keys, and Edit Value, Rename Key,
+  Add After, Add Inside and Delete on right-click. Each change is one
+  undoable edit of only that node's characters: a value keeps its quote
+  style; a string stays a string, so typing `no`, `yes`, `null`, `1.0`,
+  `:x`, `#x` or text with leading spaces over one writes it
+  double-quoted (no Norway problem), while text typed over a number,
+  boolean or null is kept as written when it is one plain value.
+  Deleting a block mapping entry or sequence item removes its lines
+  (nested lines and a comment on its last line included); new entries
+  (`key: null`, `- null`) go on a new line at the same indentation with
+  the same line ending. Comments, blank lines, indentation and CRLF
+  elsewhere stay byte for byte, and every edit is checked by parsing the
+  result again: anything but the expected tree is refused. Flow
+  collections (`[…]`, `{…}`), scalars with an anchor or tag, aliases,
+  block scalars (`|`, `>`), complex keys and documents after the first
+  are shown but read-only, with the reason on hover; deleting the only
+  entry of a collection is disabled. Aliases are still never expanded.
+  Editing is off for read-only files.
 
 ### Fixed
 - Saving a hard-linked file (saved in place on Linux and macOS) on a

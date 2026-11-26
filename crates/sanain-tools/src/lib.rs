@@ -7,6 +7,7 @@ pub mod diff;
 pub mod json;
 pub mod markup;
 pub mod xml;
+pub mod yaml;
 
 /// Which line ending to convert to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
