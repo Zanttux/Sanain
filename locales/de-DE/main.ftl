@@ -437,3 +437,4 @@ settings-font = Schriftart
 settings-font-default = Integrierte Festbreitenschrift
 settings-font-loading = Installierte Schriftarten werden gesucht…
 settings-font-missing = Die Schriftart { $font } wurde nicht gefunden; die integrierte Schriftart wird verwendet.
+about-sponsor = Unterstützen Sie Sanain auf GitHub Sponsors

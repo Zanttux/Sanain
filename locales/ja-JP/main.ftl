@@ -413,3 +413,4 @@ settings-font = フォント
 settings-font-default = 内蔵の等幅フォント
 settings-font-loading = インストール済みのフォントを検索しています…
 settings-font-missing = フォント { $font } が見つかりません。内蔵フォントを使用します。
+about-sponsor = GitHub Sponsors で Sanain を支援

@@ -437,3 +437,4 @@ settings-font = Teckensnitt
 settings-font-default = Inbyggt med fast bredd
 settings-font-loading = Söker efter installerade teckensnitt…
 settings-font-missing = Teckensnittet { $font } hittades inte; det inbyggda teckensnittet används.
+about-sponsor = Stöd Sanain på GitHub Sponsors

@@ -437,3 +437,4 @@ settings-font = Lettertype
 settings-font-default = Ingebouwd monospace
 settings-font-loading = Geïnstalleerde lettertypen zoeken…
 settings-font-missing = Het lettertype { $font } is niet gevonden; het ingebouwde lettertype wordt gebruikt.
+about-sponsor = Steun Sanain via GitHub Sponsors

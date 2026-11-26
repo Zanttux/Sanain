@@ -461,3 +461,4 @@ settings-font = Font
 settings-font-default = Monospațiat integrat
 settings-font-loading = Se caută fonturile instalate…
 settings-font-missing = Fontul { $font } nu a fost găsit; se folosește fontul integrat.
+about-sponsor = Susține Sanain pe GitHub Sponsors

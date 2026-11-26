@@ -437,3 +437,4 @@ settings-font = Skrifttype
 settings-font-default = Indbygget monospace
 settings-font-loading = Søger efter installerede skrifttyper…
 settings-font-missing = Skrifttypen { $font } blev ikke fundet; den indbyggede skrifttype bruges.
+about-sponsor = Støt Sanain på GitHub Sponsors

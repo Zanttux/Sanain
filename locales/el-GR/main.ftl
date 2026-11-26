@@ -437,3 +437,4 @@ settings-font = Γραμματοσειρά
 settings-font-default = Ενσωματωμένη σταθερού πλάτους
 settings-font-loading = Αναζήτηση εγκατεστημένων γραμματοσειρών…
 settings-font-missing = Η γραμματοσειρά { $font } δεν βρέθηκε· χρησιμοποιείται η ενσωματωμένη γραμματοσειρά.
+about-sponsor = Υποστηρίξτε το Sanain στο GitHub Sponsors

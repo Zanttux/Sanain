@@ -437,3 +437,4 @@ settings-font = Tipo de letra
 settings-font-default = Monoespaciada integrada
 settings-font-loading = Buscando tipos de letra instalados…
 settings-font-missing = No se encontró el tipo de letra { $font }; se usa el tipo de letra integrado.
+about-sponsor = Apoya a Sanain en GitHub Sponsors
