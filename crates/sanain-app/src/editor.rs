@@ -1469,4 +1469,34 @@ mod tests {
         assert!(matches!(ed.save(), SaveOutcome::Saved));
         assert_eq!(fs::read(&path).unwrap(), edited.as_bytes());
     }
+
+    #[test]
+    fn json_tree_edits_are_undo_steps_and_save_only_their_bytes() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("t.json");
+        let original = "{\r\n    \"nimi\": \"Äiti\",\r\n    \"luvut\": [\r\n        1,\r\n        2\r\n    ]\r\n}\r\n";
+        fs::write(&path, original).unwrap();
+        let mut ed = Editor::open(&path).unwrap();
+        let doc = sanain_tools::json::doc(&ed.document().text()).unwrap();
+        let e = doc
+            .set_value(doc.find(&[0]).unwrap(), "Isä 🙂")
+            .unwrap()
+            .unwrap();
+        ed.replace_range(e.range, &e.text);
+        let doc = sanain_tools::json::doc(&ed.document().text()).unwrap();
+        let e = doc.delete(doc.find(&[1, 0]).unwrap()).unwrap();
+        ed.replace_range(e.range, &e.text);
+        let edited =
+            "{\r\n    \"nimi\": \"Isä 🙂\",\r\n    \"luvut\": [\r\n        2\r\n    ]\r\n}\r\n";
+        assert_eq!(ed.document().text(), edited);
+        ed.execute(Command::Undo);
+        assert!(ed.document().text().contains("        1,\r\n        2\r\n"));
+        ed.execute(Command::Undo);
+        assert_eq!(ed.document().text(), original, "one undo per edit");
+        assert!(!ed.document().is_dirty());
+        ed.execute(Command::Redo);
+        ed.execute(Command::Redo);
+        assert!(matches!(ed.save(), SaveOutcome::Saved));
+        assert_eq!(fs::read(&path).unwrap(), edited.as_bytes());
+    }
 }

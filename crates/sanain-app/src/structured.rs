@@ -1,11 +1,12 @@
-//! Structured views: an editable CSV grid and read-only trees. The source
-//! stays authoritative: grid edits come back as [`GridAction`]s that the
-//! caller applies to the text as ordinary undoable edits.
+//! Structured views: an editable CSV grid, an editable JSON tree and
+//! read-only XML/YAML trees. The source stays authoritative: edits come back
+//! as [`GridAction`]s and [`TreeAction`]s that the caller applies to the
+//! text as ordinary undoable edits.
 
 use eframe::egui::{self, RichText};
 use egui_extras::{Column, TableBuilder};
 use sanain_tools::csv::Table;
-use sanain_tools::json::Node;
+use sanain_tools::json::{self, Node};
 
 use crate::theme::Palette;
 
@@ -353,7 +354,452 @@ pub fn csv(
     actions
 }
 
-pub fn json(ui: &mut egui::Ui, root: &Node, p: &Palette, more: &dyn Fn(usize) -> String) {
+/// Which part of a JSON node the inline field edits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Field {
+    Key,
+    Value,
+}
+
+/// Selection and inline editor of one tab's JSON tree. Nodes are named by
+/// their path of child positions, which survives re-parsing the text.
+#[derive(Debug, Default)]
+pub struct TreeState {
+    pub selected: Option<Vec<usize>>,
+    /// The part of the selected node last clicked: what Enter or F2 edits.
+    pub selected_field: Option<Field>,
+    pub editing: Option<NodeEdit>,
+    /// Open this field once the tree shows the node (after an add).
+    pub pending: Option<(Vec<usize>, Field)>,
+    /// Rows shown on the last frame, top to bottom, for the arrow keys.
+    visible: Vec<Vec<usize>>,
+}
+
+#[derive(Debug)]
+pub struct NodeEdit {
+    pub path: Vec<usize>,
+    pub field: Field,
+    pub text: String,
+    /// Why the last commit was refused.
+    pub error: Option<json::EditError>,
+    /// Move keyboard focus into the field on the next frame.
+    focus: bool,
+    /// Reset the caret (a newly opened field).
+    fresh: bool,
+}
+
+impl TreeState {
+    /// Open the inline field on a node, if that part of it is editable:
+    /// a scalar's value as JSON text, or a member's key decoded.
+    pub fn start_edit(&mut self, doc: &json::Doc, path: &[usize], field: Field) -> bool {
+        let Some(i) = doc.find(path) else {
+            return false;
+        };
+        let text = match field {
+            Field::Value => match doc.items[i].kind {
+                json::Kind::String | json::Kind::Literal => doc.value_text(i).map(str::to_owned),
+                _ => None,
+            },
+            Field::Key => doc.key(i),
+        };
+        let Some(text) = text else {
+            return false;
+        };
+        self.selected = Some(path.to_vec());
+        self.editing = Some(NodeEdit {
+            path: path.to_vec(),
+            field,
+            text,
+            error: None,
+            focus: true,
+            fresh: true,
+        });
+        true
+    }
+
+    /// Edit what Enter or F2 means for a node: the part last clicked if
+    /// editable, else a scalar's value, else its key.
+    fn start_default_edit(&mut self, doc: &json::Doc, path: &[usize]) {
+        if let Some(f) = self.selected_field
+            && self.start_edit(doc, path, f)
+        {
+            return;
+        }
+        if !self.start_edit(doc, path, Field::Value) {
+            self.start_edit(doc, path, Field::Key);
+        }
+    }
+
+    fn step(&mut self, d: isize) {
+        let rows = &self.visible;
+        if rows.is_empty() {
+            return;
+        }
+        let at = self
+            .selected
+            .as_ref()
+            .and_then(|s| rows.iter().position(|r| r == s));
+        let next = match at {
+            Some(k) => (k as isize + d).clamp(0, rows.len() as isize - 1) as usize,
+            None => 0,
+        };
+        if at != Some(next) {
+            self.selected_field = None;
+        }
+        self.selected = Some(rows[next].clone());
+    }
+}
+
+/// A change made in the JSON tree, for the caller to apply to the text as
+/// one undoable edit through [`json::Doc`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TreeAction {
+    SetValue { path: Vec<usize>, text: String },
+    RenameKey { path: Vec<usize>, name: String },
+    Delete(Vec<usize>),
+    AddAfter(Vec<usize>),
+    AddInside(Vec<usize>),
+}
+
+/// Localized labels of the JSON tree's menu and errors.
+pub struct TreeLabels {
+    pub edit_value: String,
+    pub rename_key: String,
+    pub add_after: String,
+    pub add_inside: String,
+    pub delete: String,
+    pub invalid_value: String,
+    pub duplicate_key: String,
+}
+
+/// The editable JSON tree. With `editable`, double-clicking a key or a
+/// scalar value (or Enter/F2 on the selected node) edits it inline: Enter
+/// commits, Escape cancels, and a refused value shows why without changing
+/// anything. Up and Down move the selection while `id` has focus; Delete
+/// removes the selected node; right-click offers every operation.
+#[allow(clippy::too_many_arguments)]
+pub fn json(
+    ui: &mut egui::Ui,
+    id: egui::Id,
+    doc: &json::Doc,
+    p: &Palette,
+    editable: bool,
+    state: &mut TreeState,
+    labels: &TreeLabels,
+    more: &dyn Fn(usize) -> String,
+) -> Vec<TreeAction> {
+    let mut actions = Vec::new();
+    if !editable {
+        state.editing = None;
+        state.pending = None;
+    }
+    if state
+        .editing
+        .as_ref()
+        .is_some_and(|e| doc.find(&e.path).is_none())
+    {
+        state.editing = None;
+    }
+    if let Some((path, field)) = state.pending.take() {
+        // Open the containers above a new node so its field shows.
+        for k in 0..path.len() {
+            let open_id = id.with(("node", &path[..k]));
+            let mut c = egui::collapsing_header::CollapsingState::load_with_default_open(
+                ui.ctx(),
+                open_id,
+                k < 2,
+            );
+            c.set_open(true);
+            c.store(ui.ctx());
+        }
+        state.start_edit(doc, &path, field);
+    }
+    let focus = ui.interact(ui.max_rect(), id, egui::Sense::focusable_noninteractive());
+    if focus.has_focus() && state.editing.is_none() {
+        ui.memory_mut(|m| {
+            m.set_focus_lock_filter(
+                id,
+                egui::EventFilter {
+                    tab: false,
+                    horizontal_arrows: true,
+                    vertical_arrows: true,
+                    escape: false,
+                },
+            );
+        });
+        use egui::Key;
+        let pressed = |k| ui.input_mut(|i| i.consume_key(egui::Modifiers::NONE, k));
+        if pressed(Key::ArrowUp) {
+            state.step(-1);
+        }
+        if pressed(Key::ArrowDown) {
+            state.step(1);
+        }
+        if editable && let Some(sel) = state.selected.clone() {
+            if pressed(Key::Enter) || pressed(Key::F2) {
+                state.start_default_edit(doc, &sel);
+            } else if pressed(Key::Delete) && !sel.is_empty() {
+                actions.push(TreeAction::Delete(sel));
+            }
+        }
+    }
+    let mut visible = Vec::new();
+    egui::ScrollArea::both().auto_shrink(false).show(ui, |ui| {
+        let mut cx = TreeCx {
+            doc,
+            p,
+            id,
+            editable,
+            state,
+            labels,
+            more,
+            actions: &mut actions,
+            visible: &mut visible,
+        };
+        cx.node(ui, 0, &mut Vec::new(), 0, None);
+    });
+    state.visible = visible;
+    actions
+}
+
+struct TreeCx<'a> {
+    doc: &'a json::Doc,
+    p: &'a Palette,
+    id: egui::Id,
+    editable: bool,
+    state: &'a mut TreeState,
+    labels: &'a TreeLabels,
+    more: &'a dyn Fn(usize) -> String,
+    actions: &'a mut Vec<TreeAction>,
+    visible: &'a mut Vec<Vec<usize>>,
+}
+
+impl TreeCx<'_> {
+    fn node(
+        &mut self,
+        ui: &mut egui::Ui,
+        i: usize,
+        path: &mut Vec<usize>,
+        depth: usize,
+        index: Option<usize>,
+    ) {
+        let it = &self.doc.items[i];
+        self.visible.push(path.clone());
+        let container = matches!(it.kind, json::Kind::Object | json::Kind::Array);
+        if !container {
+            ui.horizontal(|ui| self.row(ui, i, path, index));
+            return;
+        }
+        if depth >= MAX_TREE_DEPTH {
+            ui.horizontal(|ui| self.row(ui, i, path, index));
+            return;
+        }
+        let open_id = self.id.with(("node", path.as_slice()));
+        let state = egui::collapsing_header::CollapsingState::load_with_default_open(
+            ui.ctx(),
+            open_id,
+            depth < 2,
+        );
+        let header = state.show_header(ui, |ui| self.row(ui, i, path, index));
+        header.body(|ui| {
+            let children = &self.doc.items[i].children;
+            let is_array = self.doc.items[i].kind == json::Kind::Array;
+            for (k, &c) in children.iter().take(MAX_CHILDREN).enumerate() {
+                path.push(k);
+                self.node(ui, c, path, depth + 1, is_array.then_some(k));
+                path.pop();
+            }
+            if children.len() > MAX_CHILDREN {
+                ui.label(
+                    RichText::new((self.more)(children.len() - MAX_CHILDREN)).color(self.p.muted),
+                );
+            }
+        });
+    }
+
+    /// One line of the tree: key (or array index), then value or summary.
+    fn row(&mut self, ui: &mut egui::Ui, i: usize, path: &[usize], index: Option<usize>) {
+        let (doc, p) = (self.doc, self.p);
+        let it = &doc.items[i];
+        let selected = self.state.selected.as_deref() == Some(path);
+        let style = |t: RichText| {
+            if selected {
+                t.background_color(p.accent.gamma_multiply(0.25))
+            } else {
+                t
+            }
+        };
+        let editing = |f: Field| {
+            self.state
+                .editing
+                .as_ref()
+                .is_some_and(|e| e.field == f && e.path == path)
+        };
+        let editing_key = editing(Field::Key);
+        let editing_value = editing(Field::Value);
+        // The key part.
+        if editing_key {
+            self.field(ui, i);
+            ui.label(RichText::new(":").monospace().color(p.muted));
+        } else if let Some(k) = doc.key_text(i) {
+            let r = ui.add(
+                egui::Label::new(style(
+                    RichText::new(format!("{k}:")).monospace().color(p.muted),
+                ))
+                .sense(egui::Sense::click()),
+            );
+            self.interact(ui, &r, i, path, Field::Key);
+        } else if let Some(n) = index {
+            let r = ui.add(
+                egui::Label::new(style(
+                    RichText::new(format!("{n}:")).monospace().color(p.muted),
+                ))
+                .sense(egui::Sense::click()),
+            );
+            self.interact(ui, &r, i, path, Field::Value);
+        }
+        // The value part.
+        let summary = match it.kind {
+            json::Kind::Object => Some(format!("{{{}}}", it.children.len())),
+            json::Kind::Array => Some(format!("[{}]", it.children.len())),
+            _ => None,
+        };
+        if editing_value {
+            self.field(ui, i);
+        } else {
+            let text = summary.unwrap_or_else(|| doc.value_text(i).unwrap_or_default().to_owned());
+            let color = if it.children.is_empty()
+                && matches!(it.kind, json::Kind::Object | json::Kind::Array)
+            {
+                p.muted
+            } else {
+                p.text
+            };
+            let r = ui.add(
+                egui::Label::new(style(RichText::new(text).monospace().color(color)))
+                    .sense(egui::Sense::click()),
+            );
+            self.interact(ui, &r, i, path, Field::Value);
+        }
+    }
+
+    /// Selection, double-click editing and the context menu of a label.
+    fn interact(
+        &mut self,
+        ui: &egui::Ui,
+        r: &egui::Response,
+        i: usize,
+        path: &[usize],
+        field: Field,
+    ) {
+        if r.clicked() || r.secondary_clicked() {
+            self.state.selected = Some(path.to_vec());
+            self.state.selected_field = Some(field);
+            ui.memory_mut(|m| m.request_focus(self.id));
+        }
+        if self.editable && r.double_clicked() && !self.state.start_edit(self.doc, path, field) {
+            self.state.start_default_edit(self.doc, path);
+        }
+        if !self.editable {
+            return;
+        }
+        let it = &self.doc.items[i];
+        let scalar = matches!(it.kind, json::Kind::String | json::Kind::Literal);
+        r.context_menu(|ui| {
+            if scalar && ui.button(&self.labels.edit_value).clicked() {
+                self.state.start_edit(self.doc, path, Field::Value);
+            }
+            if it.key_span.is_some() && ui.button(&self.labels.rename_key).clicked() {
+                self.state.start_edit(self.doc, path, Field::Key);
+            }
+            if it.parent.is_some() && ui.button(&self.labels.add_after).clicked() {
+                self.actions.push(TreeAction::AddAfter(path.to_vec()));
+            }
+            if !scalar && ui.button(&self.labels.add_inside).clicked() {
+                self.actions.push(TreeAction::AddInside(path.to_vec()));
+            }
+            if it.parent.is_some() {
+                ui.separator();
+                if ui.button(&self.labels.delete).clicked() {
+                    self.actions.push(TreeAction::Delete(path.to_vec()));
+                }
+            }
+        });
+    }
+
+    /// The inline field of the node being edited.
+    fn field(&mut self, ui: &mut egui::Ui, i: usize) {
+        let Some(ed) = &mut self.state.editing else {
+            return;
+        };
+        let editor_id = self.id.with("node-editor");
+        if ed.fresh {
+            egui::text_edit::TextEditState::default().store(ui.ctx(), editor_id);
+            ed.fresh = false;
+        }
+        let width = (ed.text.chars().count() as f32 + 4.0) * 9.0;
+        let resp = ui.add(
+            egui::TextEdit::singleline(&mut ed.text)
+                .id(editor_id)
+                .font(egui::TextStyle::Monospace)
+                .desired_width(width.clamp(120.0, 600.0)),
+        );
+        if ed.focus {
+            resp.request_focus();
+            ed.focus = false;
+        }
+        if let Some(e) = ed.error {
+            let msg = match e {
+                json::EditError::DuplicateKey => &self.labels.duplicate_key,
+                _ => &self.labels.invalid_value,
+            };
+            ui.colored_label(self.p.error, msg);
+        }
+        if !resp.lost_focus() {
+            return;
+        }
+        let esc = ui.input(|i| i.key_pressed(egui::Key::Escape));
+        let enter = ui.input(|i| i.key_pressed(egui::Key::Enter));
+        if esc {
+            self.state.editing = None;
+            ui.memory_mut(|m| m.request_focus(self.id));
+            return;
+        }
+        let check = match ed.field {
+            Field::Value => self.doc.check_value(i, &ed.text),
+            Field::Key => self.doc.check_key(i, &ed.text),
+        };
+        match check {
+            Ok(change) => {
+                if let (Some(_), Some(ed)) = (change, self.state.editing.take()) {
+                    self.actions.push(match ed.field {
+                        Field::Value => TreeAction::SetValue {
+                            path: ed.path,
+                            text: ed.text,
+                        },
+                        Field::Key => TreeAction::RenameKey {
+                            path: ed.path,
+                            name: ed.text,
+                        },
+                    });
+                } else {
+                    self.state.editing = None;
+                }
+                if enter {
+                    ui.memory_mut(|m| m.request_focus(self.id));
+                }
+            }
+            Err(e) => {
+                // Keep the field and say why; Enter keeps typing in it.
+                ed.error = Some(e);
+                ed.focus = enter;
+            }
+        }
+    }
+}
+
+/// A read-only tree (XML, YAML).
+pub fn tree(ui: &mut egui::Ui, root: &Node, p: &Palette, more: &dyn Fn(usize) -> String) {
     egui::ScrollArea::both().auto_shrink(false).show(ui, |ui| {
         node(ui, None, root, p, 0, "$".to_owned(), more);
     });
@@ -464,5 +910,48 @@ mod tests {
             "a missing ragged cell edits as empty"
         );
         assert_eq!(g.selected, Some((1, 1)));
+    }
+
+    #[test]
+    fn tree_fields_start_with_json_text_or_decoded_key() {
+        let doc = json::doc(r#"{"\u00e4": "x\n", "n": [1e3, {}]}"#).unwrap();
+        let mut t = TreeState::default();
+        assert!(t.start_edit(&doc, &[0], Field::Value));
+        assert_eq!(
+            t.editing.as_ref().map(|e| e.text.as_str()),
+            Some("\"x\\n\"")
+        );
+        assert!(t.start_edit(&doc, &[0], Field::Key));
+        assert_eq!(t.editing.as_ref().map(|e| e.text.as_str()), Some("ä"));
+        assert!(
+            !t.start_edit(&doc, &[1], Field::Value),
+            "containers have no value field"
+        );
+        assert!(
+            !t.start_edit(&doc, &[1, 0], Field::Key),
+            "array elements have no key"
+        );
+        t.start_default_edit(&doc, &[1]);
+        assert_eq!(t.editing.as_ref().map(|e| e.field), Some(Field::Key));
+        t.start_default_edit(&doc, &[1, 0]);
+        assert_eq!(
+            t.editing.as_ref().map(|e| (e.field, e.text.as_str())),
+            Some((Field::Value, "1e3"))
+        );
+        assert_eq!(t.selected.as_deref(), Some(&[1, 0][..]));
+        t.selected_field = Some(Field::Key);
+        t.start_default_edit(&doc, &[0]);
+        assert_eq!(
+            t.editing.as_ref().map(|e| e.field),
+            Some(Field::Key),
+            "the clicked key, not the value"
+        );
+        t.visible = vec![vec![], vec![0], vec![1]];
+        t.selected = Some(vec![0]);
+        t.step(1);
+        t.step(1);
+        assert_eq!(t.selected, Some(vec![1]), "clamped at the end");
+        t.step(-5);
+        assert_eq!(t.selected, Some(vec![]));
     }
 }
