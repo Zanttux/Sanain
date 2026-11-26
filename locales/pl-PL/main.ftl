@@ -489,3 +489,4 @@ settings-theme-more = Więcej motywów
 settings-theme-user-note = Własne motywy: pliki .theme w folderze { $folder } (zob. docs/THEMES.md).
 language-auto = Wykryj automatycznie
 language-choose = Wybierz język tej karty
+tools-xml-format = Formatuj XML

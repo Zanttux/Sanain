@@ -489,3 +489,4 @@ settings-theme-more = Другие темы
 settings-theme-user-note = Свои темы: файлы .theme в папке { $folder } (см. docs/THEMES.md).
 language-auto = Определять автоматически
 language-choose = Выбрать язык этой вкладки
+tools-xml-format = Форматировать XML

@@ -9,6 +9,11 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   Markdown source, preview or both, and the JSON/XML/YAML tree or CSV
   grid when the structured view is on. Clicking a preview or tree focuses
   its pane; links and image permissions work from either pane.
+- Tools → Format XML re-indents element-only content with the tab's
+  indentation as one undo step. Text, mixed content, CDATA,
+  `xml:space="preserve"`, comments, tags and attributes stay exactly as
+  written, and line endings are kept; malformed XML is reported in the
+  status bar and nothing changes.
 
 ### Fixed
 - Notepad++ shortcut preset: Mod+D was both Duplicate Line and Select

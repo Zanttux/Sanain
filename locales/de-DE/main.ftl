@@ -441,3 +441,4 @@ settings-theme-more = Weitere Designs
 settings-theme-user-note = Eigene Designs: .theme-Dateien im Ordner { $folder } (siehe docs/THEMES.md).
 language-auto = Automatisch erkennen
 language-choose = Sprache dieses Tabs auswählen
+tools-xml-format = XML formatieren
