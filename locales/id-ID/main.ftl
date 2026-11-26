@@ -343,3 +343,13 @@ edit-toggle-comment = Alihkan Komentar Baris
 edit-indent = Indentasi Baris
 edit-outdent = Kurangi Indentasi Baris
 comment-unsupported = Jenis file ini tidak memiliki komentar baris.
+tab-close-others = Tutup Tab Lain
+tab-close-all = Tutup Semua Tab
+file-copy-path = Salin Jalur File
+file-reveal-macos = Tampilkan di Finder
+file-reveal-windows = Tampilkan di File Explorer
+file-reveal-other = Tampilkan di Pengelola File
+status-path-copied = Jalur file disalin.
+tabs-kept-unsaved = { $count ->
+   *[other] { $count } tab dengan perubahan yang belum disimpan tetap dibuka.
+    }

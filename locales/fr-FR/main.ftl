@@ -379,3 +379,15 @@ edit-toggle-comment = Basculer le commentaire de ligne
 edit-indent = Mettre les lignes en retrait
 edit-outdent = Retirer le retrait des lignes
 comment-unsupported = Ce type de fichier n’a pas de commentaires de ligne.
+tab-close-others = Fermer les autres onglets
+tab-close-all = Fermer tous les onglets
+file-copy-path = Copier le chemin du fichier
+file-reveal-macos = Afficher dans le Finder
+file-reveal-windows = Afficher dans l’Explorateur de fichiers
+file-reveal-other = Afficher dans le gestionnaire de fichiers
+status-path-copied = Chemin du fichier copié.
+tabs-kept-unsaved = { $count ->
+    [one] 1 onglet avec des modifications non enregistrées est resté ouvert.
+    [many] { $count } onglets avec des modifications non enregistrées sont restés ouverts.
+   *[other] { $count } onglets avec des modifications non enregistrées sont restés ouverts.
+    }

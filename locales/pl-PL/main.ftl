@@ -397,3 +397,16 @@ edit-toggle-comment = Przełącz komentarz wiersza
 edit-indent = Zwiększ wcięcie wierszy
 edit-outdent = Zmniejsz wcięcie wierszy
 comment-unsupported = Ten typ pliku nie obsługuje komentarzy wierszowych.
+tab-close-others = Zamknij pozostałe karty
+tab-close-all = Zamknij wszystkie karty
+file-copy-path = Kopiuj ścieżkę pliku
+file-reveal-macos = Pokaż w Finderze
+file-reveal-windows = Pokaż w Eksploratorze plików
+file-reveal-other = Pokaż w menedżerze plików
+status-path-copied = Skopiowano ścieżkę pliku.
+tabs-kept-unsaved = { $count ->
+    [one] 1 karta z niezapisanymi zmianami pozostała otwarta.
+    [few] { $count } karty z niezapisanymi zmianami pozostały otwarte.
+    [many] { $count } kart z niezapisanymi zmianami pozostało otwartych.
+   *[other] { $count } karty z niezapisanymi zmianami pozostało otwartych.
+    }

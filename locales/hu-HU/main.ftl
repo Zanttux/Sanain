@@ -361,3 +361,14 @@ edit-toggle-comment = Sorkomment be/ki
 edit-indent = Sorok behúzása
 edit-outdent = Sorok behúzásának csökkentése
 comment-unsupported = Ez a fájltípus nem támogatja a sorkommenteket.
+tab-close-others = Többi lap bezárása
+tab-close-all = Összes lap bezárása
+file-copy-path = Fájl elérési útjának másolása
+file-reveal-macos = Megjelenítés a Finderben
+file-reveal-windows = Megjelenítés a Fájlkezelőben
+file-reveal-other = Megjelenítés a fájlkezelőben
+status-path-copied = A fájl elérési útja másolva.
+tabs-kept-unsaved = { $count ->
+    [one] 1 nem mentett módosításokat tartalmazó lap nyitva maradt.
+   *[other] { $count } nem mentett módosításokat tartalmazó lap nyitva maradt.
+    }

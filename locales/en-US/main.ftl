@@ -360,3 +360,14 @@ edit-toggle-comment = Toggle Line Comment
 edit-indent = Indent Lines
 edit-outdent = Outdent Lines
 comment-unsupported = This file type has no line comments.
+tab-close-others = Close Other Tabs
+tab-close-all = Close All Tabs
+file-copy-path = Copy File Path
+file-reveal-macos = Show in Finder
+file-reveal-windows = Show in Explorer
+file-reveal-other = Show in File Manager
+status-path-copied = File path copied.
+tabs-kept-unsaved = { $count ->
+    [one] 1 tab with unsaved changes was kept open.
+   *[other] { $count } tabs with unsaved changes were kept open.
+    }

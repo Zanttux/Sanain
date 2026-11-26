@@ -379,3 +379,15 @@ edit-toggle-comment = Alternar comentário de linha
 edit-indent = Recuar linhas
 edit-outdent = Remover recuo das linhas
 comment-unsupported = Este tipo de arquivo não tem comentários de linha.
+tab-close-others = Fechar outras abas
+tab-close-all = Fechar todas as abas
+file-copy-path = Copiar caminho do arquivo
+file-reveal-macos = Mostrar no Finder
+file-reveal-windows = Mostrar no Explorador de Arquivos
+file-reveal-other = Mostrar no gerenciador de arquivos
+status-path-copied = Caminho do arquivo copiado.
+tabs-kept-unsaved = { $count ->
+    [one] 1 aba com alterações não salvas foi mantida aberta.
+    [many] { $count } abas com alterações não salvas foram mantidas abertas.
+   *[other] { $count } abas com alterações não salvas foram mantidas abertas.
+    }

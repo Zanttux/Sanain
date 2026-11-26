@@ -361,3 +361,14 @@ edit-toggle-comment = Alternar comentario de línea
 edit-indent = Aumentar sangría de líneas
 edit-outdent = Reducir sangría de líneas
 comment-unsupported = Este tipo de archivo no tiene comentarios de línea.
+tab-close-others = Cerrar las demás pestañas
+tab-close-all = Cerrar todas las pestañas
+file-copy-path = Copiar ruta del archivo
+file-reveal-macos = Mostrar en Finder
+file-reveal-windows = Mostrar en el Explorador de archivos
+file-reveal-other = Mostrar en el gestor de archivos
+status-path-copied = Ruta del archivo copiada.
+tabs-kept-unsaved = { $count ->
+    [one] Se mantuvo abierta 1 pestaña con cambios sin guardar.
+   *[other] Se mantuvieron abiertas { $count } pestañas con cambios sin guardar.
+    }

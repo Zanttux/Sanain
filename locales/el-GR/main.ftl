@@ -361,3 +361,14 @@ edit-toggle-comment = Εναλλαγή σχολίου γραμμής
 edit-indent = Εσοχή γραμμών
 edit-outdent = Αφαίρεση εσοχής γραμμών
 comment-unsupported = Αυτός ο τύπος αρχείου δεν έχει σχόλια γραμμής.
+tab-close-others = Κλείσιμο άλλων καρτελών
+tab-close-all = Κλείσιμο όλων των καρτελών
+file-copy-path = Αντιγραφή διαδρομής αρχείου
+file-reveal-macos = Εμφάνιση στο Finder
+file-reveal-windows = Εμφάνιση στην Εξερεύνηση αρχείων
+file-reveal-other = Εμφάνιση στη διαχείριση αρχείων
+status-path-copied = Η διαδρομή αρχείου αντιγράφηκε.
+tabs-kept-unsaved = { $count ->
+    [one] 1 καρτέλα με μη αποθηκευμένες αλλαγές παρέμεινε ανοιχτή.
+   *[other] { $count } καρτέλες με μη αποθηκευμένες αλλαγές παρέμειναν ανοιχτές.
+    }

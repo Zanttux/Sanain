@@ -397,3 +397,16 @@ edit-toggle-comment = Přepnout řádkový komentář
 edit-indent = Odsadit řádky
 edit-outdent = Zrušit odsazení řádků
 comment-unsupported = Tento typ souboru nemá řádkové komentáře.
+tab-close-others = Zavřít ostatní karty
+tab-close-all = Zavřít všechny karty
+file-copy-path = Kopírovat cestu k souboru
+file-reveal-macos = Zobrazit ve Finderu
+file-reveal-windows = Zobrazit v Průzkumníkovi
+file-reveal-other = Zobrazit ve správci souborů
+status-path-copied = Cesta k souboru byla zkopírována.
+tabs-kept-unsaved = { $count ->
+    [one] 1 karta s neuloženými změnami zůstala otevřená.
+    [few] { $count } karty s neuloženými změnami zůstaly otevřené.
+    [many] { $count } karty s neuloženými změnami zůstalo otevřených.
+   *[other] { $count } karet s neuloženými změnami zůstalo otevřených.
+    }

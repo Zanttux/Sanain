@@ -361,3 +361,14 @@ edit-toggle-comment = Växla radkommentar
 edit-indent = Öka indrag för rader
 edit-outdent = Minska indrag för rader
 comment-unsupported = Den här filtypen har inga radkommentarer.
+tab-close-others = Stäng andra flikar
+tab-close-all = Stäng alla flikar
+file-copy-path = Kopiera filsökväg
+file-reveal-macos = Visa i Finder
+file-reveal-windows = Visa i Utforskaren
+file-reveal-other = Visa i filhanteraren
+status-path-copied = Filsökvägen kopierades.
+tabs-kept-unsaved = { $count ->
+    [one] 1 flik med osparade ändringar hölls öppen.
+   *[other] { $count } flikar med osparade ändringar hölls öppna.
+    }

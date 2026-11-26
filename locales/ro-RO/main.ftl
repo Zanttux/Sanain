@@ -379,3 +379,15 @@ edit-toggle-comment = Comută comentariul de linie
 edit-indent = Indentează liniile
 edit-outdent = Anulează indentarea liniilor
 comment-unsupported = Acest tip de fișier nu are comentarii de linie.
+tab-close-others = Închide celelalte file
+tab-close-all = Închide toate filele
+file-copy-path = Copiază calea fișierului
+file-reveal-macos = Afișează în Finder
+file-reveal-windows = Afișează în Explorer
+file-reveal-other = Afișează în managerul de fișiere
+status-path-copied = Calea fișierului a fost copiată.
+tabs-kept-unsaved = { $count ->
+    [one] 1 filă cu modificări nesalvate a rămas deschisă.
+    [few] { $count } file cu modificări nesalvate au rămas deschise.
+   *[other] { $count } de file cu modificări nesalvate au rămas deschise.
+    }

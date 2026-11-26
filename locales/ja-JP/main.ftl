@@ -343,3 +343,13 @@ edit-toggle-comment = 行コメントの切り替え
 edit-indent = 行のインデント
 edit-outdent = 行のインデント解除
 comment-unsupported = このファイル形式には行コメントがありません。
+tab-close-others = 他のタブを閉じる
+tab-close-all = すべてのタブを閉じる
+file-copy-path = ファイルパスをコピー
+file-reveal-macos = Finderで表示
+file-reveal-windows = エクスプローラーで表示
+file-reveal-other = ファイルマネージャーで表示
+status-path-copied = ファイルパスをコピーしました。
+tabs-kept-unsaved = { $count ->
+   *[other] 未保存の変更があるタブ { $count } 個を開いたままにしました。
+    }

@@ -83,10 +83,14 @@ pub enum MenuAction {
     ToggleComment,
     IndentLines,
     OutdentLines,
+    CloseOthers,
+    CloseAll,
+    CopyPath,
+    Reveal,
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 76] = [
+    pub const ALL: [MenuAction; 80] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -163,6 +167,10 @@ impl MenuAction {
         Self::ToggleComment,
         Self::IndentLines,
         Self::OutdentLines,
+        Self::CloseOthers,
+        Self::CloseAll,
+        Self::CopyPath,
+        Self::Reveal,
     ];
 
     /// Stable identifier used for native menu item ids.
@@ -244,6 +252,10 @@ impl MenuAction {
             Self::ToggleComment => "edit.toggle-comment",
             Self::IndentLines => "edit.indent",
             Self::OutdentLines => "edit.outdent",
+            Self::CloseOthers => "file.close-others",
+            Self::CloseAll => "file.close-all",
+            Self::CopyPath => "file.copy-path",
+            Self::Reveal => "file.reveal",
         }
     }
 
@@ -331,6 +343,10 @@ impl MenuAction {
             Self::ToggleComment => "edit-toggle-comment",
             Self::IndentLines => "edit-indent",
             Self::OutdentLines => "edit-outdent",
+            Self::CloseOthers => "tab-close-others",
+            Self::CloseAll => "tab-close-all",
+            Self::CopyPath => "file-copy-path",
+            Self::Reveal => REVEAL_LABEL,
         }
     }
 
@@ -435,6 +451,10 @@ impl MenuAction {
             | Self::XmlValidate
             | Self::YamlValidate
             | Self::Revert
+            | Self::CloseOthers
+            | Self::CloseAll
+            | Self::CopyPath
+            | Self::Reveal
             | Self::CompareSaved
             | Self::CompareClipboard => return None,
         };
@@ -486,6 +506,15 @@ pub fn chord_from_press(key: Key, m: Modifiers) -> Option<Chord> {
 /// Labels resolved by the caller (keeps this module free of l10n state).
 pub type Label<'a> = &'a dyn Fn(&str) -> String;
 
+/// "Show in Finder/Explorer/File Manager", by platform.
+pub const REVEAL_LABEL: &str = if cfg!(target_os = "macos") {
+    "file-reveal-macos"
+} else if cfg!(windows) {
+    "file-reveal-windows"
+} else {
+    "file-reveal-other"
+};
+
 const FILE_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::New),
     Some(MenuAction::Open),
@@ -503,7 +532,12 @@ const FILE_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::ClearHistory),
     None,
     Some(MenuAction::CloseTab),
+    Some(MenuAction::CloseOthers),
+    Some(MenuAction::CloseAll),
     Some(MenuAction::ReopenTab),
+    None,
+    Some(MenuAction::CopyPath),
+    Some(MenuAction::Reveal),
 ];
 const WINDOW_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::NextTab),
@@ -806,6 +840,10 @@ mod native {
             | MenuAction::XmlValidate
             | MenuAction::YamlValidate
             | MenuAction::Revert
+            | MenuAction::CloseOthers
+            | MenuAction::CloseAll
+            | MenuAction::CopyPath
+            | MenuAction::Reveal
             | MenuAction::CompareSaved
             | MenuAction::CompareClipboard => return None,
         };

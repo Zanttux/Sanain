@@ -361,3 +361,14 @@ edit-toggle-comment = Satır Yorumunu Aç/Kapat
 edit-indent = Satırları Girintile
 edit-outdent = Satır Girintisini Azalt
 comment-unsupported = Bu dosya türünde satır yorumu yok.
+tab-close-others = Diğer Sekmeleri Kapat
+tab-close-all = Tüm Sekmeleri Kapat
+file-copy-path = Dosya Yolunu Kopyala
+file-reveal-macos = Finder’da Göster
+file-reveal-windows = Dosya Gezgini’nde Göster
+file-reveal-other = Dosya Yöneticisinde Göster
+status-path-copied = Dosya yolu kopyalandı.
+tabs-kept-unsaved = { $count ->
+    [one] Kaydedilmemiş değişiklikleri olan 1 sekme açık bırakıldı.
+   *[other] Kaydedilmemiş değişiklikleri olan { $count } sekme açık bırakıldı.
+    }
