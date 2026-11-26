@@ -5,6 +5,8 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Encoding suggestions for non-UTF-8 files larger than 16 MB (guessed from
+  the start of the file).
 - Tools › Play Macro Multiple Times…: replay the recorded macro up to
   10 000 times as one undo step.
 - Edit › Skip to Next Occurrence (Cmd/Ctrl+Shift+D): replace the newest
@@ -232,6 +234,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   or when changes are discarded.
 
 ### Fixed
+- UTF-16 files without a BOM that contain only ASCII text opened as UTF-8
+  with invisible NUL characters, so typed text was saved in the wrong
+  encoding. They now open as UTF-16.
 - Saving a file with several hard links (macOS, Linux) replaced it with a
   new file, so the other names kept the old contents. Such files are now
   overwritten in place, after a backup copy of the old contents is

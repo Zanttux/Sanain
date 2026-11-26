@@ -101,7 +101,42 @@ pub fn decode(bytes: &[u8]) -> Result<(String, TextEncoding), DecodeError> {
     if let Some(rest) = bytes.strip_prefix(BOM_UTF16BE) {
         return utf16(rest, u16::from_be_bytes).map(|s| (s, TextEncoding::Utf16BeBom));
     }
-    utf8(bytes, 0).map(|s| (s, TextEncoding::Utf8))
+    let text = utf8(bytes, 0)?;
+    // ASCII-only UTF-16 without a BOM is also valid UTF-8 (with NUL
+    // bytes). If the NULs follow the UTF-16 pattern, decode it as UTF-16
+    // instead; that is exact, so the file still saves byte for byte.
+    if text.as_bytes().contains(&0)
+        && let Some(enc) = utf16_pattern(bytes, true)
+        && let Ok(t) = decode_as(bytes, enc)
+    {
+        return Ok((t, enc));
+    }
+    Ok((text, TextEncoding::Utf8))
+}
+
+/// UTF-16 without a BOM, judged by where the zero bytes are in the first
+/// 64 KiB (most bytes of one parity are zero, as in mostly ASCII text).
+/// `complete`: `bytes` is the whole file, so its length must be even.
+fn utf16_pattern(bytes: &[u8], complete: bool) -> Option<TextEncoding> {
+    let sample = &bytes[..bytes.len().min(64 * 1024)];
+    let pairs = sample.len() / 2;
+    if pairs < 4 || (complete && !bytes.len().is_multiple_of(2)) {
+        return None;
+    }
+    let zero_even = sample.iter().step_by(2).filter(|b| **b == 0).count();
+    let zero_odd = sample
+        .iter()
+        .skip(1)
+        .step_by(2)
+        .filter(|b| **b == 0)
+        .count();
+    if zero_odd * 10 >= pairs * 4 && zero_even * 20 < pairs {
+        Some(TextEncoding::Utf16Le)
+    } else if zero_even * 10 >= pairs * 4 && zero_odd * 20 < pairs {
+        Some(TextEncoding::Utf16Be)
+    } else {
+        None
+    }
 }
 
 /// Decode with an encoding the user chose. Never replaces bytes; a legacy
@@ -238,33 +273,33 @@ fn with_units(bom: &[u8], text: &str, write: fn(u16) -> [u8; 2]) -> Vec<u8> {
 /// A guess, to be shown to the user, except for UTF-16 (see
 /// [`is_confident`]).
 pub fn guess(bytes: &[u8]) -> Option<TextEncoding> {
+    guess_with(bytes, true, |enc| decode_as(bytes, enc).is_ok())
+}
+
+/// [`guess`] from the first bytes of a file too large to read whole
+/// (`head`, at least 64 KiB when the file is longer). The result is not
+/// checked against the whole file: opening with it still verifies an exact
+/// round trip and fails cleanly otherwise.
+pub fn guess_head(head: &[u8]) -> Option<TextEncoding> {
+    // Cut at an even length so a UTF-16 unit is never split.
+    let head = &head[..head.len() & !1];
+    guess_with(head, false, |_| true)
+}
+
+fn guess_with(
+    bytes: &[u8],
+    complete: bool,
+    decodes: impl Fn(TextEncoding) -> bool,
+) -> Option<TextEncoding> {
     let sample = &bytes[..bytes.len().min(64 * 1024)];
-    let pairs = sample.len() / 2;
-    if pairs >= 4 && bytes.len().is_multiple_of(2) {
-        let zero_even = sample.iter().step_by(2).filter(|b| **b == 0).count();
-        let zero_odd = sample
-            .iter()
-            .skip(1)
-            .step_by(2)
-            .filter(|b| **b == 0)
-            .count();
-        let candidate = if zero_odd * 10 >= pairs * 4 && zero_even * 20 < pairs {
-            Some(TextEncoding::Utf16Le)
-        } else if zero_even * 10 >= pairs * 4 && zero_odd * 20 < pairs {
-            Some(TextEncoding::Utf16Be)
-        } else {
-            None
-        };
-        if let Some(enc) = candidate.filter(|e| decode_as(bytes, *e).is_ok()) {
-            return Some(enc);
-        }
+    if let Some(enc) = utf16_pattern(bytes, complete).filter(|e| decodes(*e)) {
+        return Some(enc);
     }
     let mut detector = chardetng::EncodingDetector::new(chardetng::Iso2022JpDetection::Deny);
-    detector.feed(sample, sample.len() == bytes.len());
+    detector.feed(sample, complete && sample.len() == bytes.len());
     let enc = detector.guess(None, chardetng::Utf8Detection::Deny);
     let enc = TextEncoding::Legacy(enc);
-    (enc != TextEncoding::Legacy(encoding_rs::UTF_8) && decode_as(bytes, enc).is_ok())
-        .then_some(enc)
+    (enc != TextEncoding::Legacy(encoding_rs::UTF_8) && decodes(enc)).then_some(enc)
 }
 
 /// Whether a [`guess`] is safe to apply without asking: UTF-16 decodes
@@ -275,6 +310,48 @@ pub fn is_confident(enc: TextEncoding) -> bool {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn ascii_utf16_without_bom_is_not_read_as_utf8() {
+        let bytes: Vec<u8> = "Hello\nworld\n"
+            .encode_utf16()
+            .flat_map(u16::to_le_bytes)
+            .collect();
+        let (text, enc) = decode(&bytes).unwrap();
+        assert_eq!(
+            (text.as_str(), enc),
+            ("Hello\nworld\n", TextEncoding::Utf16Le)
+        );
+        assert_eq!(encode(&text, enc).unwrap(), bytes, "round trip");
+        let be: Vec<u8> = "Hello\nworld\n"
+            .encode_utf16()
+            .flat_map(u16::to_be_bytes)
+            .collect();
+        assert_eq!(decode(&be).unwrap().1, TextEncoding::Utf16Be);
+        // A few NULs in real UTF-8 text do not trigger it.
+        assert_eq!(decode(b"abc\0def ghi jkl\n").unwrap().1, TextEncoding::Utf8);
+    }
+
+    #[test]
+    fn guess_from_head_of_large_file() {
+        let text = "Hyvää päivää, näin äänekäs öljy. ".repeat(4000);
+        let latin1 = encode(&text, TextEncoding::Legacy(encoding_rs::WINDOWS_1252)).unwrap();
+        assert_eq!(
+            guess_head(&latin1[..64 * 1024 + 3]),
+            Some(TextEncoding::Legacy(encoding_rs::WINDOWS_1252))
+        );
+        let utf16 = encode(&text, TextEncoding::Utf16Le).unwrap();
+        assert_eq!(
+            guess_head(&utf16[..64 * 1024 + 1]),
+            Some(TextEncoding::Utf16Le),
+            "odd cut"
+        );
+        assert_eq!(
+            guess_head(&utf16[..64 * 1024]),
+            guess(&utf16),
+            "same answer as a full guess"
+        );
+    }
     use super::*;
 
     fn round_trip(bytes: &[u8], expected: TextEncoding) {
