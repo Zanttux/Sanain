@@ -13,32 +13,41 @@ Fast by design. Powerful when needed. Simple by default.
 
 ## What works today
 
-- **Editing:** tabs (drag to reorder, pin), multiple cursors (Option/Alt+click,
-  Option/Alt+drag for a column selection, Add Cursor Above/Below, Select
-  Next Occurrence), word and line operations, undo/redo, word wrap, code
+- **Editing:** tabs (drag to reorder, pin, close others), a split editor,
+  multiple cursors (Option/Alt+click, Option/Alt+drag for a column
+  selection, Add Cursor Above/Below, Select Next Occurrence), automatic
+  indentation, indent/outdent and line comments, bracket matching, word
+  and line operations, undo/redo, keyboard macros, word wrap, code
   folding, Go to Line and Go to Heading, command palette
   (Cmd/Ctrl+Shift+P).
-- **Find:** find and replace with regular expressions in the current
-  file, and search across a folder.
+- **Find:** find and replace with regular expressions, a preview before
+  Replace All, and search across a folder.
 - **Your files stay intact:** unchanged files save byte for byte, line
   endings and encodings are preserved, saves are atomic, and Sanain refuses
-  to overwrite a file another program changed. Unsaved text survives a
-  crash and comes back on the next launch. Local history keeps earlier
-  saved versions on your computer so you can restore them.
-- **Encodings:** UTF-8 and UTF-16, plus legacy encodings such as
-  Windows-1252, ISO-8859-15 and Shift_JIS by explicit choice, only when
-  they reproduce the file exactly.
+  to overwrite a file another program changed. A full disk or a missing
+  permission is explained and leaves the file untouched. Unsaved text
+  survives a crash and comes back on the next launch. Local history keeps
+  earlier saved versions on your computer so you can restore them, and
+  any file can be compared with its saved version.
+- **Files:** Open Recent, Save All, Revert to Saved, drag and drop.
+- **Encodings:** UTF-8 and UTF-16 (with or without a byte order mark,
+  detected), plus legacy encodings such as Windows-1252, ISO-8859-15 and
+  Shift_JIS, suggested from the file's contents and used only when they
+  reproduce the file exactly.
 - **Markdown:** source, split and preview, with tables, task lists, local
   images and safe links. Nothing in a document runs or loads from the
   network.
 - **Data files:** syntax highlighting for 18 languages, JSON
   validate/format/minify that keeps your numbers and keys as written,
-  read-only trees for JSON, XML and YAML (entities and aliases are never
-  expanded), a CSV grid, side-by-side comparison of two files, and text
-  tools (sort, deduplicate, case, line endings).
+  XML and YAML validation, read-only trees for JSON, XML and YAML
+  (entities and aliases are never expanded), a CSV grid, side-by-side
+  comparison with another file, the saved version or the clipboard (with
+  changed characters highlighted), and text tools (sort, deduplicate,
+  case, line endings).
 - **Large files and logs:** a read-only log viewer for files of any size,
-  with filtering and follow mode; files of 256 MB or more open there
-  automatically.
+  with level colours, filtering, Go to Line and follow mode; files of
+  256 MB or more open there automatically. Very long lines (minified
+  files) stay responsive.
 - **Comfort:** light, dark and high-contrast themes, zoom, session restore,
   configurable shortcuts with a Notepad++ preset, native macOS menus.
 - **Languages:** the interface is available in 26 languages. English is
@@ -54,6 +63,8 @@ Fast by design. Powerful when needed. Simple by default.
 | ![Markdown source and preview side by side](docs/screenshots/markdown.png) | ![Find bar with highlighted matches](docs/screenshots/find.png) |
 | **CSV grid** | **Light theme** |
 | ![CSV file shown as a table](docs/screenshots/csv.png) | ![Editor in the light theme](docs/screenshots/light.png) |
+| **Split editor** | **Log viewer** |
+| ![Two files side by side in a split editor](docs/screenshots/split.png) | ![Log viewer with level colours and a filter](docs/screenshots/log.png) |
 
 Screenshots are from a real build (macOS, release profile).
 
