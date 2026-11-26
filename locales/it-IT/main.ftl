@@ -172,6 +172,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Virgolette non chiuse a partire dalla riga { $line }
 csv-truncated = Vengono mostrate le prime 200.000 righe
+csv-edit-cell = Modifica cella
+csv-insert-row-below = Inserisci riga sotto
+csv-delete-row = Elimina riga
+csv-read-only = File di sola lettura: la griglia non può essere modificata
 json-more = … altri { $count }
 dialog-open-link-title = Aprire questo link nel browser web?
 button-open = Apri

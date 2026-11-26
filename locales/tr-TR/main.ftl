@@ -172,6 +172,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = { $line }. satırda başlayan tırnak kapatılmamış
 csv-truncated = İlk 200.000 satır gösteriliyor
+csv-edit-cell = Hücreyi düzenle
+csv-insert-row-below = Alta satır ekle
+csv-delete-row = Satırı sil
+csv-read-only = Salt okunur dosya: tablo düzenlenemez
 json-more = … { $count } tane daha
 dialog-open-link-title = Bu bağlantı web tarayıcınızda açılsın mı?
 button-open = Aç

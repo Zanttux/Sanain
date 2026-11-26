@@ -166,6 +166,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Tanda kutip tidak ditutup mulai baris { $line }
 csv-truncated = Menampilkan 200.000 baris pertama
+csv-edit-cell = Edit sel
+csv-insert-row-below = Sisipkan baris di bawah
+csv-delete-row = Hapus baris
+csv-read-only = Berkas hanya-baca: kisi tidak dapat diedit
 json-more = … { $count } lagi
 dialog-open-link-title = Buka tautan ini di browser web Anda?
 button-open = Buka

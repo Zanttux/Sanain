@@ -1448,4 +1448,25 @@ mod tests {
             matches!(self, SaveOutcome::Saved)
         }
     }
+
+    #[test]
+    fn csv_cell_edit_is_one_undo_step_and_saves_only_that_field() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("t.csv");
+        let original = "id,name,note\r\n1,\"Äiti\",🙂 ok\r\n2,Ville,x";
+        fs::write(&path, original).unwrap();
+        let mut ed = Editor::open(&path).unwrap();
+        let table = sanain_tools::csv::parse(&ed.document().text(), ',');
+        let edit = table.edit_cell(2, 1, "Kalle, \"K\"").unwrap();
+        ed.replace_range(edit.range, &edit.text);
+        let edited = "id,name,note\r\n1,\"Äiti\",🙂 ok\r\n2,\"Kalle, \"\"K\"\"\",x";
+        assert_eq!(ed.document().text(), edited);
+        assert!(ed.document().is_dirty());
+        ed.execute(Command::Undo);
+        assert_eq!(ed.document().text(), original, "one undo restores all");
+        assert!(!ed.document().is_dirty());
+        ed.execute(Command::Redo);
+        assert!(matches!(ed.save(), SaveOutcome::Saved));
+        assert_eq!(fs::read(&path).unwrap(), edited.as_bytes());
+    }
 }

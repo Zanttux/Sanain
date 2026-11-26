@@ -166,6 +166,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = { $line }번째 줄에서 시작된 따옴표가 닫히지 않음
 csv-truncated = 처음 200,000행 표시 중
+csv-edit-cell = 셀 편집
+csv-insert-row-below = 아래에 행 삽입
+csv-delete-row = 행 삭제
+csv-read-only = 읽기 전용 파일: 그리드를 편집할 수 없습니다
 json-more = … { $count }개 더
 dialog-open-link-title = 웹 브라우저에서 이 링크를 여시겠습니까?
 button-open = 열기

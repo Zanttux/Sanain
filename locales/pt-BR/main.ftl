@@ -178,6 +178,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Aspas não fechadas a partir da linha { $line }
 csv-truncated = Exibindo as primeiras 200.000 linhas
+csv-edit-cell = Editar célula
+csv-insert-row-below = Inserir linha abaixo
+csv-delete-row = Excluir linha
+csv-read-only = Arquivo somente leitura: a grade não pode ser editada
 json-more = … mais { $count }
 dialog-open-link-title = Abrir este link no navegador?
 button-open = Abrir

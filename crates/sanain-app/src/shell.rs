@@ -131,9 +131,15 @@ fn encoding_choices(reopen: bool) -> Vec<TextEncoding> {
     v
 }
 
+/// Keyboard focus id of a tab's CSV grid.
+fn grid_id(id: TabId) -> egui::Id {
+    egui::Id::unique(("sanain-csv-grid", id))
+}
+
 /// Parsed data behind a structured view, for one document revision.
 enum Structured {
-    Csv(sanain_tools::csv::Table),
+    /// The table, and whether its file is read-only on disk (no grid edits).
+    Csv(sanain_tools::csv::Table, bool),
     Json(Result<sanain_tools::json::Node, sanain_tools::json::JsonError>),
     /// XML or YAML as a tree; the message id names the format.
     Tree(
@@ -302,6 +308,7 @@ pub struct Shell {
     structured: std::collections::HashSet<TabId>,
     structured_cache: HashMap<TabId, (Revision, Option<char>, Structured)>,
     csv_delimiter: HashMap<TabId, char>,
+    csv_grids: HashMap<TabId, crate::structured::GridState>,
     compare_pick: bool,
     md_modes: HashMap<TabId, MdMode>,
     md_cache: HashMap<TabId, (Revision, std::sync::Arc<Vec<sanain_markdown::Block>>)>,
@@ -470,6 +477,7 @@ impl Shell {
             structured: Default::default(),
             structured_cache: HashMap::new(),
             csv_delimiter: HashMap::new(),
+            csv_grids: HashMap::new(),
             compare_pick: false,
             md_modes: HashMap::new(),
             md_cache: HashMap::new(),
@@ -802,6 +810,7 @@ impl Shell {
                     self.structured.remove(&id);
                     self.structured_cache.remove(&id);
                     self.csv_delimiter.remove(&id);
+                    self.csv_grids.remove(&id);
                 }
             }
             Then::Quit => {
@@ -2726,7 +2735,8 @@ impl Shell {
             .get(&id)
             .is_some_and(|(r, d, _)| *r == rev && *d == override_delim);
         if !fresh {
-            let text = self.ws.tabs()[i].editor.document().text();
+            let ed = &self.ws.tabs()[i].editor;
+            let text = ed.document().text();
             let data = match kind {
                 DataKind::Json => Structured::Json(sanain_tools::json::tree(&text)),
                 DataKind::Xml => {
@@ -2738,7 +2748,10 @@ impl Shell {
                 DataKind::Csv | DataKind::Tsv => {
                     let hint = override_delim.or((kind == DataKind::Tsv).then_some('\t'));
                     let d = sanain_tools::csv::detect_delimiter(&text, hint);
-                    Structured::Csv(sanain_tools::csv::parse(&text, d))
+                    let read_only = ed.file().is_some_and(|f| {
+                        std::fs::metadata(&f.path).is_ok_and(|m| m.permissions().readonly())
+                    });
+                    Structured::Csv(sanain_tools::csv::parse(&text, d), read_only)
                 }
             };
             self.structured_cache
@@ -2751,8 +2764,9 @@ impl Shell {
             return;
         };
         let mut pick = None;
+        let mut grid_actions = Vec::new();
         match data {
-            Structured::Csv(table) => {
+            Structured::Csv(table, read_only) => {
                 egui::Frame::NONE
                     .fill(p.surface)
                     .inner_margin(egui::Margin::symmetric(8, 6))
@@ -2778,9 +2792,29 @@ impl Shell {
                             if table.truncated {
                                 ui.colored_label(p.muted, tr(l10n, "csv-truncated", &[]));
                             }
+                            if *read_only {
+                                ui.colored_label(p.muted, tr(l10n, "csv-read-only", &[]));
+                            }
                         });
                     });
-                crate::structured::csv(ui, table, p, size, true);
+                let labels = crate::structured::GridLabels {
+                    edit_cell: tr(l10n, "csv-edit-cell", &[]),
+                    insert_row_below: tr(l10n, "csv-insert-row-below", &[]),
+                    delete_row: tr(l10n, "csv-delete-row", &[]),
+                };
+                let editable = !*read_only && table.unterminated_quote.is_none();
+                let state = self.csv_grids.entry(id).or_default();
+                grid_actions = crate::structured::csv(
+                    ui,
+                    grid_id(id),
+                    table,
+                    p,
+                    size,
+                    true,
+                    editable,
+                    state,
+                    &labels,
+                );
             }
             Structured::Json(Ok(root)) | Structured::Tree(_, Ok(root)) => {
                 let more = |n: usize| tr(l10n, "json-more", &[("count", (n as i64).into())]);
@@ -2816,6 +2850,38 @@ impl Shell {
         }
         if let Some(c) = pick {
             self.csv_delimiter.insert(id, c);
+        }
+        for a in grid_actions {
+            self.apply_grid_action(id, a);
+        }
+    }
+
+    /// Apply a grid change to the tab's text as one undoable edit, computed
+    /// from the table the grid showed (the cache is for this revision).
+    fn apply_grid_action(&mut self, id: TabId, action: crate::structured::GridAction) {
+        use crate::structured::GridAction;
+        let Some((rev, _, Structured::Csv(table, false))) = self.structured_cache.get(&id) else {
+            return;
+        };
+        let Some(i) = self.ws.position(id) else {
+            return;
+        };
+        if self.ws.tabs()[i].editor.document().revision() != *rev {
+            return;
+        }
+        let edit = match &action {
+            GridAction::SetCell { row, col, value } => table.edit_cell(*row, *col, value),
+            GridAction::InsertRowAfter(r) => table.insert_row_after(*r),
+            GridAction::DeleteRow(r) => table.delete_row(*r),
+        };
+        let Some(edit) = edit else {
+            return;
+        };
+        if let Some(tab) = self.ws.tab_mut(i) {
+            tab.editor.replace_range(edit.range, &edit.text);
+        }
+        if let (GridAction::InsertRowAfter(r), Some(g)) = (&action, self.csv_grids.get_mut(&id)) {
+            g.selected = Some((r + 1, g.selected.map_or(0, |(_, c)| c)));
         }
     }
 
@@ -3591,14 +3657,14 @@ impl Shell {
             }
     }
 
-    /// Whether a text field other than the editor has keyboard focus.
+    /// Whether a text field other than the editor has keyboard focus. The
+    /// CSV grid's own focus (not its cell editor) counts as the editor, so
+    /// undo and redo reach the document.
     fn text_field_focused(&self, ctx: &egui::Context) -> bool {
-        let editor = self
-            .views
-            .get(&self.ws.active().id)
-            .and_then(|v| v.widget_id);
+        let active = self.ws.active().id;
+        let editor = self.views.get(&active).and_then(|v| v.widget_id);
         ctx.memory(|m| m.focused())
-            .is_some_and(|f| Some(f) != editor)
+            .is_some_and(|f| Some(f) != editor && f != grid_id(active))
     }
 
     fn dispatch(&mut self, action: MenuAction, ctx: &egui::Context) {

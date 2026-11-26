@@ -172,6 +172,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Uafsluttet anførselstegn, der starter på linje { $line }
 csv-truncated = Viser de første 200.000 rækker
+csv-edit-cell = Rediger celle
+csv-insert-row-below = Indsæt række nedenunder
+csv-delete-row = Slet række
+csv-read-only = Skrivebeskyttet fil: gitteret kan ikke redigeres
 json-more = … { $count } mere
 dialog-open-link-title = Vil du åbne dette link i din webbrowser?
 button-open = Åbn

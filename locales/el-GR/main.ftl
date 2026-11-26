@@ -172,6 +172,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Μη τερματισμένα εισαγωγικά από τη γραμμή { $line }
 csv-truncated = Εμφανίζονται οι πρώτες 200.000 γραμμές
+csv-edit-cell = Επεξεργασία κελιού
+csv-insert-row-below = Εισαγωγή γραμμής από κάτω
+csv-delete-row = Διαγραφή γραμμής
+csv-read-only = Αρχείο μόνο για ανάγνωση: το πλέγμα δεν μπορεί να επεξεργαστεί
 json-more = … { $count } ακόμη
 dialog-open-link-title = Άνοιγμα αυτού του συνδέσμου στο πρόγραμμα περιήγησης;
 button-open = Άνοιγμα

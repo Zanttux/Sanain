@@ -178,6 +178,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Guillemet non fermé à partir de la ligne { $line }
 csv-truncated = Affichage des 200 000 premières lignes
+csv-edit-cell = Modifier la cellule
+csv-insert-row-below = Insérer une ligne en dessous
+csv-delete-row = Supprimer la ligne
+csv-read-only = Fichier en lecture seule : la grille ne peut pas être modifiée
 json-more = … { $count } de plus
 dialog-open-link-title = Ouvrir ce lien dans votre navigateur web ?
 button-open = Ouvrir

@@ -172,6 +172,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Lezáratlan idézőjel a(z) { $line }. sortól kezdve
 csv-truncated = Az első 200 000 sor látható
+csv-edit-cell = Cella szerkesztése
+csv-insert-row-below = Sor beszúrása alá
+csv-delete-row = Sor törlése
+csv-read-only = Írásvédett fájl: a rács nem szerkeszthető
 json-more = … még { $count }
 dialog-open-link-title = Megnyitja ezt a hivatkozást a webböngészőben?
 button-open = Megnyitás

@@ -172,6 +172,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Sulkematon lainausmerkki rivillä { $line }
 csv-truncated = Näytetään ensimmäiset 200 000 riviä
+csv-edit-cell = Muokkaa solua
+csv-insert-row-below = Lisää rivi alle
+csv-delete-row = Poista rivi
+csv-read-only = Tiedosto on vain luettavissa, joten taulukkoa ei voi muokata
 json-more = … { $count } lisää
 dialog-open-link-title = Avataanko linkki selaimessa?
 button-open = Avaa

@@ -172,6 +172,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Comillas sin cerrar a partir de la línea { $line }
 csv-truncated = Se muestran las primeras 200.000 filas
+csv-edit-cell = Editar celda
+csv-insert-row-below = Insertar fila debajo
+csv-delete-row = Eliminar fila
+csv-read-only = Archivo de solo lectura: la cuadrícula no se puede editar
 json-more = … { $count } más
 dialog-open-link-title = ¿Abrir este enlace en el navegador web?
 button-open = Abrir

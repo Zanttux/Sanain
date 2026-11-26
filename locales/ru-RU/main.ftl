@@ -184,6 +184,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Незакрытая кавычка, начиная со строки { $line }
 csv-truncated = Показаны первые 200 000 строк
+csv-edit-cell = Изменить ячейку
+csv-insert-row-below = Вставить строку ниже
+csv-delete-row = Удалить строку
+csv-read-only = Файл только для чтения: таблицу нельзя изменить
 json-more = … ещё { $count }
 dialog-open-link-title = Открыть эту ссылку в веб-браузере?
 button-open = Открыть

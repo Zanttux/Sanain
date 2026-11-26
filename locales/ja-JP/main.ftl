@@ -166,6 +166,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = { $line } 行目から始まる引用符が閉じられていません
 csv-truncated = 最初の 200,000 行を表示しています
+csv-edit-cell = セルを編集
+csv-insert-row-below = 下に行を挿入
+csv-delete-row = 行を削除
+csv-read-only = 読み取り専用ファイル: グリッドは編集できません
 json-more = … ほか { $count } 件
 dialog-open-link-title = このリンクを Web ブラウザで開きますか？
 button-open = 開く

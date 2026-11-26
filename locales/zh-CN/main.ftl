@@ -166,6 +166,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = 从第 { $line } 行开始的引号未闭合
 csv-truncated = 仅显示前 200,000 行
+csv-edit-cell = 编辑单元格
+csv-insert-row-below = 在下方插入行
+csv-delete-row = 删除行
+csv-read-only = 只读文件：无法编辑表格
 json-more = … 还有 { $count } 项
 dialog-open-link-title = 要在网页浏览器中打开此链接吗？
 button-open = 打开

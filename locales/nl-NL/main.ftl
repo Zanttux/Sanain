@@ -172,6 +172,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Niet-afgesloten aanhalingsteken vanaf regel { $line }
 csv-truncated = De eerste 200.000 rijen worden getoond
+csv-edit-cell = Cel bewerken
+csv-insert-row-below = Rij eronder invoegen
+csv-delete-row = Rij verwijderen
+csv-read-only = Alleen-lezen bestand: het raster kan niet worden bewerkt
 json-more = … nog { $count }
 dialog-open-link-title = Deze link openen in je webbrowser?
 button-open = Open

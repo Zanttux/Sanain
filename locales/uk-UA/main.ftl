@@ -184,6 +184,10 @@ csv-rows = { $count ->
     }
 csv-unterminated = Незакрита лапка, починаючи з рядка { $line }
 csv-truncated = Показано перші 200 000 рядків
+csv-edit-cell = Редагувати клітинку
+csv-insert-row-below = Вставити рядок нижче
+csv-delete-row = Видалити рядок
+csv-read-only = Файл лише для читання: таблицю не можна редагувати
 json-more = … ще { $count }
 dialog-open-link-title = Відкрити це посилання у веббраузері?
 button-open = Відкрити
