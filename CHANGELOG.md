@@ -5,6 +5,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Log viewer: logs in legacy encodings (Windows-1252, Windows-1251,
+  Shift_JIS, …) are detected and shown correctly instead of with
+  replacement characters; the encoding is shown in the header.
 - View › Outline: a side panel with the headings of a Markdown document;
   the current section is highlighted and a click jumps to the heading.
 - Encoding suggestions for non-UTF-8 files larger than 16 MB (guessed from
