@@ -3226,6 +3226,10 @@ impl Shell {
     }
 
     fn dispatch(&mut self, action: MenuAction, ctx: &egui::Context) {
+        // Native menu accelerators can bypass egui's raw key events.
+        for view in self.views.values_mut().chain(self.right_views.values_mut()) {
+            view.end_column_mode();
+        }
         if self.dialog.is_some() {
             return;
         }
@@ -4268,7 +4272,30 @@ impl eframe::App for Shell {
                     continue;
                 }
                 if let Some(s) = a.shortcut(&self.settings.keymap)
-                    && ctx.input_mut(|i| i.consume_shortcut(&s))
+                    && ctx.input_mut(|i| {
+                        // Arrow shortcuts must match all modifiers: egui's
+                        // logical matching ignores extra Shift/Alt and would
+                        // steal rectangular selection or duplicate-line keys.
+                        if matches!(
+                            s.logical_key,
+                            egui::Key::ArrowUp
+                                | egui::Key::ArrowDown
+                                | egui::Key::ArrowLeft
+                                | egui::Key::ArrowRight
+                        ) {
+                            let mut consumed = false;
+                            i.events.retain(|event| {
+                                let matches = matches!(event, egui::Event::Key {
+                                    key, pressed: true, modifiers, ..
+                                } if *key == s.logical_key && modifiers.matches_exact(s.modifiers));
+                                consumed |= matches;
+                                !matches
+                            });
+                            consumed
+                        } else {
+                            i.consume_shortcut(&s)
+                        }
+                    })
                 {
                     actions.push(a);
                 }

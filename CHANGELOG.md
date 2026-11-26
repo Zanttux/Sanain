@@ -24,6 +24,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   moves to the pointer first (#114).
 
 ### Added
+- Keyboard rectangular selection with Ctrl+Alt+Shift+Arrow (Control+Option+Shift
+  on macOS): tab-expanded logical columns, whole graphemes and clamped short
+  lines; typing replaces every selected row. Shift+Alt+Arrow keeps line duplication.
 - macOS: Sanain appears in Finder's Open With for text, code and data
   files, and files opened from Finder or the Dock open in a tab, at launch
   and while running (#78, ADR 0003).
