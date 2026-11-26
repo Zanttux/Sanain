@@ -16,6 +16,10 @@ use std::path::{Path, PathBuf};
 /// File name of the desktop entry (reverse-DNS, as freedesktop recommends).
 pub const DESKTOP_FILE: &str = "io.github.zanttux.Sanain.desktop";
 
+/// Icon name in the hicolor theme (installed by [`register_freedesktop`]).
+pub const ICON_NAME: &str = "io.github.zanttux.Sanain";
+const ICON_PNG: &[u8] = include_bytes!("../../../packaging/icons/sanain-256.png");
+
 /// MIME types offered in "Open With": text and common code/data formats.
 pub const MIME_TYPES: &[&str] = &[
     "text/plain",
@@ -61,7 +65,7 @@ pub fn desktop_entry(exe: &Path) -> String {
     quoted.push('"');
     format!(
         "[Desktop Entry]\nType=Application\nName=Sanain\nGenericName=Text Editor\n\
-         Comment=Native text editor\nExec={quoted} %F\nIcon=accessories-text-editor\n\
+         Comment=Native text editor\nExec={quoted} %F\nIcon={ICON_NAME}\n\
          Terminal=false\nCategories=Utility;TextEditor;Development;\n\
          MimeType={};\nStartupNotify=true\nStartupWMClass=sanain\n",
         MIME_TYPES.join(";")
@@ -84,6 +88,12 @@ pub fn register_freedesktop(exe: &Path, apps: Option<PathBuf>) -> std::io::Resul
     std::fs::create_dir_all(&dir)?;
     let path = dir.join(DESKTOP_FILE);
     sanain_io::write_atomic(&path, desktop_entry(exe).as_bytes(), None)?;
+    if let Some(icon) = icon_path(&dir) {
+        if let Some(parent) = icon.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        sanain_io::write_atomic(&icon, ICON_PNG, None)?;
+    }
     refresh_desktop_database(&dir);
     Ok(path)
 }
@@ -93,6 +103,9 @@ pub fn unregister_freedesktop(apps: Option<PathBuf>) -> std::io::Result<bool> {
     let Some(dir) = apps.or_else(applications_dir) else {
         return Ok(false);
     };
+    if let Some(icon) = icon_path(&dir) {
+        let _ = std::fs::remove_file(icon);
+    }
     match std::fs::remove_file(dir.join(DESKTOP_FILE)) {
         Ok(()) => {
             refresh_desktop_database(&dir);
@@ -101,6 +114,14 @@ pub fn unregister_freedesktop(apps: Option<PathBuf>) -> std::io::Result<bool> {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(false),
         Err(e) => Err(e),
     }
+}
+
+/// `<data>/icons/hicolor/256x256/apps/<name>.png` next to `<data>/applications`.
+fn icon_path(apps: &Path) -> Option<PathBuf> {
+    apps.parent().map(|data| {
+        data.join("icons/hicolor/256x256/apps")
+            .join(format!("{ICON_NAME}.png"))
+    })
 }
 
 /// Best effort: file managers also notice the change without it.
@@ -192,8 +213,13 @@ mod tests {
                 .unwrap()
                 .contains("Exec=\"/usr/bin/sanain\" %F")
         );
+        let icon = d
+            .path()
+            .join("icons/hicolor/256x256/apps/io.github.zanttux.Sanain.png");
+        assert!(icon.is_file(), "icon installed");
         assert!(unregister_freedesktop(Some(apps.clone())).unwrap());
         assert!(!p.exists());
+        assert!(!icon.exists(), "icon removed");
         assert!(
             !unregister_freedesktop(Some(apps)).unwrap(),
             "second time: nothing to remove"
