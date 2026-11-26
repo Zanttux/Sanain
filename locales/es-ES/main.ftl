@@ -374,3 +374,4 @@ tabs-kept-unsaved = { $count ->
     }
 status-indent-tabs = Tabulaciones
 status-indent-spaces = Espacios: { $count }
+find-searching = Buscando…

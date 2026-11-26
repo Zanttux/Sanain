@@ -380,7 +380,7 @@ impl Shell {
     /// Move to the next or previous match and select it.
     fn find_step(&mut self, forward: bool) {
         let id = self.ws.active().id;
-        self.find.refresh(id, &self.ws.active().editor);
+        self.find.refresh(id, &self.ws.active().editor, &self.ctx);
         let sel = self.editor().selections().primary().range();
         let from = if forward { sel.end } else { sel.start };
         if let Some(i) = self.find.matches.next_from(from, forward) {
@@ -400,7 +400,7 @@ impl Shell {
                 self.focus_active();
             }
             FindEvent::Replace => {
-                self.find.refresh(id, &self.ws.active().editor);
+                self.find.refresh(id, &self.ws.active().editor, &self.ctx);
                 let with = self.find.replacement.clone();
                 if let Some(m) = self.find.matcher().cloned() {
                     self.editor_mut().replace_selected(&m, &with);
@@ -408,7 +408,7 @@ impl Shell {
                 self.find_step(true);
             }
             FindEvent::ReplaceAll => {
-                self.find.refresh(id, &self.ws.active().editor);
+                self.find.refresh(id, &self.ws.active().editor, &self.ctx);
                 let with = self.find.replacement.clone();
                 // Show what would change; nothing is replaced until the
                 // user confirms.
@@ -3475,7 +3475,7 @@ impl eframe::App for Shell {
             .show(ui, |ui| self.tab_bar(ui, &ctx));
         if self.find.open {
             let tab = self.ws.active().id;
-            self.find.refresh(tab, &self.ws.active().editor);
+            self.find.refresh(tab, &self.ws.active().editor, &ctx);
             let current = self
                 .find
                 .matches

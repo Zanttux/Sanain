@@ -412,3 +412,4 @@ tabs-kept-unsaved = { $count ->
     }
 status-indent-tabs = Табуляція
 status-indent-spaces = Пробіли: { $count }
+find-searching = Пошук…

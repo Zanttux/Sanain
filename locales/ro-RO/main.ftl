@@ -393,3 +393,4 @@ tabs-kept-unsaved = { $count ->
     }
 status-indent-tabs = Tabulatoare
 status-indent-spaces = Spații: { $count }
+find-searching = Se caută…
