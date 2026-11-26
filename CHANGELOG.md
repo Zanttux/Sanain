@@ -5,6 +5,8 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Enter keeps the current line's indentation, and the bracket matching
+  the one next to the cursor is outlined.
 - Indent and outdent lines: Tab with a multi-line selection indents it,
   Shift+Tab outdents; also Edit > Indent/Outdent Lines (Cmd/Ctrl+] and
   [). Edit > Toggle Line Comment (Cmd/Ctrl+/) for languages with line

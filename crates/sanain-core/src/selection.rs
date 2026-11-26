@@ -117,6 +117,74 @@ pub fn insert(sels: &Selections, text: &str) -> (Transaction, Selections) {
     replace_each(sels, |s| (s.range(), text.to_owned()))
 }
 
+/// Enter: replace each selection with `newline` followed by the leading
+/// whitespace of its line (up to the selection start), so the new line keeps
+/// the indentation.
+pub fn newline_indented(
+    rope: &Rope,
+    sels: &Selections,
+    newline: &str,
+) -> (Transaction, Selections) {
+    replace_each(sels, |s| {
+        let start = s.range().start;
+        let line = rope.char_to_line(start);
+        let line_start = rope.line_to_char(line);
+        let indent: String = rope
+            .slice(line_start..start)
+            .chars()
+            .take_while(|c| *c == ' ' || *c == '\t')
+            .collect();
+        (s.range(), format!("{newline}{indent}"))
+    })
+}
+
+/// The bracket matching the one at or just before `pos` (`()[]{}`), as
+/// (this bracket, its match) char indices. Naive about strings and
+/// comments; gives up after `limit` chars.
+pub fn matching_bracket(rope: &Rope, pos: usize, limit: usize) -> Option<(usize, usize)> {
+    const PAIRS: [(char, char); 3] = [('(', ')'), ('[', ']'), ('{', '}')];
+    let len = rope.len_chars();
+    let at = |i: usize| (i < len).then(|| rope.char(i));
+    // Prefer the bracket after the caret, then the one before it.
+    let candidates = [Some(pos), pos.checked_sub(1)];
+    for i in candidates.into_iter().flatten() {
+        let Some(c) = at(i) else { continue };
+        if let Some(&(open, close)) = PAIRS.iter().find(|(o, _)| *o == c) {
+            let mut depth = 0usize;
+            for (j, ch) in rope.chars_at(i).enumerate().take(limit) {
+                if ch == open {
+                    depth += 1;
+                } else if ch == close {
+                    depth -= 1;
+                    if depth == 0 {
+                        return Some((i, i + j));
+                    }
+                }
+            }
+            return None;
+        }
+        if let Some(&(open, close)) = PAIRS.iter().find(|(_, c2)| *c2 == c) {
+            let mut depth = 0usize;
+            let mut chars = rope.chars_at(i + 1);
+            let mut j = i + 1;
+            for _ in 0..limit {
+                let Some(ch) = chars.prev() else { break };
+                j -= 1;
+                if ch == close {
+                    depth += 1;
+                } else if ch == open {
+                    depth -= 1;
+                    if depth == 0 {
+                        return Some((i, j));
+                    }
+                }
+            }
+            return None;
+        }
+    }
+    None
+}
+
 /// Backspace: delete each selection, or the grapheme before each cursor.
 pub fn delete_backward(rope: &Rope, sels: &Selections) -> (Transaction, Selections) {
     replace_each(sels, |s| {
@@ -411,6 +479,47 @@ mod tests {
         let (tx, next) = cmd(doc.rope(), &sels);
         doc.apply(&tx).unwrap();
         (doc.text(), next.iter().copied().collect())
+    }
+
+    #[test]
+    fn enter_keeps_indentation() {
+        let rope = Rope::from_str("fn f() {\n    let a = 1;\n}");
+        let sels = Selections::single(Selection::cursor(23)); // end of "let a = 1;"
+        let (tx, next) = newline_indented(&rope, &sels, "\n");
+        let mut r = rope.clone();
+        tx.apply(&mut r).unwrap();
+        assert_eq!(r.to_string(), "fn f() {\n    let a = 1;\n    \n}");
+        assert_eq!(next.primary().head, 28);
+        // Caret inside the indentation: only the part before it is copied.
+        let sels = Selections::single(Selection::cursor(11));
+        let (tx, _) = newline_indented(&rope, &sels, "\n");
+        let mut r = rope.clone();
+        tx.apply(&mut r).unwrap();
+        assert_eq!(r.to_string(), "fn f() {\n  \n    let a = 1;\n}");
+    }
+
+    #[test]
+    fn finds_matching_brackets() {
+        let rope = Rope::from_str("f(a[1], {b: (2)})");
+        assert_eq!(
+            matching_bracket(&rope, 1, 1000),
+            Some((1, 16)),
+            "after the caret"
+        );
+        assert_eq!(
+            matching_bracket(&rope, 17, 1000),
+            Some((16, 1)),
+            "before the caret"
+        );
+        assert_eq!(matching_bracket(&rope, 3, 1000), Some((3, 5)));
+        assert_eq!(matching_bracket(&rope, 8, 1000), Some((8, 15)));
+        assert_eq!(matching_bracket(&rope, 0, 1000), None);
+        assert_eq!(
+            matching_bracket(&Rope::from_str("(()"), 0, 1000),
+            None,
+            "unbalanced"
+        );
+        assert_eq!(matching_bracket(&rope, 1, 5), None, "limit");
     }
 
     #[test]

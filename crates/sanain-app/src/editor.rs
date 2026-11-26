@@ -275,7 +275,7 @@ impl Editor {
                 (Some(tx), s)
             }
             Command::NewLine => {
-                let (tx, s) = sel::insert(&self.sels, self.newline());
+                let (tx, s) = sel::newline_indented(rope, &self.sels, self.newline());
                 (Some(tx), s)
             }
             Command::Backspace => {

@@ -483,6 +483,10 @@ impl EditorView {
             let rope = editor.document().rope();
             let sels: Vec<_> = editor.selections().iter().copied().collect();
             let primary_head = editor.selections().primary().head;
+            // The bracket pair at the primary caret, outlined below.
+            let brackets = (editor.selections().len() == 1)
+                .then(|| sanain_core::selection::matching_bracket(rope, primary_head, 20_000))
+                .flatten();
             let mut caret_rect = None;
             for row in first..last {
                 let seg = rows.at(row);
@@ -589,6 +593,22 @@ impl EditorView {
                     );
                 }
 
+                if let Some((a, b)) = brackets {
+                    for i in [a, b] {
+                        if i >= start && i < seg_end {
+                            let r = Rect::from_min_max(
+                                pos2(x_of(i), y + 1.0),
+                                pos2(x_of(i + 1).max(x_of(i) + 2.0), y + row_h - 1.0),
+                            );
+                            painter.rect_stroke(
+                                r,
+                                2.0,
+                                Stroke::new(1.0, palette.muted),
+                                egui::StrokeKind::Inside,
+                            );
+                        }
+                    }
+                }
                 for s in &sels {
                     // A caret at a wrap point shows at the next row's start.
                     let on_row = s.head >= start
