@@ -144,6 +144,7 @@ fn main() -> eframe::Result {
     }
 
     let options = eframe::NativeOptions {
+        renderer: renderer(),
         viewport: eframe::egui::ViewportBuilder::default()
             .with_title("Sanain")
             .with_app_id("sanain")
@@ -246,4 +247,21 @@ fn app_icon() -> std::sync::Arc<eframe::egui::IconData> {
             },
         );
     std::sync::Arc::new(icon)
+}
+
+/// Windows uses OpenGL (glow): wgpu flickers and lags while the window is
+/// moved on some drivers (#95). `SANAIN_RENDERER=wgpu` or `glow` overrides
+/// it where both are built in.
+fn renderer() -> eframe::Renderer {
+    #[cfg(windows)]
+    {
+        if std::env::var("SANAIN_RENDERER").as_deref() == Ok("wgpu") {
+            return eframe::Renderer::Wgpu;
+        }
+        eframe::Renderer::Glow
+    }
+    #[cfg(not(windows))]
+    {
+        eframe::Renderer::Wgpu
+    }
 }

@@ -30,6 +30,11 @@ sys-locale = "0.3"
 fontdb = { version = "0.24", default-features = false, features = ["std", "fs", "fontconfig"] }
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "webp"] }
 
+# Windows: OpenGL renderer as well (wgpu flickers while the window is
+# moved or resized on some drivers, #95); chosen at startup in main.rs.
+[target.'cfg(windows)'.dependencies]
+eframe = { version = "0.37", default-features = false, features = ["glow"] }
+
 [target.'cfg(target_os = "macos")'.dependencies]
 muda = { version = "0.22", default-features = false }
 
