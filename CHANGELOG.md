@@ -5,6 +5,15 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased]
 
 ### Added
+- The split editor holds up to four panes. View › Split Right (Ctrl/Cmd+\,
+  formerly Split Editor) adds a pane beside the focused one and the new
+  Split Down adds one below it; the first split sets the direction and a
+  split the other way stacks panes inside that column or row (one level of
+  nesting). Close Pane closes the focused pane, and Focus Next Pane / Focus
+  Previous Pane move between panes (no default shortcuts; assign them in
+  Settings). Panes share the space evenly. Split Right no longer toggles
+  the split off: use Close Pane. Saved shortcuts for Split Editor keep
+  working.
 - Settings › Keyboard shortcuts › Import from Notepad++… reads a Notepad++
   `shortcuts.xml` (on Windows `%AppData%\Notepad++\shortcuts.xml`) and
   applies its changed shortcuts for the commands Sanain has (file, edit,

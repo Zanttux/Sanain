@@ -10,6 +10,7 @@ pub mod images;
 pub mod keymap;
 pub mod macros;
 pub mod npp_shortcuts;
+pub mod panes;
 pub mod recent;
 pub mod recovery;
 pub mod replacefiles;

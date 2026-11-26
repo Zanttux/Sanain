@@ -363,7 +363,6 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Показано лише перші 200 змінених рядків.
 replace-preview-stale = Документ змінився; нічого не замінено. Виконайте «Замінити все» ще раз.
-view-split-editor = Розділити редактор
 encoding-detected = Відкрито в кодуванні { $encoding } (визначено за вмістом файлу).
 encoding-suggested = Запропоновано за вмістом файлу: { $encoding }. Перед відкриттям перевірте попередній перегляд.
 app-about = Про Sanain
@@ -510,3 +509,9 @@ settings-shortcut-import-npp-done = Імпортовано з Notepad++: { $impo
 settings-shortcut-import-npp-failed = Не вдалося імпортувати { $name }: { $reason }
 settings-shortcut-import-npp-too-large = Файл більший за 1 МіБ.
 settings-shortcut-import-npp-invalid = Файл не є коректним shortcuts.xml з Notepad++.
+view-split-right = Розділити праворуч
+view-split-down = Розділити донизу
+view-close-pane = Закрити область
+view-focus-next-pane = Наступна область
+view-focus-prev-pane = Попередня область
+status-pane-limit = Досягнуто межі кількості областей (не більше { $max }).

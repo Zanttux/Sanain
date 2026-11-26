@@ -363,7 +363,6 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Zobrazeno je pouze prvních 200 změněných řádků.
 replace-preview-stale = Dokument se změnil, nic nebylo nahrazeno. Spusťte znovu Nahradit vše.
-view-split-editor = Rozdělit editor
 encoding-detected = Otevřeno v kódování { $encoding } (zjištěno z obsahu souboru).
 encoding-suggested = Navrženo podle obsahu souboru: { $encoding }. Před otevřením zkontrolujte náhled.
 app-about = O aplikaci Sanain
@@ -510,3 +509,9 @@ settings-shortcut-import-npp-done = Importováno z Notepad++: { $imported }. Př
 settings-shortcut-import-npp-failed = Soubor { $name } nelze importovat: { $reason }
 settings-shortcut-import-npp-too-large = Soubor je větší než 1 MiB.
 settings-shortcut-import-npp-invalid = Soubor není platný shortcuts.xml z Notepad++.
+view-split-right = Rozdělit vpravo
+view-split-down = Rozdělit dolů
+view-close-pane = Zavřít podokno
+view-focus-next-pane = Přejít na další podokno
+view-focus-prev-pane = Přejít na předchozí podokno
+status-pane-limit = Bylo dosaženo limitu podoken (nejvýše { $max }).

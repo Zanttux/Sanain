@@ -329,7 +329,6 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Csak az első 200 módosuló sor látható.
 replace-preview-stale = A dokumentum megváltozott, semmi sem lett lecserélve. Futtassa újra az Összes cseréje parancsot.
-view-split-editor = Szerkesztő felosztása
 encoding-detected = Megnyitva { $encoding } kódolással (a fájl tartalmából felismerve).
 encoding-suggested = A fájl tartalma alapján javasolt: { $encoding }. Megnyitás előtt ellenőrizze az előnézetet.
 app-about = A Sanain névjegye
@@ -462,3 +461,9 @@ settings-shortcut-import-npp-done = Importálva a Notepad++-ból: { $imported }.
 settings-shortcut-import-npp-failed = A(z) { $name } importálása nem sikerült: { $reason }
 settings-shortcut-import-npp-too-large = A fájl nagyobb 1 MiB-nál.
 settings-shortcut-import-npp-invalid = A fájl nem érvényes Notepad++ shortcuts.xml.
+view-split-right = Felosztás jobbra
+view-split-down = Felosztás lefelé
+view-close-pane = Panel bezárása
+view-focus-next-pane = Következő panel
+view-focus-prev-pane = Előző panel
+status-pane-limit = Elérte a panelek maximális számát (legfeljebb { $max }).

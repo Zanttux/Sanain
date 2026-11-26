@@ -329,7 +329,6 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Bare de første 200 endrede linjene vises.
 replace-preview-stale = Dokumentet er endret; ingenting ble erstattet. Kjør Erstatt alle på nytt.
-view-split-editor = Del redigeringsprogram
 encoding-detected = Åpnet som { $encoding } (oppdaget fra innholdet i filen).
 encoding-suggested = Foreslått ut fra innholdet i filen: { $encoding }. Kontroller forhåndsvisningen før du åpner.
 app-about = Om Sanain
@@ -462,3 +461,9 @@ settings-shortcut-import-npp-done = Importert fra Notepad++: { $imported }. Hopp
 settings-shortcut-import-npp-failed = Kunne ikke importere { $name }: { $reason }
 settings-shortcut-import-npp-too-large = Filen er større enn 1 MiB.
 settings-shortcut-import-npp-invalid = Filen er ikke en gyldig shortcuts.xml fra Notepad++.
+view-split-right = Del til høyre
+view-split-down = Del nedover
+view-close-pane = Lukk rute
+view-focus-next-pane = Gå til neste rute
+view-focus-prev-pane = Gå til forrige rute
+status-pane-limit = Grensen for ruter er nådd (høyst { $max }).

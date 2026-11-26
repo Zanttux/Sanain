@@ -312,7 +312,6 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Chỉ hiển thị 200 dòng thay đổi đầu tiên.
 replace-preview-stale = Tài liệu đã thay đổi; không có gì được thay thế. Hãy chạy lại Thay thế tất cả.
-view-split-editor = Chia trình soạn thảo
 encoding-detected = Đã mở dưới dạng { $encoding } (phát hiện từ nội dung tệp).
 encoding-suggested = Đề xuất dựa trên nội dung tệp: { $encoding }. Hãy kiểm tra bản xem trước trước khi mở.
 app-about = Giới thiệu về Sanain
@@ -438,3 +437,9 @@ settings-shortcut-import-npp-done = Đã nhập từ Notepad++: { $imported }. �
 settings-shortcut-import-npp-failed = Không thể nhập { $name }: { $reason }
 settings-shortcut-import-npp-too-large = Tệp lớn hơn 1 MiB.
 settings-shortcut-import-npp-invalid = Tệp không phải là shortcuts.xml hợp lệ của Notepad++.
+view-split-right = Chia sang phải
+view-split-down = Chia xuống dưới
+view-close-pane = Đóng ngăn
+view-focus-next-pane = Chuyển đến ngăn tiếp theo
+view-focus-prev-pane = Chuyển đến ngăn trước
+status-pane-limit = Đã đạt giới hạn số ngăn (tối đa { $max }).

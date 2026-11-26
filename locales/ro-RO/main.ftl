@@ -346,7 +346,6 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Sunt afișate doar primele 200 de rânduri modificate.
 replace-preview-stale = Documentul s-a modificat; nu s-a înlocuit nimic. Rulați din nou Înlocuiește tot.
-view-split-editor = Împarte editorul
 encoding-detected = Deschis ca { $encoding } (detectat din conținutul fișierului).
 encoding-suggested = Sugerată pe baza conținutului fișierului: { $encoding }. Verificați previzualizarea înainte de deschidere.
 app-about = Despre Sanain
@@ -486,3 +485,9 @@ settings-shortcut-import-npp-done = Importate din Notepad++: { $imported }. Omis
 settings-shortcut-import-npp-failed = Nu s-a putut importa { $name }: { $reason }
 settings-shortcut-import-npp-too-large = Fișierul depășește 1 MiB.
 settings-shortcut-import-npp-invalid = Fișierul nu este un shortcuts.xml valid din Notepad++.
+view-split-right = Împarte la dreapta
+view-split-down = Împarte în jos
+view-close-pane = Închide panoul
+view-focus-next-pane = Panoul următor
+view-focus-prev-pane = Panoul anterior
+status-pane-limit = S-a atins limita de panouri (cel mult { $max }).

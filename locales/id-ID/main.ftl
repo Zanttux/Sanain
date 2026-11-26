@@ -312,7 +312,6 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Hanya 200 baris pertama yang berubah yang ditampilkan.
 replace-preview-stale = Dokumen telah berubah; tidak ada yang diganti. Jalankan Ganti Semua lagi.
-view-split-editor = Pisahkan Editor
 encoding-detected = Dibuka sebagai { $encoding } (terdeteksi dari isi berkas).
 encoding-suggested = Disarankan dari isi berkas: { $encoding }. Periksa pratinjau sebelum membuka.
 app-about = Tentang Sanain
@@ -438,3 +437,9 @@ settings-shortcut-import-npp-done = Diimpor dari Notepad++: { $imported }. Dilew
 settings-shortcut-import-npp-failed = Tidak dapat mengimpor { $name }: { $reason }
 settings-shortcut-import-npp-too-large = Berkas lebih besar dari 1 MiB.
 settings-shortcut-import-npp-invalid = Berkas bukan shortcuts.xml Notepad++ yang valid.
+view-split-right = Pisahkan ke Kanan
+view-split-down = Pisahkan ke Bawah
+view-close-pane = Tutup Panel
+view-focus-next-pane = Fokus ke Panel Berikutnya
+view-focus-prev-pane = Fokus ke Panel Sebelumnya
+status-pane-limit = Batas panel tercapai (maksimal { $max }).

@@ -329,7 +329,6 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Yalnızca değişen ilk 200 satır gösteriliyor.
 replace-preview-stale = Belge değişti; hiçbir şey değiştirilmedi. Tümünü Değiştir'i yeniden çalıştırın.
-view-split-editor = Düzenleyiciyi Böl
 encoding-detected = { $encoding } olarak açıldı (dosya içeriğinden algılandı).
 encoding-suggested = Dosya içeriğine göre önerilen: { $encoding }. Açmadan önce önizlemeyi kontrol edin.
 app-about = Sanain Hakkında
@@ -462,3 +461,9 @@ settings-shortcut-import-npp-done = Notepad++'tan içe aktarılan: { $imported }
 settings-shortcut-import-npp-failed = { $name } içe aktarılamadı: { $reason }
 settings-shortcut-import-npp-too-large = Dosya 1 MiB'den büyük.
 settings-shortcut-import-npp-invalid = Dosya geçerli bir Notepad++ shortcuts.xml dosyası değil.
+view-split-right = Sağa Böl
+view-split-down = Aşağı Böl
+view-close-pane = Bölmeyi Kapat
+view-focus-next-pane = Sonraki Bölmeye Odaklan
+view-focus-prev-pane = Önceki Bölmeye Odaklan
+status-pane-limit = Bölme sınırına ulaşıldı (en fazla { $max }).
