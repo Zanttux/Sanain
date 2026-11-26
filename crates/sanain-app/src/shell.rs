@@ -20,6 +20,7 @@ use crate::palette::{Entry, Palette};
 use crate::preview;
 use crate::theme;
 use crate::view::{ContextLabels, EditorView, ViewOptions};
+use sanain_app::macros::{MacroError, MacroStore};
 use sanain_app::settings::{FONT_SIZE_DEFAULT, Settings, ThemeChoice};
 use sanain_app::update::{Status as UpdateStatus, UpdateError};
 
@@ -240,6 +241,8 @@ pub struct Shell {
     history_open: bool,
     /// The last recorded macro.
     macro_cmds: Vec<Command>,
+    /// Saved, named macros (the `macros` file in the config folder).
+    saved_macros: MacroStore,
     replace_preview: Option<ReplacePreview>,
     about_open: bool,
     /// Markdown headings for Go to Heading, per tab and revision.
@@ -399,6 +402,10 @@ impl Shell {
         settings_dir: Option<std::path::PathBuf>,
     ) -> Self {
         let status = (restored > 0).then(|| (l10n.get("status-recovered"), false));
+        let saved_macros = settings_dir
+            .as_deref()
+            .map(MacroStore::load)
+            .unwrap_or_default();
         let mut shell = Self {
             ws,
             views: HashMap::new(),
@@ -419,6 +426,7 @@ impl Shell {
             history: None,
             history_open: false,
             macro_cmds: Vec::new(),
+            saved_macros,
             replace_preview: None,
             about_open: false,
             headings: None,
@@ -1967,6 +1975,51 @@ impl Shell {
                 }
                 None
             }
+            Mode::MacroSave => {
+                let hint = self.t("macro-save-hint", &[]);
+                let note = self.t("macro-save-note", &[]);
+                if let Some(name) = self.palette.show_input(ctx, &hint, &note) {
+                    self.save_macro(&name);
+                }
+                None
+            }
+            Mode::MacroPlaySaved | Mode::MacroDeleteSaved => {
+                let names: Vec<String> = self
+                    .saved_macros
+                    .sorted()
+                    .into_iter()
+                    .map(|m| m.name.clone())
+                    .collect();
+                let entries: Vec<Entry<usize>> = names
+                    .iter()
+                    .enumerate()
+                    .map(|(i, name)| Entry {
+                        action: i,
+                        label: name.clone(),
+                        shortcut: String::new(),
+                        enabled: true,
+                    })
+                    .collect();
+                let hint = self.t(
+                    if entries.is_empty() {
+                        "macro-saved-none"
+                    } else {
+                        "macro-saved-hint"
+                    },
+                    &[],
+                );
+                let delete = self.palette.mode == Mode::MacroDeleteSaved;
+                if let Some(i) = self.palette.show(ctx, &entries, &hint)
+                    && let Some(name) = names.get(i)
+                {
+                    if delete {
+                        self.delete_saved_macro(name);
+                    } else {
+                        self.play_saved_macro(name);
+                    }
+                }
+                None
+            }
             Mode::Commands => None,
         };
         if let (Some((line, _)), Some(log)) = (target, &mut self.log)
@@ -1981,6 +2034,73 @@ impl Shell {
         if !self.palette.open {
             self.focus_active();
         }
+    }
+
+    /// Save the recorded macro as `name`, replacing one with that name.
+    /// The file is re-read first so macros saved by another window are
+    /// kept.
+    fn save_macro(&mut self, name: &str) {
+        let mut store = match &self.settings_dir {
+            Some(dir) => MacroStore::load(dir),
+            None => self.saved_macros.clone(),
+        };
+        let msg = match store.insert(name, &self.macro_cmds) {
+            Ok(name) => match self.write_macros(store) {
+                Ok(()) => Ok(self.t("macro-saved", &[("name", name.into())])),
+                Err(e) => Err(e),
+            },
+            Err(MacroError::Empty) => Err(self.t("macro-save-empty", &[])),
+            Err(MacroError::InvalidName) => Err(self.t(
+                "macro-name-invalid",
+                &[("max", (sanain_app::macros::NAME_MAX as i64).into())],
+            )),
+            Err(MacroError::TooLarge) => Err(self.t("macro-save-too-large", &[])),
+            Err(MacroError::Full) => Err(self.t(
+                "macro-save-full",
+                &[("max", (sanain_app::macros::MAX_MACROS as i64).into())],
+            )),
+        };
+        self.status = Some(match msg {
+            Ok(m) => (m, false),
+            Err(m) => (m, true),
+        });
+    }
+
+    /// Store `store` as the saved macros and write it to the config folder;
+    /// the localized error message on failure.
+    fn write_macros(&mut self, store: MacroStore) -> Result<(), String> {
+        if let Some(dir) = &self.settings_dir
+            && let Err(e) = store.save(dir)
+        {
+            return Err(self.t("macro-save-failed", &[("error", e.to_string().into())]));
+        }
+        self.saved_macros = store;
+        Ok(())
+    }
+
+    /// Play a saved macro at the cursor as one undo step. It also becomes
+    /// the macro Play Macro repeats.
+    fn play_saved_macro(&mut self, name: &str) {
+        let Some(m) = self.saved_macros.get(name) else {
+            return;
+        };
+        let cmds = m.steps.clone();
+        self.editor_mut().play(&cmds);
+        self.macro_cmds = cmds;
+        let id = self.ws.active().id;
+        self.active_view(id).reveal();
+    }
+
+    fn delete_saved_macro(&mut self, name: &str) {
+        let mut store = match &self.settings_dir {
+            Some(dir) => MacroStore::load(dir),
+            None => self.saved_macros.clone(),
+        };
+        store.remove(name);
+        self.status = Some(match self.write_macros(store) {
+            Ok(()) => (self.t("macro-deleted", &[("name", name.into())]), false),
+            Err(m) => (m, true),
+        });
     }
 
     /// Start a background job whose result arrives as a [`FontMsg`].
@@ -3274,6 +3394,7 @@ impl Shell {
                 MenuAction::PlayMacro | MenuAction::PlayMacroTimes => {
                     !self.macro_cmds.is_empty() && !self.editor().is_recording()
                 }
+                MenuAction::SaveMacro | MenuAction::PlaySavedMacro => !self.editor().is_recording(),
                 MenuAction::PinTab => !self.ws.active().pinned,
                 MenuAction::UnpinTab => self.ws.active().pinned,
                 _ => true,
@@ -3743,6 +3864,22 @@ impl Shell {
             }
             MenuAction::PlayMacroTimes => {
                 self.palette.open(crate::palette::Mode::MacroTimes);
+                return;
+            }
+            MenuAction::SaveMacro => {
+                if self.macro_cmds.is_empty() {
+                    self.status = Some((self.t("macro-save-empty", &[]), true));
+                } else {
+                    self.palette.open(crate::palette::Mode::MacroSave);
+                }
+                return;
+            }
+            MenuAction::PlaySavedMacro => {
+                self.palette.open(crate::palette::Mode::MacroPlaySaved);
+                return;
+            }
+            MenuAction::DeleteSavedMacro => {
+                self.palette.open(crate::palette::Mode::MacroDeleteSaved);
                 return;
             }
             MenuAction::GoToHeading => {

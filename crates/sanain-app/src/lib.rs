@@ -8,6 +8,7 @@ pub mod fonts;
 pub mod fuzzy;
 pub mod images;
 pub mod keymap;
+pub mod macros;
 pub mod recent;
 pub mod recovery;
 pub mod replacefiles;

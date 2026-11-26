@@ -5,6 +5,12 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased]
 
 ### Added
+- Saved keyboard macros: Tools → Save Macro… stores the last recorded
+  macro under a name (a macro with the same name is replaced), and Play
+  Saved Macro… / Delete Saved Macro… pick one from a filtered list, also
+  from the command palette. Playing is one undo step. Macros are kept in
+  `macros` next to the settings, in a small versioned text format; damaged
+  or oversized entries are skipped, never crashing the editor.
 - Split editor: each pane shows its tab as the single editor would —
   Markdown source, preview or both, and the JSON/XML/YAML tree or CSV
   grid when the structured view is on. Clicking a preview or tree focuses
