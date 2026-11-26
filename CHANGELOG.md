@@ -11,6 +11,14 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   `sanain --register`) to replace the old entries (#115).
 - Clicking × on a tab only activated it instead of closing the document
   (since drag-to-reorder was added) (#110).
+- Selecting text with the mouse started one character after the pointer:
+  a drag now starts where the button went down (#112).
+- Double-click selects the word under the pointer (or the run of spaces
+  or punctuation), and triple-click the whole line with its line break
+  (#113).
+- Right-click in the editor opens a menu with Cut, Copy, Paste and Select
+  All. Right-clicking inside the selection keeps it; elsewhere the caret
+  moves to the pointer first (#114).
 
 ### Added
 - macOS: Sanain appears in Finder's Open With for text, code and data

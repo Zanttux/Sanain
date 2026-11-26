@@ -22,6 +22,17 @@ pub struct ViewOptions {
     pub tab_width: usize,
     /// Soft-wrap long lines to the window width.
     pub wrap: bool,
+    /// Localized labels for the right-click menu.
+    pub menu: ContextLabels,
+}
+
+/// Localized labels of the editor's right-click menu.
+#[derive(Debug, Clone, Default)]
+pub struct ContextLabels {
+    pub cut: String,
+    pub copy: String,
+    pub paste: String,
+    pub select_all: String,
 }
 
 /// Unwrapped lines longer than this (chars) are laid out only around the
@@ -356,6 +367,84 @@ impl EditorView {
                     changed = true;
                 }
             }
+
+            // Double-click selects the word (or run of spaces or
+            // punctuation) at the pointer; triple-click the whole line,
+            // with its line break (#113).
+            if let Some(pos) = response.interact_pointer_pos().filter(|_| !toggled)
+                && !ui.input(|i| i.modifiers.alt || i.modifiers.shift)
+                && (response.double_clicked() || response.triple_clicked())
+            {
+                let at = hit(ui, pos, &rows, editor);
+                let rope = editor.document().rope();
+                let range = if response.triple_clicked() {
+                    sanain_core::selection::line_at(rope, at)
+                } else {
+                    sanain_core::selection::word_at(rope, at)
+                };
+                editor.execute(Command::SetSelections(vec![(range.start, range.end)]));
+                changed = true;
+            }
+
+            // Right-click: a caret moves to the pointer unless the click
+            // lands inside a selection, which the menu then acts on (#114).
+            if response.secondary_clicked()
+                && let Some(pos) = response.interact_pointer_pos()
+            {
+                response.request_focus();
+                let at = hit(ui, pos, &rows, editor);
+                let inside = editor
+                    .selections()
+                    .iter()
+                    .any(|s| !s.is_empty() && s.range().contains(&at));
+                if !inside {
+                    editor.execute(Command::PlaceCaret { at, extend: false });
+                    changed = true;
+                }
+            }
+            let has_selection = editor.selections().iter().any(|s| !s.is_empty());
+            response.context_menu(|ui| {
+                let labels = &opts.menu;
+                let mut done = false;
+                if ui
+                    .add_enabled(has_selection, egui::Button::new(&labels.cut))
+                    .clicked()
+                {
+                    if let Some(t) = editor.execute(Command::Cut) {
+                        ui.ctx().copy_text(t);
+                    }
+                    done = true;
+                }
+                if ui
+                    .add_enabled(has_selection, egui::Button::new(&labels.copy))
+                    .clicked()
+                {
+                    if let Some(t) = editor.copy() {
+                        ui.ctx().copy_text(t);
+                    }
+                    done = true;
+                }
+                if ui.button(&labels.paste).clicked() {
+                    if let Some(t) = arboard::Clipboard::new()
+                        .and_then(|mut c| c.get_text())
+                        .ok()
+                        .filter(|t| !t.is_empty())
+                    {
+                        editor.execute(Command::Insert(t));
+                    }
+                    done = true;
+                }
+                ui.separator();
+                if ui.button(&labels.select_all).clicked() {
+                    editor.execute(Command::SelectAll);
+                    done = true;
+                }
+                if done {
+                    changed = true;
+                    response.request_focus();
+                    ui.close();
+                }
+            });
 
             if !response.dragged() {
                 self.block_from = None;
