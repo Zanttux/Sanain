@@ -432,3 +432,7 @@ cli-registered = Sanain lisättiin "Avaa sovelluksella" -valikkoon. { $place }
 cli-unregistered = Sanain poistettiin "Avaa sovelluksella" -valikosta.
 cli-register-failed = Tiedostonhallinnan liitosta ei voitu muuttaa: { $reason }
 cli-register-macos = Finder-liitos ei ole vielä käytettävissä macOS:ssä. Avaa tiedostot Sanainista (Tiedosto › Avaa, vedä ja pudota) tai komentoriviltä.
+settings-tab-general = Yleiset
+settings-tab-editor = Editori
+settings-tab-appearance = Ulkoasu
+settings-shortcut-search = Hae komentoa tai näppäintä

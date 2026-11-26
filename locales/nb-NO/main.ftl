@@ -429,3 +429,7 @@ cli-registered = Sanain ble lagt til i «Åpne med». { $place }
 cli-unregistered = Sanain ble fjernet fra «Åpne med».
 cli-register-failed = Integrasjonen med filbehandleren kunne ikke endres: { $reason }
 cli-register-macos = Finder-integrasjon på macOS er ikke tilgjengelig ennå. Åpne filer fra Sanain (Fil › Åpne, dra og slipp) eller fra kommandolinjen.
+settings-tab-general = Generelt
+settings-tab-editor = Redigering
+settings-tab-appearance = Utseende
+settings-shortcut-search = Søk etter kommandoer eller taster

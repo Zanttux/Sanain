@@ -429,3 +429,7 @@ cli-registered = A Sanain bekerült a „Megnyitás ezzel” menübe. { $place }
 cli-unregistered = A Sanain kikerült a „Megnyitás ezzel” menüből.
 cli-register-failed = A fájlkezelő-integrációt nem sikerült módosítani: { $reason }
 cli-register-macos = A Finder-integráció macOS-en még nem érhető el. Nyissa meg a fájlokat a Sanainből (Fájl › Megnyitás, húzással) vagy a parancssorból.
+settings-tab-general = Általános
+settings-tab-editor = Szerkesztő
+settings-tab-appearance = Megjelenés
+settings-shortcut-search = Parancsok vagy billentyűk keresése

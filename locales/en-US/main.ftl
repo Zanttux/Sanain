@@ -431,3 +431,7 @@ cli-registered = Sanain was added to "Open With". { $place }
 cli-unregistered = Sanain was removed from "Open With".
 cli-register-failed = The file manager integration could not be changed: { $reason }
 cli-register-macos = Finder integration on macOS is not available yet. Open files from Sanain (File › Open, drag and drop) or from the command line.
+settings-tab-general = General
+settings-tab-editor = Editor
+settings-tab-appearance = Appearance
+settings-shortcut-search = Search commands or keys

@@ -300,6 +300,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 - Esc now closes the find bar after searching with Enter.
 
 ### Changed
+- Settings has sections (General, Editor, Appearance, Keyboard shortcuts)
+  in a larger, resizable window; keyboard shortcuts get the whole page,
+  grouped by menu, with a search field (#84).
 - README describes what works today and shows screenshots from a real
   build.
 - Repository renamed to github.com/Zanttux/Sanain.

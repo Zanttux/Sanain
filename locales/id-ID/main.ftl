@@ -405,3 +405,7 @@ cli-registered = Sanain telah ditambahkan ke "Buka Dengan". { $place }
 cli-unregistered = Sanain telah dihapus dari "Buka Dengan".
 cli-register-failed = Integrasi pengelola berkas tidak dapat diubah: { $reason }
 cli-register-macos = Integrasi Finder di macOS belum tersedia. Buka berkas dari Sanain (Berkas › Buka, seret dan lepas) atau dari baris perintah.
+settings-tab-general = Umum
+settings-tab-editor = Editor
+settings-tab-appearance = Tampilan
+settings-shortcut-search = Cari perintah atau tombol

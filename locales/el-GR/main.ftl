@@ -429,3 +429,7 @@ cli-registered = Το Sanain προστέθηκε στο «Άνοιγμα με»
 cli-unregistered = Το Sanain αφαιρέθηκε από το «Άνοιγμα με».
 cli-register-failed = Δεν ήταν δυνατή η αλλαγή της ενσωμάτωσης στη διαχείριση αρχείων: { $reason }
 cli-register-macos = Η ενσωμάτωση στο Finder στο macOS δεν είναι ακόμη διαθέσιμη. Ανοίξτε αρχεία από το Sanain (Αρχείο › Άνοιγμα, μεταφορά και απόθεση) ή από τη γραμμή εντολών.
+settings-tab-general = Γενικά
+settings-tab-editor = Επεξεργαστής
+settings-tab-appearance = Εμφάνιση
+settings-shortcut-search = Αναζήτηση εντολών ή πλήκτρων

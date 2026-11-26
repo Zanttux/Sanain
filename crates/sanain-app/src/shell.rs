@@ -23,6 +23,15 @@ use crate::view::{EditorView, ViewOptions};
 use sanain_app::settings::{FONT_SIZE_DEFAULT, Settings, ThemeChoice};
 use sanain_app::update::{Status as UpdateStatus, UpdateError};
 
+/// Sections of the Settings window.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SettingsTab {
+    General,
+    Editor,
+    Appearance,
+    Shortcuts,
+}
+
 /// Upper bound for Play Macro Multiple Times.
 const MACRO_TIMES_MAX: usize = 10_000;
 
@@ -191,6 +200,10 @@ pub struct Shell {
     headings: Option<HeadingCache>,
     /// The Markdown outline side panel is shown.
     outline_open: bool,
+    /// Section shown in Settings.
+    settings_tab: SettingsTab,
+    /// Filter text of the shortcut list in Settings.
+    shortcut_filter: String,
     /// Folders outside a document's own folder the user allowed images
     /// from (this session only).
     allowed_image_dirs: Vec<std::path::PathBuf>,
@@ -354,6 +367,8 @@ impl Shell {
             about_open: false,
             headings: None,
             outline_open: false,
+            settings_tab: SettingsTab::General,
+            shortcut_filter: String::new(),
             allowed_image_dirs: Vec::new(),
             outline_follow: false,
             recent: Default::default(),
@@ -801,144 +816,265 @@ impl Shell {
         let s = &mut self.settings;
         let recording = &mut self.recording;
         let moved = &mut self.shortcut_moved;
+        let tab = &mut self.settings_tab;
+        let filter = &mut self.shortcut_filter;
         let was_recording = recording.is_some();
+        let mut focus_search = false;
         egui::Window::new(title)
             .id(egui::Id::unique("sanain-settings"))
             .open(&mut open)
             .collapsible(false)
-            .resizable(false)
-            .default_width(380.0)
+            .resizable(true)
+            .default_size([680.0, 480.0])
+            .min_size([520.0, 320.0])
             .show(ctx, |ui| {
-                egui::Grid::new("settings-grid")
-                    .num_columns(2)
-                    .spacing([16.0, 10.0])
-                    .show(ui, |ui| {
-                        ui.label(l("settings-font-size"));
-                        ui.add(
-                            egui::DragValue::new(&mut s.font_size)
-                                .range(
-                                    sanain_app::settings::FONT_SIZE_MIN
-                                        ..=sanain_app::settings::FONT_SIZE_MAX,
-                                )
-                                .speed(0.25)
-                                .suffix(" pt"),
-                        );
-                        ui.end_row();
-                        ui.label(l("settings-tab-width"));
-                        ui.add(egui::DragValue::new(&mut s.tab_width).range(1..=16));
-                        ui.end_row();
-                        ui.label("");
-                        ui.checkbox(&mut s.insert_spaces, l("settings-insert-spaces"));
-                        ui.end_row();
-                        ui.label(l("settings-theme"));
-                        ui.horizontal(|ui| {
-                            for (v, id) in [
-                                (ThemeChoice::System, "settings-theme-system"),
-                                (ThemeChoice::Light, "settings-theme-light"),
-                                (ThemeChoice::Dark, "settings-theme-dark"),
-                                (ThemeChoice::HighContrast, "settings-theme-high-contrast"),
-                            ] {
-                                ui.radio_value(&mut s.theme, v, l(id));
-                            }
-                        });
-                        ui.end_row();
-                        ui.label("");
-                        ui.checkbox(&mut s.restore_session, l("settings-restore-session"));
-                        ui.end_row();
-                        ui.label("");
-                        ui.checkbox(&mut s.word_wrap, l("settings-word-wrap"));
-                        ui.end_row();
-                        ui.label("");
-                        ui.checkbox(&mut s.local_history, l("settings-local-history"))
-                            .on_hover_text(l("settings-local-history-detail"));
-                        ui.end_row();
-                        ui.label("");
-                        ui.checkbox(&mut s.check_updates, l("settings-check-updates"))
-                            .on_hover_text(l("settings-check-updates-detail"));
-                        ui.end_row();
-                        ui.label(l("settings-language"));
-                        let current = s
-                            .locale
-                            .as_deref()
-                            .and_then(|t| sanain_i18n::LANGUAGES.iter().find(|(tag, _)| *tag == t))
-                            .map_or_else(
-                                || l("settings-language-system"),
-                                |(_, name)| (*name).to_owned(),
+                ui.horizontal_top(|ui| {
+                    // Section list.
+                    ui.vertical(|ui| {
+                        ui.set_width(150.0);
+                        for (t, id) in [
+                            (SettingsTab::General, "settings-tab-general"),
+                            (SettingsTab::Editor, "settings-tab-editor"),
+                            (SettingsTab::Appearance, "settings-tab-appearance"),
+                            (SettingsTab::Shortcuts, "settings-shortcuts"),
+                        ] {
+                            let r = ui.add_sized(
+                                [150.0, 26.0],
+                                egui::Button::selectable(*tab == t, l(id)),
                             );
-                        egui::ComboBox::from_id_salt("settings-language")
-                            .selected_text(current)
-                            .show_ui(ui, |ui| {
-                                ui.selectable_value(
-                                    &mut s.locale,
-                                    None,
-                                    l("settings-language-system"),
-                                );
-                                // Language names in their own language.
-                                for (tag, name) in sanain_i18n::LANGUAGES {
-                                    ui.selectable_value(
-                                        &mut s.locale,
-                                        Some((*tag).to_owned()),
-                                        *name,
-                                    );
+                            if r.clicked() {
+                                if t == SettingsTab::Shortcuts && *tab != t {
+                                    focus_search = true;
                                 }
-                            });
-                        ui.end_row();
-                    });
-                ui.add_space(4.0);
-                ui.weak(l("settings-language-note"));
-                ui.add_space(8.0);
-                egui::CollapsingHeader::new(l("settings-shortcuts"))
-                    .id_salt("settings-shortcuts")
-                    .show(ui, |ui| {
-                        ui.horizontal(|ui| {
-                            ui.label(l("settings-keymap-preset"));
-                            use sanain_app::keymap::Preset;
-                            for (p, id) in [
-                                (Preset::Default, "settings-keymap-default"),
-                                (Preset::NotepadPlusPlus, "settings-keymap-notepadpp"),
-                            ] {
-                                ui.radio_value(&mut s.keymap.preset, p, l(id));
+                                *tab = t;
                             }
-                        });
-                        egui::ScrollArea::vertical()
-                            .max_height(260.0)
-                            .show(ui, |ui| {
-                                egui::Grid::new("shortcut-grid")
-                                    .num_columns(3)
-                                    .striped(true)
+                        }
+                    });
+                    ui.separator();
+                    ui.vertical(|ui| {
+                        ui.set_min_height(ui.available_height());
+                        ui.set_min_width(480.0);
+                        match *tab {
+                            SettingsTab::General => {
+                                egui::Grid::new("settings-general")
+                                    .num_columns(2)
+                                    .spacing([16.0, 10.0])
                                     .show(ui, |ui| {
-                                        for a in MenuAction::ALL {
-                                            ui.label(
-                                                l(a.label_id()).trim_end_matches('…').to_owned(),
+                                        ui.label(l("settings-language"));
+                                        let current = s
+                                            .locale
+                                            .as_deref()
+                                            .and_then(|t| {
+                                                sanain_i18n::LANGUAGES
+                                                    .iter()
+                                                    .find(|(tag, _)| *tag == t)
+                                            })
+                                            .map_or_else(
+                                                || l("settings-language-system"),
+                                                |(_, name)| (*name).to_owned(),
                                             );
-                                            let text = if *recording == Some(a) {
-                                                l("settings-shortcut-press")
-                                            } else {
-                                                a.shortcut(&s.keymap)
-                                                    .map(|k| ctx.format_shortcut(&k))
-                                                    .unwrap_or_default()
-                                            };
-                                            ui.monospace(text);
-                                            ui.horizontal(|ui| {
-                                                if ui
-                                                    .small_button(l("settings-shortcut-change"))
-                                                    .clicked()
-                                                {
-                                                    *recording = Some(a);
-                                                }
-                                                if s.keymap.custom.contains_key(a.command_id())
-                                                    && ui
-                                                        .small_button(l("settings-shortcut-reset"))
-                                                        .clicked()
-                                                {
-                                                    s.keymap.custom.remove(a.command_id());
+                                        egui::ComboBox::from_id_salt("settings-language")
+                                            .selected_text(current)
+                                            .show_ui(ui, |ui| {
+                                                ui.selectable_value(
+                                                    &mut s.locale,
+                                                    None,
+                                                    l("settings-language-system"),
+                                                );
+                                                // Language names in their own language.
+                                                for (tag, name) in sanain_i18n::LANGUAGES {
+                                                    ui.selectable_value(
+                                                        &mut s.locale,
+                                                        Some((*tag).to_owned()),
+                                                        *name,
+                                                    );
                                                 }
                                             });
-                                            ui.end_row();
+                                        ui.end_row();
+                                        ui.label("");
+                                        ui.weak(l("settings-language-note"));
+                                        ui.end_row();
+                                        ui.label("");
+                                        ui.checkbox(
+                                            &mut s.restore_session,
+                                            l("settings-restore-session"),
+                                        );
+                                        ui.end_row();
+                                        ui.label("");
+                                        ui.checkbox(
+                                            &mut s.local_history,
+                                            l("settings-local-history"),
+                                        )
+                                        .on_hover_text(l("settings-local-history-detail"));
+                                        ui.end_row();
+                                        ui.label("");
+                                        ui.checkbox(
+                                            &mut s.check_updates,
+                                            l("settings-check-updates"),
+                                        )
+                                        .on_hover_text(l("settings-check-updates-detail"));
+                                        ui.end_row();
+                                    });
+                            }
+                            SettingsTab::Editor => {
+                                egui::Grid::new("settings-editor")
+                                    .num_columns(2)
+                                    .spacing([16.0, 10.0])
+                                    .show(ui, |ui| {
+                                        ui.label(l("settings-font-size"));
+                                        ui.add(
+                                            egui::DragValue::new(&mut s.font_size)
+                                                .range(
+                                                    sanain_app::settings::FONT_SIZE_MIN
+                                                        ..=sanain_app::settings::FONT_SIZE_MAX,
+                                                )
+                                                .speed(0.25)
+                                                .suffix(" pt"),
+                                        );
+                                        ui.end_row();
+                                        ui.label(l("settings-tab-width"));
+                                        ui.add(
+                                            egui::DragValue::new(&mut s.tab_width).range(1..=16),
+                                        );
+                                        ui.end_row();
+                                        ui.label("");
+                                        ui.checkbox(
+                                            &mut s.insert_spaces,
+                                            l("settings-insert-spaces"),
+                                        );
+                                        ui.end_row();
+                                        ui.label("");
+                                        ui.checkbox(&mut s.word_wrap, l("settings-word-wrap"));
+                                        ui.end_row();
+                                    });
+                            }
+                            SettingsTab::Appearance => {
+                                ui.label(l("settings-theme"));
+                                ui.add_space(4.0);
+                                for (v, id) in [
+                                    (ThemeChoice::System, "settings-theme-system"),
+                                    (ThemeChoice::Light, "settings-theme-light"),
+                                    (ThemeChoice::Dark, "settings-theme-dark"),
+                                    (ThemeChoice::HighContrast, "settings-theme-high-contrast"),
+                                ] {
+                                    ui.radio_value(&mut s.theme, v, l(id));
+                                }
+                            }
+                            SettingsTab::Shortcuts => {
+                                ui.horizontal(|ui| {
+                                    ui.label(l("settings-keymap-preset"));
+                                    use sanain_app::keymap::Preset;
+                                    for (p, id) in [
+                                        (Preset::Default, "settings-keymap-default"),
+                                        (Preset::NotepadPlusPlus, "settings-keymap-notepadpp"),
+                                    ] {
+                                        ui.radio_value(&mut s.keymap.preset, p, l(id));
+                                    }
+                                });
+                                let search = ui.add(
+                                    egui::TextEdit::singleline(filter)
+                                        .hint_text(l("settings-shortcut-search"))
+                                        .desired_width(f32::INFINITY),
+                                );
+                                if focus_search {
+                                    search.request_focus();
+                                }
+                                if !moved.is_empty() {
+                                    ui.colored_label(
+                                        theme::palette(ui.ctx()).warning,
+                                        format!(
+                                            "{} {}",
+                                            l("settings-shortcut-moved"),
+                                            moved.join(", ")
+                                        ),
+                                    );
+                                }
+                                let needle = filter.to_lowercase();
+                                egui::ScrollArea::vertical()
+                                    .auto_shrink(false)
+                                    .show(ui, |ui| {
+                                        // Grouped by menu, in menu order.
+                                        const GROUPS: [&str; 6] =
+                                            ["file", "edit", "view", "tools", "window", "app"];
+                                        for g in GROUPS {
+                                            let rows: Vec<(MenuAction, String, String)> =
+                                                MenuAction::ALL
+                                                    .into_iter()
+                                                    .filter(|a| {
+                                                        a.command_id().split('.').next() == Some(g)
+                                                    })
+                                                    .map(|a| {
+                                                        let label = l(a.label_id())
+                                                            .trim_end_matches('…')
+                                                            .to_owned();
+                                                        let keys = a
+                                                            .shortcut(&s.keymap)
+                                                            .map(|k| ctx.format_shortcut(&k))
+                                                            .unwrap_or_default();
+                                                        (a, label, keys)
+                                                    })
+                                                    .filter(|(_, label, keys)| {
+                                                        needle.is_empty()
+                                                            || label
+                                                                .to_lowercase()
+                                                                .contains(&needle)
+                                                            || keys.to_lowercase().contains(&needle)
+                                                    })
+                                                    .collect();
+                                            if rows.is_empty() {
+                                                continue;
+                                            }
+                                            ui.add_space(6.0);
+                                            ui.strong(match g {
+                                                "app" => "Sanain".to_owned(),
+                                                other => l(&format!("menu-{other}")),
+                                            });
+                                            egui::Grid::new(("shortcuts", g))
+                                                .num_columns(3)
+                                                .striped(true)
+                                                .min_col_width(120.0)
+                                                .spacing([16.0, 4.0])
+                                                .show(ui, |ui| {
+                                                    for (a, label, keys) in rows {
+                                                        ui.label(label);
+                                                        let text = if *recording == Some(a) {
+                                                            l("settings-shortcut-press")
+                                                        } else {
+                                                            keys
+                                                        };
+                                                        ui.monospace(text);
+                                                        ui.horizontal(|ui| {
+                                                            if ui
+                                                                .small_button(l(
+                                                                    "settings-shortcut-change",
+                                                                ))
+                                                                .clicked()
+                                                            {
+                                                                *recording = Some(a);
+                                                            }
+                                                            if s.keymap
+                                                                .custom
+                                                                .contains_key(a.command_id())
+                                                                && ui
+                                                                    .small_button(l(
+                                                                        "settings-shortcut-reset",
+                                                                    ))
+                                                                    .clicked()
+                                                            {
+                                                                s.keymap
+                                                                    .custom
+                                                                    .remove(a.command_id());
+                                                            }
+                                                        });
+                                                        ui.end_row();
+                                                    }
+                                                });
                                         }
                                     });
-                            });
+                            }
+                        }
                     });
+                });
                 if let Some(a) = *recording {
                     // Capture the next chord; Escape cancels.
                     let pressed = ui.input(|i| {
@@ -981,12 +1117,6 @@ impl Shell {
                         }
                         None => {}
                     }
-                }
-                if !moved.is_empty() {
-                    ui.colored_label(
-                        theme::palette(ui.ctx()).warning,
-                        format!("{} {}", l("settings-shortcut-moved"), moved.join(", ")),
-                    );
                 }
             });
         if self.settings != before {

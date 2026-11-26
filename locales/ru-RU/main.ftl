@@ -477,3 +477,7 @@ cli-registered = Sanain добавлен в «Открыть с помощью»
 cli-unregistered = Sanain удалён из «Открыть с помощью».
 cli-register-failed = Не удалось изменить интеграцию с файловым менеджером: { $reason }
 cli-register-macos = Интеграция с Finder в macOS пока недоступна. Открывайте файлы из Sanain (Файл › Открыть, перетаскивание) или из командной строки.
+settings-tab-general = Общие
+settings-tab-editor = Редактор
+settings-tab-appearance = Оформление
+settings-shortcut-search = Поиск команд или клавиш

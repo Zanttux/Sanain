@@ -405,3 +405,7 @@ cli-registered = Sanain을 "연결 프로그램"에 추가했습니다. { $place
 cli-unregistered = Sanain을 "연결 프로그램"에서 제거했습니다.
 cli-register-failed = 파일 관리자 통합을 변경할 수 없습니다: { $reason }
 cli-register-macos = macOS의 Finder 통합은 아직 사용할 수 없습니다. Sanain에서(파일 › 열기, 끌어서 놓기) 또는 명령줄에서 파일을 여세요.
+settings-tab-general = 일반
+settings-tab-editor = 편집기
+settings-tab-appearance = 모양
+settings-shortcut-search = 명령 또는 키 검색

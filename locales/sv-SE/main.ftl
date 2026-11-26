@@ -429,3 +429,7 @@ cli-registered = Sanain lades till i ”Öppna med”. { $place }
 cli-unregistered = Sanain togs bort från ”Öppna med”.
 cli-register-failed = Integreringen med filhanteraren kunde inte ändras: { $reason }
 cli-register-macos = Finder-integrering i macOS är inte tillgänglig ännu. Öppna filer från Sanain (Arkiv › Öppna, dra och släpp) eller från kommandoraden.
+settings-tab-general = Allmänt
+settings-tab-editor = Redigerare
+settings-tab-appearance = Utseende
+settings-shortcut-search = Sök kommandon eller tangenter

@@ -453,3 +453,7 @@ cli-registered = Sanain a fost adăugat la „Deschide cu”. { $place }
 cli-unregistered = Sanain a fost eliminat din „Deschide cu”.
 cli-register-failed = Integrarea cu managerul de fișiere nu a putut fi modificată: { $reason }
 cli-register-macos = Integrarea cu Finder pe macOS nu este încă disponibilă. Deschideți fișierele din Sanain (Fișier › Deschide, glisare și plasare) sau din linia de comandă.
+settings-tab-general = General
+settings-tab-editor = Editor
+settings-tab-appearance = Aspect
+settings-shortcut-search = Caută comenzi sau taste
