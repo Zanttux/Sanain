@@ -170,6 +170,12 @@ enum PaneContent {
 
 /// The content of a pane: the structured view when it is on for a data
 /// file, else the Markdown mode (`md` is `None` for other files).
+/// Width of the strip around a pane divider that can be dragged.
+const DIVIDER_HIT: f32 = 6.0;
+
+/// Smallest size dragging a divider leaves a pane, where it fits.
+const MIN_PANE_PX: f32 = 120.0;
+
 fn pane_content(structured: bool, md: Option<MdMode>) -> PaneContent {
     if structured {
         return PaneContent::Structured;
@@ -394,6 +400,11 @@ impl Shell {
     /// Where saved versions are kept (`None` disables local history).
     pub fn set_history(&mut self, store: Option<sanain_io::history::HistoryStore>) {
         self.history = store;
+    }
+
+    /// Show a split layout restored from the session.
+    pub fn set_split(&mut self, split: Option<Panes<TabId>>) {
+        self.split = split.filter(|s| s.is_split());
     }
 
     pub fn new(
@@ -756,7 +767,7 @@ impl Shell {
         // Record open files before the quit flow starts closing tabs.
         if !std::mem::replace(&mut self.quit_recorded, true)
             && let Some(f) = &self.session_file
-            && let Err(e) = self.ws.session().save(f)
+            && let Err(e) = self.ws.session(self.split.as_ref()).save(f)
         {
             eprintln!("sanain: could not save session: {e}");
         }
@@ -3183,7 +3194,8 @@ impl Shell {
 
     /// Up to four panes, side by side or stacked, each showing its tab as
     /// the single area would. Interacting with a pane makes its tab
-    /// active, so menus and shortcuts act on it.
+    /// active, so menus and shortcuts act on it. Dragging a divider resizes
+    /// the panes on both sides; double-clicking it shares the space evenly.
     fn split_area(&mut self, ui: &mut egui::Ui) -> bool {
         self.sync_split();
         let Some(split) = self.split.clone() else {
@@ -3220,23 +3232,84 @@ impl Shell {
                 .push_id((id, slot), |ui| self.pane_area(ui, id, slot))
                 .inner;
             // Drawn after the content so a filled preview cannot hide it.
-            let painter = ui.painter();
             if slot == focus_slot {
-                painter.hline(
+                ui.painter().hline(
                     rect.x_range(),
                     rect.top() + 1.0,
                     egui::Stroke::new(2.0, p.accent),
                 );
             }
-            let border = egui::Stroke::new(1.0, p.border);
-            if f.x0 > 0.0 {
-                painter.vline(rect.left() - gap / 2.0, rect.y_range(), border);
-            }
-            if f.y0 > 0.0 {
-                painter.hline(rect.x_range(), rect.top() - gap / 2.0, border);
-            }
             if used || (pressed && self.dialog.is_none()) {
                 touched = Some(slot);
+            }
+        }
+        // Dividers last, so they sit above the panes' edges and win the
+        // pointer there.
+        let interactive = self.dialog.is_none();
+        for d in split.dividers() {
+            let (along, across) = if d.vertical {
+                (area.y_range(), area.x_range())
+            } else {
+                (area.x_range(), area.y_range())
+            };
+            let at = across.min + d.at * across.span();
+            let (from, to) = (
+                along.min + d.from * along.span(),
+                along.min + d.to * along.span(),
+            );
+            // Stop half a gap short of a crossing divider.
+            let trim = |t: f32| if t > 0.0 && t < 1.0 { gap / 2.0 } else { 0.0 };
+            let span = egui::Rangef::new(from + trim(d.from), to - trim(d.to));
+            let hit = DIVIDER_HIT.max(gap);
+            let hit_rect = if d.vertical {
+                egui::Rect::from_x_y_ranges(egui::Rangef::new(at - hit / 2.0, at + hit / 2.0), span)
+            } else {
+                egui::Rect::from_x_y_ranges(span, egui::Rangef::new(at - hit / 2.0, at + hit / 2.0))
+            };
+            let sense = if interactive {
+                egui::Sense::click_and_drag()
+            } else {
+                egui::Sense::hover()
+            };
+            let resp = ui.interact(
+                hit_rect,
+                ui.make_persistent_id(("pane-divider", d.id)),
+                sense,
+            );
+            // Only while the button is held: should a release go missing,
+            // the divider must not keep following the pointer.
+            let dragging = resp.dragged() && ui.input(|i| i.pointer.primary_down());
+            let active = interactive && (resp.hovered() || dragging);
+            if active {
+                ui.ctx().set_cursor_icon(if d.vertical {
+                    egui::CursorIcon::ResizeHorizontal
+                } else {
+                    egui::CursorIcon::ResizeVertical
+                });
+            }
+            if resp.double_clicked() {
+                if let Some(s) = &mut self.split {
+                    s.reset_divider(d.id);
+                }
+            } else if dragging
+                && let Some(pos) = resp.interact_pointer_pos()
+                && let Some(s) = &mut self.split
+            {
+                let extent = across.span().max(1.0);
+                let t = ((if d.vertical { pos.x } else { pos.y }) - across.min) / extent;
+                let min = (MIN_PANE_PX / extent).clamp(0.05, 0.5);
+                s.move_divider(d.id, t, min);
+                ui.ctx().request_repaint();
+            }
+            let stroke = if active {
+                egui::Stroke::new(2.0, p.accent)
+            } else {
+                egui::Stroke::new(1.0, p.border)
+            };
+            if d.vertical {
+                ui.painter().vline(at, span, stroke);
+            } else {
+                ui.painter().hline(span, at, stroke);
             }
         }
         ui.advance_cursor_after_rect(area);

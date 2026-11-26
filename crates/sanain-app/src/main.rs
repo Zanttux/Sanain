@@ -148,12 +148,13 @@ fn main() -> eframe::Result {
         .map(|l| l.into_iter().filter_map(Result::ok).collect())
         .unwrap_or_default();
     let (mut workspace, load_errors, restored) = Workspace::startup(store, snapshots, &paths);
+    let mut split = None;
     if paths.is_empty()
         && settings.restore_session
         && std::env::var_os("SANAIN_NO_SESSION").is_none()
         && let Some(session) = session_file.as_deref().and_then(Session::load)
     {
-        workspace.restore_session(&session);
+        split = workspace.restore_session(&session);
     }
 
     // Before the event loop starts, so a file opened from Finder at launch
@@ -185,6 +186,7 @@ fn main() -> eframe::Result {
                 settings_dir,
             );
             shell.set_history(history);
+            shell.set_split(split);
             shell.start_editor_font(&cc.egui_ctx);
             let wake = cc.egui_ctx.clone();
             sanain_platform::on_opened_files(move || wake.request_repaint());
