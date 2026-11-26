@@ -258,6 +258,8 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   or when changes are discarded.
 
 ### Fixed
+- Windows: starting Sanain no longer opens an extra console window
+  (release builds use the GUI subsystem).
 - macOS: the menu bar showed "sanain" (the file name) when the program
   was started outside Sanain.app, e.g. with `cargo run`. The executable
   now carries an embedded Info.plist with the name "Sanain".
