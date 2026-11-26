@@ -89,9 +89,11 @@ says otherwise. See [PRIVACY.md](PRIVACY.md).
 
 ## Packages
 
-`scripts/package.py` builds an unsigned archive for the current platform
-(macOS `Sanain.app`, Windows zip, Linux tar.gz) with the license,
-third-party notices and a checksum; the `Package` workflow builds all
+`scripts/package.py` builds unsigned packages for the current platform:
+an installer (Windows per-user setup, macOS `.dmg`, Linux `.deb`) and a
+portable archive that keeps its settings and data in its own folder
+(delete the `sanain-portable` file to use your profile instead), each
+with the license, third-party notices and a checksum; the `Package` workflow builds all
 three and publishes them as the `nightly` pre-release on every change.
 
 ## Building

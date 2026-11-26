@@ -5,6 +5,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Installers and portable builds: Windows per-user setup (no admin rights,
+  Start menu, optional Open With), macOS `.dmg`, Linux `.deb`, and portable
+  archives that keep settings and data next to the program (#98).
 - Themes: Classic (Notepad++ style), Solarized Light/Dark, Dracula, Nord,
   Gruvbox Dark, One Dark and Tomorrow Night, plus your own `.theme` files;
   chosen in Settings › Appearance with colour swatches (#85).

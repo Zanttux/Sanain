@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Build an unsigned release archive for the current platform.
+"""Build unsigned release packages for the current platform: a portable
+archive (with the `sanain-portable` marker) and an installer (Windows:
+Inno Setup per-user setup.exe; macOS: .dmg; Linux: .deb).
 
 Writes target/dist/sanain-<version>-<os>-<arch>.(zip|tar.gz) and a
 .sha256 file next to it. The archive holds the program (Sanain.app on
@@ -58,6 +60,131 @@ def add_tree(zf, src, arc):
                 zf.writestr(info, f.read())
 
 
+def checksum(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            digest.update(chunk)
+    base = os.path.basename(path)
+    with open(path + ".sha256", "w", encoding="utf-8") as f:
+        f.write(f"{digest.hexdigest()}  {base}\n")
+    print(path)
+
+
+def find_iscc():
+    """Inno Setup's compiler: on PATH, in its default folder, or installed
+    with Chocolatey on CI runners."""
+    for c in [
+        shutil.which("iscc"),
+        r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
+        r"C:\Program Files\Inno Setup 6\ISCC.exe",
+    ]:
+        if c and os.path.isfile(c):
+            return c
+    if os.environ.get("CI") and shutil.which("choco"):
+        subprocess.run(["choco", "install", "innosetup", "-y", "--no-progress"], check=True)
+        return find_iscc_installed()
+    return None
+
+
+def find_iscc_installed():
+    for c in [r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe", r"C:\Program Files\Inno Setup 6\ISCC.exe"]:
+        if os.path.isfile(c):
+            return c
+    return None
+
+
+def windows_installer(ver, stage, dist, name):
+    iscc = find_iscc()
+    if not iscc:
+        print("Inno Setup not found; skipping the Windows installer", file=sys.stderr)
+        return None
+    out = name + "-setup"
+    run(
+        iscc,
+        f"/DAppVersion={ver}",
+        f"/DSourceDir={stage}",
+        f"/DOutputDir={dist}",
+        f"/DOutputName={out}",
+        f"/DRepoRoot={ROOT}",
+        os.path.join(ROOT, "packaging", "windows", "sanain.iss"),
+    )
+    return os.path.join(dist, out + ".exe")
+
+
+def macos_dmg(stage_app, dist, name, notices):
+    tmp = os.path.join(dist, name + "-dmg")
+    shutil.rmtree(tmp, ignore_errors=True)
+    os.makedirs(tmp)
+    shutil.copytree(stage_app, os.path.join(tmp, "Sanain.app"), symlinks=True)
+    os.symlink("/Applications", os.path.join(tmp, "Applications"))
+    for doc in DOCS:
+        shutil.copy2(os.path.join(ROOT, doc), os.path.join(tmp, doc))
+    shutil.copy2(notices, os.path.join(tmp, "THIRD_PARTY_NOTICES.md"))
+    dmg = os.path.join(dist, name + ".dmg")
+    if os.path.exists(dmg):
+        os.remove(dmg)
+    run("hdiutil", "create", "-volname", "Sanain", "-srcfolder", tmp, "-ov", "-format", "UDZO", dmg)
+    shutil.rmtree(tmp)
+    return dmg
+
+
+def linux_deb(ver, arch, dist, notices):
+    deb_arch = {"x86_64": "amd64", "aarch64": "arm64"}.get(arch, arch)
+    root = os.path.join(dist, "deb-root")
+    shutil.rmtree(root, ignore_errors=True)
+    def p(*parts):
+        path = os.path.join(root, *parts)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        return path
+    shutil.copy2(os.path.join(ROOT, "target", "release", "sanain"), p("usr", "bin", "sanain"))
+    os.chmod(p("usr", "bin", "sanain"), 0o755)
+    shutil.copy2(
+        os.path.join(ROOT, "packaging", "icons", "sanain-256.png"),
+        p("usr", "share", "icons", "hicolor", "256x256", "apps", "io.github.zanttux.Sanain.png"),
+    )
+    shutil.copy2(
+        os.path.join(ROOT, "packaging", "linux", "io.github.zanttux.Sanain.desktop"),
+        p("usr", "share", "applications", "io.github.zanttux.Sanain.desktop"),
+    )
+    shutil.copy2(os.path.join(ROOT, "LICENSE"), p("usr", "share", "doc", "sanain", "copyright"))
+    shutil.copy2(notices, p("usr", "share", "doc", "sanain", "THIRD_PARTY_NOTICES.md"))
+    depends = "libc6, libgcc-s1"
+    if shutil.which("dpkg-shlibdeps"):
+        # dpkg-shlibdeps wants a debian/control next to it.
+        os.makedirs(os.path.join(root, "debian"), exist_ok=True)
+        with open(os.path.join(root, "debian", "control"), "w") as f:
+            f.write("Source: sanain\n\nPackage: sanain\nArchitecture: any\n")
+        r = subprocess.run(
+            ["dpkg-shlibdeps", "-O", "usr/bin/sanain"], cwd=root, capture_output=True, text=True
+        )
+        shutil.rmtree(os.path.join(root, "debian"))
+        if r.returncode == 0 and "shlibs:Depends=" in r.stdout:
+            depends = r.stdout.split("shlibs:Depends=", 1)[1].strip()
+    size_kb = sum(
+        os.path.getsize(os.path.join(d, f)) for d, _, fs in os.walk(root) for f in fs
+    ) // 1024
+    with open(p("DEBIAN", "control"), "w") as f:
+        f.write(
+            "Package: sanain\n"
+            f"Version: {ver}\n"
+            f"Architecture: {deb_arch}\n"
+            "Maintainer: Sanain project <https://github.com/Zanttux/Sanain>\n"
+            f"Installed-Size: {size_kb}\n"
+            f"Depends: {depends}\n"
+            "Section: editors\n"
+            "Priority: optional\n"
+            "Homepage: https://github.com/Zanttux/Sanain\n"
+            "Description: Native text editor for text, code, Markdown and data\n"
+            " Sanain is a fast, offline text editor with tabs, Markdown preview,\n"
+            " data views, comparison and a log viewer for very large files.\n"
+        )
+    deb = os.path.join(dist, f"sanain_{ver}_{deb_arch}.deb")
+    run("dpkg-deb", "--root-owner-group", "--build", root, deb)
+    shutil.rmtree(root)
+    return deb
+
+
 def main():
     build = "--no-build" not in sys.argv[1:]
     ver = version()
@@ -84,26 +211,38 @@ def main():
 
     for doc in DOCS:
         shutil.copy2(os.path.join(ROOT, doc), os.path.join(stage, doc))
-    run(sys.executable, "scripts/third-party-notices.py", os.path.join(stage, "THIRD_PARTY_NOTICES.md"))
+    notices = os.path.join(stage, "THIRD_PARTY_NOTICES.md")
+    run(sys.executable, "scripts/third-party-notices.py", notices)
 
+    # Installer first, from the stage without the portable marker.
+    installer = None
+    if system == "windows":
+        installer = windows_installer(ver, stage, dist, name)
+    elif system == "macos":
+        installer = macos_dmg(os.path.join(stage, "Sanain.app"), dist, name, notices)
+    elif system == "linux" and shutil.which("dpkg-deb"):
+        installer = linux_deb(ver, arch, dist, notices)
+    if installer:
+        checksum(installer)
+
+    # Portable archive: the marker keeps settings and data next to the app.
+    with open(os.path.join(stage, "sanain-portable"), "w", encoding="utf-8") as f:
+        f.write(
+            "This file makes Sanain portable: settings, crash recovery and local\n"
+            "history are kept in the data folder next to it. Delete it to use\n"
+            "your user profile instead.\n"
+        )
+    portable = name + "-portable"
     if system == "linux":
-        archive = os.path.join(dist, name + ".tar.gz")
+        archive = os.path.join(dist, portable + ".tar.gz")
         with tarfile.open(archive, "w:gz") as tf:
-            tf.add(stage, arcname=name)
+            tf.add(stage, arcname=portable)
     else:
-        archive = os.path.join(dist, name + ".zip")
+        archive = os.path.join(dist, portable + ".zip")
         with zipfile.ZipFile(archive, "w") as zf:
-            add_tree(zf, stage, name)
-
-    digest = hashlib.sha256()
-    with open(archive, "rb") as f:
-        for chunk in iter(lambda: f.read(1 << 20), b""):
-            digest.update(chunk)
-    base = os.path.basename(archive)
-    with open(archive + ".sha256", "w", encoding="utf-8") as f:
-        f.write(f"{digest.hexdigest()}  {base}\n")
+            add_tree(zf, stage, portable)
+    checksum(archive)
     shutil.rmtree(stage)
-    print(archive)
     return 0
 
 
