@@ -461,3 +461,5 @@ settings-font = Font
 settings-font-default = Monospațiat integrat
 settings-font-loading = Se caută fonturile instalate…
 settings-font-missing = Fontul { $font } nu a fost găsit; se folosește fontul integrat.
+settings-theme-more = Mai multe teme
+settings-theme-user-note = Teme proprii: fișiere .theme în dosarul { $folder } (vezi docs/THEMES.md).

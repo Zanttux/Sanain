@@ -273,7 +273,9 @@ pub struct Shell {
     /// Heading anchor to scroll the preview to, per tab.
     md_anchor: HashMap<TabId, String>,
     images: std::cell::RefCell<crate::imagecache::ImageCache>,
-    applied_theme: Option<ThemeChoice>,
+    applied_theme: Option<(ThemeChoice, Option<String>)>,
+    /// Bundled and user colour themes, and user theme files that failed.
+    themes: (Vec<crate::themes::ThemeEntry>, Vec<(String, String)>),
     /// Set once the session was recorded for the current quit attempt.
     quit_recorded: bool,
     #[cfg(target_os = "macos")]
@@ -426,6 +428,7 @@ impl Shell {
             md_anchor: HashMap::new(),
             images: Default::default(),
             applied_theme: None,
+            themes: (Vec::new(), Vec::new()),
             quit_recorded: false,
             #[cfg(target_os = "macos")]
             native_menu: None,
@@ -826,16 +829,37 @@ impl Shell {
     }
 
     fn apply_theme(&mut self, ctx: &egui::Context) {
-        if self.applied_theme == Some(self.settings.theme) {
+        let key = (self.settings.theme, self.settings.color_theme.clone());
+        if self.applied_theme.as_ref() == Some(&key) {
             return;
         }
-        theme::set_high_contrast(ctx, self.settings.theme == ThemeChoice::HighContrast);
-        ctx.set_theme(match self.settings.theme {
-            ThemeChoice::System => egui::ThemePreference::System,
-            ThemeChoice::Light => egui::ThemePreference::Light,
-            ThemeChoice::Dark | ThemeChoice::HighContrast => egui::ThemePreference::Dark,
+        if self.themes.0.is_empty() {
+            self.reload_themes();
+        }
+        let chosen = self.settings.color_theme.as_ref().and_then(|id| {
+            self.themes
+                .0
+                .iter()
+                .find(|t| &t.id == id)
+                .map(|t| t.palette)
         });
-        self.applied_theme = Some(self.settings.theme);
+        if let Some(p) = chosen {
+            theme::set_override(ctx, Some(p));
+        } else {
+            theme::set_override(ctx, None);
+            theme::set_high_contrast(ctx, self.settings.theme == ThemeChoice::HighContrast);
+            ctx.set_theme(match self.settings.theme {
+                ThemeChoice::System => egui::ThemePreference::System,
+                ThemeChoice::Light => egui::ThemePreference::Light,
+                ThemeChoice::Dark | ThemeChoice::HighContrast => egui::ThemePreference::Dark,
+            });
+        }
+        self.applied_theme = Some(key);
+    }
+
+    /// Read the bundled themes and the user's `.theme` files again.
+    fn reload_themes(&mut self) {
+        self.themes = crate::themes::all(self.settings_dir.as_deref());
     }
 
     fn settings_window(&mut self, ctx: &egui::Context) {
@@ -843,6 +867,22 @@ impl Shell {
             return;
         }
         let before = self.settings.clone();
+        if self.settings_tab == SettingsTab::Appearance && self.themes.0.is_empty() {
+            self.reload_themes();
+        }
+        let theme_list = self.themes.0.clone();
+        let theme_errors = self.themes.1.clone();
+        let user_theme_note = self.t(
+            "settings-theme-user-note",
+            &[(
+                "folder",
+                self.settings_dir
+                    .as_ref()
+                    .map(|d| d.join("themes").display().to_string())
+                    .unwrap_or_default()
+                    .into(),
+            )],
+        );
         let mut open = true;
         let title = self.t("settings-title", &[]);
         let l = |id: &str| tr(&self.l10n, id, &[]);
@@ -1037,7 +1077,59 @@ impl Shell {
                                     (ThemeChoice::Dark, "settings-theme-dark"),
                                     (ThemeChoice::HighContrast, "settings-theme-high-contrast"),
                                 ] {
-                                    ui.radio_value(&mut s.theme, v, l(id));
+                                    if ui
+                                        .radio(s.color_theme.is_none() && s.theme == v, l(id))
+                                        .clicked()
+                                    {
+                                        s.theme = v;
+                                        s.color_theme = None;
+                                    }
+                                }
+                                ui.add_space(10.0);
+                                ui.strong(l("settings-theme-more"));
+                                egui::ScrollArea::vertical()
+                                    .id_salt("settings-themes")
+                                    .max_height(240.0)
+                                    .show(ui, |ui| {
+                                        for t in &theme_list {
+                                            ui.horizontal(|ui| {
+                                                let sel = s.color_theme.as_deref() == Some(&t.id);
+                                                let (rect, _) = ui.allocate_exact_size(
+                                                    egui::vec2(54.0, 16.0),
+                                                    egui::Sense::hover(),
+                                                );
+                                                let p = t.palette;
+                                                let painter = ui.painter();
+                                                painter.rect_filled(rect, 3.0, p.canvas);
+                                                for (i, c) in [
+                                                    p.text,
+                                                    p.syntax.keyword,
+                                                    p.syntax.string,
+                                                    p.syntax.function,
+                                                ]
+                                                .into_iter()
+                                                .enumerate()
+                                                {
+                                                    let x = rect.left() + 6.0 + i as f32 * 12.0;
+                                                    painter.circle_filled(
+                                                        egui::pos2(x, rect.center().y),
+                                                        4.0,
+                                                        c,
+                                                    );
+                                                }
+                                                if ui.radio(sel, &t.name).clicked() {
+                                                    s.color_theme = Some(t.id.clone());
+                                                }
+                                            });
+                                        }
+                                    });
+                                ui.add_space(6.0);
+                                ui.weak(user_theme_note.clone());
+                                for (file, err) in &theme_errors {
+                                    ui.colored_label(
+                                        theme::palette(ui.ctx()).warning,
+                                        format!("{file}: {err}"),
+                                    );
                                 }
                             }
                             SettingsTab::Shortcuts => {

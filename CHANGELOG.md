@@ -5,6 +5,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Themes: Classic (Notepad++ style), Solarized Light/Dark, Dracula, Nord,
+  Gruvbox Dark, One Dark and Tomorrow Night, plus your own `.theme` files;
+  chosen in Settings › Appearance with colour swatches (#85).
 - Settings › Editor › Font: choose any installed monospaced font, with a
   preview; built-in fonts remain the fallback for missing characters
   (#83).

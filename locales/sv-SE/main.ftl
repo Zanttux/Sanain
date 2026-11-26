@@ -437,3 +437,5 @@ settings-font = Teckensnitt
 settings-font-default = Inbyggt med fast bredd
 settings-font-loading = Söker efter installerade teckensnitt…
 settings-font-missing = Teckensnittet { $font } hittades inte; det inbyggda teckensnittet används.
+settings-theme-more = Fler teman
+settings-theme-user-note = Egna teman: .theme-filer i mappen { $folder } (se docs/THEMES.md).

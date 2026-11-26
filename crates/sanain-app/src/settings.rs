@@ -47,6 +47,8 @@ pub struct Settings {
     pub word_wrap: bool,
     /// Editor font family; `None` uses the built-in monospace font.
     pub editor_font: Option<String>,
+    /// A bundled or user colour theme (its id) replacing `theme`.
+    pub color_theme: Option<String>,
 }
 
 impl Default for Settings {
@@ -64,6 +66,7 @@ impl Default for Settings {
             local_history: true,
             word_wrap: true,
             editor_font: None,
+            color_theme: None,
         }
     }
 }
@@ -112,6 +115,9 @@ impl Settings {
         if let Some(f) = &self.editor_font {
             out.push_str(&format!("editor_font={f}\n"));
         }
+        if let Some(t) = &self.color_theme {
+            out.push_str(&format!("color_theme={t}\n"));
+        }
         out.push_str(&self.keymap.encode());
         out
     }
@@ -159,6 +165,9 @@ impl Settings {
                 "word_wrap" => s.word_wrap = v.parse().unwrap_or(true),
                 "editor_font" if !v.is_empty() && v.len() <= 200 => {
                     s.editor_font = Some(v.to_owned())
+                }
+                "color_theme" if !v.is_empty() && v.len() <= 200 => {
+                    s.color_theme = Some(v.to_owned())
                 }
                 other => {
                     s.keymap.read_line(other, v);
@@ -219,6 +228,7 @@ mod tests {
             local_history: false,
             word_wrap: false,
             editor_font: Some("JetBrains Mono".into()),
+            color_theme: Some("nord".into()),
         };
         assert_eq!(Settings::decode(&s.encode()), Some(s.clone()));
         let hc = Settings {

@@ -413,3 +413,5 @@ settings-font = Phông chữ
 settings-font-default = Phông đơn cách tích hợp
 settings-font-loading = Đang tìm phông chữ đã cài đặt…
 settings-font-missing = Không tìm thấy phông chữ { $font }; đang dùng phông chữ tích hợp.
+settings-theme-more = Thêm chủ đề
+settings-theme-user-note = Chủ đề của riêng bạn: tệp .theme trong thư mục { $folder } (xem docs/THEMES.md).

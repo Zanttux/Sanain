@@ -437,3 +437,5 @@ settings-font = Lettertype
 settings-font-default = Ingebouwd monospace
 settings-font-loading = Geïnstalleerde lettertypen zoeken…
 settings-font-missing = Het lettertype { $font } is niet gevonden; het ingebouwde lettertype wordt gebruikt.
+settings-theme-more = Meer thema's
+settings-theme-user-note = Eigen thema's: .theme-bestanden in de map { $folder } (zie docs/THEMES.md).

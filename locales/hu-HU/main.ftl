@@ -437,3 +437,5 @@ settings-font = Betűtípus
 settings-font-default = Beépített fix szélességű
 settings-font-loading = Telepített betűtípusok keresése…
 settings-font-missing = A(z) { $font } betűtípus nem található; a beépített betűtípus van használatban.
+settings-theme-more = További témák
+settings-theme-user-note = Saját témák: .theme fájlok ebben a mappában: { $folder } (lásd: docs/THEMES.md).

@@ -437,3 +437,5 @@ settings-font = Schriftart
 settings-font-default = Integrierte Festbreitenschrift
 settings-font-loading = Installierte Schriftarten werden gesucht…
 settings-font-missing = Die Schriftart { $font } wurde nicht gefunden; die integrierte Schriftart wird verwendet.
+settings-theme-more = Weitere Designs
+settings-theme-user-note = Eigene Designs: .theme-Dateien im Ordner { $folder } (siehe docs/THEMES.md).
