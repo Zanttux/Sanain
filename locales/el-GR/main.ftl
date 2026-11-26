@@ -372,3 +372,5 @@ tabs-kept-unsaved = { $count ->
     [one] 1 καρτέλα με μη αποθηκευμένες αλλαγές παρέμεινε ανοιχτή.
    *[other] { $count } καρτέλες με μη αποθηκευμένες αλλαγές παρέμειναν ανοιχτές.
     }
+status-indent-tabs = Στηλοθέτες
+status-indent-spaces = Κενά: { $count }

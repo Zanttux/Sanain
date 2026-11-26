@@ -371,3 +371,5 @@ tabs-kept-unsaved = { $count ->
     [one] 1 tab with unsaved changes was kept open.
    *[other] { $count } tabs with unsaved changes were kept open.
     }
+status-indent-tabs = Tabs
+status-indent-spaces = Spaces: { $count }

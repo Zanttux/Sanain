@@ -5,6 +5,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- `.editorconfig` files set indentation (indent_style, indent_size,
+  tab_width) per file; the status bar shows the indentation in use. Other
+  EditorConfig properties are not applied yet.
 - Tabs: Close Other Tabs and Close All Tabs (pinned tabs and tabs with
   unsaved changes stay open), Copy File Path, and Show in Finder /
   Explorer / File Manager, in the tab context menu and the File menu.

@@ -372,3 +372,5 @@ tabs-kept-unsaved = { $count ->
     [one] 1 scheda con modifiche non salvate è stata lasciata aperta.
    *[other] { $count } schede con modifiche non salvate sono state lasciate aperte.
     }
+status-indent-tabs = Tabulazioni
+status-indent-spaces = Spazi: { $count }

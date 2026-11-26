@@ -353,3 +353,5 @@ status-path-copied = 파일 경로를 복사했습니다.
 tabs-kept-unsaved = { $count ->
    *[other] 저장하지 않은 변경 사항이 있는 탭 { $count }개를 열어 두었습니다.
     }
+status-indent-tabs = 탭
+status-indent-spaces = 공백: { $count }

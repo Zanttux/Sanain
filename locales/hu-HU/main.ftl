@@ -372,3 +372,5 @@ tabs-kept-unsaved = { $count ->
     [one] 1 nem mentett módosításokat tartalmazó lap nyitva maradt.
    *[other] { $count } nem mentett módosításokat tartalmazó lap nyitva maradt.
     }
+status-indent-tabs = Tabulátorok
+status-indent-spaces = Szóközök: { $count }

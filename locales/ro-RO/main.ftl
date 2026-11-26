@@ -391,3 +391,5 @@ tabs-kept-unsaved = { $count ->
     [few] { $count } file cu modificări nesalvate au rămas deschise.
    *[other] { $count } de file cu modificări nesalvate au rămas deschise.
     }
+status-indent-tabs = Tabulatoare
+status-indent-spaces = Spații: { $count }

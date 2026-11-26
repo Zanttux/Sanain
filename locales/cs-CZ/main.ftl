@@ -410,3 +410,5 @@ tabs-kept-unsaved = { $count ->
     [many] { $count } karty s neuloženými změnami zůstalo otevřených.
    *[other] { $count } karet s neuloženými změnami zůstalo otevřených.
     }
+status-indent-tabs = Tabulátory
+status-indent-spaces = Mezery: { $count }

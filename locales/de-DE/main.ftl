@@ -372,3 +372,5 @@ tabs-kept-unsaved = { $count ->
     [one] 1 Tab mit ungespeicherten Änderungen wurde offen gelassen.
    *[other] { $count } Tabs mit ungespeicherten Änderungen wurden offen gelassen.
     }
+status-indent-tabs = Tabs
+status-indent-spaces = Leerzeichen: { $count }

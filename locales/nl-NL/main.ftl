@@ -372,3 +372,5 @@ tabs-kept-unsaved = { $count ->
     [one] 1 tabblad met niet-opgeslagen wijzigingen is open gelaten.
    *[other] { $count } tabbladen met niet-opgeslagen wijzigingen zijn open gelaten.
     }
+status-indent-tabs = Tabs
+status-indent-spaces = Spaties: { $count }

@@ -372,3 +372,5 @@ tabs-kept-unsaved = { $count ->
     [one] Se mantuvo abierta 1 pestaña con cambios sin guardar.
    *[other] Se mantuvieron abiertas { $count } pestañas con cambios sin guardar.
     }
+status-indent-tabs = Tabulaciones
+status-indent-spaces = Espacios: { $count }

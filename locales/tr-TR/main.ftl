@@ -372,3 +372,5 @@ tabs-kept-unsaved = { $count ->
     [one] Kaydedilmemiş değişiklikleri olan 1 sekme açık bırakıldı.
    *[other] Kaydedilmemiş değişiklikleri olan { $count } sekme açık bırakıldı.
     }
+status-indent-tabs = Sekmeler
+status-indent-spaces = Boşluklar: { $count }

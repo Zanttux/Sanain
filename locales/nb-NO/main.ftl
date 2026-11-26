@@ -372,3 +372,5 @@ tabs-kept-unsaved = { $count ->
     [one] 1 fane med ulagrede endringer ble holdt åpen.
    *[other] { $count } faner med ulagrede endringer ble holdt åpne.
     }
+status-indent-tabs = Tabulatorer
+status-indent-spaces = Mellomrom: { $count }

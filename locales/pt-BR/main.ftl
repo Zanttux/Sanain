@@ -391,3 +391,5 @@ tabs-kept-unsaved = { $count ->
     [many] { $count } abas com alterações não salvas foram mantidas abertas.
    *[other] { $count } abas com alterações não salvas foram mantidas abertas.
     }
+status-indent-tabs = Tabulações
+status-indent-spaces = Espaços: { $count }
