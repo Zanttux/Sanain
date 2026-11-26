@@ -409,3 +409,7 @@ cli-diff-needs-two = --diff precisa de dois arquivos: sanain --diff ESQUERDA DIR
 window-move-tab-left = Mover aba para a esquerda
 window-move-tab-right = Mover aba para a direita
 edit-skip-occurrence = Pular para a próxima ocorrência
+tools-play-macro-times = Reproduzir macro várias vezes…
+macro-times-hint = Número de vezes
+macro-times-note = De 1 a { $max }
+macro-times-invalid = Digite um número de 1 a { $max }.

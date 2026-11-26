@@ -371,3 +371,7 @@ cli-diff-needs-two = --diff에는 두 파일이 필요합니다: sanain --diff �
 window-move-tab-left = 탭을 왼쪽으로 이동
 window-move-tab-right = 탭을 오른쪽으로 이동
 edit-skip-occurrence = 다음 항목으로 건너뛰기
+tools-play-macro-times = 매크로 여러 번 재생…
+macro-times-hint = 반복 횟수
+macro-times-note = 1~{ $max }
+macro-times-invalid = 1~{ $max } 사이의 숫자를 입력하세요.

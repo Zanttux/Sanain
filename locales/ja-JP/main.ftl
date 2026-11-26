@@ -371,3 +371,7 @@ cli-diff-needs-two = --diff には 2 つのファイルが必要です: sanain -
 window-move-tab-left = タブを左に移動
 window-move-tab-right = タブを右に移動
 edit-skip-occurrence = 次の出現箇所へスキップ
+tools-play-macro-times = マクロを指定回数再生…
+macro-times-hint = 回数
+macro-times-note = 1～{ $max }
+macro-times-invalid = 1～{ $max } の数値を入力してください。

@@ -390,3 +390,7 @@ cli-diff-needs-two = --diff heeft twee bestanden nodig: sanain --diff LINKS RECH
 window-move-tab-left = Tabblad naar links verplaatsen
 window-move-tab-right = Tabblad naar rechts verplaatsen
 edit-skip-occurrence = Spring naar volgende overeenkomst
+tools-play-macro-times = Macro meerdere keren afspelen…
+macro-times-hint = Aantal keren
+macro-times-note = Van 1 tot en met { $max }
+macro-times-invalid = Voer een getal in van 1 tot en met { $max }.

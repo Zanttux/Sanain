@@ -390,3 +390,7 @@ cli-diff-needs-two = --diff necesita dos archivos: sanain --diff IZQUIERDA DEREC
 window-move-tab-left = Mover pestaña a la izquierda
 window-move-tab-right = Mover pestaña a la derecha
 edit-skip-occurrence = Saltar a la siguiente coincidencia
+tools-play-macro-times = Reproducir macro varias veces…
+macro-times-hint = Número de veces
+macro-times-note = De 1 a { $max }
+macro-times-invalid = Introduce un número de 1 a { $max }.

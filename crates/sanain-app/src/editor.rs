@@ -594,10 +594,17 @@ impl Editor {
     /// Run `commands` at the current selections; the edits undo as one
     /// step.
     pub fn play(&mut self, commands: &[Command]) {
+        self.play_times(commands, 1);
+    }
+
+    /// Play `commands` `times` times as one undo step.
+    pub fn play_times(&mut self, commands: &[Command], times: usize) {
         let mark = self.doc.undo_mark();
         let rec = self.macro_rec.take();
-        for c in commands {
-            self.execute(c.clone());
+        for _ in 0..times {
+            for c in commands {
+                self.execute(c.clone());
+            }
         }
         self.macro_rec = rec;
         self.doc.merge_undo_since(mark);
@@ -919,6 +926,25 @@ mod tests {
             "alpha\n- beta;\ngamma\n",
             "one run, one undo"
         );
+    }
+
+    #[test]
+    fn play_times_is_one_undo() {
+        let mut ed = Editor::new();
+        ed.execute(Command::Insert("a\nb\nc\n".into()));
+        ed.execute(Command::PlaceCaret {
+            at: 0,
+            extend: false,
+        });
+        let cmds = vec![
+            Command::Insert("- ".into()),
+            Command::Down { extend: false },
+            Command::LineStart { extend: false },
+        ];
+        ed.play_times(&cmds, 3);
+        assert_eq!(ed.document().text(), "- a\n- b\n- c\n");
+        ed.execute(Command::Undo);
+        assert_eq!(ed.document().text(), "a\nb\nc\n", "all runs undo together");
     }
 
     #[test]

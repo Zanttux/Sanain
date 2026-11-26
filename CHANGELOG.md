@@ -5,6 +5,8 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Tools › Play Macro Multiple Times…: replay the recorded macro up to
+  10 000 times as one undo step.
 - Edit › Skip to Next Occurrence (Cmd/Ctrl+Shift+D): replace the newest
   occurrence selection with the next one.
 - Window › Move Tab Left/Right (Ctrl+Shift+Page Up/Down): reorder tabs

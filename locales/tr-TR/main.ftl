@@ -390,3 +390,7 @@ cli-diff-needs-two = --diff iki dosya gerektirir: sanain --diff SOL SAĞ
 window-move-tab-left = Sekmeyi Sola Taşı
 window-move-tab-right = Sekmeyi Sağa Taşı
 edit-skip-occurrence = Sonraki Eşleşmeye Atla
+tools-play-macro-times = Makroyu Birden Çok Kez Oynat…
+macro-times-hint = Tekrar sayısı
+macro-times-note = 1 ile { $max } arası
+macro-times-invalid = 1 ile { $max } arasında bir sayı girin.
