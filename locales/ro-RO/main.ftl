@@ -465,3 +465,4 @@ settings-theme-more = Mai multe teme
 settings-theme-user-note = Teme proprii: fișiere .theme în dosarul { $folder } (vezi docs/THEMES.md).
 language-auto = Detectează automat
 language-choose = Alegeți limbajul acestei file
+tools-xml-format = Formatează XML

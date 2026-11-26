@@ -417,3 +417,4 @@ settings-theme-more = 更多主題
 settings-theme-user-note = 自訂主題：{ $folder } 資料夾中的 .theme 檔案（請參閱 docs/THEMES.md）。
 language-auto = 自動偵測
 language-choose = 選擇此分頁的語言
+tools-xml-format = 格式化 XML

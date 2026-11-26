@@ -441,3 +441,4 @@ settings-theme-more = Meer thema's
 settings-theme-user-note = Eigen thema's: .theme-bestanden in de map { $folder } (zie docs/THEMES.md).
 language-auto = Automatisch detecteren
 language-choose = Kies de taal van dit tabblad
+tools-xml-format = Formatteer XML

@@ -441,3 +441,4 @@ settings-theme-more = Περισσότερα θέματα
 settings-theme-user-note = Δικά σας θέματα: αρχεία .theme στον φάκελο { $folder } (δείτε docs/THEMES.md).
 language-auto = Αυτόματη ανίχνευση
 language-choose = Επιλέξτε τη γλώσσα αυτής της καρτέλας
+tools-xml-format = Μορφοποίηση XML

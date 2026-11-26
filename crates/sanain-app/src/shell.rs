@@ -3596,6 +3596,48 @@ impl Shell {
                 }
                 return;
             }
+            MenuAction::XmlFormat => {
+                let range = self.editor().tool_range();
+                let result = self
+                    .editor_mut()
+                    .transform(|t| sanain_tools::markup::format_xml(t, &tab_indent));
+                match result {
+                    Ok(changed) => {
+                        let id = if changed {
+                            "tools-done"
+                        } else {
+                            "tools-no-change"
+                        };
+                        self.status = Some((self.t(id, &[]), false));
+                    }
+                    Err(e) => {
+                        // Put the caret on the problem; the position is
+                        // relative to the formatted range.
+                        let rope = self.editor().document().rope();
+                        let first = rope.char_to_line(range.start);
+                        let line = first + e.line.saturating_sub(1);
+                        let mut column = e.column.saturating_sub(1);
+                        if e.line <= 1 {
+                            column += range.start - rope.line_to_char(first);
+                        }
+                        self.editor_mut().go_to(line, column);
+                        let id = self.ws.active().id;
+                        self.active_view(id).reveal();
+                        let format = self.t("format-xml", &[]);
+                        let msg = self.t(
+                            "tools-tree-error",
+                            &[
+                                ("format", format.into()),
+                                ("line", ((line + 1) as i64).into()),
+                                ("column", ((column + 1) as i64).into()),
+                                ("reason", e.message.into()),
+                            ],
+                        );
+                        self.status = Some((msg, true));
+                    }
+                }
+                None
+            }
             MenuAction::About => {
                 self.about_open = true;
                 return;
