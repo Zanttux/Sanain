@@ -257,6 +257,9 @@ fn save_keeps_hard_links_together() {
     let b = dir.path().join("b.txt");
     fs::write(&a, "old\n").unwrap();
     fs::hard_link(&a, &b).unwrap();
+    // An unrelated file with the backup's name must survive.
+    let other = dir.path().join(".a.txt.sanain-backup");
+    fs::write(&other, "keep me").unwrap();
     let ino = fs::metadata(&a).unwrap().ino();
     let loaded = load(&a).unwrap();
     save(
@@ -277,9 +280,10 @@ fn save_keeps_hard_links_together() {
         .unwrap()
         .filter_map(Result::ok)
         .map(|e| e.file_name().to_string_lossy().into_owned())
-        .filter(|n| n.contains("sanain"))
+        .filter(|n| n.contains("sanain") && n != ".a.txt.sanain-backup")
         .collect();
     assert!(leftovers.is_empty(), "backup removed: {leftovers:?}");
+    assert_eq!(fs::read_to_string(&other).unwrap(), "keep me");
     // A second save still works (fingerprint matches the in-place write).
     let loaded = load(&a).unwrap();
     save(

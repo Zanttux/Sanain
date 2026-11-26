@@ -1730,7 +1730,8 @@ impl Shell {
     /// Replace the folder search matches in the files of its results: in
     /// the tab for open files (undoable, not saved), on disk otherwise.
     fn replace_in_files(&mut self, ctx: &egui::Context) {
-        let Ok(Some(matcher)) = self.folder.query.compile() else {
+        // The matcher of the shown results, not the query as edited since.
+        let Some(matcher) = self.folder.hits_matcher() else {
             return;
         };
         let with = self.folder.replace.clone();

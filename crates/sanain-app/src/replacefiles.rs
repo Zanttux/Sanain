@@ -10,7 +10,7 @@ use std::path::Path;
 use sanain_core::Document;
 use sanain_core::search::Matcher;
 use sanain_io::history::{HistoryStore, Retention};
-use sanain_io::{SaveMode, load, save};
+use sanain_io::{SaveMode, TextEncoding, load_with_bytes, save};
 
 /// Replace every match of `matcher` in the file at `path` and save it.
 /// Returns the number of replacements (0 leaves the file untouched).
@@ -20,14 +20,18 @@ pub fn replace_in_file(
     with: &str,
     history: Option<&HistoryStore>,
 ) -> Result<usize, String> {
-    let loaded = load(path).map_err(|e| e.to_string())?;
+    let (loaded, bytes) = load_with_bytes(path).map_err(|e| e.to_string())?;
+    // The folder search reads files as UTF-8; anything decoded otherwise
+    // (e.g. UTF-16 detected later in the file) is left alone.
+    if !matches!(loaded.encoding, TextEncoding::Utf8 | TextEncoding::Utf8Bom) {
+        return Err("not a UTF-8 file".into());
+    }
     let mut doc = Document::from_saved_text(&loaded.text);
     let (tx, n) = matcher.replace_all(doc.rope(), with);
     if n == 0 {
         return Ok(0);
     }
     if let Some(store) = history {
-        let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
         store
             .record(path, &bytes, Retention::default())
             .map_err(|e| e.to_string())?;
