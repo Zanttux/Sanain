@@ -28,6 +28,15 @@ file; Apache-2.0 and BSL-1.0 full texts appended once). CI runs it on
 every pull request and fails if any crate lacks license text. License,
 advisory and source policy: `deny.toml`, checked by cargo-deny in CI.
 
+Packaging: `scripts/package.py` builds an unsigned archive for the
+current platform in `target/dist/` (macOS: `Sanain.app` in a zip;
+Windows: zip; Linux: tar.gz) with LICENSE, README, CHANGELOG, the
+third-party notices and a `.sha256` file. The `Package` workflow runs it
+on Linux, Windows and macOS for `v*` tags and on manual dispatch, and
+keeps the archives as workflow artifacts for 14 days; it publishes
+nothing. Still missing before a public release: signing and
+notarization, an SBOM, and a Linux desktop entry and icon.
+
 CI builds releases from tagged commits with the lockfile and produces
 checksums, SBOM, notices and release notes. The owner approves publishing.
 Updates: Sanain can check GitHub for a newer release (manual, or once a

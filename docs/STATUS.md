@@ -126,7 +126,8 @@ because nobody independent exists; no fake approvals.
 - Windows and Linux runtime smoke test (needs a machine or VM): open,
   edit, save, menus, shortcuts on non-US layouts.
 - Manual screen-reader (VoiceOver) and IME pass on macOS.
-- Release preparation for 0.1.0: installer/bundle per platform, notices
-  file, release notes; publishing waits for the owner (signing).
+- Release preparation for 0.1.0: unsigned archives exist (`Package`
+  workflow); still SBOM, Linux desktop entry and icon, release notes;
+  publishing waits for the owner (signing).
 - Smaller: incremental word wrap (lift the 1 M-character limit), log
   viewer for non-UTF-8 files, Mermaid diagrams in Markdown preview.
