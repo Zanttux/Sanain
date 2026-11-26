@@ -1,13 +1,14 @@
-//! Structured views: an editable CSV grid, editable JSON and XML trees and
-//! a read-only YAML tree. The source stays authoritative: edits come back
-//! as [`GridAction`]s and [`TreeAction`]s that the caller applies to the
-//! text as ordinary undoable edits.
+//! Structured views: an editable CSV grid and editable JSON, XML and YAML
+//! trees. The source stays authoritative: edits come back as
+//! [`GridAction`]s and [`TreeAction`]s that the caller applies to the text
+//! as ordinary undoable edits.
 
 use eframe::egui::{self, RichText};
 use egui_extras::{Column, TableBuilder};
 use sanain_tools::csv::Table;
-use sanain_tools::json::{self, Node};
+use sanain_tools::json;
 use sanain_tools::xml;
+use sanain_tools::yaml;
 
 use crate::theme::Palette;
 
@@ -372,6 +373,10 @@ pub enum FieldError {
     InvalidName,
     DuplicateAttribute,
     NotWellFormed,
+    /// YAML: the edit would change more than the node.
+    NotPreserved,
+    /// YAML: a key over 1024 characters.
+    KeyTooLong,
 }
 
 impl From<json::EditError> for FieldError {
@@ -393,7 +398,17 @@ impl From<xml::EditError> for FieldError {
     }
 }
 
-/// Selection and inline editor of one tab's JSON or XML tree. Nodes are
+impl From<yaml::EditError> for FieldError {
+    fn from(e: yaml::EditError) -> Self {
+        match e {
+            yaml::EditError::DuplicateKey => Self::DuplicateKey,
+            yaml::EditError::InvalidValue => Self::KeyTooLong,
+            _ => Self::NotPreserved,
+        }
+    }
+}
+
+/// Selection and inline editor of one tab's JSON, XML or YAML tree. Nodes are
 /// named by their path of child positions, which survives re-parsing the
 /// text.
 #[derive(Debug, Default)]
@@ -492,6 +507,31 @@ impl TreeState {
         }
     }
 
+    /// Open the inline field on a YAML node: a scalar's value or an
+    /// entry's key, decoded, when that part is editable.
+    pub fn start_yaml_edit(&mut self, doc: &yaml::Doc, path: &[usize], field: Field) -> bool {
+        let Some(i) = doc.find(path) else {
+            return false;
+        };
+        let text = match field {
+            Field::Value if doc.can_set_value(i) => doc.value(i),
+            Field::Key if doc.can_rename(i) => doc.key(i),
+            _ => None,
+        };
+        self.open(path, field, text)
+    }
+
+    fn start_default_yaml_edit(&mut self, doc: &yaml::Doc, path: &[usize]) {
+        if let Some(f) = self.selected_field
+            && self.start_yaml_edit(doc, path, f)
+        {
+            return;
+        }
+        if !self.start_yaml_edit(doc, path, Field::Value) {
+            self.start_yaml_edit(doc, path, Field::Key);
+        }
+    }
+
     fn step(&mut self, d: isize) {
         let rows = &self.visible;
         if rows.is_empty() {
@@ -556,6 +596,30 @@ pub struct XmlLabels {
     pub invalid_name: String,
     pub duplicate_attribute: String,
     pub not_well_formed: String,
+}
+
+/// Localized labels of the YAML tree's menu, errors and read-only reasons.
+pub struct YamlLabels {
+    pub edit_value: String,
+    pub rename_key: String,
+    pub add_after: String,
+    pub add_inside: String,
+    pub delete: String,
+    pub duplicate_key: String,
+    pub key_too_long: String,
+    pub not_preserved: String,
+    /// Why a node is read-only, by [`yaml::Lock`].
+    pub locks: Vec<(yaml::Lock, String)>,
+}
+
+impl YamlLabels {
+    fn lock(&self, l: yaml::Lock) -> String {
+        self.locks
+            .iter()
+            .find(|(k, _)| *k == l)
+            .map(|(_, t)| t.clone())
+            .unwrap_or_default()
+    }
 }
 
 /// What the tree's keys asked for on the selected node.
@@ -1172,79 +1236,274 @@ impl XmlCx<'_> {
     }
 }
 
-/// A read-only tree (YAML).
-pub fn tree(ui: &mut egui::Ui, root: &Node, p: &Palette, more: &dyn Fn(usize) -> String) {
+/// The editable YAML tree: mappings (`{n}`), sequences (`[n]`) and scalars
+/// as written. Interaction is as in [`json`]. Read-only parts (flow
+/// collections, anchors, tags, aliases, block scalars, complex keys, later
+/// documents) show why on hover, and their menu entries are disabled with
+/// the same reason. Comments are not shown and never change.
+#[allow(clippy::too_many_arguments)]
+pub fn yaml(
+    ui: &mut egui::Ui,
+    id: egui::Id,
+    doc: &yaml::Doc,
+    p: &Palette,
+    editable: bool,
+    state: &mut TreeState,
+    labels: &YamlLabels,
+    more: &dyn Fn(usize) -> String,
+) -> Vec<TreeAction> {
+    let mut actions = Vec::new();
+    let exists = |path: &[usize]| doc.find(path).is_some();
+    let open = |s: &mut TreeState, path: &[usize], f| {
+        s.start_yaml_edit(doc, path, f);
+    };
+    let act = tree_frame(ui, id, editable, state, &exists, &open);
+    match act {
+        Some(KeyAct::Edit(sel)) => state.start_default_yaml_edit(doc, &sel),
+        Some(KeyAct::Delete(sel)) if doc.find(&sel).is_some_and(|i| doc.can_delete(i)) => {
+            actions.push(TreeAction::Delete(sel));
+        }
+        _ => {}
+    }
+    let mut visible = Vec::new();
     egui::ScrollArea::both().auto_shrink(false).show(ui, |ui| {
-        node(ui, None, root, p, 0, "$".to_owned(), more);
+        let mut cx = YamlCx {
+            doc,
+            p,
+            id,
+            editable,
+            state,
+            labels,
+            more,
+            actions: &mut actions,
+            visible: &mut visible,
+        };
+        let docs = &doc.items[0].children;
+        let many = docs.len() > 1;
+        let mut path = Vec::new();
+        for (k, &c) in docs.iter().enumerate() {
+            if many {
+                ui.label(
+                    RichText::new(format!("--- {}", k + 1))
+                        .monospace()
+                        .color(p.muted),
+                );
+            }
+            path.push(k);
+            cx.node(ui, c, &mut path, 0);
+            path.pop();
+        }
     });
+    state.visible = visible;
+    actions
 }
 
-fn node(
-    ui: &mut egui::Ui,
-    key: Option<&str>,
-    n: &Node,
-    p: &Palette,
-    depth: usize,
-    path: String,
-    more: &dyn Fn(usize) -> String,
-) {
-    let label = |summary: String| {
-        let mut s = String::new();
-        if let Some(k) = key {
-            s.push_str(k);
-            s.push_str(": ");
+struct YamlCx<'a> {
+    doc: &'a yaml::Doc,
+    p: &'a Palette,
+    id: egui::Id,
+    editable: bool,
+    state: &'a mut TreeState,
+    labels: &'a YamlLabels,
+    more: &'a dyn Fn(usize) -> String,
+    actions: &'a mut Vec<TreeAction>,
+    visible: &'a mut Vec<Vec<usize>>,
+}
+
+/// Text shown for a scalar, alias or flow collection: as written, on one
+/// line.
+fn one_line(s: &str) -> String {
+    const MAX: usize = 200;
+    let mut out: String = s
+        .chars()
+        .take(MAX)
+        .map(|c| if c == '\n' || c == '\r' { '⏎' } else { c })
+        .collect();
+    if s.chars().count() > MAX {
+        out.push('…');
+    }
+    out
+}
+
+impl YamlCx<'_> {
+    fn node(&mut self, ui: &mut egui::Ui, i: usize, path: &mut Vec<usize>, depth: usize) {
+        let it = &self.doc.items[i];
+        self.visible.push(path.clone());
+        // Flow collections are shown as written, on their row.
+        let open = matches!(it.kind, yaml::Kind::Mapping | yaml::Kind::Sequence) && !it.flow;
+        if !open || depth >= MAX_TREE_DEPTH {
+            ui.horizontal(|ui| self.row(ui, i, path));
+            return;
         }
-        s.push_str(&summary);
-        s
-    };
-    match n {
-        Node::Scalar(v) => {
-            ui.horizontal(|ui| {
-                if let Some(k) = key {
-                    ui.label(RichText::new(format!("{k}:")).monospace().color(p.muted));
-                }
-                ui.label(RichText::new(v).monospace().color(p.text));
-            });
+        let open_id = self.id.with(("node", path.as_slice()));
+        let state = egui::collapsing_header::CollapsingState::load_with_default_open(
+            ui.ctx(),
+            open_id,
+            depth < 2,
+        );
+        let header = state.show_header(ui, |ui| self.row(ui, i, path));
+        header.body(|ui| {
+            let children = &self.doc.items[i].children;
+            for (k, &c) in children.iter().take(MAX_CHILDREN).enumerate() {
+                path.push(k);
+                self.node(ui, c, path, depth + 1);
+                path.pop();
+            }
+            if children.len() > MAX_CHILDREN {
+                ui.label(
+                    RichText::new((self.more)(children.len() - MAX_CHILDREN)).color(self.p.muted),
+                );
+            }
+        });
+    }
+
+    /// One line: key (or sequence index), then the value or a summary.
+    fn row(&mut self, ui: &mut egui::Ui, i: usize, path: &[usize]) {
+        let (doc, p) = (self.doc, self.p);
+        let it = &doc.items[i];
+        let selected = self.state.selected.as_deref() == Some(path);
+        let editing = |f: Field| {
+            self.state
+                .editing
+                .as_ref()
+                .is_some_and(|e| e.field == f && e.path == path)
+        };
+        let (editing_key, editing_value) = (editing(Field::Key), editing(Field::Value));
+        let in_seq = it
+            .parent
+            .is_some_and(|q| doc.items[q].kind == yaml::Kind::Sequence);
+        if editing_key {
+            self.field(ui, i);
+            ui.label(RichText::new(":").monospace().color(p.muted));
+        } else if let Some(k) = doc.key_text(i) {
+            let r = label(ui, format!("{}:", one_line(k)), p.muted, selected, p);
+            self.interact(ui, &r, i, path, Field::Key);
+        } else if it.key_lock.is_some() {
+            let r = label(ui, "?:".into(), p.muted, selected, p);
+            self.interact(ui, &r, i, path, Field::Key);
+        } else if in_seq {
+            let n = path.last().copied().unwrap_or(0);
+            let r = label(ui, format!("{n}:"), p.muted, selected, p);
+            self.interact(ui, &r, i, path, Field::Value);
         }
-        Node::Object(_) | Node::Array(_) if depth >= MAX_TREE_DEPTH => {
-            ui.label(RichText::new(label("…".into())).monospace().color(p.muted));
+        if editing_value {
+            self.field(ui, i);
+            return;
         }
-        Node::Object(members) => {
-            egui::CollapsingHeader::new(
-                RichText::new(label(format!("{{{}}}", members.len()))).monospace(),
-            )
-            .id_salt(&path)
-            .default_open(depth < 2)
-            .show(ui, |ui| {
-                for (i, (k, v)) in members.iter().take(MAX_CHILDREN).enumerate() {
-                    node(ui, Some(k), v, p, depth + 1, format!("{path}.{i}"), more);
-                }
-                if members.len() > MAX_CHILDREN {
-                    ui.label(RichText::new(more(members.len() - MAX_CHILDREN)).color(p.muted));
-                }
-            });
+        let (text, color) = match it.kind {
+            yaml::Kind::Mapping | yaml::Kind::Sequence if !it.flow => {
+                let n = it.children.len();
+                let t = if it.kind == yaml::Kind::Mapping {
+                    format!("{{{n}}}")
+                } else {
+                    format!("[{n}]")
+                };
+                (t, p.muted)
+            }
+            _ => {
+                let raw = doc.value_text(i).unwrap_or_default();
+                let shown = match it.style {
+                    Some(yaml::Style::Literal | yaml::Style::Folded) => {
+                        doc.value(i).unwrap_or_default()
+                    }
+                    _ => raw.to_owned(),
+                };
+                (one_line(&shown), p.text)
+            }
+        };
+        let r = label(ui, text, color, selected, p);
+        self.interact(ui, &r, i, path, Field::Value);
+    }
+
+    fn interact(
+        &mut self,
+        ui: &egui::Ui,
+        r: &egui::Response,
+        i: usize,
+        path: &[usize],
+        field: Field,
+    ) {
+        let (doc, labels) = (self.doc, self.labels);
+        let r = match doc.lock(i) {
+            Some(l) => r.clone().on_hover_text(labels.lock(l)),
+            None => r.clone(),
+        };
+        let double = select_on_click(ui, self.id, self.state, &r, path, field);
+        if self.editable && double && !self.state.start_yaml_edit(doc, path, field) {
+            self.state.start_default_yaml_edit(doc, path);
         }
-        Node::Array(items) => {
-            egui::CollapsingHeader::new(
-                RichText::new(label(format!("[{}]", items.len()))).monospace(),
-            )
-            .id_salt(&path)
-            .default_open(depth < 2)
-            .show(ui, |ui| {
-                for (i, v) in items.iter().take(MAX_CHILDREN).enumerate() {
-                    node(
-                        ui,
-                        Some(&i.to_string()),
-                        v,
-                        p,
-                        depth + 1,
-                        format!("{path}[{i}]"),
-                        more,
-                    );
+        if !self.editable {
+            return;
+        }
+        let it = &doc.items[i];
+        let reason = |l: Option<yaml::Lock>| l.map(|l| labels.lock(l)).unwrap_or_default();
+        // An entry with a disabled reason, when the operation applies.
+        let entry = |ui: &mut egui::Ui, text: &str, on: bool, why: Option<yaml::Lock>| {
+            let b = ui.add_enabled(on, egui::Button::new(text));
+            let b = if on {
+                b
+            } else {
+                b.on_disabled_hover_text(reason(why))
+            };
+            b.clicked()
+        };
+        let scalar = matches!(it.kind, yaml::Kind::Scalar | yaml::Kind::Alias);
+        let has_key = it.spans.key.is_some() || it.key_lock.is_some();
+        let container = matches!(it.kind, yaml::Kind::Mapping | yaml::Kind::Sequence);
+        let member = it.parent.is_some_and(|q| q != 0);
+        r.context_menu(|ui| {
+            if scalar && entry(ui, &labels.edit_value, doc.can_set_value(i), it.value_lock) {
+                self.state.start_yaml_edit(doc, path, Field::Value);
+            }
+            if has_key && entry(ui, &labels.rename_key, doc.can_rename(i), it.key_lock) {
+                self.state.start_yaml_edit(doc, path, Field::Key);
+            }
+            if member && entry(ui, &labels.add_after, doc.can_add_after(i), it.add_lock) {
+                self.actions.push(TreeAction::AddAfter(path.to_vec()));
+            }
+            if container
+                && entry(
+                    ui,
+                    &labels.add_inside,
+                    doc.can_add_inside(i),
+                    doc.add_inside_lock(i),
+                )
+            {
+                self.actions.push(TreeAction::AddInside(path.to_vec()));
+            }
+            if member {
+                ui.separator();
+                if entry(ui, &labels.delete, doc.can_delete(i), it.delete_lock) {
+                    self.actions.push(TreeAction::Delete(path.to_vec()));
                 }
-                if items.len() > MAX_CHILDREN {
-                    ui.label(RichText::new(more(items.len() - MAX_CHILDREN)).color(p.muted));
-                }
+            }
+            if let Some(l) = doc.lock(i) {
+                ui.separator();
+                ui.label(RichText::new(labels.lock(l)).color(self.p.muted).small());
+            }
+        });
+    }
+
+    fn field(&mut self, ui: &mut egui::Ui, i: usize) {
+        let (doc, labels) = (self.doc, self.labels);
+        let message = |e: FieldError| match e {
+            FieldError::DuplicateKey => labels.duplicate_key.clone(),
+            FieldError::KeyTooLong => labels.key_too_long.clone(),
+            _ => labels.not_preserved.clone(),
+        };
+        let check = |f: Field, text: &str| {
+            let r = match f {
+                Field::Value => doc.check_value(i, text),
+                Field::Key => doc.check_key(i, text),
+            };
+            r.map_err(FieldError::from)
+        };
+        if let Some((path, field, text)) =
+            edit_field(ui, self.id, self.p, self.state, &message, &check)
+        {
+            self.actions.push(match field {
+                Field::Value => TreeAction::SetValue { path, text },
+                Field::Key => TreeAction::RenameKey { path, name: text },
             });
         }
     }
@@ -1357,6 +1616,67 @@ mod tests {
         assert!(!xml_deletable(&doc, doc.find(&[0]).unwrap()), "the root");
         assert!(!xml_deletable(&doc, doc.find(&[0, 2, 0]).unwrap()));
     }
+
+    #[test]
+    fn yaml_fields_start_with_decoded_text_where_editable() {
+        let doc =
+            yaml::doc("'a b': 'it''s' # c\nn: 5\nf: [1]\nl:\n  - x\n  - &r y\n  - *r\n").unwrap();
+        let mut t = TreeState::default();
+        assert!(t.start_yaml_edit(&doc, &[0, 0], Field::Value));
+        assert_eq!(t.editing.as_ref().map(|e| e.text.as_str()), Some("it's"));
+        assert!(t.start_yaml_edit(&doc, &[0, 0], Field::Key));
+        assert_eq!(t.editing.as_ref().map(|e| e.text.as_str()), Some("a b"));
+        t.selected_field = None;
+        t.start_default_yaml_edit(&doc, &[0, 1]);
+        assert_eq!(
+            t.editing.as_ref().map(|e| (e.field, e.text.as_str())),
+            Some((Field::Value, "5"))
+        );
+        t.start_default_yaml_edit(&doc, &[0, 2]);
+        assert_eq!(
+            t.editing.as_ref().map(|e| e.field),
+            Some(Field::Key),
+            "a flow collection: its key"
+        );
+        assert!(
+            !t.start_yaml_edit(&doc, &[0, 2, 0], Field::Value),
+            "inside flow"
+        );
+        assert!(t.start_yaml_edit(&doc, &[0, 3, 0], Field::Value));
+        assert!(!t.start_yaml_edit(&doc, &[0, 3, 0], Field::Key), "no key");
+        assert!(!t.start_yaml_edit(&doc, &[0, 3, 1], Field::Value), "anchor");
+        assert!(!t.start_yaml_edit(&doc, &[0, 3, 2], Field::Value), "alias");
+        assert_eq!(one_line("a\r\nb"), "a⏎⏎b");
+    }
+
+    #[test]
+    fn yaml_tree_strings_exist_in_every_locale() {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../locales");
+        let mut seen = 0;
+        for entry in std::fs::read_dir(dir).expect("locales") {
+            let path = entry.expect("entry").path().join("main.ftl");
+            let ftl = std::fs::read_to_string(&path).expect("main.ftl");
+            for id in YAML_IDS {
+                assert!(ftl.contains(&format!("\n{id} = ")), "{id} in {path:?}");
+            }
+            seen += 1;
+        }
+        assert_eq!(seen, 26);
+    }
+
+    const YAML_IDS: [&str; 11] = [
+        "yaml-not-preserved",
+        "yaml-key-too-long",
+        "yaml-read-only-flow",
+        "yaml-read-only-anchor",
+        "yaml-read-only-tag",
+        "yaml-read-only-alias",
+        "yaml-read-only-block-scalar",
+        "yaml-read-only-complex-key",
+        "yaml-read-only-document",
+        "yaml-read-only-layout",
+        "yaml-read-only-only-child",
+    ];
 
     #[test]
     fn xml_tree_strings_exist_in_every_locale() {

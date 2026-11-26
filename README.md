@@ -50,8 +50,9 @@ Fast by design. Powerful when needed. Simple by default.
   flowcharts (with subgraphs) and sequence diagrams drawn natively, plus an Outline panel. Nothing in a document runs or loads from the network.
 - **Data files:** syntax highlighting for 22 languages, JSON
   validate/format/minify that keeps your numbers and keys as written,
-  XML and YAML validation, editable JSON and XML trees, a read-only YAML
-  tree (entities and aliases are never expanded), an editable CSV grid,
+  XML and YAML validation, editable JSON, XML and YAML trees that keep
+  comments and formatting (entities and aliases are never expanded), an
+  editable CSV grid,
   side-by-side comparison with another tab, any file, the saved version or the
   clipboard (changed characters highlighted, whitespace optionally
   ignored), and text tools (sort, deduplicate,
