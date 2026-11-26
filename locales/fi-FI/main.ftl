@@ -394,3 +394,6 @@ tools-play-macro-times = Toista makro useita kertoja…
 macro-times-hint = Toistokerrat
 macro-times-note = 1–{ $max }
 macro-times-invalid = Anna luku väliltä 1–{ $max }.
+view-outline = Jäsennys
+outline-empty = Dokumentissa ei ole otsikoita.
+outline-close = Sulje jäsennys

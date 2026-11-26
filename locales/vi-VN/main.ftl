@@ -375,3 +375,6 @@ tools-play-macro-times = Phát macro nhiều lần…
 macro-times-hint = Số lần
 macro-times-note = Từ 1 đến { $max }
 macro-times-invalid = Nhập một số từ 1 đến { $max }.
+view-outline = Dàn ý
+outline-empty = Tài liệu này không có tiêu đề.
+outline-close = Đóng dàn ý

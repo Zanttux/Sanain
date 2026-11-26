@@ -394,3 +394,6 @@ tools-play-macro-times = Αναπαραγωγή μακροεντολής πολ�
 macro-times-hint = Αριθμός επαναλήψεων
 macro-times-note = Από 1 έως { $max }
 macro-times-invalid = Εισαγάγετε έναν αριθμό από 1 έως { $max }.
+view-outline = Διάρθρωση
+outline-empty = Δεν υπάρχουν επικεφαλίδες σε αυτό το έγγραφο.
+outline-close = Κλείσιμο διάρθρωσης

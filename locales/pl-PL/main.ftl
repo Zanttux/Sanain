@@ -432,3 +432,6 @@ tools-play-macro-times = Odtwórz makro wielokrotnie…
 macro-times-hint = Liczba powtórzeń
 macro-times-note = Od 1 do { $max }
 macro-times-invalid = Wpisz liczbę od 1 do { $max }.
+view-outline = Konspekt
+outline-empty = Brak nagłówków w tym dokumencie.
+outline-close = Zamknij konspekt

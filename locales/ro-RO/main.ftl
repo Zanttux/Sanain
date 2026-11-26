@@ -413,3 +413,6 @@ tools-play-macro-times = Redă macro de mai multe ori…
 macro-times-hint = Număr de repetări
 macro-times-note = De la 1 la { $max }
 macro-times-invalid = Introdu un număr de la 1 la { $max }.
+view-outline = Schiță
+outline-empty = Nu există titluri în acest document.
+outline-close = Închide schița

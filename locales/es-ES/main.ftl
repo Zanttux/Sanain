@@ -394,3 +394,6 @@ tools-play-macro-times = Reproducir macro varias veces…
 macro-times-hint = Número de veces
 macro-times-note = De 1 a { $max }
 macro-times-invalid = Introduce un número de 1 a { $max }.
+view-outline = Esquema
+outline-empty = No hay encabezados en este documento.
+outline-close = Cerrar esquema

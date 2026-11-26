@@ -432,3 +432,6 @@ tools-play-macro-times = Přehrát makro vícekrát…
 macro-times-hint = Počet opakování
 macro-times-note = Od 1 do { $max }
 macro-times-invalid = Zadejte číslo od 1 do { $max }.
+view-outline = Osnova
+outline-empty = V tomto dokumentu nejsou žádné nadpisy.
+outline-close = Zavřít osnovu

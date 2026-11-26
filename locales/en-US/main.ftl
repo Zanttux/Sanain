@@ -393,3 +393,6 @@ tools-play-macro-times = Play Macro Multiple Times…
 macro-times-hint = Number of times
 macro-times-note = From 1 to { $max }
 macro-times-invalid = Enter a number from 1 to { $max }.
+view-outline = Outline
+outline-empty = No headings in this document.
+outline-close = Close Outline

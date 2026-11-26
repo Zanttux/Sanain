@@ -394,3 +394,6 @@ tools-play-macro-times = Makroyu Birden Çok Kez Oynat…
 macro-times-hint = Tekrar sayısı
 macro-times-note = 1 ile { $max } arası
 macro-times-invalid = 1 ile { $max } arasında bir sayı girin.
+view-outline = Ana Hat
+outline-empty = Bu belgede başlık yok.
+outline-close = Ana Hattı Kapat

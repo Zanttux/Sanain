@@ -394,3 +394,6 @@ tools-play-macro-times = Spela upp makro flera gånger…
 macro-times-hint = Antal gånger
 macro-times-note = Från 1 till { $max }
 macro-times-invalid = Ange ett tal från 1 till { $max }.
+view-outline = Disposition
+outline-empty = Inga rubriker i det här dokumentet.
+outline-close = Stäng disposition
