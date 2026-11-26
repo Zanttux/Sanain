@@ -27,6 +27,9 @@ are cross-platform verification and release readiness.
   "Owner-only items").
 
 ## Done
+- Mouse selection (#112-#114): drags start at the press point; double-click
+  selects the word, whitespace or punctuation run under the pointer,
+  triple-click the line; right-click menu with Cut/Copy/Paste/Select All.
 - Environment: macOS 27.2.1 arm64 (Apple M5), Rust 1.100.0 via rustup,
   git 2.54, gh 2.101 authenticated.
 - Repository: github.com/Zanttux/Sanain (public, MPL-2.0). Commits use the

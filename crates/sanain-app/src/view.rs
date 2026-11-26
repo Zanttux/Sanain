@@ -22,6 +22,17 @@ pub struct ViewOptions {
     pub tab_width: usize,
     /// Soft-wrap long lines to the window width.
     pub wrap: bool,
+    /// Localized labels for the right-click menu.
+    pub menu: ContextLabels,
+}
+
+/// Localized labels of the editor's right-click menu.
+#[derive(Debug, Clone, Default)]
+pub struct ContextLabels {
+    pub cut: String,
+    pub copy: String,
+    pub paste: String,
+    pub select_all: String,
 }
 
 /// Unwrapped lines longer than this (chars) are laid out only around the
@@ -38,6 +49,26 @@ struct RowLayout {
     to: usize,
     x: f32,
     clipped: bool,
+}
+
+impl RowLayout {
+    /// Character under the pointer, in document char indices. egui rounds
+    /// to the nearest caret boundary; shifting half a monospace cell left
+    /// instead finds the character whose cell contains the pointer.
+    fn character_at(&self, x: f32, char_w: f32, last: bool) -> usize {
+        let cursor = self.galley.cursor_from_pos(vec2(
+            (x - self.x - char_w / 2.0).max(0.0),
+            self.galley.size().y / 2.0,
+        ));
+        // A wrapped row's end belongs to the next row. Empty rows remain
+        // at their start; ordinary line ends may point to the line break.
+        let end = if last {
+            self.to
+        } else {
+            self.to.saturating_sub(1).max(self.from)
+        };
+        (self.from + cursor.index.0).min(end)
+    }
 }
 
 /// Larger documents are not wrapped (wrapping is recomputed per edit).
@@ -293,6 +324,10 @@ impl EditorView {
             let hit = |ui: &Ui, pos: Pos2, rows: &Rows, editor: &Editor| -> usize {
                 hit_row(ui, row_at(pos, rows), pos.x, rows, editor)
             };
+            let hit_character = |ui: &Ui, pos: Pos2, rows: &Rows, editor: &Editor| {
+                let seg = rows.at(row_at(pos, rows));
+                layout_row(ui, seg, editor).character_at(pos.x - text_x, char_w, seg.last)
+            };
             // A click on the fold marker column toggles the fold.
             let marker_x = (text_x - 1.6 * char_w)..(text_x - 0.2 * char_w);
             let mut toggled = false;
@@ -339,7 +374,15 @@ impl EditorView {
                     changed = true;
                 } else if response.drag_started() || response.clicked() {
                     response.request_focus();
-                    let at = hit(ui, pos, &rows, editor);
+                    // A drag is reported only after the pointer has moved a
+                    // few points: start the selection where the button went
+                    // down, not where the pointer is now (#112).
+                    let start = if response.drag_started() {
+                        ui.input(|i| i.pointer.press_origin()).unwrap_or(pos)
+                    } else {
+                        pos
+                    };
+                    let at = hit(ui, start, &rows, editor);
                     editor.execute(Command::PlaceCaret { at, extend: shift });
                     changed = true;
                 } else if response.dragged() {
@@ -348,6 +391,85 @@ impl EditorView {
                     changed = true;
                 }
             }
+
+            // Double-click selects the word (or run of spaces or
+            // punctuation) at the pointer; triple-click the whole line,
+            // with its line break (#113).
+            if let Some(pos) = response.interact_pointer_pos().filter(|_| !toggled)
+                && !ui.input(|i| i.modifiers.alt || i.modifiers.shift)
+                && (response.double_clicked() || response.triple_clicked())
+            {
+                let at = hit_character(ui, pos, &rows, editor);
+                let rope = editor.document().rope();
+                let range = if response.triple_clicked() {
+                    sanain_core::selection::line_at(rope, at)
+                } else {
+                    sanain_core::selection::run_at_char(rope, at)
+                };
+                editor.execute(Command::SetSelections(vec![(range.start, range.end)]));
+                changed = true;
+            }
+
+            // Right-click: a caret moves to the pointer unless the click
+            // lands inside a selection, which the menu then acts on (#114).
+            if response.secondary_clicked()
+                && let Some(pos) = response.interact_pointer_pos()
+            {
+                response.request_focus();
+                let at = hit_character(ui, pos, &rows, editor);
+                let inside = editor
+                    .selections()
+                    .iter()
+                    .any(|s| !s.is_empty() && s.range().contains(&at));
+                if !inside {
+                    let at = hit(ui, pos, &rows, editor);
+                    editor.execute(Command::PlaceCaret { at, extend: false });
+                    changed = true;
+                }
+            }
+            let has_selection = editor.selections().iter().any(|s| !s.is_empty());
+            response.context_menu(|ui| {
+                let labels = &opts.menu;
+                let mut done = false;
+                if ui
+                    .add_enabled(has_selection, egui::Button::new(&labels.cut))
+                    .clicked()
+                {
+                    if let Some(t) = editor.execute(Command::Cut) {
+                        ui.ctx().copy_text(t);
+                    }
+                    done = true;
+                }
+                if ui
+                    .add_enabled(has_selection, egui::Button::new(&labels.copy))
+                    .clicked()
+                {
+                    if let Some(t) = editor.copy() {
+                        ui.ctx().copy_text(t);
+                    }
+                    done = true;
+                }
+                if ui.button(&labels.paste).clicked() {
+                    if let Some(t) = arboard::Clipboard::new()
+                        .and_then(|mut c| c.get_text())
+                        .ok()
+                        .filter(|t| !t.is_empty())
+                    {
+                        editor.execute(Command::Insert(t));
+                    }
+                    done = true;
+                }
+                ui.separator();
+                if ui.button(&labels.select_all).clicked() {
+                    editor.execute(Command::SelectAll);
+                    done = true;
+                }
+                if done {
+                    changed = true;
+                    response.request_focus();
+                    ui.close();
+                }
+            });
 
             if !response.dragged() {
                 self.block_from = None;
@@ -893,4 +1015,57 @@ fn line_job(
         job.append(&text[cursor..], 0.0, plain);
     }
     job
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn character_hit_testing_uses_both_halves_of_each_cell() {
+        let ctx = egui::Context::default();
+        let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
+            let ctx = ui.ctx();
+            let font = FontId::monospace(16.0);
+            let char_w = ctx.fonts_mut(|f| f.glyph_width(&font, '0'));
+            for text in ["a.b", "a b", "ä.b"] {
+                let galley = ctx.fonts_mut(|f| {
+                    f.layout_no_wrap(text.into(), font.clone(), egui::Color32::WHITE)
+                });
+                // Nonzero offsets also exercise clipped/scrolled rows.
+                let row = RowLayout {
+                    galley,
+                    from: 10,
+                    to: 13,
+                    x: 40.0,
+                    clipped: true,
+                };
+                for col in 0..3 {
+                    for fraction in [0.25, 0.75] {
+                        let x = row.x + (col as f32 + fraction) * char_w;
+                        let at = row.character_at(x, char_w, true);
+                        assert_eq!(at, row.from + col, "{text}, {col}, {fraction}");
+                        let selection = sanain_core::selection::Selection::new(13, 10);
+                        assert!(selection.range().contains(&at));
+                    }
+                }
+                assert_eq!(row.character_at(-100.0, char_w, true), 10);
+                assert_eq!(row.character_at(1000.0, char_w, true), 13);
+                assert_eq!(row.character_at(1000.0, char_w, false), 12);
+                assert!(!(10..13).contains(&row.character_at(1000.0, char_w, true)));
+            }
+            let empty = RowLayout {
+                galley: ctx.fonts_mut(|f| {
+                    f.layout_no_wrap(String::new(), font.clone(), egui::Color32::WHITE)
+                }),
+                from: 10,
+                to: 10,
+                x: 0.0,
+                clipped: false,
+            };
+            assert_eq!(empty.character_at(100.0, char_w, true), 10);
+            assert_eq!(empty.character_at(100.0, char_w, false), 10);
+        });
+        output.textures_delta.clear();
+    }
 }

@@ -5,12 +5,23 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased]
 
 ### Fixed
+- Right-clicking the right half of the last selected glyph preserves the
+  selection. Double-clicking punctuation or whitespace between words
+  selects that run instead of a neighbouring word (#113, #114).
 - Windows: "Open with Sanain" from Explorer failed for every file
   ("Windows cannot access the specified device, path or file"): the
   registered command used a `\\?\` path. Run the installer again (or
   `sanain --register`) to replace the old entries (#115).
 - Clicking × on a tab only activated it instead of closing the document
   (since drag-to-reorder was added) (#110).
+- Selecting text with the mouse started one character after the pointer:
+  a drag now starts where the button went down (#112).
+- Double-click selects the word under the pointer (or the run of spaces
+  or punctuation), and triple-click the whole line with its line break
+  (#113).
+- Right-click in the editor opens a menu with Cut, Copy, Paste and Select
+  All. Right-clicking inside the selection keeps it; elsewhere the caret
+  moves to the pointer first (#114).
 
 ### Added
 - macOS: Sanain appears in Finder's Open With for text, code and data

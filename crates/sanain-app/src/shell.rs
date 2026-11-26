@@ -19,7 +19,7 @@ use crate::menu::{self, MenuAction};
 use crate::palette::{Entry, Palette};
 use crate::preview;
 use crate::theme;
-use crate::view::{EditorView, ViewOptions};
+use crate::view::{ContextLabels, EditorView, ViewOptions};
 use sanain_app::settings::{FONT_SIZE_DEFAULT, Settings, ThemeChoice};
 use sanain_app::update::{Status as UpdateStatus, UpdateError};
 
@@ -456,6 +456,16 @@ impl Shell {
 
     fn t(&self, id: &str, args: &[(&str, FluentValue<'_>)]) -> String {
         tr(&self.l10n, id, args)
+    }
+
+    /// Labels of the editor's right-click menu.
+    fn context_labels(&self) -> ContextLabels {
+        ContextLabels {
+            cut: self.t("edit-cut", &[]),
+            copy: self.t("edit-copy", &[]),
+            paste: self.t("edit-paste", &[]),
+            select_all: self.t("edit-select-all", &[]),
+        }
     }
 
     /// Move to the next or previous match and select it.
@@ -2903,6 +2913,7 @@ impl Shell {
                 indent,
                 tab_width,
                 wrap: self.settings.word_wrap,
+                menu: self.context_labels(),
             }
         });
         let p = theme::palette(ui.ctx());
@@ -2969,6 +2980,7 @@ impl Shell {
 
     fn editor_area(&mut self, ui: &mut egui::Ui) {
         let name = self.t("editor-accessible-name", &[]);
+        let menu = self.context_labels();
         let interactive = self.dialog.is_none();
         let id = self.ws.active().id;
         let (indent, tab_width) = self.tab_indent(id);
@@ -2982,6 +2994,7 @@ impl Shell {
             indent,
             tab_width,
             wrap: self.settings.word_wrap,
+            menu,
         };
         let highlights: &[std::ops::Range<usize>] = if self.find.open {
             &self.find.matches.ranges
