@@ -14,6 +14,28 @@ use tree_sitter_highlight::{HighlightConfiguration, HighlightEvent};
 
 mod folds;
 
+/// PHP's own injections plus the HTML around `<?php … ?>`, highlighted as
+/// one combined HTML document.
+static PHP_INJECTIONS: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
+    format!(
+        "{}\n((text) @injection.content\n (#set! injection.language \"html\")\n (#set! injection.combined))\n",
+        tree_sitter_php::INJECTIONS_QUERY
+    )
+});
+
+/// The injection name the Markdown block grammar gives inline content.
+const MARKDOWN_INLINE: &str = "markdown_inline";
+
+/// Markdown's block injections. Inline content must include the block
+/// node's anonymous children (its text), which the upstream query leaves
+/// to the editor (Helix: `include-unnamed-children`).
+static MARKDOWN_INJECTIONS: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
+    tree_sitter_md::INJECTION_QUERY_BLOCK.replace(
+        "(#set! injection.language \"markdown_inline\"))",
+        "(#set! injection.language \"markdown_inline\")\n  (#set! injection.include-children))",
+    )
+});
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Lang {
     Bash,
@@ -26,6 +48,10 @@ pub enum Lang {
     Java,
     JavaScript,
     Json,
+    Lua,
+    Markdown,
+    Php,
+    PowerShell,
     Python,
     Ruby,
     Rust,
@@ -37,7 +63,7 @@ pub enum Lang {
 }
 
 impl Lang {
-    pub const ALL: [Lang; 18] = [
+    pub const ALL: [Lang; 22] = [
         Lang::Bash,
         Lang::C,
         Lang::CSharp,
@@ -48,6 +74,10 @@ impl Lang {
         Lang::Java,
         Lang::JavaScript,
         Lang::Json,
+        Lang::Lua,
+        Lang::Markdown,
+        Lang::Php,
+        Lang::PowerShell,
         Lang::Python,
         Lang::Ruby,
         Lang::Rust,
@@ -65,6 +95,7 @@ impl Lang {
             ".bashrc" | ".bash_profile" | ".zshrc" | ".profile" => return Some(Lang::Bash),
             "cargo.lock" => return Some(Lang::Toml),
             "gemfile" | "rakefile" | "podfile" | "vagrantfile" => return Some(Lang::Ruby),
+            ".luacheckrc" => return Some(Lang::Lua),
             _ => {}
         }
         let ext = name.rsplit_once('.')?.1;
@@ -76,6 +107,10 @@ impl Lang {
             "go" => Lang::Go,
             "html" | "htm" | "xhtml" => Lang::Html,
             "java" => Lang::Java,
+            "lua" | "luau" | "rockspec" => Lang::Lua,
+            "md" | "markdown" | "mdown" | "mkd" => Lang::Markdown,
+            "php" | "phtml" | "php3" | "php4" | "php5" | "php7" | "php8" | "phps" => Lang::Php,
+            "ps1" | "psm1" | "psd1" => Lang::PowerShell,
             "rb" | "rake" | "gemspec" => Lang::Ruby,
             "ts" | "mts" | "cts" => Lang::TypeScript,
             "tsx" => Lang::Tsx,
@@ -97,6 +132,8 @@ impl Lang {
         match self {
             Lang::Html => tree_sitter_html::INJECTIONS_QUERY,
             Lang::JavaScript => tree_sitter_javascript::INJECTIONS_QUERY,
+            Lang::Markdown => MARKDOWN_INJECTIONS.as_str(),
+            Lang::Php => PHP_INJECTIONS.as_str(),
             _ => "",
         }
     }
@@ -106,6 +143,10 @@ impl Lang {
         match self {
             Lang::Html => &[Lang::JavaScript, Lang::Css],
             Lang::JavaScript => &[Lang::Css, Lang::Html],
+            // Fenced code blocks are found by `fence_langs`.
+            Lang::Markdown => &[Lang::Html, Lang::Yaml, Lang::Toml],
+            // Heredocs may name their language (`<<<HTML`).
+            Lang::Php => &[Lang::Html, Lang::JavaScript, Lang::Css],
             _ => &[],
         }
     }
@@ -128,6 +169,9 @@ impl Lang {
                 "python" | "pypy" => Lang::Python,
                 "node" | "nodejs" | "deno" | "bun" => Lang::JavaScript,
                 "ruby" | "jruby" => Lang::Ruby,
+                "php" => Lang::Php,
+                "lua" | "luajit" => Lang::Lua,
+                "pwsh" | "powershell" => Lang::PowerShell,
                 _ => return None,
             });
         }
@@ -137,6 +181,9 @@ impl Lang {
         }
         if lower.starts_with("<!doctype html") || lower.starts_with("<html") {
             return Some(Lang::Html);
+        }
+        if lower.starts_with("<?php") {
+            return Some(Lang::Php);
         }
         None
     }
@@ -158,6 +205,10 @@ impl Lang {
             "go" | "golang" => Lang::Go,
             "html" | "htm" | "xhtml" => Lang::Html,
             "java" => Lang::Java,
+            "lua" | "luau" => Lang::Lua,
+            "md" | "markdown" => Lang::Markdown,
+            "php" => Lang::Php,
+            "ps1" | "powershell" | "pwsh" | "ps" => Lang::PowerShell,
             "js" | "javascript" | "jsx" | "mjs" | "cjs" | "node" => Lang::JavaScript,
             "json" | "jsonc" | "json5" | "geojson" => Lang::Json,
             "py" | "python" | "python3" | "py3" => Lang::Python,
@@ -181,11 +232,15 @@ impl Lang {
             | Lang::Go
             | Lang::Java
             | Lang::JavaScript
+            | Lang::Php
             | Lang::Rust
             | Lang::Tsx
             | Lang::TypeScript => Some("//"),
-            Lang::Bash | Lang::Python | Lang::Ruby | Lang::Toml | Lang::Yaml => Some("#"),
-            Lang::Css | Lang::Html | Lang::Json | Lang::Xml => None,
+            Lang::Bash | Lang::PowerShell | Lang::Python | Lang::Ruby | Lang::Toml | Lang::Yaml => {
+                Some("#")
+            }
+            Lang::Lua => Some("--"),
+            Lang::Css | Lang::Html | Lang::Json | Lang::Markdown | Lang::Xml => None,
         }
     }
 
@@ -199,6 +254,10 @@ impl Lang {
             Lang::Go => "Go",
             Lang::Html => "HTML",
             Lang::Java => "Java",
+            Lang::Lua => "Lua",
+            Lang::Markdown => "Markdown",
+            Lang::Php => "PHP",
+            Lang::PowerShell => "PowerShell",
             Lang::Ruby => "Ruby",
             Lang::Tsx => "TSX",
             Lang::TypeScript => "TypeScript",
@@ -244,6 +303,22 @@ impl Lang {
             Lang::Java => (
                 tree_sitter_java::LANGUAGE.into(),
                 tree_sitter_java::HIGHLIGHTS_QUERY,
+            ),
+            Lang::Lua => (
+                tree_sitter_lua::LANGUAGE.into(),
+                tree_sitter_lua::HIGHLIGHTS_QUERY,
+            ),
+            Lang::Markdown => (
+                tree_sitter_md::LANGUAGE.into(),
+                tree_sitter_md::HIGHLIGHT_QUERY_BLOCK,
+            ),
+            Lang::Php => (
+                tree_sitter_php::LANGUAGE_PHP.into(),
+                tree_sitter_php::HIGHLIGHTS_QUERY,
+            ),
+            Lang::PowerShell => (
+                tree_sitter_powershell::LANGUAGE.into(),
+                tree_sitter_powershell::HIGHLIGHTS_QUERY,
             ),
             Lang::Ruby => (
                 tree_sitter_ruby::LANGUAGE.into(),
@@ -324,7 +399,7 @@ pub enum Style {
 }
 
 /// Capture names we recognise, in the order of [`STYLES`].
-const NAMES: [&str; 21] = [
+const NAMES: [&str; 35] = [
     "keyword",
     "string",
     "string.special.key",
@@ -346,9 +421,25 @@ const NAMES: [&str; 21] = [
     "tag",
     "label",
     "embedded",
+    // Older (nvim-treesitter style) names used by some bundled queries.
+    "conditional",
+    "repeat",
+    "storageclass",
+    "include",
+    "exception",
+    "preproc",
+    "field",
+    "parameter",
+    "method",
+    "float",
+    "delimiter",
+    // Markdown.
+    "text.title",
+    "text.literal",
+    "text.uri",
 ];
 
-const STYLES: [Style; 21] = [
+const STYLES: [Style; 35] = [
     Style::Keyword,
     Style::String,
     Style::Property,
@@ -370,6 +461,20 @@ const STYLES: [Style; 21] = [
     Style::Tag,
     Style::Property,
     Style::Punctuation,
+    Style::Keyword,
+    Style::Keyword,
+    Style::Keyword,
+    Style::Keyword,
+    Style::Keyword,
+    Style::Attribute,
+    Style::Property,
+    Style::Variable,
+    Style::Function,
+    Style::Number,
+    Style::Punctuation,
+    Style::Keyword,
+    Style::String,
+    Style::Constant,
 ];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -390,6 +495,8 @@ pub enum HighlightError {
 /// Reusable highlighter. Not `Sync`; keep one per worker thread.
 pub struct Highlighter {
     configs: HashMap<Lang, Option<HighlightConfiguration>>,
+    /// Markdown's inline grammar, injected into its block grammar.
+    md_inline: Option<Option<HighlightConfiguration>>,
     inner: tree_sitter_highlight::Highlighter,
     /// Parser for folding (the highlighter keeps its own).
     parser: tree_sitter::Parser,
@@ -411,6 +518,7 @@ impl Highlighter {
     pub fn new() -> Self {
         Self {
             configs: HashMap::new(),
+            md_inline: None,
             inner: tree_sitter_highlight::Highlighter::new(),
             parser: tree_sitter::Parser::new(),
         }
@@ -456,12 +564,37 @@ impl Highlighter {
         for l in lang.embedded() {
             let _ = self.config(*l);
         }
-        let Self { configs, inner, .. } = self;
+        if lang == Lang::Markdown {
+            for l in fence_langs(source) {
+                let _ = self.config(l);
+            }
+            self.md_inline.get_or_insert_with(|| {
+                let mut c = HighlightConfiguration::new(
+                    tree_sitter_md::INLINE_LANGUAGE.into(),
+                    MARKDOWN_INLINE,
+                    tree_sitter_md::HIGHLIGHT_QUERY_INLINE,
+                    tree_sitter_md::INJECTION_QUERY_INLINE,
+                    "",
+                )
+                .ok()?;
+                c.configure(&NAMES);
+                Some(c)
+            });
+        }
+        let Self {
+            configs,
+            md_inline,
+            inner,
+            ..
+        } = self;
         let Some(Some(config)) = configs.get(&lang) else {
             return Ok(Vec::new());
         };
         let events = inner
             .highlight(config, source, None, cancel, |name| {
+                if name == MARKDOWN_INLINE {
+                    return md_inline.as_ref().and_then(Option::as_ref);
+                }
                 Lang::from_fence(name)
                     .and_then(|l| configs.get(&l))
                     .and_then(Option::as_ref)
@@ -526,6 +659,28 @@ impl Highlighter {
     }
 }
 
+/// Languages named by the code fences (` ```rust `, `~~~ py`) of a
+/// Markdown document, so their configurations are ready before
+/// highlighting.
+fn fence_langs(source: &[u8]) -> Vec<Lang> {
+    let mut out: Vec<Lang> = Vec::new();
+    for line in source.split(|&b| b == b'\n') {
+        let t = line.trim_ascii_start();
+        let Some(rest) = t.strip_prefix(b"```").or_else(|| t.strip_prefix(b"~~~")) else {
+            continue;
+        };
+        let skip = rest.iter().take_while(|&&b| b == b'`' || b == b'~').count();
+        let info = String::from_utf8_lossy(rest.get(skip..).unwrap_or_default());
+        let info = info.trim_start();
+        if let Some(l) = Lang::from_fence(info)
+            && !out.contains(&l)
+        {
+            out.push(l);
+        }
+    }
+    out
+}
+
 fn map_err(e: tree_sitter_highlight::Error) -> HighlightError {
     match e {
         tree_sitter_highlight::Error::Cancelled => HighlightError::Cancelled,
@@ -555,6 +710,42 @@ mod tests {
     }
 
     #[test]
+    fn php_highlights_the_html_around_it() {
+        let src = "<p class=\"a\">hi</p>\n<?php echo strlen('x'); ?>\n<b>b</b>\n";
+        let mut h = Highlighter::new();
+        let spans = h.highlight(Lang::Php, src.as_bytes(), None).unwrap();
+        let at = |needle: &str| {
+            let i = src.find(needle).unwrap();
+            spans.iter().find(|s| s.range.contains(&i)).map(|s| s.style)
+        };
+        assert_eq!(at("p class"), Some(Style::Tag), "HTML before <?php");
+        assert_eq!(at("class"), Some(Style::Attribute));
+        assert_eq!(at("echo"), Some(Style::Keyword));
+        assert_eq!(at("'x'"), Some(Style::String));
+        assert_eq!(at("b>b"), Some(Style::Tag), "HTML after ?>");
+    }
+
+    #[test]
+    fn markdown_headings_inline_code_and_fenced_code() {
+        let src = "# Title\n\nA `span` here.\n\n```rust\nfn f() {}\n```\n";
+        let mut h = Highlighter::new();
+        let spans = h.highlight(Lang::Markdown, src.as_bytes(), None).unwrap();
+        let at = |needle: &str| {
+            let i = src.find(needle).unwrap();
+            spans.iter().find(|s| s.range.contains(&i)).map(|s| s.style)
+        };
+        assert_eq!(at("Title"), Some(Style::Keyword), "heading");
+        assert_eq!(at("`span"), Some(Style::Punctuation), "code delimiter");
+        assert_eq!(at("span`"), Some(Style::String), "inline code");
+        assert_eq!(at("fn f"), Some(Style::Keyword), "Rust inside the fence");
+        assert_eq!(fence_langs(src.as_bytes()), vec![Lang::Rust]);
+        assert_eq!(
+            fence_langs(b"  ~~~~ py title=x\n````js\n```\n```nope\n"),
+            vec![Lang::Python, Lang::JavaScript]
+        );
+    }
+
+    #[test]
     fn content_detection() {
         assert_eq!(Lang::from_content("#!/bin/bash\necho"), Some(Lang::Bash));
         assert_eq!(
@@ -570,6 +761,13 @@ mod tests {
             Some(Lang::Ruby)
         );
         assert_eq!(Lang::from_content("#!/usr/bin/perl"), None);
+        assert_eq!(Lang::from_content("#!/usr/bin/env php\n"), Some(Lang::Php));
+        assert_eq!(Lang::from_content("#!/usr/bin/env lua5.4"), Some(Lang::Lua));
+        assert_eq!(
+            Lang::from_content("#!/usr/bin/env pwsh"),
+            Some(Lang::PowerShell)
+        );
+        assert_eq!(Lang::from_content("<?php\necho 1;"), Some(Lang::Php));
         assert_eq!(
             Lang::from_content("\u{feff}<?xml version=\"1.0\"?>"),
             Some(Lang::Xml)
@@ -595,6 +793,10 @@ mod tests {
         assert_eq!(Lang::from_fence("c#"), Some(Lang::CSharp));
         assert_eq!(Lang::from_fence(""), None);
         assert_eq!(Lang::from_fence("mermaid"), None);
+        assert_eq!(Lang::from_fence("php"), Some(Lang::Php));
+        assert_eq!(Lang::from_fence("lua"), Some(Lang::Lua));
+        assert_eq!(Lang::from_fence("pwsh"), Some(Lang::PowerShell));
+        assert_eq!(Lang::from_fence("markdown"), Some(Lang::Markdown));
     }
     use super::*;
     use std::sync::atomic::Ordering;
@@ -624,6 +826,26 @@ mod tests {
         assert_eq!(Lang::from_path(Path::new("x.hpp")), Some(Lang::Cpp));
         assert_eq!(Lang::from_path(Path::new("App.tsx")), Some(Lang::Tsx));
         assert_eq!(Lang::from_path(Path::new("Gemfile")), Some(Lang::Ruby));
+        assert_eq!(Lang::from_path(Path::new("index.php")), Some(Lang::Php));
+        assert_eq!(Lang::from_path(Path::new("view.phtml")), Some(Lang::Php));
+        assert_eq!(Lang::from_path(Path::new("init.lua")), Some(Lang::Lua));
+        assert_eq!(Lang::from_path(Path::new(".luacheckrc")), Some(Lang::Lua));
+        assert_eq!(
+            Lang::from_path(Path::new("Build.PS1")),
+            Some(Lang::PowerShell)
+        );
+        assert_eq!(
+            Lang::from_path(Path::new("Mod.psm1")),
+            Some(Lang::PowerShell)
+        );
+        assert_eq!(
+            Lang::from_path(Path::new("README.md")),
+            Some(Lang::Markdown)
+        );
+        assert_eq!(
+            Lang::from_path(Path::new("notes.markdown")),
+            Some(Lang::Markdown)
+        );
     }
 
     #[test]
@@ -655,7 +877,15 @@ mod tests {
             (Lang::TypeScript, "const x: number = 1;"),
             (Lang::Tsx, "const a = <div className=\"x\">hi</div>;"),
             (Lang::Xml, "<?xml version=\"1.0\"?><a b=\"c\">t</a>"),
+            (Lang::Php, "<?php\nfunction f($a) { return 'x'; } // c\n"),
+            (Lang::Lua, "local x = 'y' -- c\nfunction f() return 1 end"),
+            (
+                Lang::PowerShell,
+                "function Get-X { param($a) Write-Host \"hi\" } # c",
+            ),
+            (Lang::Markdown, "# Title\n\nSome *text* and `code`.\n"),
         ];
+        assert_eq!(samples.len(), Lang::ALL.len(), "a sample per language");
         for (lang, src) in samples {
             assert!(!styles_of(lang, src).is_empty(), "{lang:?}");
         }

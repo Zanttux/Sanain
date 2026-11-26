@@ -29,7 +29,7 @@ T = {
             ("Find and replace", "Regular expressions, a preview before Replace All, search across a folder and Replace in Files, with the previous version of each file kept in local history."),
             ("Markdown", "Source, split and preview with tables, task lists, coloured code blocks, local images and an outline. Nothing in a document runs or loads from the network."),
             ("Data and logs", "JSON, XML and YAML trees and validation, a CSV grid, side-by-side comparison, and a log viewer that opens files of any size."),
-            ("Languages", "Highlighting for 18 programming languages, including languages inside others (JavaScript and CSS in HTML). The interface is in 26 languages."),
+            ("Languages", "Highlighting for 22 languages, including languages inside others (JavaScript and CSS in HTML, HTML around PHP, code blocks in Markdown). The interface is in 26 languages."),
             ("Comfort", "Light, dark, high-contrast and bundled terminal themes, your own font, session restore, portable mode for a USB stick."),
         ],
         "shots_h": "Screenshots",
