@@ -5,6 +5,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Replace in Files: replace the matches of a folder search in all result
+  files after a confirmation. Open files change in their tab (undoable);
+  other files are saved, with their previous contents in local history.
 - Log viewer: logs in legacy encodings (Windows-1252, Windows-1251,
   Shift_JIS, …) are detected and shown correctly instead of with
   replacement characters; the encoding is shown in the header.

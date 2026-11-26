@@ -416,3 +416,30 @@ macro-times-invalid = Saisissez un nombre de 1 à { $max }.
 view-outline = Plan
 outline-empty = Aucun titre dans ce document.
 outline-close = Fermer le plan
+folder-replace-placeholder = Remplacer par
+folder-replace-run = Remplacer dans les fichiers…
+replace-files-title = Remplacer { $count ->
+    [one] { $count } occurrence
+    [many] { $count } occurrences
+   *[other] { $count } occurrences
+    } dans { $files ->
+    [one] { $files } fichier
+    [many] { $files } fichiers
+   *[other] { $files } fichiers
+    } ?
+replace-files-body = Les fichiers ouverts dans un onglet y sont modifiés et la modification peut être annulée ; enregistrez-les vous-même. Les autres fichiers sont enregistrés maintenant et leur contenu précédent est conservé dans l’historique local s’il est activé. Un fichier modifié sur le disque entre-temps est ignoré.
+replace-files-confirm = Remplacer
+replace-files-done = { $count ->
+    [one] { $count } occurrence remplacée
+    [many] { $count } occurrences remplacées
+   *[other] { $count } occurrences remplacées
+    } dans { $files ->
+    [one] { $files } fichier
+    [many] { $files } fichiers
+   *[other] { $files } fichiers
+    } (ouverts dans des onglets : { $open }, non enregistrés).
+replace-files-failed = { $failed ->
+    [one] { $failed } fichier n’a pas été modifié :
+    [many] { $failed } fichiers n’ont pas été modifiés ; premier :
+   *[other] { $failed } fichiers n’ont pas été modifiés ; premier :
+    } { $first }

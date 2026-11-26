@@ -397,3 +397,25 @@ macro-times-invalid = Angiv et tal fra 1 til { $max }.
 view-outline = Disposition
 outline-empty = Ingen overskrifter i dette dokument.
 outline-close = Luk disposition
+folder-replace-placeholder = Erstat med
+folder-replace-run = Erstat i filer…
+replace-files-title = Erstat { $count ->
+    [one] 1 forekomst
+   *[other] { $count } forekomster
+    } i { $files ->
+    [one] 1 fil
+   *[other] { $files } filer
+    }?
+replace-files-body = Filer, der er åbne i en fane, ændres dér og kan fortrydes; du skal selv gemme dem. Andre filer gemmes nu, og deres tidligere indhold bevares i den lokale historik, hvis den er slået til. En fil, der er ændret på disken i mellemtiden, springes over.
+replace-files-confirm = Erstat
+replace-files-done = Erstattede { $count ->
+    [one] 1 forekomst
+   *[other] { $count } forekomster
+    } i { $files ->
+    [one] 1 fil
+   *[other] { $files } filer
+    } (åbne i faner: { $open }, ikke gemt).
+replace-files-failed = { $failed ->
+    [one] 1 fil blev ikke ændret:
+   *[other] { $failed } filer blev ikke ændret; første:
+    } { $first }

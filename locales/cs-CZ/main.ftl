@@ -435,3 +435,35 @@ macro-times-invalid = Zadejte číslo od 1 do { $max }.
 view-outline = Osnova
 outline-empty = V tomto dokumentu nejsou žádné nadpisy.
 outline-close = Zavřít osnovu
+folder-replace-placeholder = Nahradit čím
+folder-replace-run = Nahradit v souborech…
+replace-files-title = Nahradit { $count ->
+    [one] 1 shodu
+    [few] { $count } shody
+    [many] { $count } shody
+   *[other] { $count } shod
+    } v { $files ->
+    [one] 1 souboru
+    [few] { $files } souborech
+    [many] { $files } souboru
+   *[other] { $files } souborech
+    }?
+replace-files-body = Soubory otevřené na kartě se změní přímo tam a změnu lze vrátit zpět; uložte je sami. Ostatní soubory se uloží hned a jejich předchozí obsah se uchová v místní historii, pokud je zapnutá. Soubor, který se mezitím změnil na disku, se přeskočí.
+replace-files-confirm = Nahradit
+replace-files-done = { $count ->
+    [one] Nahrazena 1 shoda
+    [few] Nahrazeny { $count } shody
+    [many] Nahrazeno { $count } shody
+   *[other] Nahrazeno { $count } shod
+    } v { $files ->
+    [one] 1 souboru
+    [few] { $files } souborech
+    [many] { $files } souboru
+   *[other] { $files } souborech
+    } (otevřeno na kartách: { $open }, neuloženo).
+replace-files-failed = { $failed ->
+    [one] 1 soubor nebyl změněn:
+    [few] { $failed } soubory nebyly změněny; první:
+    [many] { $failed } souboru nebylo změněno; první:
+   *[other] { $failed } souborů nebylo změněno; první:
+    } { $first }

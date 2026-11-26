@@ -416,3 +416,30 @@ macro-times-invalid = Introdu un număr de la 1 la { $max }.
 view-outline = Schiță
 outline-empty = Nu există titluri în acest document.
 outline-close = Închide schița
+folder-replace-placeholder = Înlocuiește cu
+folder-replace-run = Înlocuiește în fișiere…
+replace-files-title = Înlocuiți { $count ->
+    [one] 1 potrivire
+    [few] { $count } potriviri
+   *[other] { $count } de potriviri
+    } în { $files ->
+    [one] 1 fișier
+    [few] { $files } fișiere
+   *[other] { $files } de fișiere
+    }?
+replace-files-body = Fișierele deschise într-o filă sunt modificate acolo, iar modificarea poate fi anulată; salvați-le dvs. Celelalte fișiere sunt salvate acum, iar conținutul lor anterior este păstrat în istoricul local, dacă este activat. Un fișier care s-a modificat între timp pe disc este omis.
+replace-files-confirm = Înlocuiește
+replace-files-done = { $count ->
+    [one] A fost înlocuită 1 potrivire
+    [few] Au fost înlocuite { $count } potriviri
+   *[other] Au fost înlocuite { $count } de potriviri
+    } în { $files ->
+    [one] 1 fișier
+    [few] { $files } fișiere
+   *[other] { $files } de fișiere
+    } (deschise în file: { $open }, nesalvate).
+replace-files-failed = { $failed ->
+    [one] 1 fișier nu a fost modificat:
+    [few] { $failed } fișiere nu au fost modificate; primul:
+   *[other] { $failed } de fișiere nu au fost modificate; primul:
+    } { $first }

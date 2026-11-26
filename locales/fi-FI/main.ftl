@@ -397,3 +397,28 @@ macro-times-invalid = Anna luku väliltä 1–{ $max }.
 view-outline = Jäsennys
 outline-empty = Dokumentissa ei ole otsikoita.
 outline-close = Sulje jäsennys
+folder-replace-placeholder = Korvaa tekstillä
+folder-replace-run = Korvaa tiedostoissa…
+replace-files-title = { $count ->
+    [one] Korvataanko 1 osuma { $files ->
+        [one] 1 tiedostossa
+       *[other] { $files } tiedostossa
+    }?
+   *[other] Korvataanko { $count } osumaa { $files ->
+        [one] 1 tiedostossa
+       *[other] { $files } tiedostossa
+    }?
+}
+replace-files-body = Välilehdellä auki olevat tiedostot muutetaan siellä, ja muutoksen voi kumota; tallenna ne itse. Muut tiedostot tallennetaan heti, ja niiden aiempi sisältö säilyy paikallisessa historiassa, jos se on käytössä. Jos tiedosto on sillä välin muuttunut levyllä, se ohitetaan.
+replace-files-confirm = Korvaa
+replace-files-done = { $count ->
+    [one] Korvattiin 1 osuma
+   *[other] Korvattiin { $count } osumaa
+} { $files ->
+    [one] 1 tiedostossa
+   *[other] { $files } tiedostossa
+} ({ $open } auki välilehdillä, ei tallennettu).
+replace-files-failed = { $failed ->
+    [one] 1 tiedostoa ei muutettu:
+   *[other] { $failed } tiedostoa jäi muuttamatta; ensimmäinen:
+} { $first }

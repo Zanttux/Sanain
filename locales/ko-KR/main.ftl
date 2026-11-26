@@ -378,3 +378,20 @@ macro-times-invalid = 1~{ $max } 사이의 숫자를 입력하세요.
 view-outline = 개요
 outline-empty = 이 문서에는 제목이 없습니다.
 outline-close = 개요 닫기
+folder-replace-placeholder = 바꿀 내용
+folder-replace-run = 파일에서 바꾸기…
+replace-files-title = { $files ->
+   *[other] 파일 { $files }개에서
+    } { $count ->
+   *[other] 일치 항목 { $count }개를
+    } 바꿀까요?
+replace-files-body = 탭에서 열린 파일은 탭에서 변경되며 실행 취소할 수 있습니다. 이 파일은 직접 저장하세요. 다른 파일은 지금 저장되며, 로컬 기록이 켜져 있으면 이전 내용이 로컬 기록에 보관됩니다. 그동안 디스크에서 변경된 파일은 건너뜁니다.
+replace-files-confirm = 바꾸기
+replace-files-done = { $files ->
+   *[other] 파일 { $files }개에서
+    } { $count ->
+   *[other] 일치 항목 { $count }개를
+    } 바꿨습니다(탭에서 열림: { $open }개, 저장 안 됨).
+replace-files-failed = { $failed ->
+   *[other] 파일 { $failed }개를 변경하지 못했습니다. 첫 번째 파일:
+    } { $first }

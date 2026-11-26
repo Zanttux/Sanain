@@ -396,3 +396,28 @@ macro-times-invalid = Enter a number from 1 to { $max }.
 view-outline = Outline
 outline-empty = No headings in this document.
 outline-close = Close Outline
+folder-replace-placeholder = Replace with
+folder-replace-run = Replace in Files…
+replace-files-title = { $count ->
+    [one] Replace 1 match in { $files ->
+        [one] 1 file
+       *[other] { $files } files
+    }?
+   *[other] Replace { $count } matches in { $files ->
+        [one] 1 file
+       *[other] { $files } files
+    }?
+}
+replace-files-body = Files open in a tab are changed there and can be undone; save them yourself. Other files are saved now, and their previous contents are kept in local history when it is turned on. A file that changed on disk in the meantime is skipped.
+replace-files-confirm = Replace
+replace-files-done = { $count ->
+    [one] Replaced 1 match
+   *[other] Replaced { $count } matches
+} in { $files ->
+    [one] 1 file
+   *[other] { $files } files
+} ({ $open } open in tabs, not saved).
+replace-files-failed = { $failed ->
+    [one] 1 file was not changed:
+   *[other] { $failed } files were not changed; first:
+} { $first }

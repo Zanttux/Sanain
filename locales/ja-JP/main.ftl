@@ -378,3 +378,20 @@ macro-times-invalid = 1～{ $max } の数値を入力してください。
 view-outline = アウトライン
 outline-empty = このドキュメントには見出しがありません。
 outline-close = アウトラインを閉じる
+folder-replace-placeholder = 置換後の文字列
+folder-replace-run = ファイル内で置換…
+replace-files-title = { $files ->
+   *[other] { $files } 個のファイル
+    }で { $count ->
+   *[other] { $count } 件
+    }を置換しますか？
+replace-files-body = タブで開いているファイルはタブ内で変更され、元に戻すことができます。これらはご自身で保存してください。その他のファイルはすぐに保存され、ローカル履歴が有効な場合は以前の内容がローカル履歴に保存されます。その間にディスク上で変更されたファイルはスキップされます。
+replace-files-confirm = 置換
+replace-files-done = { $files ->
+   *[other] { $files } 個のファイル
+    }で { $count ->
+   *[other] { $count } 件
+    }を置換しました（タブで開いているもの: { $open }、未保存）。
+replace-files-failed = { $failed ->
+   *[other] { $failed } 個のファイルは変更されませんでした。最初のファイル:
+    } { $first }

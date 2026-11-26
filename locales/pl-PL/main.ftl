@@ -435,3 +435,35 @@ macro-times-invalid = Wpisz liczbę od 1 do { $max }.
 view-outline = Konspekt
 outline-empty = Brak nagłówków w tym dokumencie.
 outline-close = Zamknij konspekt
+folder-replace-placeholder = Zamień na
+folder-replace-run = Zamień w plikach…
+replace-files-title = Zamienić { $count ->
+    [one] 1 dopasowanie
+    [few] { $count } dopasowania
+    [many] { $count } dopasowań
+   *[other] { $count } dopasowania
+    } w { $files ->
+    [one] 1 pliku
+    [few] { $files } plikach
+    [many] { $files } plikach
+   *[other] { $files } pliku
+    }?
+replace-files-body = Pliki otwarte na karcie zostaną zmienione w niej i można to cofnąć; zapisz je samodzielnie. Pozostałe pliki zostaną zapisane od razu, a ich poprzednia zawartość zostanie zachowana w historii lokalnej, jeśli jest włączona. Plik, który w międzyczasie zmienił się na dysku, zostanie pominięty.
+replace-files-confirm = Zamień
+replace-files-done = { $count ->
+    [one] Zamieniono 1 dopasowanie
+    [few] Zamieniono { $count } dopasowania
+    [many] Zamieniono { $count } dopasowań
+   *[other] Zamieniono { $count } dopasowania
+    } w { $files ->
+    [one] 1 pliku
+    [few] { $files } plikach
+    [many] { $files } plikach
+   *[other] { $files } pliku
+    } (otwarte na kartach: { $open }, niezapisane).
+replace-files-failed = { $failed ->
+    [one] 1 plik nie został zmieniony:
+    [few] { $failed } pliki nie zostały zmienione; pierwszy:
+    [many] { $failed } plików nie zostało zmienionych; pierwszy:
+   *[other] { $failed } pliku nie zostało zmienione; pierwszy:
+    } { $first }

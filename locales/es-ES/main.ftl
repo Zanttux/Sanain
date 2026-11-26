@@ -397,3 +397,25 @@ macro-times-invalid = Introduce un número de 1 a { $max }.
 view-outline = Esquema
 outline-empty = No hay encabezados en este documento.
 outline-close = Cerrar esquema
+folder-replace-placeholder = Reemplazar por
+folder-replace-run = Reemplazar en archivos…
+replace-files-title = ¿Reemplazar { $count ->
+    [one] 1 coincidencia
+   *[other] { $count } coincidencias
+    } en { $files ->
+    [one] 1 archivo
+   *[other] { $files } archivos
+    }?
+replace-files-body = Los archivos abiertos en una pestaña se cambian allí y el cambio se puede deshacer; guárdelos usted. Los demás archivos se guardan ahora y su contenido anterior se conserva en el historial local si está activado. Si un archivo ha cambiado en el disco mientras tanto, se omite.
+replace-files-confirm = Reemplazar
+replace-files-done = { $count ->
+    [one] Se ha reemplazado 1 coincidencia
+   *[other] Se han reemplazado { $count } coincidencias
+    } en { $files ->
+    [one] 1 archivo
+   *[other] { $files } archivos
+    } (abiertos en pestañas: { $open }, sin guardar).
+replace-files-failed = { $failed ->
+    [one] 1 archivo no se ha cambiado:
+   *[other] { $failed } archivos no se han cambiado; el primero:
+    } { $first }

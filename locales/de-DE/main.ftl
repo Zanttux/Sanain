@@ -397,3 +397,25 @@ macro-times-invalid = Geben Sie eine Zahl von 1 bis { $max } ein.
 view-outline = Gliederung
 outline-empty = Keine Überschriften in diesem Dokument.
 outline-close = Gliederung schließen
+folder-replace-placeholder = Ersetzen durch
+folder-replace-run = In Dateien ersetzen…
+replace-files-title = { $count ->
+    [one] 1 Treffer
+   *[other] { $count } Treffer
+    } in { $files ->
+    [one] 1 Datei
+   *[other] { $files } Dateien
+    } ersetzen?
+replace-files-body = Dateien, die in einem Tab geöffnet sind, werden dort geändert und können rückgängig gemacht werden; speichern Sie sie selbst. Andere Dateien werden sofort gespeichert, und ihr vorheriger Inhalt bleibt im lokalen Verlauf erhalten, wenn dieser aktiviert ist. Eine Datei, die sich inzwischen auf dem Datenträger geändert hat, wird übersprungen.
+replace-files-confirm = Ersetzen
+replace-files-done = { $count ->
+    [one] 1 Treffer
+   *[other] { $count } Treffer
+    } in { $files ->
+    [one] 1 Datei
+   *[other] { $files } Dateien
+    } ersetzt (in Tabs geöffnet: { $open }, nicht gespeichert).
+replace-files-failed = { $failed ->
+    [one] 1 Datei wurde nicht geändert:
+   *[other] { $failed } Dateien wurden nicht geändert; erste:
+    } { $first }

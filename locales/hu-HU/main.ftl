@@ -397,3 +397,25 @@ macro-times-invalid = Adjon meg egy számot 1 és { $max } között.
 view-outline = Vázlat
 outline-empty = Ebben a dokumentumban nincsenek címsorok.
 outline-close = Vázlat bezárása
+folder-replace-placeholder = Csere erre
+folder-replace-run = Csere a fájlokban…
+replace-files-title = { $count ->
+    [one] 1 találat
+   *[other] { $count } találat
+    } cseréje { $files ->
+    [one] 1 fájlban
+   *[other] { $files } fájlban
+    }?
+replace-files-body = A lapon megnyitott fájlok ott módosulnak, és a módosítás visszavonható; ezeket mentse saját maga. A többi fájl most mentésre kerül, korábbi tartalmuk pedig megmarad a helyi előzményekben, ha azok be vannak kapcsolva. Az a fájl, amely közben megváltozott a lemezen, kimarad.
+replace-files-confirm = Csere
+replace-files-done = { $count ->
+    [one] 1 találat
+   *[other] { $count } találat
+    } lecserélve { $files ->
+    [one] 1 fájlban
+   *[other] { $files } fájlban
+    } (lapon megnyitva: { $open }, nincs mentve).
+replace-files-failed = { $failed ->
+    [one] 1 fájl nem módosult:
+   *[other] { $failed } fájl nem módosult; az első:
+    } { $first }

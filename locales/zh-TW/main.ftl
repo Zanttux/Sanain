@@ -378,3 +378,20 @@ macro-times-invalid = 請輸入 1 到 { $max } 之間的數字。
 view-outline = 大綱
 outline-empty = 此文件中沒有標題。
 outline-close = 關閉大綱
+folder-replace-placeholder = 取代為
+folder-replace-run = 在檔案中取代…
+replace-files-title = 要取代 { $files ->
+   *[other] { $files } 個檔案中
+    }的 { $count ->
+   *[other] { $count } 個符合項目
+    }嗎？
+replace-files-body = 在標籤頁中開啟的檔案會在標籤頁中變更，且可以復原；請自行儲存這些檔案。其他檔案會立即儲存，若已啟用本機歷史記錄，其先前內容會保留在本機歷史記錄中。在此期間已於磁碟上變更的檔案將會略過。
+replace-files-confirm = 取代
+replace-files-done = 已取代 { $files ->
+   *[other] { $files } 個檔案中
+    }的 { $count ->
+   *[other] { $count } 個符合項目
+    }（在標籤頁中開啟：{ $open } 個，未儲存）。
+replace-files-failed = { $failed ->
+   *[other] { $failed } 個檔案未變更；第一個：
+    } { $first }

@@ -397,3 +397,25 @@ macro-times-invalid = Ange ett tal från 1 till { $max }.
 view-outline = Disposition
 outline-empty = Inga rubriker i det här dokumentet.
 outline-close = Stäng disposition
+folder-replace-placeholder = Ersätt med
+folder-replace-run = Ersätt i filer…
+replace-files-title = Ersätta { $count ->
+    [one] 1 träff
+   *[other] { $count } träffar
+    } i { $files ->
+    [one] 1 fil
+   *[other] { $files } filer
+    }?
+replace-files-body = Filer som är öppna i en flik ändras där och kan ångras; spara dem själv. Övriga filer sparas nu, och deras tidigare innehåll behålls i den lokala historiken om den är aktiverad. En fil som har ändrats på disken under tiden hoppas över.
+replace-files-confirm = Ersätt
+replace-files-done = Ersatte { $count ->
+    [one] 1 träff
+   *[other] { $count } träffar
+    } i { $files ->
+    [one] 1 fil
+   *[other] { $files } filer
+    } (öppna i flikar: { $open }, inte sparade).
+replace-files-failed = { $failed ->
+    [one] 1 fil ändrades inte:
+   *[other] { $failed } filer ändrades inte; första:
+    } { $first }

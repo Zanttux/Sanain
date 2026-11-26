@@ -397,3 +397,25 @@ macro-times-invalid = Inserisci un numero da 1 a { $max }.
 view-outline = Struttura
 outline-empty = Nessuna intestazione in questo documento.
 outline-close = Chiudi struttura
+folder-replace-placeholder = Sostituisci con
+folder-replace-run = Sostituisci nei file…
+replace-files-title = Sostituire { $count ->
+    [one] 1 corrispondenza
+   *[other] { $count } corrispondenze
+    } in { $files ->
+    [one] 1 file
+   *[other] { $files } file
+    }?
+replace-files-body = I file aperti in una scheda vengono modificati lì e la modifica può essere annullata; salvali tu. Gli altri file vengono salvati subito e il loro contenuto precedente viene conservato nella cronologia locale, se è attiva. Un file modificato sul disco nel frattempo viene saltato.
+replace-files-confirm = Sostituisci
+replace-files-done = { $count ->
+    [one] Sostituita 1 corrispondenza
+   *[other] Sostituite { $count } corrispondenze
+    } in { $files ->
+    [one] 1 file
+   *[other] { $files } file
+    } (aperti in schede: { $open }, non salvati).
+replace-files-failed = { $failed ->
+    [one] 1 file non è stato modificato:
+   *[other] { $failed } file non sono stati modificati; il primo:
+    } { $first }

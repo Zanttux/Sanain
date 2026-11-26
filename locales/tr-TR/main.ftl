@@ -397,3 +397,25 @@ macro-times-invalid = 1 ile { $max } arasında bir sayı girin.
 view-outline = Ana Hat
 outline-empty = Bu belgede başlık yok.
 outline-close = Ana Hattı Kapat
+folder-replace-placeholder = Şununla değiştir
+folder-replace-run = Dosyalarda Değiştir…
+replace-files-title = { $files ->
+    [one] 1 dosyadaki
+   *[other] { $files } dosyadaki
+    } { $count ->
+    [one] 1 eşleşme
+   *[other] { $count } eşleşme
+    } değiştirilsin mi?
+replace-files-body = Bir sekmede açık olan dosyalar orada değiştirilir ve değişiklik geri alınabilir; bunları kendiniz kaydedin. Diğer dosyalar şimdi kaydedilir ve önceki içerikleri, etkinse yerel geçmişte saklanır. Bu sırada diskte değişen bir dosya atlanır.
+replace-files-confirm = Değiştir
+replace-files-done = { $files ->
+    [one] 1 dosyada
+   *[other] { $files } dosyada
+    } { $count ->
+    [one] 1 eşleşme
+   *[other] { $count } eşleşme
+    } değiştirildi (sekmelerde açık: { $open }, kaydedilmedi).
+replace-files-failed = { $failed ->
+    [one] 1 dosya değiştirilmedi:
+   *[other] { $failed } dosya değiştirilmedi; ilki:
+    } { $first }

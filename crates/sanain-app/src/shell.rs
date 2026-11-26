@@ -137,6 +137,7 @@ enum Then {
 #[derive(Debug, Clone, Copy)]
 enum Action {
     PurgeHistory,
+    ReplaceInFiles,
     Revert,
     SaveThen(Then),
     Proceed(Then),
@@ -156,6 +157,8 @@ enum Dialog {
     OpenLink(String),
     /// A newer release exists: (version, release page).
     Update(String, String),
+    /// Confirm Replace in Files: (matches, files).
+    ConfirmReplaceFiles(usize, usize),
     /// Confirm deleting all local history.
     ConfirmPurge,
 }
@@ -1722,6 +1725,76 @@ impl Shell {
             self.active_view(id).reveal();
             self.focus_active();
         }
+    }
+
+    /// Replace the folder search matches in the files of its results: in
+    /// the tab for open files (undoable, not saved), on disk otherwise.
+    fn replace_in_files(&mut self, ctx: &egui::Context) {
+        let Ok(Some(matcher)) = self.folder.query.compile() else {
+            return;
+        };
+        let with = self.folder.replace.clone();
+        let history = self.history.clone().filter(|_| self.settings.local_history);
+        let same = |a: &Path, b: &Path| {
+            a == b || matches!((a.canonicalize(), b.canonicalize()), (Ok(x), Ok(y)) if x == y)
+        };
+        let (mut count, mut files, mut in_tabs) = (0usize, 0usize, 0usize);
+        let mut failed: Vec<String> = Vec::new();
+        for path in self.folder.hit_files() {
+            let tab = self
+                .ws
+                .tabs()
+                .iter()
+                .position(|t| t.editor.file().is_some_and(|f| same(&f.path, &path)));
+            let n = if let Some(i) = tab {
+                let n = self
+                    .ws
+                    .tab_mut(i)
+                    .map_or(0, |t| t.editor.replace_all(&matcher, &with));
+                if n > 0 {
+                    in_tabs += 1;
+                }
+                n
+            } else {
+                match sanain_app::replacefiles::replace_in_file(
+                    &path,
+                    &matcher,
+                    &with,
+                    history.as_ref(),
+                ) {
+                    Ok(n) => n,
+                    Err(e) => {
+                        failed.push(format!("{}: {e}", path.display()));
+                        0
+                    }
+                }
+            };
+            if n > 0 {
+                count += n;
+                files += 1;
+            }
+        }
+        let mut msg = self.t(
+            "replace-files-done",
+            &[
+                ("count", (count as i64).into()),
+                ("files", (files as i64).into()),
+                ("open", (in_tabs as i64).into()),
+            ],
+        );
+        if let Some(first) = failed.first() {
+            msg.push(' ');
+            msg.push_str(&self.t(
+                "replace-files-failed",
+                &[
+                    ("failed", (failed.len() as i64).into()),
+                    ("first", first.clone().into()),
+                ],
+            ));
+        }
+        self.status = Some((msg, !failed.is_empty()));
+        // Show what is left.
+        self.folder.start(ctx);
     }
 
     /// Reload the active file from disk in its encoding (no undo across).
@@ -3507,6 +3580,16 @@ impl Shell {
                     self.t("history-purge-title", &[]),
                     self.t("history-purge-body", &[]),
                 ),
+                Dialog::ConfirmReplaceFiles(count, files) => (
+                    self.t(
+                        "replace-files-title",
+                        &[
+                            ("count", (*count as i64).into()),
+                            ("files", (*files as i64).into()),
+                        ],
+                    ),
+                    self.t("replace-files-body", &[]),
+                ),
                 Dialog::Update(version, _) => (
                     self.t(
                         "update-available-title",
@@ -3567,6 +3650,15 @@ impl Shell {
                             close = true;
                         }
                     }
+                    Dialog::ConfirmReplaceFiles(..) => {
+                        if ui.button(self.t("replace-files-confirm", &[])).clicked() {
+                            close = true;
+                            after = Some(Action::ReplaceInFiles);
+                        }
+                        if ui.button(self.t("button-cancel", &[])).clicked() {
+                            close = true;
+                        }
+                    }
                     Dialog::ConfirmPurge => {
                         if ui.button(self.t("history-purge-confirm", &[])).clicked() {
                             close = true;
@@ -3620,6 +3712,7 @@ impl Shell {
                     self.save_as();
                 }
                 Some(Action::Revert) => self.revert(),
+                Some(Action::ReplaceInFiles) => self.replace_in_files(ctx),
                 Some(Action::PurgeHistory) => {
                     let msg = match self
                         .history
@@ -3786,6 +3879,10 @@ impl eframe::App for Shell {
                     if let Some(dir) = rfd::FileDialog::new().pick_folder() {
                         self.folder.root = Some(dir);
                     }
+                }
+                Some(PanelEvent::ReplaceInFiles) => {
+                    let (count, files) = (self.folder.hit_count(), self.folder.hit_files().len());
+                    self.dialog = Some(Dialog::ConfirmReplaceFiles(count, files));
                 }
                 Some(PanelEvent::OpenHit(hit)) => {
                     self.open(&hit.path);
