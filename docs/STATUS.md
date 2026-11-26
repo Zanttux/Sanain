@@ -53,6 +53,14 @@ M1 in progress.
 | E06 | Partial | Unsaved-changes prompts; crash recovery per tab (kill -9 → relaunch restores text); session restore of open files and active tab. Disk-full and permission-denied saves verified on macOS (file unchanged, text kept, plain error; see ACCEPTANCE). Session restore can be turned off in Settings. Not yet: disk-full drill on Windows/Linux |
 | Others | Not started | |
 
+Keyboard layouts (checked 2026-11-26, Finnish layout, macOS): native
+menu shortcuts on punctuation keys are localised by macOS and work as
+shown in the menu (Toggle Line Comment Cmd+´, Indent Cmd+Ä, Outdent
+Cmd+Ö); Cmd+Shift+7 does not reach the window at all. Not verified: the
+same shortcuts with in-window menus on Windows/Linux non-US layouts (they
+match egui's logical key; may need per-layout defaults or rebinding in
+Settings).
+
 Known M1 limits: native menus only on macOS (Windows/Linux use in-window
 menus); running the bare binary on macOS shows "sanain" in the menu bar,
 use `scripts/macos-bundle.sh` for the proper app name;
