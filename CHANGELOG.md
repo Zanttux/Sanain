@@ -5,6 +5,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased]
 
 ### Fixed
+- Right-clicking the right half of the last selected glyph preserves the
+  selection. Double-clicking punctuation or whitespace between words
+  selects that run instead of a neighbouring word (#113, #114).
 - Windows: "Open with Sanain" from Explorer failed for every file
   ("Windows cannot access the specified device, path or file"): the
   registered command used a `\\?\` path. Run the installer again (or

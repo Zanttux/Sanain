@@ -366,35 +366,24 @@ pub fn word_boundary(rope: &Rope, from: usize, forward: bool) -> usize {
     }
 }
 
-/// Double-click: the run of same-class graphemes around the caret position
-/// `at` (a word of letters, digits and `_`; or a run of spaces; or a run of
-/// punctuation). Of the two sides of `at`, a word wins over punctuation and
-/// punctuation over spaces, so a click on the right half of a word's last
-/// letter still selects the word. Line breaks are never selected; with
-/// nothing but line breaks around, the range is empty at `at`. Grapheme
-/// clusters are never split.
-pub fn word_at(rope: &Rope, at: usize) -> Range<usize> {
+/// The run containing character index `at`: letters, digits and `_`,
+/// whitespace excluding line breaks, or punctuation. Classify each whole
+/// grapheme by its first character, so combining marks and emoji stay intact.
+/// Line breaks and end of text return an empty range at the clamped index
+/// (the start of CRLF when `at` points to its LF).
+pub fn run_at_char(rope: &Rope, at: usize) -> Range<usize> {
     let len = rope.len_chars();
     let mut at = at.min(len);
+    if at == len {
+        return at..at;
+    }
     if !grapheme::is_boundary(rope, at) {
         at = grapheme::prev_boundary(rope, at);
     }
-    let after = (at < len).then(|| class_at(rope, at));
-    let before = (at > 0).then(|| class_at(rope, grapheme::prev_boundary(rope, at)));
-    let rank = |c: Option<CharClass>| match c {
-        Some(CharClass::Word) => 3,
-        Some(CharClass::Punct) => 2,
-        Some(CharClass::Space) => 1,
-        Some(CharClass::LineBreak) | None => 0,
-    };
-    let class = match (rank(before), rank(after)) {
-        (0, 0) => return at..at,
-        (b, a) if a >= b => after,
-        _ => before,
-    };
-    let Some(class) = class else {
+    let class = class_at(rope, at);
+    if class == CharClass::LineBreak {
         return at..at;
-    };
+    }
     let mut start = at;
     while start > 0 {
         let prev = grapheme::prev_boundary(rope, start);
@@ -772,40 +761,42 @@ mod tests {
     }
 
     #[test]
-    fn word_at_selects_words_runs_and_graphemes() {
+    fn run_at_char_selects_words_runs_and_graphemes() {
         let w = |t: &str, at: usize| {
             let rope = Rope::from_str(t);
-            rope.slice(word_at(&rope, at)).to_string()
+            rope.slice(run_at_char(&rope, at)).to_string()
         };
-        // ASCII: inside, at the start, and right after the last letter.
+        // ASCII: inside and at the start of a word.
         assert_eq!(w("foo bar_1 baz", 5), "bar_1");
         assert_eq!(w("foo bar_1 baz", 4), "bar_1");
-        assert_eq!(w("foo bar_1 baz", 9), "bar_1");
+        assert_eq!(w("foo bar_1 baz", 9), " ");
         // Start and end of text.
         assert_eq!(w("foo bar", 0), "foo");
-        assert_eq!(w("foo bar", 7), "bar");
+        assert_eq!(run_at_char(&Rope::from_str("foo bar"), 7), 7..7);
         // Finnish letters are word characters.
         assert_eq!(w("hyvää yötä", 2), "hyvää");
         assert_eq!(w("hyvää yötä", 8), "yötä");
         // Punctuation and whitespace runs select just that run.
         assert_eq!(w("a := b", 2), ":=");
         assert_eq!(w("a    b", 3), "    ");
-        assert_eq!(w("x.y", 1), "x");
+        assert_eq!(w("a.b", 1), ".");
+        assert_eq!(w("a b", 1), " ");
         assert_eq!(w("(.)", 1), "(.)");
         // Emoji and combining marks stay whole.
         assert_eq!(w("hi 👍🏽 ok", 4), "👍🏽");
-        assert_eq!(w("hi 👍🏽 ok", 5), "👍🏽");
+        assert_eq!(w("hi 👍🏽 ok", 3), "👍🏽");
         assert_eq!(w("cafe\u{301} x", 2), "cafe\u{301}");
         assert_eq!(w("cafe\u{301} x", 4), "cafe\u{301}");
         let fam = "👨\u{200d}👩\u{200d}👧";
         assert_eq!(w(&format!("a {fam} b"), 3), fam);
         // Line breaks are never selected.
-        assert_eq!(word_at(&Rope::from_str("a\n\nb"), 2), 2..2);
-        assert_eq!(w("ab\r\ncd", 2), "ab");
+        assert_eq!(run_at_char(&Rope::from_str("a\n\nb"), 2), 2..2);
+        assert_eq!(run_at_char(&Rope::from_str("ab\r\ncd"), 2), 2..2);
+        assert_eq!(run_at_char(&Rope::from_str("ab\r\ncd"), 3), 2..2);
         assert_eq!(w("ab\r\ncd", 4), "cd");
-        assert_eq!(word_at(&Rope::from_str(""), 0), 0..0);
+        assert_eq!(run_at_char(&Rope::from_str(""), 0), 0..0);
         // Past the end is clamped.
-        assert_eq!(w("abc", 99), "abc");
+        assert_eq!(run_at_char(&Rope::from_str("abc"), 99), 3..3);
     }
 
     #[test]
