@@ -346,7 +346,6 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Apenas as primeiras 200 linhas alteradas são exibidas.
 replace-preview-stale = O documento foi alterado; nada foi substituído. Execute Substituir tudo novamente.
-view-split-editor = Dividir editor
 encoding-detected = Aberto como { $encoding } (detectado a partir do conteúdo do arquivo).
 encoding-suggested = Sugerida com base no conteúdo do arquivo: { $encoding }. Verifique a pré-visualização antes de abrir.
 app-about = Sobre o Sanain
@@ -486,3 +485,9 @@ settings-shortcut-import-npp-done = Importados do Notepad++: { $imported }. Igno
 settings-shortcut-import-npp-failed = Não foi possível importar { $name }: { $reason }
 settings-shortcut-import-npp-too-large = O arquivo é maior que 1 MiB.
 settings-shortcut-import-npp-invalid = O arquivo não é um shortcuts.xml válido do Notepad++.
+view-split-right = Dividir à direita
+view-split-down = Dividir para baixo
+view-close-pane = Fechar painel
+view-focus-next-pane = Ir para o próximo painel
+view-focus-prev-pane = Ir para o painel anterior
+status-pane-limit = Limite de painéis atingido (no máximo { $max }).

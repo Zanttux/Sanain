@@ -21,6 +21,7 @@ use crate::preview;
 use crate::theme;
 use crate::view::{ContextLabels, EditorView, ViewOptions};
 use sanain_app::macros::{MacroError, MacroStore};
+use sanain_app::panes::{Direction, MAX_PANES, Panes};
 use sanain_app::settings::{FONT_SIZE_DEFAULT, Settings, ThemeChoice};
 use sanain_app::update::{Status as UpdateStatus, UpdateError};
 
@@ -269,11 +270,12 @@ pub struct Shell {
     recent: sanain_app::recent::Recent,
     /// `.editorconfig` indentation per tab, keyed by the file it was read for.
     tab_indent: HashMap<TabId, (Option<std::path::PathBuf>, sanain_app::editorconfig::Indent)>,
-    /// Split editor: the tabs shown in the left and right panes, and which
-    /// pane has focus (its tab is the active tab).
-    split: Option<([TabId; 2], usize)>,
-    /// Scroll and caret display state of the right pane.
-    right_views: HashMap<TabId, EditorView>,
+    /// Split editor: the panes, each showing a tab, and which has focus
+    /// (its tab is the active tab). `None` without a split.
+    split: Option<Panes<TabId>>,
+    /// Display state of split panes in slots 1 and up, per tab (slot 0
+    /// uses `views`, like the single area).
+    pane_views: HashMap<(usize, TabId), EditorView>,
     log: Option<crate::logview::LogView>,
     /// For work started outside a frame (e.g. opening a file).
     ctx: egui::Context,
@@ -444,7 +446,7 @@ impl Shell {
             recent: Default::default(),
             tab_indent: HashMap::new(),
             split: None,
-            right_views: HashMap::new(),
+            pane_views: HashMap::new(),
             log: None,
             ctx: egui::Context::default(),
             update: None,
@@ -579,13 +581,18 @@ impl Shell {
         self.active_view(id).request_focus();
     }
 
-    /// The view showing the active tab: the right pane's when it has focus
-    /// in a split.
+    /// The view showing the active tab: the focused pane's in a split.
     fn active_view(&mut self, id: TabId) -> &mut EditorView {
-        if matches!(self.split, Some((_, 1))) {
-            self.right_views.entry(id).or_default()
-        } else {
+        let slot = self.split.as_ref().map_or(0, |s| s.focused().slot);
+        self.slot_view(slot, id)
+    }
+
+    /// The display state of tab `id` in pane slot `slot`.
+    fn slot_view(&mut self, slot: usize, id: TabId) -> &mut EditorView {
+        if slot == 0 {
             self.views.entry(id).or_default()
+        } else {
+            self.pane_views.entry((slot, id)).or_default()
         }
     }
 
@@ -773,6 +780,7 @@ impl Shell {
                 if let Some(i) = self.ws.position(id) {
                     self.ws.close(i);
                     self.views.remove(&id);
+                    self.pane_views.retain(|(_, t), _| *t != id);
                     self.spans.remove(&id);
                     self.requested.remove(&id);
                     self.md_cache.remove(&id);
@@ -3053,7 +3061,7 @@ impl Shell {
         pane_content(structured, md)
     }
 
-    /// The content of one pane (0 in a single area, 0 or 1 in a split).
+    /// The content of one pane: `pane` is its slot (0 in a single area).
     /// Returns whether its editor was interacted with.
     fn pane_area(&mut self, ui: &mut egui::Ui, id: TabId, pane: usize) -> bool {
         match self.pane_mode(id) {
@@ -3077,16 +3085,27 @@ impl Shell {
         }
     }
 
-    /// Give a split pane focus and make its tab active. Does nothing
-    /// without a split.
-    fn focus_pane(&mut self, pane: usize) {
-        if let Some((panes, focus)) = &mut self.split
-            && *focus != pane
+    /// Give the split pane in `slot` focus and make its tab active. Does
+    /// nothing without a split.
+    fn focus_pane(&mut self, slot: usize) {
+        let Some(split) = &mut self.split else {
+            return;
+        };
+        if let Some(i) = split.index_of_slot(slot)
+            && i != split.focus()
         {
-            *focus = pane;
-            if let Some(i) = self.ws.position(panes[pane]) {
-                self.ws.activate(i);
-            }
+            split.set_focus(i);
+            self.activate_focused_pane();
+        }
+    }
+
+    /// Make the focused pane's tab the active tab.
+    fn activate_focused_pane(&mut self) {
+        let Some(split) = &self.split else {
+            return;
+        };
+        if let Some(i) = self.ws.position(split.focused().tab) {
+            self.ws.activate(i);
         }
     }
 
@@ -3094,63 +3113,136 @@ impl Shell {
     /// active tab; a pane whose tab closed takes the active tab.
     fn sync_split(&mut self) {
         let active = self.ws.active().id;
-        let Some((panes, focus)) = &mut self.split else {
+        let Some(split) = &mut self.split else {
             return;
         };
-        panes[*focus] = active;
-        for p in panes.iter_mut() {
-            if self.ws.position(*p).is_none() {
-                *p = active;
+        split.set_tab(split.focus(), active);
+        for i in 0..split.len() {
+            if split
+                .get(i)
+                .is_some_and(|p| self.ws.position(p.tab).is_none())
+            {
+                split.set_tab(i, active);
             }
         }
     }
 
-    /// Two panes side by side, each showing its tab as the single area
-    /// would. Interacting with a pane makes its tab active, so menus and
-    /// shortcuts act on it.
+    /// Add a pane next to the focused one. It starts with the tab after
+    /// the active one, or the same document when only one is open; focus
+    /// stays put.
+    fn split_pane(&mut self, dir: Direction) {
+        self.status = None;
+        let active = self.ws.active().id;
+        let i = self.ws.active_index();
+        let other = self
+            .ws
+            .tabs()
+            .get((i + 1) % self.ws.len())
+            .map_or(active, |t| t.id);
+        let split = self.split.get_or_insert_with(|| Panes::new(active));
+        if !split.split(dir, other) {
+            let msg = self.t("status-pane-limit", &[("max", MAX_PANES.into())]);
+            self.status = Some((msg, false));
+        }
+        self.focus_active();
+    }
+
+    /// Close the focused split pane; the last one stays.
+    fn close_pane(&mut self) {
+        self.status = None;
+        let Some(split) = &mut self.split else {
+            return;
+        };
+        if let Some(closed) = split.close_focused()
+            && closed.slot != 0
+        {
+            self.pane_views.retain(|(s, _), _| *s != closed.slot);
+            self.md_synced.retain(|(_, s), _| *s != closed.slot);
+        }
+        self.activate_focused_pane();
+        if self.split.as_ref().is_some_and(|s| !s.is_split()) {
+            self.split = None;
+        }
+        self.focus_active();
+    }
+
+    /// Focus the next (or previous) split pane.
+    fn cycle_pane(&mut self, forward: bool) {
+        self.status = None;
+        let Some(split) = &mut self.split else {
+            return;
+        };
+        if forward {
+            split.focus_next();
+        } else {
+            split.focus_prev();
+        }
+        self.activate_focused_pane();
+        self.focus_active();
+    }
+
+    /// Up to four panes, side by side or stacked, each showing its tab as
+    /// the single area would. Interacting with a pane makes its tab
+    /// active, so menus and shortcuts act on it.
     fn split_area(&mut self, ui: &mut egui::Ui) -> bool {
         self.sync_split();
-        let Some((panes, focus)) = self.split else {
+        let Some(split) = self.split.clone() else {
             return false;
         };
         let p = theme::palette(ui.ctx());
+        let area = ui.available_rect_before_wrap();
+        let gap = ui.spacing().item_spacing.x.max(4.0);
+        let focus_slot = split.focused().slot;
         let mut touched = None;
-        ui.columns(2, |cols| {
-            for (pane, ui) in cols.iter_mut().enumerate() {
-                let id = panes[pane];
-                if self.ws.position(id).is_none() {
-                    continue;
-                }
-                let rect = ui.max_rect();
-                // A click anywhere in the pane (preview, tree) focuses it.
-                let pressed =
-                    ui.input(|i| i.pointer.any_pressed()) && ui.rect_contains_pointer(rect);
-                let used = ui
-                    .push_id((id, pane), |ui| self.pane_area(ui, id, pane))
-                    .inner;
-                // Drawn after the content so a filled preview cannot hide it.
-                if pane == focus {
-                    ui.painter().hline(
-                        rect.x_range(),
-                        rect.top() + 1.0,
-                        egui::Stroke::new(2.0, p.accent),
-                    );
-                }
-                if pane == 1 {
-                    ui.painter().vline(
-                        rect.left() - 4.0,
-                        rect.y_range(),
-                        egui::Stroke::new(1.0, p.border),
-                    );
-                }
-                if used || (pressed && self.dialog.is_none()) {
-                    touched = Some(pane);
-                }
+        for (pane, f) in split.panes().zip(split.fractions()) {
+            let (id, slot) = (pane.tab, pane.slot);
+            if self.ws.position(id).is_none() {
+                continue;
             }
-        });
-        if let Some(pane) = touched {
+            let x = |t: f32| area.left() + t * area.width();
+            let y = |t: f32| area.top() + t * area.height();
+            // Leave half a gap on each inner edge.
+            let inner = |t: f32| if t > 0.0 && t < 1.0 { gap / 2.0 } else { 0.0 };
+            let rect = egui::Rect::from_min_max(
+                egui::pos2(x(f.x0) + inner(f.x0), y(f.y0) + inner(f.y0)),
+                egui::pos2(x(f.x1) - inner(f.x1), y(f.y1) - inner(f.y1)),
+            );
+            let mut child = ui.new_child(
+                egui::UiBuilder::new()
+                    .max_rect(rect)
+                    .layout(egui::Layout::top_down_justified(egui::Align::LEFT)),
+            );
+            child.set_clip_rect(rect.intersect(ui.clip_rect()));
+            // A click anywhere in the pane (preview, tree) focuses it.
+            let pressed =
+                child.input(|i| i.pointer.any_pressed()) && child.rect_contains_pointer(rect);
+            let used = child
+                .push_id((id, slot), |ui| self.pane_area(ui, id, slot))
+                .inner;
+            // Drawn after the content so a filled preview cannot hide it.
+            let painter = ui.painter();
+            if slot == focus_slot {
+                painter.hline(
+                    rect.x_range(),
+                    rect.top() + 1.0,
+                    egui::Stroke::new(2.0, p.accent),
+                );
+            }
+            let border = egui::Stroke::new(1.0, p.border);
+            if f.x0 > 0.0 {
+                painter.vline(rect.left() - gap / 2.0, rect.y_range(), border);
+            }
+            if f.y0 > 0.0 {
+                painter.hline(rect.x_range(), rect.top() - gap / 2.0, border);
+            }
+            if used || (pressed && self.dialog.is_none()) {
+                touched = Some(slot);
+            }
+        }
+        ui.advance_cursor_after_rect(area);
+        if let Some(slot) = touched {
             self.status = None;
-            self.focus_pane(pane);
+            self.focus_pane(slot);
         }
         true
     }
@@ -3165,10 +3257,11 @@ impl Shell {
         let Some(i) = self.ws.position(id) else {
             return false;
         };
-        let view = if pane == 1 {
-            self.right_views.entry(id).or_default()
-        } else {
+        // Field borrows, not `slot_view`, so the tab can be borrowed too.
+        let view = if pane == 0 {
             self.views.entry(id).or_default()
+        } else {
+            self.pane_views.entry((pane, id)).or_default()
         };
         let Some(tab) = self.ws.tab_mut(i) else {
             return false;
@@ -3229,7 +3322,7 @@ impl Shell {
         let scroll = self.md_synced.get(&(id, pane)) != Some(&caret_line);
         // An anchor click scrolls once, on the next frame, in the focused
         // pane (the one clicked).
-        let focused = self.split.is_none_or(|(_, f)| f == pane);
+        let focused = self.split.as_ref().is_none_or(|s| s.focused().slot == pane);
         let anchor = if focused {
             self.md_anchor.remove(&id)
         } else {
@@ -3439,7 +3532,7 @@ impl Shell {
 
     fn dispatch(&mut self, action: MenuAction, ctx: &egui::Context) {
         // Native menu accelerators can bypass egui's raw key events.
-        for view in self.views.values_mut().chain(self.right_views.values_mut()) {
+        for view in self.views.values_mut().chain(self.pane_views.values_mut()) {
             view.end_column_mode();
         }
         if self.dialog.is_some() {
@@ -3790,19 +3883,23 @@ impl Shell {
                 return;
             }
             MenuAction::SplitEditor => {
-                if self.split.take().is_none() {
-                    let active = self.ws.active().id;
-                    // The other pane starts with the next tab, or the same
-                    // document when only one is open.
-                    let i = self.ws.active_index();
-                    let other = self
-                        .ws
-                        .tabs()
-                        .get((i + 1) % self.ws.len())
-                        .map_or(active, |t| t.id);
-                    self.split = Some(([active, other], 0));
-                }
-                self.focus_active();
+                self.split_pane(Direction::Right);
+                return;
+            }
+            MenuAction::SplitDown => {
+                self.split_pane(Direction::Down);
+                return;
+            }
+            MenuAction::ClosePane => {
+                self.close_pane();
+                return;
+            }
+            MenuAction::FocusNextPane => {
+                self.cycle_pane(true);
+                return;
+            }
+            MenuAction::FocusPrevPane => {
+                self.cycle_pane(false);
                 return;
             }
             MenuAction::CompareSaved => {

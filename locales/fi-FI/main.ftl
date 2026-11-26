@@ -329,7 +329,6 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Vain 200 ensimmäistä muuttuvaa riviä näytetään.
 replace-preview-stale = Asiakirja muuttui, joten mitään ei korvattu. Valitse Korvaa kaikki uudelleen.
-view-split-editor = Jaa editori
 encoding-detected = Avattiin merkistöllä { $encoding } (tunnistettu tiedoston sisällöstä).
 encoding-suggested = Tiedoston sisällön perusteella ehdotettu: { $encoding }. Tarkista esikatselu ennen avaamista.
 app-about = Tietoja Sanainista
@@ -465,3 +464,9 @@ settings-shortcut-import-npp-done = Tuotiin Notepad++:sta: { $imported }. Ohitet
 settings-shortcut-import-npp-failed = Tiedoston { $name } tuominen epäonnistui: { $reason }
 settings-shortcut-import-npp-too-large = Tiedosto on yli 1 Mt.
 settings-shortcut-import-npp-invalid = Tiedosto ei ole kelvollinen Notepad++:n shortcuts.xml.
+view-split-right = Jaa oikealle
+view-split-down = Jaa alas
+view-close-pane = Sulje ruutu
+view-focus-next-pane = Siirry seuraavaan ruutuun
+view-focus-prev-pane = Siirry edelliseen ruutuun
+status-pane-limit = Ruutuja on jo enimmäismäärä ({ $max }).

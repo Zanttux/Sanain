@@ -329,7 +329,6 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Endast de första 200 ändrade raderna visas.
 replace-preview-stale = Dokumentet har ändrats; inget ersattes. Kör Ersätt alla igen.
-view-split-editor = Dela redigerare
 encoding-detected = Öppnad som { $encoding } (identifierad utifrån filens innehåll).
 encoding-suggested = Föreslagen utifrån filens innehåll: { $encoding }. Kontrollera förhandsgranskningen innan du öppnar.
 app-about = Om Sanain
@@ -462,3 +461,9 @@ settings-shortcut-import-npp-done = Importerade från Notepad++: { $imported }. 
 settings-shortcut-import-npp-failed = Det gick inte att importera { $name }: { $reason }
 settings-shortcut-import-npp-too-large = Filen är större än 1 MiB.
 settings-shortcut-import-npp-invalid = Filen är inte en giltig shortcuts.xml från Notepad++.
+view-split-right = Dela åt höger
+view-split-down = Dela nedåt
+view-close-pane = Stäng ruta
+view-focus-next-pane = Gå till nästa ruta
+view-focus-prev-pane = Gå till föregående ruta
+status-pane-limit = Gränsen för rutor är nådd (högst { $max }).

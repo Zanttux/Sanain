@@ -328,7 +328,6 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Only the first 200 changed lines are shown.
 replace-preview-stale = The document changed; nothing was replaced. Run Replace All again.
-view-split-editor = Split Editor
 encoding-detected = Opened as { $encoding } (detected from the file's contents).
 encoding-suggested = Suggested from the file's contents: { $encoding }. Check the preview before opening.
 app-about = About Sanain
@@ -464,3 +463,9 @@ settings-shortcut-import-npp-done = Imported from Notepad++: { $imported }. Skip
 settings-shortcut-import-npp-failed = Could not import { $name }: { $reason }
 settings-shortcut-import-npp-too-large = The file is larger than 1 MiB.
 settings-shortcut-import-npp-invalid = The file is not a valid Notepad++ shortcuts.xml.
+view-split-right = Split Right
+view-split-down = Split Down
+view-close-pane = Close Pane
+view-focus-next-pane = Focus Next Pane
+view-focus-prev-pane = Focus Previous Pane
+status-pane-limit = Pane limit reached (at most { $max }).

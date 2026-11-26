@@ -329,7 +329,6 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Εμφανίζονται μόνο οι πρώτες 200 γραμμές που αλλάζουν.
 replace-preview-stale = Το έγγραφο άλλαξε· δεν αντικαταστάθηκε τίποτα. Εκτελέστε ξανά την Αντικατάσταση όλων.
-view-split-editor = Διαίρεση επεξεργαστή
 encoding-detected = Άνοιξε ως { $encoding } (εντοπίστηκε από τα περιεχόμενα του αρχείου).
 encoding-suggested = Προτείνεται από τα περιεχόμενα του αρχείου: { $encoding }. Ελέγξτε την προεπισκόπηση πριν από το άνοιγμα.
 app-about = Σχετικά με το Sanain
@@ -462,3 +461,9 @@ settings-shortcut-import-npp-done = Εισήχθησαν από το Notepad++: 
 settings-shortcut-import-npp-failed = Δεν ήταν δυνατή η εισαγωγή του { $name }: { $reason }
 settings-shortcut-import-npp-too-large = Το αρχείο είναι μεγαλύτερο από 1 MiB.
 settings-shortcut-import-npp-invalid = Το αρχείο δεν είναι έγκυρο shortcuts.xml του Notepad++.
+view-split-right = Διαίρεση δεξιά
+view-split-down = Διαίρεση κάτω
+view-close-pane = Κλείσιμο τμήματος
+view-focus-next-pane = Επόμενο τμήμα
+view-focus-prev-pane = Προηγούμενο τμήμα
+status-pane-limit = Έχει επιτευχθεί το όριο τμημάτων (έως { $max }).

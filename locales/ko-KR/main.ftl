@@ -312,7 +312,6 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = 변경되는 처음 200줄만 표시됩니다.
 replace-preview-stale = 문서가 변경되어 아무것도 바꾸지 않았습니다. 모두 바꾸기를 다시 실행하세요.
-view-split-editor = 편집기 분할
 encoding-detected = { $encoding }(으)로 열었습니다(파일 내용에서 감지됨).
 encoding-suggested = 파일 내용으로 추천된 인코딩: { $encoding }. 열기 전에 미리 보기를 확인하세요.
 app-about = Sanain 정보
@@ -438,3 +437,9 @@ settings-shortcut-import-npp-done = Notepad++에서 가져옴: { $imported }. �
 settings-shortcut-import-npp-failed = { $name }을(를) 가져올 수 없습니다: { $reason }
 settings-shortcut-import-npp-too-large = 파일이 1MiB보다 큽니다.
 settings-shortcut-import-npp-invalid = 유효한 Notepad++ shortcuts.xml 파일이 아닙니다.
+view-split-right = 오른쪽으로 분할
+view-split-down = 아래로 분할
+view-close-pane = 창 닫기
+view-focus-next-pane = 다음 창으로 포커스
+view-focus-prev-pane = 이전 창으로 포커스
+status-pane-limit = 창 개수 한도에 도달했습니다(최대 { $max }개).

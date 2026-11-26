@@ -329,7 +329,6 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Alleen de eerste 200 gewijzigde regels worden getoond.
 replace-preview-stale = Het document is gewijzigd; er is niets vervangen. Voer Vervang alles opnieuw uit.
-view-split-editor = Editor splitsen
 encoding-detected = Geopend als { $encoding } (gedetecteerd uit de inhoud van het bestand).
 encoding-suggested = Voorgesteld op basis van de inhoud van het bestand: { $encoding }. Controleer het voorbeeld voordat u opent.
 app-about = Over Sanain
@@ -462,3 +461,9 @@ settings-shortcut-import-npp-done = Geïmporteerd uit Notepad++: { $imported }. 
 settings-shortcut-import-npp-failed = Kan { $name } niet importeren: { $reason }
 settings-shortcut-import-npp-too-large = Het bestand is groter dan 1 MiB.
 settings-shortcut-import-npp-invalid = Het bestand is geen geldige shortcuts.xml van Notepad++.
+view-split-right = Rechts splitsen
+view-split-down = Omlaag splitsen
+view-close-pane = Deelvenster sluiten
+view-focus-next-pane = Volgend deelvenster
+view-focus-prev-pane = Vorig deelvenster
+status-pane-limit = Maximumaantal deelvensters bereikt (hoogstens { $max }).

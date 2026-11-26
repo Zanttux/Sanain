@@ -312,7 +312,6 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = 僅顯示前 200 行變更。
 replace-preview-stale = 文件已變更，未取代任何內容。請重新執行「全部取代」。
-view-split-editor = 分割編輯器
 encoding-detected = 已以 { $encoding } 打開（根據檔案內容偵測）。
 encoding-suggested = 根據檔案內容建議的編碼：{ $encoding }。打開前請檢查預覽。
 app-about = 關於 Sanain
@@ -438,3 +437,9 @@ settings-shortcut-import-npp-done = 已從 Notepad++ 匯入：{ $imported }。�
 settings-shortcut-import-npp-failed = 無法匯入 { $name }：{ $reason }
 settings-shortcut-import-npp-too-large = 檔案大於 1 MiB。
 settings-shortcut-import-npp-invalid = 此檔案不是有效的 Notepad++ shortcuts.xml。
+view-split-right = 向右分割
+view-split-down = 向下分割
+view-close-pane = 關閉窗格
+view-focus-next-pane = 聚焦下一個窗格
+view-focus-prev-pane = 聚焦上一個窗格
+status-pane-limit = 已達窗格上限（最多 { $max } 個）。

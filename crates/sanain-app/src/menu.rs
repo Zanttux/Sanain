@@ -83,6 +83,10 @@ pub enum MenuAction {
     CompareClipboard,
     CompareFile,
     SplitEditor,
+    SplitDown,
+    ClosePane,
+    FocusNextPane,
+    FocusPrevPane,
     About,
     XmlValidate,
     XmlFormat,
@@ -100,7 +104,7 @@ pub enum MenuAction {
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 90] = [
+    pub const ALL: [MenuAction; 94] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -177,6 +181,10 @@ impl MenuAction {
         Self::CompareClipboard,
         Self::CompareFile,
         Self::SplitEditor,
+        Self::SplitDown,
+        Self::ClosePane,
+        Self::FocusNextPane,
+        Self::FocusPrevPane,
         Self::About,
         Self::XmlValidate,
         Self::XmlFormat,
@@ -271,7 +279,12 @@ impl MenuAction {
             Self::CompareSaved => "tools.compare-saved",
             Self::CompareClipboard => "tools.compare-clipboard",
             Self::CompareFile => "tools.compare-file",
+            // Kept from when it was the only split, for saved shortcuts.
             Self::SplitEditor => "view.split-editor",
+            Self::SplitDown => "view.split-down",
+            Self::ClosePane => "view.close-pane",
+            Self::FocusNextPane => "view.focus-next-pane",
+            Self::FocusPrevPane => "view.focus-prev-pane",
             Self::About => "app.about",
             Self::XmlValidate => "tools.xml-validate",
             Self::XmlFormat => "tools.xml-format",
@@ -372,7 +385,11 @@ impl MenuAction {
             Self::CompareSaved => "tools-compare-saved",
             Self::CompareClipboard => "tools-compare-clipboard",
             Self::CompareFile => "tools-compare-file",
-            Self::SplitEditor => "view-split-editor",
+            Self::SplitEditor => "view-split-right",
+            Self::SplitDown => "view-split-down",
+            Self::ClosePane => "view-close-pane",
+            Self::FocusNextPane => "view-focus-next-pane",
+            Self::FocusPrevPane => "view-focus-prev-pane",
             Self::About => "app-about",
             Self::XmlValidate => "tools-xml-validate",
             Self::XmlFormat => "tools-xml-format",
@@ -506,6 +523,10 @@ impl MenuAction {
             | Self::SaveMacro
             | Self::PlaySavedMacro
             | Self::DeleteSavedMacro
+            | Self::SplitDown
+            | Self::ClosePane
+            | Self::FocusNextPane
+            | Self::FocusPrevPane
             | Self::Outline => return None,
         };
         Some(KeyboardShortcut::new(mods, key))
@@ -679,7 +700,12 @@ const VIEW_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::UnfoldAll),
     Some(MenuAction::WordWrap),
     Some(MenuAction::Outline),
+    None,
     Some(MenuAction::SplitEditor),
+    Some(MenuAction::SplitDown),
+    Some(MenuAction::ClosePane),
+    Some(MenuAction::FocusNextPane),
+    Some(MenuAction::FocusPrevPane),
     None,
     Some(MenuAction::ZoomIn),
     Some(MenuAction::ZoomOut),
@@ -958,6 +984,10 @@ mod native {
             | MenuAction::SaveMacro
             | MenuAction::PlaySavedMacro
             | MenuAction::DeleteSavedMacro
+            | MenuAction::SplitDown
+            | MenuAction::ClosePane
+            | MenuAction::FocusNextPane
+            | MenuAction::FocusPrevPane
             | MenuAction::Outline => return None,
         };
         Some(KeyAccelerator::new(m, k))
@@ -1132,6 +1162,31 @@ mod tests {
             back.read_line(k, v);
         }
         assert_eq!(back, keymap);
+    }
+
+    /// Saved shortcut overrides name commands by id: Split Editor keeps
+    /// its old id as Split Right, and every pane command has a label.
+    #[test]
+    fn pane_commands_keep_ids_and_have_labels() {
+        assert_eq!(MenuAction::SplitEditor.command_id(), "view.split-editor");
+        let mut keymap = Keymap::default();
+        keymap.read_line("key.view.split-editor", "Mod+Alt+J");
+        assert_eq!(
+            MenuAction::SplitEditor.shortcut(&keymap),
+            chord_to_egui(&Chord::parse("Mod+Alt+J").unwrap())
+        );
+        let en = include_str!("../../../locales/en-US/main.ftl");
+        for a in [
+            MenuAction::SplitEditor,
+            MenuAction::SplitDown,
+            MenuAction::ClosePane,
+            MenuAction::FocusNextPane,
+            MenuAction::FocusPrevPane,
+        ] {
+            assert_eq!(MenuAction::from_id(a.command_id()), Some(a));
+            let id = a.label_id();
+            assert!(en.contains(&format!("\n{id} = ")), "{id} missing");
+        }
     }
 
     /// No two commands share a default shortcut in any preset, on the

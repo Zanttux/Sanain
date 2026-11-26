@@ -346,7 +346,6 @@ replace-preview-confirm = { $count ->
     }
 replace-preview-more = Seules les 200 premières lignes modifiées sont affichées.
 replace-preview-stale = Le document a changé ; rien n’a été remplacé. Relancez Tout remplacer.
-view-split-editor = Fractionner l’éditeur
 encoding-detected = Ouvert en { $encoding } (détecté à partir du contenu du fichier).
 encoding-suggested = Suggéré d’après le contenu du fichier : { $encoding }. Vérifiez l’aperçu avant d’ouvrir.
 app-about = À propos de Sanain
@@ -486,3 +485,9 @@ settings-shortcut-import-npp-done = Importés depuis Notepad++ : { $imported }. 
 settings-shortcut-import-npp-failed = Impossible d’importer { $name } : { $reason }
 settings-shortcut-import-npp-too-large = Le fichier dépasse 1 Mio.
 settings-shortcut-import-npp-invalid = Le fichier n’est pas un shortcuts.xml valide de Notepad++.
+view-split-right = Fractionner à droite
+view-split-down = Fractionner vers le bas
+view-close-pane = Fermer le volet
+view-focus-next-pane = Volet suivant
+view-focus-prev-pane = Volet précédent
+status-pane-limit = Nombre maximal de volets atteint ({ $max } au plus).
