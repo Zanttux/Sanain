@@ -199,7 +199,9 @@ fn shell_registration(l10n: &Localizer, register: bool) -> i32 {
         return 0;
     }
     let exe = match std::env::current_exe().and_then(|p| p.canonicalize()) {
-        Ok(p) => p,
+        // Windows canonical paths start with \\?\, which Explorer cannot
+        // run (#115).
+        Ok(p) => shellreg::plain_path(&p),
         Err(e) => {
             eprintln!(
                 "sanain: {}",

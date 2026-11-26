@@ -133,6 +133,20 @@ fn refresh_desktop_database(dir: &Path) {
         .status();
 }
 
+/// A path without the Windows verbatim prefix (`\\?\C:\…` → `C:\…`,
+/// `\\?\UNC\server\share` → `\\server\share`), which `canonicalize`
+/// adds and Explorer cannot start. Other paths are returned unchanged.
+pub fn plain_path(p: &Path) -> PathBuf {
+    let s = p.to_string_lossy();
+    if let Some(rest) = s.strip_prefix(r"\\?\UNC\") {
+        return PathBuf::from(format!(r"\\{rest}"));
+    }
+    match s.strip_prefix(r"\\?\") {
+        Some(rest) if rest.as_bytes().get(1) == Some(&b':') => PathBuf::from(rest),
+        _ => p.to_path_buf(),
+    }
+}
+
 /// `reg.exe` argument lists that register (`true`) or remove the Windows
 /// per-user keys for `exe`.
 pub fn windows_reg_commands(exe: &Path, register: bool) -> Vec<Vec<String>> {
@@ -227,6 +241,24 @@ mod tests {
     }
 
     #[test]
+    fn verbatim_prefix_removed() {
+        assert_eq!(
+            plain_path(Path::new(
+                r"\\?\C:\Users\Me\AppData\Local\Programs\Sanain\sanain.exe"
+            )),
+            PathBuf::from(r"C:\Users\Me\AppData\Local\Programs\Sanain\sanain.exe")
+        );
+        assert_eq!(
+            plain_path(Path::new(r"\\?\UNC\server\share\sanain.exe")),
+            PathBuf::from(r"\\server\share\sanain.exe")
+        );
+        assert_eq!(
+            plain_path(Path::new("/usr/bin/sanain")),
+            PathBuf::from("/usr/bin/sanain")
+        );
+    }
+
+    #[test]
     fn windows_commands() {
         let cmds = windows_reg_commands(Path::new(r"C:\Apps\Sanain\sanain.exe"), true);
         assert!(
@@ -239,6 +271,25 @@ mod tests {
         );
         let undo = windows_reg_commands(Path::new(r"C:\Apps\Sanain\sanain.exe"), false);
         assert_eq!(undo.len(), 2);
+    }
+
+    /// What `--register` writes: the canonical executable path without the
+    /// verbatim prefix Explorer cannot run.
+    #[cfg(windows)]
+    #[test]
+    fn registered_exe_path_is_plain() {
+        let exe = std::env::current_exe().unwrap().canonicalize().unwrap();
+        assert!(
+            exe.to_string_lossy().starts_with(r"\\?\"),
+            "canonicalize adds it"
+        );
+        let plain = plain_path(&exe);
+        assert!(!plain.to_string_lossy().starts_with(r"\\?\"));
+        assert!(
+            plain.is_file(),
+            "still names the executable: {}",
+            plain.display()
+        );
     }
 
     /// Writes real per-user keys, so only on CI runners (throwaway VMs).
