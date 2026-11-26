@@ -4,6 +4,13 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-11-26
+
+Milestone M2 (tabs, sessions, recovery, search): crash and conflict tests
+in place and no known silent data loss. Unsigned pre-release builds for
+Windows, macOS and Linux (installers and portable archives); machine
+translations accepted for now (D24). Changes since 0.1.0:
+
 ### Added
 - Syntax highlighting for PHP, Lua, PowerShell and Markdown source (22
   languages in total). PHP files highlight the HTML, JavaScript and CSS
