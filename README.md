@@ -2,7 +2,7 @@
 **The power of words.**
 
 A native, open-source text editor for everyday text, code, configuration
-files, Markdown and data. Written in Rust for Windows, macOS and Linux.
+files, Markdown and data. Website: https://zanttux.github.io/Sanain/ Written in Rust for Windows, macOS and Linux.
 Fast by design. Powerful when needed. Simple by default.
 
 ![Sanain editing a Rust file with tabs and syntax highlighting](docs/screenshots/editor.png)
