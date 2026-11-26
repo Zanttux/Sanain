@@ -73,6 +73,7 @@ pub enum MenuAction {
     PlayMacro,
     CompareSaved,
     CompareClipboard,
+    CompareFile,
     SplitEditor,
     About,
     XmlValidate,
@@ -90,7 +91,7 @@ pub enum MenuAction {
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 80] = [
+    pub const ALL: [MenuAction; 81] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -157,6 +158,7 @@ impl MenuAction {
         Self::PlayMacro,
         Self::CompareSaved,
         Self::CompareClipboard,
+        Self::CompareFile,
         Self::SplitEditor,
         Self::About,
         Self::XmlValidate,
@@ -242,6 +244,7 @@ impl MenuAction {
             Self::PlayMacro => "tools.play-macro",
             Self::CompareSaved => "tools.compare-saved",
             Self::CompareClipboard => "tools.compare-clipboard",
+            Self::CompareFile => "tools.compare-file",
             Self::SplitEditor => "view.split-editor",
             Self::About => "app.about",
             Self::XmlValidate => "tools.xml-validate",
@@ -333,6 +336,7 @@ impl MenuAction {
             Self::PlayMacro => "tools-play-macro",
             Self::CompareSaved => "tools-compare-saved",
             Self::CompareClipboard => "tools-compare-clipboard",
+            Self::CompareFile => "tools-compare-file",
             Self::SplitEditor => "view-split-editor",
             Self::About => "app-about",
             Self::XmlValidate => "tools-xml-validate",
@@ -456,7 +460,8 @@ impl MenuAction {
             | Self::CopyPath
             | Self::Reveal
             | Self::CompareSaved
-            | Self::CompareClipboard => return None,
+            | Self::CompareClipboard
+            | Self::CompareFile => return None,
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -550,6 +555,7 @@ const TOOLS_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::CompareTabs),
     Some(MenuAction::CompareSaved),
     Some(MenuAction::CompareClipboard),
+    Some(MenuAction::CompareFile),
     None,
     Some(MenuAction::RecordMacro),
     Some(MenuAction::PlayMacro),
@@ -845,7 +851,8 @@ mod native {
             | MenuAction::CopyPath
             | MenuAction::Reveal
             | MenuAction::CompareSaved
-            | MenuAction::CompareClipboard => return None,
+            | MenuAction::CompareClipboard
+            | MenuAction::CompareFile => return None,
         };
         Some(KeyAccelerator::new(m, k))
     }

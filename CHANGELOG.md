@@ -5,6 +5,7 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Tools › Compare with File…: compare the current document with any file.
 - Comparison: "Ignore whitespace" option, so indentation and line-ending
   differences no longer hide the real changes.
 - Markdown preview: fenced code blocks are coloured by language
