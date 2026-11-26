@@ -375,3 +375,4 @@ tabs-kept-unsaved = { $count ->
 status-indent-tabs = Tabulatorer
 status-indent-spaces = Mellomrom: { $count }
 find-searching = Søker…
+compare-ignore-whitespace = Ignorer mellomrom

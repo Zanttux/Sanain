@@ -55,6 +55,8 @@ struct Compare {
     /// The texts the diff was computed from (refreshed when a side's
     /// revision changes, not every frame).
     texts: (std::sync::Arc<String>, std::sync::Arc<String>),
+    /// Lines differing only in whitespace count as equal.
+    ignore_whitespace: bool,
 }
 
 /// The encoding picker's purpose.
@@ -2052,6 +2054,7 @@ impl Shell {
             revs: (Revision(u64::MAX), Revision(u64::MAX)),
             diff: Default::default(),
             texts: Default::default(),
+            ignore_whitespace: false,
         });
     }
 
@@ -2127,7 +2130,7 @@ impl Shell {
                 Side::Text { text, .. } => text.clone(),
             };
             if let Some(c) = &mut self.compare {
-                c.diff = sanain_tools::diff::diff_lines(&ltext, &rtext);
+                c.diff = sanain_tools::diff::diff_lines_with(&ltext, &rtext, c.ignore_whitespace);
                 c.revs = (lrev, rrev);
                 c.texts = (std::sync::Arc::new(ltext), std::sync::Arc::new(rtext));
             }
@@ -2145,6 +2148,7 @@ impl Shell {
         let right_editable = matches!(c.right, Side::Tab(_));
         let changes = c.diff.hunks.len() as i64;
         let mut close = false;
+        let mut ignore_ws = c.ignore_whitespace;
         egui::Frame::NONE
             .fill(p.surface)
             .inner_margin(egui::Margin::symmetric(8, 6))
@@ -2159,6 +2163,7 @@ impl Shell {
                         if ui.button(self.t("compare-close", &[])).clicked() {
                             close = true;
                         }
+                        ui.checkbox(&mut ignore_ws, self.t("compare-ignore-whitespace", &[]));
                     });
                 });
             });
@@ -2177,6 +2182,15 @@ impl Shell {
         );
         if close || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
             self.compare = None;
+            return true;
+        }
+        if let Some(c) = &mut self.compare
+            && c.ignore_whitespace != ignore_ws
+        {
+            // Recompute on the next frame with the new option.
+            c.ignore_whitespace = ignore_ws;
+            c.revs = (Revision(u64::MAX), Revision(u64::MAX));
+            ui.ctx().request_repaint();
             return true;
         }
         if let Some(a) = action {
