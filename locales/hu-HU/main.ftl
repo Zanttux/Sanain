@@ -433,3 +433,7 @@ settings-tab-general = Általános
 settings-tab-editor = Szerkesztő
 settings-tab-appearance = Megjelenés
 settings-shortcut-search = Parancsok vagy billentyűk keresése
+settings-font = Betűtípus
+settings-font-default = Beépített fix szélességű
+settings-font-loading = Telepített betűtípusok keresése…
+settings-font-missing = A(z) { $font } betűtípus nem található; a beépített betűtípus van használatban.

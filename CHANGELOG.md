@@ -5,6 +5,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Settings › Editor › Font: choose any installed monospaced font, with a
+  preview; built-in fonts remain the fallback for missing characters
+  (#83).
 - Application icon: Sanain.app (macOS), window and taskbar icon on all
   platforms, and the Linux desktop entry installed by `--register` (#90).
 - `sanain --register` / `--unregister`: add Sanain to "Open With" for the

@@ -409,3 +409,7 @@ settings-tab-general = 일반
 settings-tab-editor = 편집기
 settings-tab-appearance = 모양
 settings-shortcut-search = 명령 또는 키 검색
+settings-font = 글꼴
+settings-font-default = 내장 고정폭 글꼴
+settings-font-loading = 설치된 글꼴을 찾는 중…
+settings-font-missing = { $font } 글꼴을 찾을 수 없어 내장 글꼴을 사용합니다.

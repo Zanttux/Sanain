@@ -409,3 +409,7 @@ settings-tab-general = Umum
 settings-tab-editor = Editor
 settings-tab-appearance = Tampilan
 settings-shortcut-search = Cari perintah atau tombol
+settings-font = Font
+settings-font-default = Monospace bawaan
+settings-font-loading = Mencari font yang terpasang…
+settings-font-missing = Font { $font } tidak ditemukan; menggunakan font bawaan.

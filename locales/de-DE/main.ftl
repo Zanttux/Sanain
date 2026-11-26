@@ -433,3 +433,7 @@ settings-tab-general = Allgemein
 settings-tab-editor = Editor
 settings-tab-appearance = Erscheinungsbild
 settings-shortcut-search = Befehle oder Tasten suchen
+settings-font = Schriftart
+settings-font-default = Integrierte Festbreitenschrift
+settings-font-loading = Installierte Schriftarten werden gesucht…
+settings-font-missing = Die Schriftart { $font } wurde nicht gefunden; die integrierte Schriftart wird verwendet.

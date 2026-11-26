@@ -433,3 +433,7 @@ settings-tab-general = Γενικά
 settings-tab-editor = Επεξεργαστής
 settings-tab-appearance = Εμφάνιση
 settings-shortcut-search = Αναζήτηση εντολών ή πλήκτρων
+settings-font = Γραμματοσειρά
+settings-font-default = Ενσωματωμένη σταθερού πλάτους
+settings-font-loading = Αναζήτηση εγκατεστημένων γραμματοσειρών…
+settings-font-missing = Η γραμματοσειρά { $font } δεν βρέθηκε· χρησιμοποιείται η ενσωματωμένη γραμματοσειρά.

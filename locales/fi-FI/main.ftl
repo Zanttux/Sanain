@@ -436,3 +436,7 @@ settings-tab-general = Yleiset
 settings-tab-editor = Editori
 settings-tab-appearance = Ulkoasu
 settings-shortcut-search = Hae komentoa tai näppäintä
+settings-font = Fontti
+settings-font-default = Sisäänrakennettu tasaväli
+settings-font-loading = Haetaan asennettuja fontteja…
+settings-font-missing = Fonttia { $font } ei löytynyt; käytetään sisäänrakennettua fonttia.

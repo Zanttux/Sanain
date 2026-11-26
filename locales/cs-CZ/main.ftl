@@ -481,3 +481,7 @@ settings-tab-general = Obecné
 settings-tab-editor = Editor
 settings-tab-appearance = Vzhled
 settings-shortcut-search = Hledat příkazy nebo klávesy
+settings-font = Písmo
+settings-font-default = Vestavěné neproporcionální
+settings-font-loading = Hledání nainstalovaných písem…
+settings-font-missing = Písmo { $font } nebylo nalezeno; používá se vestavěné písmo.

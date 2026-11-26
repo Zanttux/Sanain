@@ -457,3 +457,7 @@ settings-tab-general = Geral
 settings-tab-editor = Editor
 settings-tab-appearance = Aparência
 settings-shortcut-search = Pesquisar comandos ou teclas
+settings-font = Fonte
+settings-font-default = Monoespaçada integrada
+settings-font-loading = Procurando fontes instaladas…
+settings-font-missing = A fonte { $font } não foi encontrada; usando a fonte integrada.

@@ -45,6 +45,8 @@ pub struct Settings {
     pub local_history: bool,
     /// Soft-wrap long lines to the window width.
     pub word_wrap: bool,
+    /// Editor font family; `None` uses the built-in monospace font.
+    pub editor_font: Option<String>,
 }
 
 impl Default for Settings {
@@ -61,6 +63,7 @@ impl Default for Settings {
             last_update_check: 0,
             local_history: true,
             word_wrap: true,
+            editor_font: None,
         }
     }
 }
@@ -106,6 +109,9 @@ impl Settings {
             "check_updates={}\nlast_update_check={}\nlocal_history={}\nword_wrap={}\n",
             self.check_updates, self.last_update_check, self.local_history, self.word_wrap
         ));
+        if let Some(f) = &self.editor_font {
+            out.push_str(&format!("editor_font={f}\n"));
+        }
         out.push_str(&self.keymap.encode());
         out
     }
@@ -151,6 +157,9 @@ impl Settings {
                 "last_update_check" => s.last_update_check = v.parse().unwrap_or(0),
                 "local_history" => s.local_history = v.parse().unwrap_or(true),
                 "word_wrap" => s.word_wrap = v.parse().unwrap_or(true),
+                "editor_font" if !v.is_empty() && v.len() <= 200 => {
+                    s.editor_font = Some(v.to_owned())
+                }
                 other => {
                     s.keymap.read_line(other, v);
                 }
@@ -209,6 +218,7 @@ mod tests {
             last_update_check: 1_764_000_000,
             local_history: false,
             word_wrap: false,
+            editor_font: Some("JetBrains Mono".into()),
         };
         assert_eq!(Settings::decode(&s.encode()), Some(s.clone()));
         let hc = Settings {

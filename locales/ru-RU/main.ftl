@@ -481,3 +481,7 @@ settings-tab-general = Общие
 settings-tab-editor = Редактор
 settings-tab-appearance = Оформление
 settings-shortcut-search = Поиск команд или клавиш
+settings-font = Шрифт
+settings-font-default = Встроенный моноширинный
+settings-font-loading = Поиск установленных шрифтов…
+settings-font-missing = Шрифт { $font } не найден; используется встроенный шрифт.

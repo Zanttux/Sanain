@@ -409,3 +409,7 @@ settings-tab-general = Chung
 settings-tab-editor = Trình soạn thảo
 settings-tab-appearance = Giao diện
 settings-shortcut-search = Tìm lệnh hoặc phím
+settings-font = Phông chữ
+settings-font-default = Phông đơn cách tích hợp
+settings-font-loading = Đang tìm phông chữ đã cài đặt…
+settings-font-missing = Không tìm thấy phông chữ { $font }; đang dùng phông chữ tích hợp.

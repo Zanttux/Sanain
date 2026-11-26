@@ -409,3 +409,7 @@ settings-tab-general = 一般
 settings-tab-editor = エディタ
 settings-tab-appearance = 外観
 settings-shortcut-search = コマンドまたはキーを検索
+settings-font = フォント
+settings-font-default = 内蔵の等幅フォント
+settings-font-loading = インストール済みのフォントを検索しています…
+settings-font-missing = フォント { $font } が見つかりません。内蔵フォントを使用します。
