@@ -33,7 +33,7 @@ persisted cryptographic hash when recovery (E06) stores fingerprints.
 ## Known limits
 Conflict check and rename are not one atomic operation (TOCTOU window).
 Directory fsync is best effort. Saving splits hard links (other names keep
-the old content). Unix owner/group, Windows ACLs and extended attributes
+the old content). Update 2026-11-26: on Unix, files with more than one link are now overwritten in place behind a backup copy (`write_in_place` in sanain-io); Windows keeps the rename. Unix owner/group, Windows ACLs and extended attributes
 are not preserved yet. Read-only targets are refused; there is no
 "save anyway" path yet. UTF-32 files are rejected on load.
 

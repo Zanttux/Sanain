@@ -161,8 +161,65 @@ pub fn save(
         Some(_) => Some(fs::metadata(&target).map_err(io_err)?.permissions()),
         None => None,
     };
-    let meta = write_atomic(&target, &bytes, perms).map_err(io_err)?;
+    // A file with several hard links must keep its inode, or the other
+    // names would still show the old contents: overwrite it in place,
+    // behind a backup copy of the old contents.
+    let meta = match &existing {
+        Some(old) if hard_link_count(&target) > 1 => {
+            write_in_place(&target, old, &bytes, perms).map_err(io_err)?
+        }
+        _ => write_atomic(&target, &bytes, perms).map_err(io_err)?,
+    };
     Ok(Fingerprint::of(&bytes, &meta))
+}
+
+#[cfg(unix)]
+fn hard_link_count(path: &Path) -> u64 {
+    use std::os::unix::fs::MetadataExt;
+    fs::metadata(path).map_or(1, |m| m.nlink())
+}
+
+/// Hard-link counts are not available on stable Rust elsewhere; those
+/// platforms keep the atomic rename.
+#[cfg(not(unix))]
+fn hard_link_count(_: &Path) -> u64 {
+    1
+}
+
+/// Overwrite `target` in place (same inode), after writing `old` to a
+/// backup next to it. The backup is removed on success; if the overwrite
+/// fails, it stays and the error names it.
+fn write_in_place(
+    target: &Path,
+    old: &[u8],
+    bytes: &[u8],
+    perms: Option<fs::Permissions>,
+) -> io::Result<fs::Metadata> {
+    let name = target
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    let backup = target.with_file_name(format!(".{name}.sanain-backup"));
+    write_atomic(&backup, old, perms)?;
+    let result = (|| {
+        let mut f = fs::OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .open(target)?;
+        f.write_all(bytes)?;
+        f.sync_all()?;
+        f.metadata()
+    })();
+    match result {
+        Ok(meta) => {
+            let _ = fs::remove_file(&backup);
+            Ok(meta)
+        }
+        Err(e) => Err(io::Error::new(
+            e.kind(),
+            format!("{e}; the previous contents are in {}", backup.display()),
+        )),
+    }
 }
 
 /// Write `bytes` to `target` via a synced temporary file in the same

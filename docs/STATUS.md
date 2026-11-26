@@ -41,7 +41,8 @@ are cross-platform verification and release readiness.
   correctly; dialog buttons are reachable through the macOS accessibility
   tree; Finnish UI renders.
 - Fresh-context review of the IO and core crates: no silent data loss
-  found; five gaps fixed (ADR 0002). Hard links still split on save.
+  found; five gaps fixed (ADR 0002). Hard-linked files are saved in place
+  behind a backup on Unix (2026-11-26); Windows still splits hard links.
 - CI passes on ubuntu-latest, windows-latest and macos-latest
   (run 45646960690).
 - GUI spike (GPUI vs egui) recorded in docs/adr/0001-gui-toolkit.md.
@@ -125,7 +126,6 @@ because nobody independent exists; no fake approvals.
 - Windows and Linux runtime smoke test (needs a machine or VM): open,
   edit, save, menus, shortcuts on non-US layouts.
 - Manual screen-reader (VoiceOver) and IME pass on macOS.
-- Hard-link-safe save strategy (hard links still split on save).
 - Release preparation for 0.1.0: installer/bundle per platform, notices
   file, release notes; publishing waits for the owner (signing).
 - Smaller: incremental word wrap (lift the 1 M-character limit), log
