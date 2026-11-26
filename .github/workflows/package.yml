@@ -1,0 +1,47 @@
+name: Package
+
+# Builds unsigned archives for testing and release preparation. Nothing is
+# published: a GitHub release needs the owner's approval (docs/RELEASE.md).
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+  # Keep the packaging itself tested when it changes.
+  pull_request:
+    paths:
+      - scripts/package.py
+      - scripts/macos-bundle.sh
+      - scripts/third-party-notices.py
+      - packaging/**
+      - .github/workflows/package.yml
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: package (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: python3
+          - os: windows-latest
+            python: python
+          - os: macos-latest
+            python: python3
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install
+      - run: ${{ matrix.python }} scripts/package.py
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sanain-${{ matrix.os }}
+          path: target/dist/*
+          if-no-files-found: error
+          retention-days: 14

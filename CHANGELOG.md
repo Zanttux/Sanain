@@ -5,6 +5,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Packaging script and workflow: unsigned archives for Linux, Windows and
+  macOS (Sanain.app) with license, notices and checksums. Nothing is
+  published automatically.
 - `.editorconfig` files set indentation (indent_style, indent_size,
   tab_width) per file; the status bar shows the indentation in use. Other
   EditorConfig properties are not applied yet.
