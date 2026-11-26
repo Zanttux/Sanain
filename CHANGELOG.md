@@ -61,6 +61,20 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   written, and line endings are kept; malformed XML is reported in the
   status bar and nothing changes.
 
+### Changed
+- Syntax highlighting is incremental while typing. The background
+  worker keeps the syntax tree of recently highlighted documents,
+  re-parses only what an edit touched and, for languages without
+  embedded languages, highlights again only the changed lines. A
+  one-character edit in a 1 MB Rust file now takes about 12 ms instead
+  of 174 ms, in a 512 KB JSON file about 3 ms instead of 81 ms (release
+  build, Apple M5). HTML, JavaScript, Markdown and PHP (embedded
+  languages) still highlight the whole file, but folds reuse the tree.
+  In broken or ambiguous code an incremental parse can differ from a
+  fresh one, so after a 300 ms pause in typing the document is analysed
+  once more from scratch and the colours and folds settle on that
+  result.
+
 ### Fixed
 - Notepad++ shortcut preset: Mod+D was both Duplicate Line and Select
   Next Occurrence; it is Duplicate Line only, as in Notepad++. A test now
