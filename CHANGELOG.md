@@ -13,6 +13,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   (since drag-to-reorder was added) (#110).
 
 ### Added
+- macOS: Sanain appears in Finder's Open With for text, code and data
+  files, and files opened from Finder or the Dock open in a tab, at launch
+  and while running (#78, ADR 0003).
 - Windows: the icon is embedded in sanain.exe, so Explorer, shortcuts and
   pinned taskbar items show it.
 

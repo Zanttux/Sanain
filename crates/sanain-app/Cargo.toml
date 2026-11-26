@@ -15,6 +15,7 @@ path = "src/main.rs"
 [dependencies]
 sanain-core = { path = "../sanain-core" }
 sanain-io = { path = "../sanain-io" }
+sanain-platform = { path = "../sanain-platform" }
 sanain-i18n = { path = "../sanain-i18n" }
 sanain-language = { path = "../sanain-language" }
 sanain-markdown = { path = "../sanain-markdown" }
