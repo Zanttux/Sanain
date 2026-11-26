@@ -23,6 +23,8 @@ sanain-tools = { path = "../sanain-tools" }
 ropey.workspace = true
 eframe = { version = "0.37", default-features = false, features = ["accesskit", "clipboard", "links", "default_fonts", "system_fonts", "wgpu", "wayland", "x11"] }
 rfd = "0.18"
+# Notepad++ shortcuts.xml import (already used by sanain-tools).
+quick-xml = "0.42"
 ureq = { version = "3.5", default-features = false, features = ["rustls"] }
 egui_extras = { version = "0.37", default-features = false }
 arboard = { version = "3.7", default-features = false }

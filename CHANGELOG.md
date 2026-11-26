@@ -5,6 +5,15 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased]
 
 ### Added
+- Settings › Keyboard shortcuts › Import from Notepad++… reads a Notepad++
+  `shortcuts.xml` (on Windows `%AppData%\Notepad++\shortcuts.xml`) and
+  applies its changed shortcuts for the commands Sanain has (file, edit,
+  search, case, comment, zoom and fold commands) as your own overrides.
+  Removed shortcuts are removed; macros, run and plugin commands, unknown
+  commands and keys are skipped and counted. A command that held an
+  imported shortcut gives it up, and the summary reports imported,
+  skipped and remaining conflicts. Files over 1 MiB or malformed XML are
+  rejected without changing anything; entities are never expanded.
 - Saved keyboard macros: Tools → Save Macro… stores the last recorded
   macro under a name (a macro with the same name is replaced), and Play
   Saved Macro… / Delete Saved Macro… pick one from a filtered list, also

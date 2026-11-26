@@ -286,6 +286,8 @@ pub struct Shell {
     recording: Option<MenuAction>,
     /// Commands that lost their shortcut to the last recorded one.
     shortcut_moved: Vec<String>,
+    /// Result of the last Notepad++ shortcut import (text, is error).
+    shortcut_import: Option<(String, bool)>,
     palette: Palette,
     compare: Option<Compare>,
     encoding_pick: Option<EncodingPick>,
@@ -448,6 +450,7 @@ impl Shell {
             update: None,
             recording: None,
             shortcut_moved: Vec::new(),
+            shortcut_import: None,
             palette: Palette::default(),
             compare: None,
             encoding_pick: None,
@@ -932,6 +935,8 @@ impl Shell {
         let s = &mut self.settings;
         let recording = &mut self.recording;
         let moved = &mut self.shortcut_moved;
+        let import_note = &mut self.shortcut_import;
+        let l10n = &self.l10n;
         let tab = &mut self.settings_tab;
         let filter = &mut self.shortcut_filter;
         let families = self.font_families.clone();
@@ -1184,6 +1189,27 @@ impl Shell {
                                         (Preset::NotepadPlusPlus, "settings-keymap-notepadpp"),
                                     ] {
                                         ui.radio_value(&mut s.keymap.preset, p, l(id));
+                                    }
+                                });
+                                ui.horizontal_wrapped(|ui| {
+                                    if ui
+                                        .button(l("settings-shortcut-import-npp"))
+                                        .on_hover_text(l("settings-shortcut-import-npp-hint"))
+                                        .clicked()
+                                        && let Some(path) = rfd::FileDialog::new()
+                                            .add_filter("XML", &["xml"])
+                                            .pick_file()
+                                    {
+                                        *import_note =
+                                            Some(import_npp_shortcuts(&path, &mut s.keymap, l10n));
+                                        moved.clear();
+                                    }
+                                    if let Some((text, error)) = import_note.as_ref() {
+                                        let p = theme::palette(ui.ctx());
+                                        ui.colored_label(
+                                            if *error { p.warning } else { p.text },
+                                            text,
+                                        );
                                     }
                                 });
                                 let search = ui.add(
@@ -4760,6 +4786,56 @@ fn short_dir(dir: &Path) -> String {
         s = format!("…{tail}");
     }
     s
+}
+
+/// Import a Notepad++ `shortcuts.xml` into `keymap`; returns the localized
+/// summary and whether it is an error (the keymap is unchanged then).
+fn import_npp_shortcuts(
+    path: &Path,
+    keymap: &mut sanain_app::keymap::Keymap,
+    l10n: &Localizer,
+) -> (String, bool) {
+    let lt = |id: &str, args: &[(&str, FluentValue<'_>)]| tr(l10n, id, args);
+    use sanain_app::npp_shortcuts::{self, ImportError, MAX_BYTES};
+    use std::io::Read;
+    let name = path
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    let fail = |reason: String| {
+        (
+            lt(
+                "settings-shortcut-import-npp-failed",
+                &[("name", name.clone().into()), ("reason", reason.into())],
+            ),
+            true,
+        )
+    };
+    let mut bytes = Vec::new();
+    // Read at most one byte past the cap so a huge file is not loaded.
+    if let Err(e) =
+        std::fs::File::open(path).and_then(|f| f.take(MAX_BYTES as u64 + 1).read_to_end(&mut bytes))
+    {
+        return fail(e.to_string());
+    }
+    match npp_shortcuts::parse(&bytes) {
+        Ok(import) => {
+            let conflicts = menu::apply_import(keymap, &import.entries);
+            (
+                lt(
+                    "settings-shortcut-import-npp-done",
+                    &[
+                        ("imported", import.entries.len().into()),
+                        ("skipped", import.skipped.into()),
+                        ("conflicts", conflicts.into()),
+                    ],
+                ),
+                false,
+            )
+        }
+        Err(ImportError::TooLarge) => fail(lt("settings-shortcut-import-npp-too-large", &[])),
+        Err(ImportError::Invalid) => fail(lt("settings-shortcut-import-npp-invalid", &[])),
+    }
 }
 
 fn tr(l10n: &Localizer, id: &str, args: &[(&str, FluentValue<'_>)]) -> String {

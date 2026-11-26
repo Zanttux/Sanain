@@ -63,6 +63,8 @@ Fast by design. Powerful when needed. Simple by default.
   files) stay responsive.
 - **Comfort:** light, dark and high-contrast themes, zoom, session restore,
   configurable shortcuts with a Notepad++ preset, native macOS menus.
+  Settings › Keyboard shortcuts › Import from Notepad++… reads your
+  Notepad++ `shortcuts.xml` (on Windows: `%AppData%\Notepad++\shortcuts.xml`).
 - **Languages:** the interface is available in 26 languages. English is
   the reference; Finnish is a draft; the other 24 are machine
   translations awaiting review by native speakers. Corrections are
