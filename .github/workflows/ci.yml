@@ -32,11 +32,11 @@ jobs:
       - run: cargo test --workspace --locked
       # Disk-full drill (crates/sanain-app/tests/disk_full.rs) on a real
       # tiny filesystem; the test fills it itself. Built-in tools only.
-      - name: disk-full drill (1 MiB tmpfs)
+      - name: disk-full drill (4 MiB tmpfs)
         if: runner.os == 'Linux'
         run: |
           sudo mkdir -p /mnt/sanain-full
-          sudo mount -t tmpfs -o size=1m tmpfs /mnt/sanain-full
+          sudo mount -t tmpfs -o size=4m tmpfs /mnt/sanain-full
           sudo chown "$(id -u):$(id -g)" /mnt/sanain-full
           SANAIN_FULL_DIR=/mnt/sanain-full cargo test -p sanain-app --test disk_full --locked -- --nocapture
           sudo umount /mnt/sanain-full
