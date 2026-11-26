@@ -405,3 +405,7 @@ cli-registered = 已將 Sanain 加入「開啟檔案」。{ $place }
 cli-unregistered = 已從「開啟檔案」中移除 Sanain。
 cli-register-failed = 無法變更檔案管理器整合：{ $reason }
 cli-register-macos = macOS 上的 Finder 整合尚無法使用。請在 Sanain 中（檔案 › 打開、拖放）或透過命令列開啟檔案。
+settings-tab-general = 一般
+settings-tab-editor = 編輯器
+settings-tab-appearance = 外觀
+settings-shortcut-search = 搜尋命令或按鍵

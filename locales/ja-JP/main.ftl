@@ -405,3 +405,7 @@ cli-registered = Sanain を「プログラムから開く」に追加しまし�
 cli-unregistered = Sanain を「プログラムから開く」から削除しました。
 cli-register-failed = ファイルマネージャーとの統合を変更できませんでした: { $reason }
 cli-register-macos = macOS での Finder 統合はまだ利用できません。Sanain から（ファイル › 開く、ドラッグ＆ドロップ）またはコマンドラインからファイルを開いてください。
+settings-tab-general = 一般
+settings-tab-editor = エディタ
+settings-tab-appearance = 外観
+settings-shortcut-search = コマンドまたはキーを検索

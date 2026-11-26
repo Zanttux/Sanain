@@ -429,3 +429,7 @@ cli-registered = Sanain "Birlikte Aç" menüsüne eklendi. { $place }
 cli-unregistered = Sanain "Birlikte Aç" menüsünden kaldırıldı.
 cli-register-failed = Dosya yöneticisi tümleştirmesi değiştirilemedi: { $reason }
 cli-register-macos = macOS'ta Finder tümleştirmesi henüz kullanılamıyor. Dosyaları Sanain'den (Dosya › Aç, sürükle ve bırak) veya komut satırından açın.
+settings-tab-general = Genel
+settings-tab-editor = Düzenleyici
+settings-tab-appearance = Görünüm
+settings-shortcut-search = Komut veya tuş ara

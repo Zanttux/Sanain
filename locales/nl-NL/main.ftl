@@ -429,3 +429,7 @@ cli-registered = Sanain is toegevoegd aan ‘Openen met’. { $place }
 cli-unregistered = Sanain is verwijderd uit ‘Openen met’.
 cli-register-failed = De integratie met het bestandsbeheer kon niet worden gewijzigd: { $reason }
 cli-register-macos = Finder-integratie op macOS is nog niet beschikbaar. Open bestanden vanuit Sanain (Bestand › Open, slepen en neerzetten) of vanaf de opdrachtregel.
+settings-tab-general = Algemeen
+settings-tab-editor = Editor
+settings-tab-appearance = Weergave
+settings-shortcut-search = Zoek opdrachten of toetsen

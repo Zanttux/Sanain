@@ -477,3 +477,7 @@ cli-registered = Sanain byl přidán do nabídky „Otevřít v aplikaci“. { $
 cli-unregistered = Sanain byl odebrán z nabídky „Otevřít v aplikaci“.
 cli-register-failed = Integraci se správcem souborů nebylo možné změnit: { $reason }
 cli-register-macos = Integrace s Finderem v macOS zatím není k dispozici. Otevírejte soubory ze Sanainu (Soubor › Otevřít, přetažení) nebo z příkazového řádku.
+settings-tab-general = Obecné
+settings-tab-editor = Editor
+settings-tab-appearance = Vzhled
+settings-shortcut-search = Hledat příkazy nebo klávesy

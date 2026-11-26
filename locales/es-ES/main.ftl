@@ -429,3 +429,7 @@ cli-registered = Sanain se ha añadido a «Abrir con». { $place }
 cli-unregistered = Sanain se ha quitado de «Abrir con».
 cli-register-failed = No se ha podido cambiar la integración con el gestor de archivos: { $reason }
 cli-register-macos = La integración con Finder en macOS aún no está disponible. Abra los archivos desde Sanain (Archivo › Abrir, arrastrar y soltar) o desde la línea de comandos.
+settings-tab-general = General
+settings-tab-editor = Editor
+settings-tab-appearance = Apariencia
+settings-shortcut-search = Buscar comandos o teclas
