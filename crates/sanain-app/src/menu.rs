@@ -553,6 +553,43 @@ pub fn chord_from_press(key: Key, m: Modifiers) -> Option<Chord> {
     )
 }
 
+/// Apply imported shortcuts (e.g. from Notepad++) as user overrides. As when
+/// recording a shortcut, a command that is not part of the import loses a
+/// chord the import gives to another command. Returns how many chords are
+/// still shared by more than one command (the import itself bound them
+/// twice).
+pub fn apply_import(keymap: &mut Keymap, entries: &[(&str, Option<Chord>)]) -> usize {
+    for (id, chord) in entries {
+        keymap.custom.insert((*id).to_owned(), chord.clone());
+    }
+    let imported = |id: &str| entries.iter().any(|(e, _)| *e == id);
+    for (id, chord) in entries {
+        let Some(target) = chord.as_ref().and_then(chord_to_egui) else {
+            continue;
+        };
+        for o in MenuAction::ALL {
+            if o.id() != *id && !imported(o.id()) && o.shortcut(keymap) == Some(target) {
+                keymap.custom.insert(o.id().to_owned(), None);
+            }
+        }
+    }
+    let mut seen: Vec<KeyboardShortcut> = Vec::new();
+    let mut shared: Vec<KeyboardShortcut> = Vec::new();
+    for s in MenuAction::ALL
+        .into_iter()
+        .filter_map(|a| a.shortcut(keymap))
+    {
+        if seen.contains(&s) {
+            if !shared.contains(&s) {
+                shared.push(s);
+            }
+        } else {
+            seen.push(s);
+        }
+    }
+    shared.len()
+}
+
 /// Labels resolved by the caller (keeps this module free of l10n state).
 pub type Label<'a> = &'a dyn Fn(&str) -> String;
 
@@ -1053,6 +1090,49 @@ mod native {
 mod tests {
     use super::*;
     use sanain_app::keymap::{Keymap, Preset};
+
+    #[test]
+    fn notepadpp_import_maps_to_menu_commands() {
+        use sanain_app::npp_shortcuts::{INTERNAL_COMMANDS, SCINTILLA_COMMANDS};
+        for (n, id) in INTERNAL_COMMANDS.iter().chain(SCINTILLA_COMMANDS) {
+            assert!(MenuAction::from_id(id).is_some(), "{n} -> {id}");
+        }
+    }
+
+    #[test]
+    fn notepadpp_import_applies_overrides() {
+        let xml = r#"<NotepadPlus><InternalCommands>
+            <Shortcut id="42010" Ctrl="yes" Alt="no" Shift="no" Key="68"/>
+            <Shortcut id="41006" Ctrl="no" Alt="no" Shift="no" Key="0"/>
+            <Shortcut id="43002" Ctrl="no" Alt="no" Shift="no" Key="114"/>
+            <Shortcut id="42016" Ctrl="yes" Alt="yes" Shift="no" Key="85"/>
+            <Shortcut id="42017" Ctrl="yes" Alt="yes" Shift="no" Key="85"/>
+            </InternalCommands></NotepadPlus>"#;
+        let import = sanain_app::npp_shortcuts::parse(xml.as_bytes()).unwrap();
+        assert_eq!(import.entries.len(), 5);
+        let mut keymap = Keymap::default();
+        let conflicts = apply_import(&mut keymap, &import.entries);
+        let sc = |a: MenuAction| a.shortcut(&keymap);
+        let chord = |s: &str| chord_to_egui(&Chord::parse(s).unwrap());
+        assert_eq!(sc(MenuAction::DuplicateLine), chord("Mod+D"));
+        // Mod+D selected the next occurrence by default; it moved.
+        assert_eq!(sc(MenuAction::SelectNextOccurrence), None);
+        assert_eq!(sc(MenuAction::Save), None);
+        assert_eq!(sc(MenuAction::FindNext), chord("F3"));
+        // Untouched commands keep their defaults.
+        assert_eq!(sc(MenuAction::Open), chord("Mod+O"));
+        // Upper and lower case both got Mod+Alt+U from the file.
+        assert_eq!(conflicts, 1);
+        assert_eq!(sc(MenuAction::UpperCase), chord("Mod+Alt+U"));
+        assert_eq!(sc(MenuAction::LowerCase), chord("Mod+Alt+U"));
+        // Settings round-trip keeps the imported overrides.
+        let mut back = Keymap::default();
+        for line in keymap.encode().lines() {
+            let (k, v) = line.split_once('=').unwrap();
+            back.read_line(k, v);
+        }
+        assert_eq!(back, keymap);
+    }
 
     /// No two commands share a default shortcut in any preset, on the
     /// platform the tests run on (CI covers macOS, Windows and Linux).

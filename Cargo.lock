@@ -3388,6 +3388,7 @@ dependencies = [
  "fontdb",
  "image",
  "muda",
+ "quick-xml 0.42.0",
  "rfd",
  "ropey",
  "sanain-core",
