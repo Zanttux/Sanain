@@ -1,9 +1,10 @@
 //! Sanain desktop entry point.
 //!
 //! Release builds on Windows use the GUI subsystem, so starting Sanain does
-//! not open a console window. Command-line output (`--help`, `--version`,
-//! `--register`) is then not shown in a console on Windows release builds;
-//! debug builds keep the console for development.
+//! not open a console window. CLI commands that print and exit attach to
+//! the parent's console. Their output may appear after the shell prompt
+//! because the shell does not wait for GUI-subsystem programs; this is
+//! normal Windows behaviour. Debug builds keep the console for development.
 
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
@@ -31,6 +32,17 @@ use sanain_io::recovery::RecoveryStore;
 
 fn main() -> eframe::Result {
     let parsed = sanain_app::cli::parse(std::env::args_os().skip(1));
+    match &parsed {
+        sanain_app::cli::Parsed::Version
+        | sanain_app::cli::Parsed::Help
+        | sanain_app::cli::Parsed::Unknown(_)
+        | sanain_app::cli::Parsed::DiffNeedsTwo
+        | sanain_app::cli::Parsed::Register
+        | sanain_app::cli::Parsed::Unregister => {
+            sanain_platform::attach_parent_console();
+        }
+        sanain_app::cli::Parsed::Run(_) => {}
+    }
     if parsed == sanain_app::cli::Parsed::Version {
         println!("Sanain {}", env!("CARGO_PKG_VERSION"));
         return Ok(());

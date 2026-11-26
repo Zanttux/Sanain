@@ -10,8 +10,8 @@ users expect are not offered by the window library (winit/eframe):
   on the Dock icon, `open -a Sanain file`) as an `odoc` Apple event, not as
   program arguments. winit does not handle it, and it does not install an
   application delegate either.
-- Possibly later: attaching to the parent console on Windows so `--help`
-  prints in a GUI-subsystem build.
+- Windows GUI-subsystem builds need to attach to the parent console so
+  CLI commands such as `--help` can print there.
 
 Reaching these needs Objective-C or Win32 calls that the binding crates
 mark `unsafe`.
@@ -23,8 +23,8 @@ mark `unsafe`.
   `forbid`); each block opts in with `#[allow(unsafe_code)]` and a
   `SAFETY:` comment; clippy's `undocumented_unsafe_blocks` is on.
 - The public API is safe and platform-neutral
-  (`prepare_open_documents`, `on_opened_files`, `take_opened_files`); on
-  other platforms the functions do nothing.
+  (`prepare_open_documents`, `on_opened_files`, `take_opened_files`,
+  `attach_parent_console`); unsupported platform operations are no-ops.
 - macOS: before the event loop starts, a handler object observes
   `NSApplicationWillFinishLaunchingNotification` and then registers itself
   with `NSAppleEventManager` for `kAEOpenDocuments` — the point Apple
@@ -35,8 +35,21 @@ mark `unsafe`.
   claiming any type by default.
 - Bindings: `objc2` and `objc2-foundation`, already in the dependency tree
   through winit (MIT).
+- Windows: `attach_parent_console` calls `AttachConsole(ATTACH_PARENT_PROCESS)`
+  only for CLI paths that print and exit, never for normal GUI launches.
+  It returns whether attachment succeeded (false on non-Windows), without
+  allocating a console. Bindings: Windows-only `windows-sys` 0.59, already
+  locked, with only `Win32_System_Console` and `Win32_Foundation` enabled
+  directly (MIT OR Apache-2.0).
 
 ## Consequences
-- Five `unsafe` sites, all in one file, reviewable in minutes.
+- The existing macOS unsafe sites and one Windows unsafe block stay in
+  `sanain-platform/src/lib.rs`, individually documented and reviewable.
+- Windows attachment sets standard handles for processes without a console;
+  Rust printing uses `GetStdHandle`, so no stream rebinding is needed.
+  Output may appear after the shell prompt because shells do not wait for
+  GUI-subsystem programs. This is expected Windows behaviour, not an error.
+- Non-Windows no-op behaviour is unit tested; Windows runtime console
+  behaviour still needs verification on Windows.
 - Tested on macOS 27.2 with `open -a` both at launch and while running.
   Finder's Open With uses the same event.
