@@ -428,3 +428,7 @@ cli-diff-needs-two = Для --diff потрібні два файли: sanain --
 window-move-tab-left = Перемістити вкладку ліворуч
 window-move-tab-right = Перемістити вкладку праворуч
 edit-skip-occurrence = Перейти до наступного входження
+tools-play-macro-times = Відтворити макрос кілька разів…
+macro-times-hint = Кількість повторів
+macro-times-note = Від 1 до { $max }
+macro-times-invalid = Введіть число від 1 до { $max }.

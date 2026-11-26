@@ -428,3 +428,7 @@ cli-diff-needs-two = --diff vyžaduje dva soubory: sanain --diff LEVÝ PRAVÝ
 window-move-tab-left = Přesunout kartu doleva
 window-move-tab-right = Přesunout kartu doprava
 edit-skip-occurrence = Přeskočit na další výskyt
+tools-play-macro-times = Přehrát makro vícekrát…
+macro-times-hint = Počet opakování
+macro-times-note = Od 1 do { $max }
+macro-times-invalid = Zadejte číslo od 1 do { $max }.

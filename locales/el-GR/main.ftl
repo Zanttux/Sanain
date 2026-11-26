@@ -390,3 +390,7 @@ cli-diff-needs-two = Το --diff χρειάζεται δύο αρχεία: sanai
 window-move-tab-left = Μετακίνηση καρτέλας αριστερά
 window-move-tab-right = Μετακίνηση καρτέλας δεξιά
 edit-skip-occurrence = Μετάβαση στην επόμενη εμφάνιση
+tools-play-macro-times = Αναπαραγωγή μακροεντολής πολλές φορές…
+macro-times-hint = Αριθμός επαναλήψεων
+macro-times-note = Από 1 έως { $max }
+macro-times-invalid = Εισαγάγετε έναν αριθμό από 1 έως { $max }.

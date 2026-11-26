@@ -16,6 +16,8 @@ pub enum Mode {
     GoToLine,
     Headings,
     Recent,
+    /// How many times to play the recorded macro.
+    MacroTimes,
 }
 
 /// One runnable entry as shown in the palette.

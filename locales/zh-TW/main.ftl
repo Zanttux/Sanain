@@ -371,3 +371,7 @@ cli-diff-needs-two = --diff 需要兩個檔案：sanain --diff 左 右
 window-move-tab-left = 向左移動標籤頁
 window-move-tab-right = 向右移動標籤頁
 edit-skip-occurrence = 跳至下一個符合項目
+tools-play-macro-times = 多次播放巨集…
+macro-times-hint = 次數
+macro-times-note = 1 到 { $max }
+macro-times-invalid = 請輸入 1 到 { $max } 之間的數字。

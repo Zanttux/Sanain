@@ -74,6 +74,7 @@ pub enum MenuAction {
     SkipOccurrence,
     RecordMacro,
     PlayMacro,
+    PlayMacroTimes,
     CompareSaved,
     CompareClipboard,
     CompareFile,
@@ -94,7 +95,7 @@ pub enum MenuAction {
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 84] = [
+    pub const ALL: [MenuAction; 85] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -162,6 +163,7 @@ impl MenuAction {
         Self::SkipOccurrence,
         Self::RecordMacro,
         Self::PlayMacro,
+        Self::PlayMacroTimes,
         Self::CompareSaved,
         Self::CompareClipboard,
         Self::CompareFile,
@@ -251,6 +253,7 @@ impl MenuAction {
             Self::SkipOccurrence => "edit.skip-occurrence",
             Self::RecordMacro => "tools.record-macro",
             Self::PlayMacro => "tools.play-macro",
+            Self::PlayMacroTimes => "tools.play-macro-times",
             Self::CompareSaved => "tools.compare-saved",
             Self::CompareClipboard => "tools.compare-clipboard",
             Self::CompareFile => "tools.compare-file",
@@ -346,6 +349,7 @@ impl MenuAction {
             Self::SkipOccurrence => "edit-skip-occurrence",
             Self::RecordMacro => "tools-record-macro",
             Self::PlayMacro => "tools-play-macro",
+            Self::PlayMacroTimes => "tools-play-macro-times",
             Self::CompareSaved => "tools-compare-saved",
             Self::CompareClipboard => "tools-compare-clipboard",
             Self::CompareFile => "tools-compare-file",
@@ -476,7 +480,8 @@ impl MenuAction {
             | Self::Reveal
             | Self::CompareSaved
             | Self::CompareClipboard
-            | Self::CompareFile => return None,
+            | Self::CompareFile
+            | Self::PlayMacroTimes => return None,
         };
         Some(KeyboardShortcut::new(mods, key))
     }
@@ -576,6 +581,7 @@ const TOOLS_ITEMS: &[Option<MenuAction>] = &[
     None,
     Some(MenuAction::RecordMacro),
     Some(MenuAction::PlayMacro),
+    Some(MenuAction::PlayMacroTimes),
     None,
     Some(MenuAction::JsonValidate),
     Some(MenuAction::JsonFormat),
@@ -879,7 +885,8 @@ mod native {
             | MenuAction::Reveal
             | MenuAction::CompareSaved
             | MenuAction::CompareClipboard
-            | MenuAction::CompareFile => return None,
+            | MenuAction::CompareFile
+            | MenuAction::PlayMacroTimes => return None,
         };
         Some(KeyAccelerator::new(m, k))
     }

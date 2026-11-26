@@ -23,6 +23,9 @@ use crate::view::{EditorView, ViewOptions};
 use sanain_app::settings::{FONT_SIZE_DEFAULT, Settings, ThemeChoice};
 use sanain_app::update::{Status as UpdateStatus, UpdateError};
 
+/// Upper bound for Play Macro Multiple Times.
+const MACRO_TIMES_MAX: usize = 10_000;
+
 /// Markdown outline (level, title, line) for a tab at a revision.
 type HeadingCache = ((TabId, Revision), Vec<(u8, String, usize)>);
 
@@ -1588,6 +1591,33 @@ impl Shell {
                 }
                 None
             }
+            Mode::MacroTimes => {
+                let hint = self.t("macro-times-hint", &[]);
+                let note = self.t(
+                    "macro-times-note",
+                    &[("max", (MACRO_TIMES_MAX as i64).into())],
+                );
+                if let Some(text) = self.palette.show_input(ctx, &hint, &note) {
+                    match text.trim().parse::<usize>() {
+                        Ok(n) if (1..=MACRO_TIMES_MAX).contains(&n) => {
+                            let cmds = self.macro_cmds.clone();
+                            self.editor_mut().play_times(&cmds, n);
+                            let id = self.ws.active().id;
+                            self.active_view(id).reveal();
+                        }
+                        _ => {
+                            self.status = Some((
+                                self.t(
+                                    "macro-times-invalid",
+                                    &[("max", (MACRO_TIMES_MAX as i64).into())],
+                                ),
+                                true,
+                            ))
+                        }
+                    }
+                }
+                None
+            }
             Mode::Commands => None,
         };
         if let (Some((line, _)), Some(log)) = (target, &mut self.log)
@@ -2596,7 +2626,7 @@ impl Shell {
                 | MenuAction::Revert
                 | MenuAction::CopyPath
                 | MenuAction::Reveal => self.editor().file().is_some(),
-                MenuAction::PlayMacro => {
+                MenuAction::PlayMacro | MenuAction::PlayMacroTimes => {
                     !self.macro_cmds.is_empty() && !self.editor().is_recording()
                 }
                 MenuAction::PinTab => !self.ws.active().pinned,
@@ -3018,6 +3048,10 @@ impl Shell {
             }
             MenuAction::GoToLine => {
                 self.palette.open(crate::palette::Mode::GoToLine);
+                return;
+            }
+            MenuAction::PlayMacroTimes => {
+                self.palette.open(crate::palette::Mode::MacroTimes);
                 return;
             }
             MenuAction::GoToHeading => {

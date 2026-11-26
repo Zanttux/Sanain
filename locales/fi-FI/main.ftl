@@ -390,3 +390,7 @@ cli-diff-needs-two = --diff tarvitsee kaksi tiedostoa: sanain --diff VASEN OIKEA
 window-move-tab-left = Siirrä välilehti vasemmalle
 window-move-tab-right = Siirrä välilehti oikealle
 edit-skip-occurrence = Ohita ja valitse seuraava esiintymä
+tools-play-macro-times = Toista makro useita kertoja…
+macro-times-hint = Toistokerrat
+macro-times-note = 1–{ $max }
+macro-times-invalid = Anna luku väliltä 1–{ $max }.

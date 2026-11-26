@@ -390,3 +390,7 @@ cli-diff-needs-two = --diff behöver två filer: sanain --diff VÄNSTER HÖGER
 window-move-tab-left = Flytta flik åt vänster
 window-move-tab-right = Flytta flik åt höger
 edit-skip-occurrence = Hoppa till nästa förekomst
+tools-play-macro-times = Spela upp makro flera gånger…
+macro-times-hint = Antal gånger
+macro-times-note = Från 1 till { $max }
+macro-times-invalid = Ange ett tal från 1 till { $max }.

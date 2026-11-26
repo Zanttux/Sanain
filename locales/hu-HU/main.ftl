@@ -390,3 +390,7 @@ cli-diff-needs-two = A --diff két fájlt igényel: sanain --diff BAL JOBB
 window-move-tab-left = Lap mozgatása balra
 window-move-tab-right = Lap mozgatása jobbra
 edit-skip-occurrence = Ugrás a következő előfordulásra
+tools-play-macro-times = Makró lejátszása többször…
+macro-times-hint = Ismétlések száma
+macro-times-note = 1 és { $max } között
+macro-times-invalid = Adjon meg egy számot 1 és { $max } között.

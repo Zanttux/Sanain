@@ -371,3 +371,7 @@ cli-diff-needs-two = --diff 需要两个文件：sanain --diff 左 右
 window-move-tab-left = 向左移动标签页
 window-move-tab-right = 向右移动标签页
 edit-skip-occurrence = 跳到下一个匹配项
+tools-play-macro-times = 多次回放宏…
+macro-times-hint = 次数
+macro-times-note = 1 到 { $max }
+macro-times-invalid = 请输入 1 到 { $max } 之间的数字。

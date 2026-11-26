@@ -371,3 +371,7 @@ cli-diff-needs-two = --diff cần hai tệp: sanain --diff TRÁI PHẢI
 window-move-tab-left = Di chuyển thẻ sang trái
 window-move-tab-right = Di chuyển thẻ sang phải
 edit-skip-occurrence = Bỏ qua đến lần xuất hiện tiếp theo
+tools-play-macro-times = Phát macro nhiều lần…
+macro-times-hint = Số lần
+macro-times-note = Từ 1 đến { $max }
+macro-times-invalid = Nhập một số từ 1 đến { $max }.

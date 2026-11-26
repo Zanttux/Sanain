@@ -371,3 +371,7 @@ cli-diff-needs-two = --diff memerlukan dua berkas: sanain --diff KIRI KANAN
 window-move-tab-left = Pindahkan Tab ke Kiri
 window-move-tab-right = Pindahkan Tab ke Kanan
 edit-skip-occurrence = Lewati ke Kemunculan Berikutnya
+tools-play-macro-times = Putar Makro Beberapa Kali…
+macro-times-hint = Jumlah kali
+macro-times-note = Dari 1 hingga { $max }
+macro-times-invalid = Masukkan angka dari 1 hingga { $max }.

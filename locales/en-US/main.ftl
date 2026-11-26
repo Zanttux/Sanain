@@ -389,3 +389,7 @@ cli-diff-needs-two = --diff needs two files: sanain --diff LEFT RIGHT
 window-move-tab-left = Move Tab Left
 window-move-tab-right = Move Tab Right
 edit-skip-occurrence = Skip to Next Occurrence
+tools-play-macro-times = Play Macro Multiple Times…
+macro-times-hint = Number of times
+macro-times-note = From 1 to { $max }
+macro-times-invalid = Enter a number from 1 to { $max }.

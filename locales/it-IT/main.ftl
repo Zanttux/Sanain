@@ -390,3 +390,7 @@ cli-diff-needs-two = --diff richiede due file: sanain --diff SINISTRA DESTRA
 window-move-tab-left = Sposta scheda a sinistra
 window-move-tab-right = Sposta scheda a destra
 edit-skip-occurrence = Salta all’occorrenza successiva
+tools-play-macro-times = Esegui macro più volte…
+macro-times-hint = Numero di volte
+macro-times-note = Da 1 a { $max }
+macro-times-invalid = Inserisci un numero da 1 a { $max }.

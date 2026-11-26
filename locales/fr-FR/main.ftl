@@ -409,3 +409,7 @@ cli-diff-needs-two = --diff nécessite deux fichiers : sanain --diff GAUCHE DROI
 window-move-tab-left = Déplacer l’onglet vers la gauche
 window-move-tab-right = Déplacer l’onglet vers la droite
 edit-skip-occurrence = Passer à l’occurrence suivante
+tools-play-macro-times = Exécuter la macro plusieurs fois…
+macro-times-hint = Nombre de fois
+macro-times-note = De 1 à { $max }
+macro-times-invalid = Saisissez un nombre de 1 à { $max }.

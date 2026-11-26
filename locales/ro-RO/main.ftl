@@ -409,3 +409,7 @@ cli-diff-needs-two = --diff necesită două fișiere: sanain --diff STÂNGA DREA
 window-move-tab-left = Mută fila la stânga
 window-move-tab-right = Mută fila la dreapta
 edit-skip-occurrence = Sari la următoarea apariție
+tools-play-macro-times = Redă macro de mai multe ori…
+macro-times-hint = Număr de repetări
+macro-times-note = De la 1 la { $max }
+macro-times-invalid = Introdu un număr de la 1 la { $max }.
