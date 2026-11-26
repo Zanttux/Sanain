@@ -13,10 +13,26 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   and `%%` comments. Layered layout; cycles and self-links are drawn;
   diagrams shrink to fit the preview and use the theme colours.
   `style`, `classDef`, `class`, `linkStyle` and `click` lines are
-  ignored, so diagram links never open. Other diagram types, subgraphs
-  and other unsupported syntax show the source with a short note, as do
+  ignored, so diagram links never open. Other diagram types and
+  unsupported syntax show the source with a short note, as do
   diagrams over the size limits (16 KB of text, 150 nodes, 300 links).
   (#136)
+- Mermaid in the Markdown preview, round two (still native, no
+  JavaScript, web view or network): flowchart subgraphs
+  (`subgraph id [title]` … `end`, nested up to three deep) drawn as
+  titled frames that never overlap other nodes or frames, links to and
+  from a subgraph (drawn to its frame), `<-->`, `--o`, `--x`, `o--o`
+  and `x--x` link ends, and hexagon, cylinder, parallelogram, trapezoid
+  and double-circle nodes. `sequenceDiagram`: participants and actors
+  with `as` aliases, `->`, `-->`, `->>`, `-->>`, `-x`, `--x`, `-)` and
+  `--)` messages, self-messages, notes (left of, right of, over one or
+  two participants), `autonumber`, activation bars (`activate`,
+  `deactivate`, `+`/`-`) and `loop`, `alt`/`else`, `opt`, `par`/`and`,
+  `critical`/`option`, `break` and `rect` frames (rect colours are
+  ignored). Limits: 50 participants, 500 messages and notes, blocks
+  nested 8 deep. Other sequence syntax (`box`, `create`, `link`, ...)
+  shows the source with the usual note. `direction` inside a subgraph
+  is accepted and ignored.
 
 ## [0.2.0] — 2026-11-26
 

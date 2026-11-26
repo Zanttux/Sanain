@@ -416,14 +416,20 @@ fn code_frame(ui: &mut egui::Ui, code: &str, st: &Style<'_>) {
     );
 }
 
-/// A laid-out diagram, or why the source is shown instead.
-type Diagram = Result<
-    (
+/// A laid-out diagram.
+enum Laid {
+    Flow(
         sanain_markdown::mermaid::Flowchart,
         sanain_markdown::mermaid::Layout,
     ),
-    sanain_markdown::mermaid::Error,
->;
+    Seq(
+        sanain_markdown::mermaid::sequence::Sequence,
+        sanain_markdown::mermaid::sequence::SeqLayout,
+    ),
+}
+
+/// A laid-out diagram, or why the source is shown instead.
+type Diagram = Result<Laid, sanain_markdown::mermaid::Error>;
 
 thread_local! {
     /// Diagrams per (code hash, font size), so a block is parsed and laid
@@ -438,7 +444,7 @@ fn diagram_font(size: f32) -> FontId {
 }
 
 fn diagram_for(ui: &egui::Ui, code: &str, size: f32) -> std::rc::Rc<Diagram> {
-    use sanain_markdown::mermaid;
+    use sanain_markdown::mermaid::{self, Diagram as D};
     use std::hash::{Hash, Hasher};
     let mut h = std::collections::hash_map::DefaultHasher::new();
     code.hash(&mut h);
@@ -451,9 +457,16 @@ fn diagram_for(ui: &egui::Ui, code: &str, size: f32) -> std::rc::Rc<Diagram> {
         let g = painter.layout_no_wrap(text.to_owned(), diagram_font(size), Color32::WHITE);
         (g.size().x, g.size().y)
     };
-    let d = std::rc::Rc::new(mermaid::parse(code).and_then(|fc| {
-        let l = mermaid::layout(&fc, mermaid::Spacing::for_font(size), &mut measure)?;
-        Ok((fc, l))
+    let sp = mermaid::Spacing::for_font(size);
+    let d = std::rc::Rc::new(mermaid::parse_diagram(code).and_then(|d| match d {
+        D::Flowchart(fc) => {
+            let l = mermaid::layout(&fc, sp, &mut measure)?;
+            Ok(Laid::Flow(fc, l))
+        }
+        D::Sequence(sq) => {
+            let l = mermaid::sequence::layout(&sq, sp, &mut measure);
+            Ok(Laid::Seq(sq, l))
+        }
     }));
     DIAGRAMS.with(|c| {
         let mut c = c.borrow_mut();
@@ -472,7 +485,8 @@ fn mermaid(ui: &mut egui::Ui, code: &str, st: &Style<'_>) {
     use sanain_markdown::mermaid::Error;
     let size = (st.size * 0.9).round();
     match &*diagram_for(ui, code, size) {
-        Ok((fc, l)) => draw_diagram(ui, fc, l, size, st),
+        Ok(Laid::Flow(fc, l)) => draw_diagram(ui, fc, l, size, st),
+        Ok(Laid::Seq(sq, l)) => draw_sequence(ui, sq, l, size, st),
         Err(e) => {
             let id = match e {
                 Error::UnsupportedType => "preview-mermaid-unsupported-type",
@@ -489,24 +503,22 @@ fn mermaid(ui: &mut egui::Ui, code: &str, st: &Style<'_>) {
     }
 }
 
-fn draw_diagram(
+/// Canvas for a diagram `w` x `h` layout units: scaled down (never up) to
+/// the preview width and centred. Returns the painter, the mapping from
+/// layout units to screen and the scale, or `None` when off screen.
+fn diagram_canvas(
     ui: &mut egui::Ui,
-    fc: &sanain_markdown::mermaid::Flowchart,
-    l: &sanain_markdown::mermaid::Layout,
-    size: f32,
-    st: &Style<'_>,
-) {
-    use egui::{Pos2, Shape as S, StrokeKind, pos2, vec2};
-    use sanain_markdown::mermaid::{Shape, Stroke as Line};
-    let p = st.p;
-    let margin = size;
-    // Scale down (never up) to fit the preview width.
+    w: f32,
+    h: f32,
+    margin: f32,
+    p: &Palette,
+) -> Option<(egui::Painter, egui::Pos2, f32)> {
     let avail = ui.available_width().max(1.0);
-    let scale = ((avail - 2.0 * margin) / l.width.max(1.0)).clamp(0.05, 1.0);
-    let desired = vec2(avail, l.height * scale + 2.0 * margin);
+    let scale = ((avail - 2.0 * margin) / w.max(1.0)).clamp(0.05, 1.0);
+    let desired = egui::vec2(avail, h * scale + 2.0 * margin);
     let (rect, _) = ui.allocate_exact_size(desired, Sense::hover());
     if !ui.is_rect_visible(rect) {
-        return;
+        return None;
     }
     let painter = ui.painter_at(rect);
     painter.rect(
@@ -514,23 +526,128 @@ fn draw_diagram(
         4.0,
         p.canvas,
         Stroke::new(1.0, p.border),
-        StrokeKind::Inside,
+        egui::StrokeKind::Inside,
     );
-    // Centre horizontally.
-    let left = rect.left() + (rect.width() - l.width * scale) / 2.0;
-    let at = |x: f32, y: f32| pos2(left + x * scale, rect.top() + margin + y * scale);
+    let origin = egui::pos2(
+        rect.left() + (rect.width() - w * scale) / 2.0,
+        rect.top() + margin,
+    );
+    Some((painter, origin, scale))
+}
+
+/// Draw `text` anchored at `at` (`align` picks the anchor point).
+fn diagram_text(
+    painter: &egui::Painter,
+    text: &str,
+    font: &FontId,
+    at: egui::Pos2,
+    align: egui::Align2,
+    color: Color32,
+    bg: Option<Color32>,
+) -> egui::Rect {
+    let mut job = LayoutJob::simple(text.to_owned(), font.clone(), color, f32::INFINITY);
+    job.halign = align.x();
+    let g = painter.layout_job(job);
+    let r = align.anchor_size(at, g.rect.size());
+    if let Some(bg) = bg {
+        painter.rect_filled(r.expand(2.0), 2.0, bg);
+    }
+    painter.galley(r.min - g.rect.min.to_vec2(), g, color);
+    r
+}
+
+/// Flowchart link end: arrow, circle or cross at `tip`, coming from `from`.
+fn link_head(
+    painter: &egui::Painter,
+    head: sanain_markdown::mermaid::Head,
+    tip: egui::Pos2,
+    from: egui::Pos2,
+    color: Color32,
+    scale: f32,
+    width: f32,
+) {
+    use sanain_markdown::mermaid::Head;
+    let dir = (tip - from).normalized();
+    let len = 8.0 * scale.max(0.5) + width;
+    match head {
+        Head::None => {}
+        Head::Arrow => {
+            let base = tip - dir * len;
+            let side = dir.rot90() * len * 0.45;
+            painter.add(egui::Shape::convex_polygon(
+                vec![tip, base + side, base - side],
+                color,
+                Stroke::NONE,
+            ));
+        }
+        Head::Circle => {
+            let r = len * 0.4;
+            painter.circle_filled(tip - dir * r, r, color);
+        }
+        Head::Cross => {
+            let r = len * 0.4;
+            let c = tip - dir * r;
+            let (a, b) = (
+                (dir + dir.rot90()) * r * 0.75,
+                (dir - dir.rot90()) * r * 0.75,
+            );
+            let s = Stroke::new(width.max(1.2), color);
+            painter.line_segment([c - a, c + a], s);
+            painter.line_segment([c - b, c + b], s);
+        }
+    }
+}
+
+fn draw_diagram(
+    ui: &mut egui::Ui,
+    fc: &sanain_markdown::mermaid::Flowchart,
+    l: &sanain_markdown::mermaid::Layout,
+    size: f32,
+    st: &Style<'_>,
+) {
+    use egui::{Align2, Pos2, Shape as S, StrokeKind, pos2, vec2};
+    use sanain_markdown::mermaid::{Shape, Stroke as Line};
+    let p = st.p;
+    let Some((painter, origin, scale)) = diagram_canvas(ui, l.width, l.height, size, p) else {
+        return;
+    };
+    let at = |x: f32, y: f32| pos2(origin.x + x * scale, origin.y + y * scale);
     let font = diagram_font((size * scale).max(4.0));
     let label = |text: &str, centre: Pos2, color: Color32, bg: Option<Color32>| {
-        let mut job = LayoutJob::simple(text.to_owned(), font.clone(), color, f32::INFINITY);
-        job.halign = egui::Align::Center;
-        let g = painter.layout_job(job);
-        let pos = centre - g.rect.center().to_vec2();
-        if let Some(bg) = bg {
-            let r = g.rect.translate(pos.to_vec2()).expand(2.0 * scale.max(0.5));
-            painter.rect_filled(r, 2.0, bg);
-        }
-        painter.galley(pos, g, color);
+        diagram_text(
+            &painter,
+            text,
+            &font,
+            centre,
+            Align2::CENTER_CENTER,
+            color,
+            bg,
+        );
     };
+    let pad = sanain_markdown::mermaid::Spacing::for_font(size).pad * scale;
+    // Subgraph frames, outer first (parents come before children).
+    for (k, (sg, f)) in fc.subgraphs.iter().zip(&l.frames).enumerate() {
+        let r = egui::Rect::from_center_size(at(f.x, f.y), vec2(f.w, f.h) * scale);
+        let fill = p.canvas.lerp_to_gamma(p.surface, 0.45);
+        painter.rect(
+            r,
+            6.0 * scale,
+            fill,
+            Stroke::new(1.0 * scale.max(0.6), p.border.lerp_to_gamma(p.muted, 0.4)),
+            StrokeKind::Inside,
+        );
+        let band = l.title_band.get(k).copied().unwrap_or(0.0) * scale;
+        let clip = painter.with_clip_rect(r.intersect(painter.clip_rect()));
+        diagram_text(
+            &clip,
+            &sg.title,
+            &font,
+            pos2(r.left() + pad, r.top() + pad * 0.5 + band / 2.0),
+            Align2::LEFT_CENTER,
+            body(p),
+            None,
+        );
+    }
     let edge_color = p.text.lerp_to_gamma(p.muted, 0.5);
     // Edges under nodes.
     for (e, path) in fc.edges.iter().zip(&l.edges) {
@@ -546,24 +663,35 @@ fn draw_diagram(
         } else {
             painter.add(S::line(pts.clone(), stroke));
         }
-        if e.arrow {
-            let tip = pts[pts.len() - 1];
-            let dir = (tip - pts[pts.len() - 2]).normalized();
-            let len = 8.0 * scale.max(0.5) + width;
-            let base = tip - dir * len;
-            let side = dir.rot90() * len * 0.45;
-            painter.add(S::convex_polygon(
-                vec![tip, base + side, base - side],
-                edge_color,
-                Stroke::NONE,
-            ));
-        }
+        let k = pts.len() - 1;
+        link_head(
+            &painter,
+            e.head,
+            pts[k],
+            pts[k - 1],
+            edge_color,
+            scale,
+            width,
+        );
+        link_head(&painter, e.tail, pts[0], pts[1], edge_color, scale, width);
     }
     for (node, b) in fc.nodes.iter().zip(&l.nodes) {
         let c = at(b.x, b.y);
         let half = vec2(b.w, b.h) * scale / 2.0;
         let r = egui::Rect::from_center_size(c, half * 2.0);
         let stroke = Stroke::new(1.3 * scale.max(0.6), p.accent);
+        let poly = |pts: Vec<Pos2>| {
+            painter.add(S::convex_polygon(pts, p.surface, stroke));
+        };
+        // Slant inset for hexagons, parallelograms and trapezoids.
+        let i = r.height() / 2.0;
+        let (lt, rt, lb, rb) = (
+            r.left_top(),
+            r.right_top(),
+            r.left_bottom(),
+            r.right_bottom(),
+        );
+        let dx = vec2(i, 0.0);
         match node.shape {
             Shape::Rect => {
                 painter.rect(r, 2.0, p.surface, stroke, StrokeKind::Inside);
@@ -577,14 +705,51 @@ fn draw_diagram(
             Shape::Circle => {
                 painter.circle(c, half.x.min(half.y), p.surface, stroke);
             }
-            Shape::Diamond => {
-                let pts = vec![
-                    c - vec2(0.0, half.y),
-                    c + vec2(half.x, 0.0),
-                    c + vec2(0.0, half.y),
-                    c - vec2(half.x, 0.0),
-                ];
-                painter.add(S::convex_polygon(pts, p.surface, stroke));
+            Shape::DoubleCircle => {
+                let outer = half.x.min(half.y);
+                painter.circle(c, outer, p.surface, stroke);
+                painter.circle_stroke(c, outer - 3.5 * scale.max(0.5), stroke);
+            }
+            Shape::Diamond => poly(vec![
+                c - vec2(0.0, half.y),
+                c + vec2(half.x, 0.0),
+                c + vec2(0.0, half.y),
+                c - vec2(half.x, 0.0),
+            ]),
+            Shape::Hexagon => poly(vec![
+                lt + dx,
+                rt - dx,
+                pos2(r.right(), c.y),
+                rb - dx,
+                lb + dx,
+                pos2(r.left(), c.y),
+            ]),
+            Shape::Parallelogram => poly(vec![lt + dx, rt, rb - dx, lb]),
+            Shape::ParallelogramAlt => poly(vec![lt, rt - dx, rb, lb + dx]),
+            Shape::Trapezoid => poly(vec![lt + dx, rt - dx, rb, lb]),
+            Shape::TrapezoidAlt => poly(vec![lt, rt, rb - dx, lb + dx]),
+            Shape::Cylinder => {
+                // Body with elliptical lids h/6 high (the layout adds h/2).
+                let ry = r.height() / 6.0;
+                let rx = r.width() / 2.0;
+                let ellipse = |cy: f32, from: f32, to: f32| -> Vec<Pos2> {
+                    (0..=16)
+                        .map(|k| {
+                            let t = from + (to - from) * k as f32 / 16.0;
+                            pos2(c.x + rx * t.cos(), cy + ry * t.sin())
+                        })
+                        .collect()
+                };
+                let pi = std::f32::consts::PI;
+                let (top, bottom) = (r.top() + ry, r.bottom() - ry);
+                // Left side down, front of the bottom lid, right side up,
+                // back of the top lid.
+                let mut pts = vec![pos2(r.left(), top)];
+                pts.extend(ellipse(bottom, pi, 0.0));
+                pts.extend(ellipse(top, 0.0, -pi).into_iter().skip(1));
+                pts.pop();
+                poly(pts);
+                painter.add(S::line(ellipse(top, 0.0, pi), stroke));
             }
         }
         label(&node.label, c, p.text, None);
@@ -595,6 +760,220 @@ fn draw_diagram(
             && e.stroke != Line::Invisible
         {
             label(text, at(x, y), body(p), Some(p.canvas));
+        }
+    }
+}
+
+fn draw_sequence(
+    ui: &mut egui::Ui,
+    sq: &sanain_markdown::mermaid::sequence::Sequence,
+    l: &sanain_markdown::mermaid::sequence::SeqLayout,
+    size: f32,
+    st: &Style<'_>,
+) {
+    use egui::{Align2, Pos2, Shape as S, StrokeKind, pos2, vec2};
+    use sanain_markdown::mermaid::sequence::{Item, Line, Rect, Tip, bracketed};
+    let p = st.p;
+    let Some((painter, origin, scale)) = diagram_canvas(ui, l.width, l.height, size, p) else {
+        return;
+    };
+    let at = |x: f32, y: f32| pos2(origin.x + x * scale, origin.y + y * scale);
+    let rect = |r: &Rect| egui::Rect::from_min_size(at(r.x, r.y), vec2(r.w, r.h) * scale);
+    let font = diagram_font((size * scale).max(4.0));
+    let small = diagram_font((size * 0.8 * scale).max(4.0));
+    let text = |t: &str, pos: Pos2, align: Align2, color: Color32| {
+        diagram_text(&painter, t, &font, pos, align, color, None);
+    };
+    let pad = sanain_markdown::mermaid::Spacing::for_font(size).pad * scale;
+    let line_color = p.text.lerp_to_gamma(p.muted, 0.5);
+    let thin = Stroke::new(1.2 * scale.max(0.6), line_color);
+    let box_stroke = Stroke::new(1.3 * scale.max(0.6), p.accent);
+    let dash = 4.0 * scale.max(0.5);
+    // Lifelines.
+    for i in 0..l.heads.len() {
+        let x = origin.x + l.center(i) * scale;
+        let (y0, y1) = (at(0.0, l.lifeline.0).y, at(0.0, l.lifeline.1).y);
+        painter.extend(S::dashed_line(
+            &[pos2(x, y0), pos2(x, y1)],
+            Stroke::new(1.0 * scale.max(0.6), p.border.lerp_to_gamma(p.muted, 0.3)),
+            dash,
+            dash,
+        ));
+    }
+    for b in &l.activations {
+        painter.rect(rect(b), 0.0, p.surface, box_stroke, StrokeKind::Inside);
+    }
+    // Block frames: outlines and section lines here, labels on top later.
+    let frame_stroke = Stroke::new(1.0 * scale.max(0.6), p.muted);
+    for f in &l.frames {
+        let r = rect(&f.rect);
+        painter.rect_stroke(r, 3.0 * scale, frame_stroke, StrokeKind::Inside);
+        for (y, _) in &f.branches {
+            let y = at(0.0, *y).y;
+            painter.extend(S::dashed_line(
+                &[pos2(r.left(), y), pos2(r.right(), y)],
+                frame_stroke,
+                dash,
+                dash,
+            ));
+        }
+    }
+    // Messages.
+    let tip = |end: Pos2, dir: egui::Vec2, kind: Tip| {
+        let len = 8.0 * scale.max(0.5);
+        let base = end - dir * len;
+        let side = dir.rot90() * len * 0.45;
+        match kind {
+            Tip::None => {}
+            Tip::Arrow => {
+                painter.add(S::convex_polygon(
+                    vec![end, base + side, base - side],
+                    line_color,
+                    Stroke::NONE,
+                ));
+            }
+            Tip::Open => {
+                painter.add(S::line(vec![base + side, end, base - side], thin));
+            }
+            Tip::Cross => {
+                let c = end - dir * len * 0.5;
+                let (a, b) = (
+                    (dir + dir.rot90()) * len * 0.35,
+                    (dir - dir.rot90()) * len * 0.35,
+                );
+                let s = Stroke::new(1.6 * scale.max(0.6), line_color);
+                painter.line_segment([c - a, c + a], s);
+                painter.line_segment([c - b, c + b], s);
+            }
+        }
+    };
+    for m in &l.messages {
+        let Some(Item::Message {
+            text: label,
+            line,
+            tip: kind,
+            number,
+            ..
+        }) = sq.items.get(m.item)
+        else {
+            continue;
+        };
+        let pts: Vec<Pos2> = match m.loop_size {
+            Some((w, h)) => vec![
+                at(m.x1, m.y),
+                at(m.x1 + w, m.y),
+                at(m.x1 + w, m.y + h),
+                at(m.x1, m.y + h),
+            ],
+            None => vec![at(m.x1, m.y), at(m.x2, m.y)],
+        };
+        if *line == Line::Dotted {
+            painter.extend(S::dashed_line(&pts, thin, dash, dash));
+        } else {
+            painter.add(S::line(pts.clone(), thin));
+        }
+        let k = pts.len() - 1;
+        let dir = (pts[k] - pts[k - 1]).normalized();
+        tip(pts[k], dir, *kind);
+        text(
+            label,
+            at(m.text_at.0, m.text_at.1),
+            Align2::CENTER_CENTER,
+            body(p),
+        );
+        if let (Some(n), Some((x, y))) = (number, m.number_at) {
+            let c = at(x, y);
+            painter.circle_filled(c, size * 0.6 * scale, p.accent);
+            diagram_text(
+                &painter,
+                &n.to_string(),
+                &small,
+                c,
+                Align2::CENTER_CENTER,
+                p.canvas,
+                None,
+            );
+        }
+    }
+    // Notes.
+    let note_fill = p.surface.lerp_to_gamma(p.warning, 0.18);
+    let note_stroke = Stroke::new(1.0 * scale.max(0.6), p.warning.lerp_to_gamma(p.border, 0.5));
+    for nb in &l.notes {
+        let Some(Item::Note { text: t, .. }) = sq.items.get(nb.item) else {
+            continue;
+        };
+        let r = rect(&nb.rect);
+        painter.rect(r, 2.0, note_fill, note_stroke, StrokeKind::Inside);
+        text(t, r.center(), Align2::CENTER_CENTER, p.text);
+    }
+    // Frame labels above bars and lines.
+    let labelled = |t: &str, pos: Pos2, align: Align2| {
+        diagram_text(&painter, t, &font, pos, align, body(p), Some(p.canvas));
+    };
+    for f in &l.frames {
+        let r = rect(&f.rect);
+        let tab = rect(&f.tab);
+        painter.rect(tab, 0.0, p.surface, frame_stroke, StrokeKind::Inside);
+        text(
+            f.kind.keyword(),
+            tab.center(),
+            Align2::CENTER_CENTER,
+            p.text,
+        );
+        if !f.label.is_empty() {
+            labelled(
+                &bracketed(&f.label),
+                pos2(tab.right() + pad * 0.5, tab.center().y),
+                Align2::LEFT_CENTER,
+            );
+        }
+        for (y, label) in &f.branches {
+            if !label.is_empty() {
+                let y = at(0.0, *y).y;
+                labelled(
+                    &bracketed(label),
+                    pos2(r.center().x, y + pad * 0.4),
+                    Align2::CENTER_TOP,
+                );
+            }
+        }
+    }
+    // Participant boxes, top and bottom.
+    for (i, part) in sq.participants.iter().enumerate() {
+        for b in [&l.heads[i], &l.feet[i]] {
+            let r = rect(b);
+            if part.actor {
+                let lr = diagram_text(
+                    &painter,
+                    &part.label,
+                    &font,
+                    pos2(r.center().x, r.bottom()),
+                    Align2::CENTER_BOTTOM,
+                    p.text,
+                    None,
+                );
+                // Stick figure above the label.
+                let fig =
+                    egui::Rect::from_min_max(r.left_top(), pos2(r.right(), lr.top() - pad * 0.25));
+                let fh = fig.height();
+                let cx = fig.center().x;
+                let s = Stroke::new(1.4 * scale.max(0.6), p.accent);
+                let head_r = fh * 0.16;
+                let neck = fig.top() + head_r * 2.0;
+                painter.circle(pos2(cx, fig.top() + head_r), head_r, p.surface, s);
+                let hip = fig.top() + fh * 0.66;
+                painter.line_segment([pos2(cx, neck), pos2(cx, hip)], s);
+                let arm_y = neck + fh * 0.12;
+                painter.line_segment(
+                    [pos2(cx - fh * 0.28, arm_y), pos2(cx + fh * 0.28, arm_y)],
+                    s,
+                );
+                painter.line_segment([pos2(cx, hip), pos2(cx - fh * 0.22, fig.bottom())], s);
+                painter.line_segment([pos2(cx, hip), pos2(cx + fh * 0.22, fig.bottom())], s);
+            } else {
+                painter.rect(r, 3.0 * scale, p.surface, box_stroke, StrokeKind::Inside);
+                text(&part.label, r.center(), Align2::CENTER_CENTER, p.text);
+            }
         }
     }
 }
