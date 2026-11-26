@@ -433,3 +433,7 @@ settings-tab-general = Algemeen
 settings-tab-editor = Editor
 settings-tab-appearance = Weergave
 settings-shortcut-search = Zoek opdrachten of toetsen
+settings-font = Lettertype
+settings-font-default = Ingebouwd monospace
+settings-font-loading = Geïnstalleerde lettertypen zoeken…
+settings-font-missing = Het lettertype { $font } is niet gevonden; het ingebouwde lettertype wordt gebruikt.

@@ -435,3 +435,7 @@ settings-tab-general = General
 settings-tab-editor = Editor
 settings-tab-appearance = Appearance
 settings-shortcut-search = Search commands or keys
+settings-font = Font
+settings-font-default = Built-in monospace
+settings-font-loading = Looking for installed fonts…
+settings-font-missing = The font { $font } was not found; using the built-in font.

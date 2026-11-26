@@ -433,3 +433,7 @@ settings-tab-general = Genel
 settings-tab-editor = Düzenleyici
 settings-tab-appearance = Görünüm
 settings-shortcut-search = Komut veya tuş ara
+settings-font = Yazı tipi
+settings-font-default = Yerleşik eş aralıklı
+settings-font-loading = Yüklü yazı tipleri aranıyor…
+settings-font-missing = { $font } yazı tipi bulunamadı; yerleşik yazı tipi kullanılıyor.

@@ -481,3 +481,7 @@ settings-tab-general = Ogólne
 settings-tab-editor = Edytor
 settings-tab-appearance = Wygląd
 settings-shortcut-search = Szukaj poleceń lub klawiszy
+settings-font = Czcionka
+settings-font-default = Wbudowana o stałej szerokości
+settings-font-loading = Wyszukiwanie zainstalowanych czcionek…
+settings-font-missing = Nie znaleziono czcionki { $font }; używana jest czcionka wbudowana.

@@ -409,3 +409,7 @@ settings-tab-general = 一般
 settings-tab-editor = 編輯器
 settings-tab-appearance = 外觀
 settings-shortcut-search = 搜尋命令或按鍵
+settings-font = 字體
+settings-font-default = 內建等寬字體
+settings-font-loading = 正在尋找已安裝的字體…
+settings-font-missing = 找不到字體 { $font }，改用內建字體。

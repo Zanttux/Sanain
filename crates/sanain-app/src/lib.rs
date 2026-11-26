@@ -4,6 +4,7 @@ pub mod cli;
 pub mod editor;
 pub mod editorconfig;
 pub mod filesearch;
+pub mod fonts;
 pub mod fuzzy;
 pub mod images;
 pub mod keymap;

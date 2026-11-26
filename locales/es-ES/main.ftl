@@ -433,3 +433,7 @@ settings-tab-general = General
 settings-tab-editor = Editor
 settings-tab-appearance = Apariencia
 settings-shortcut-search = Buscar comandos o teclas
+settings-font = Tipo de letra
+settings-font-default = Monoespaciada integrada
+settings-font-loading = Buscando tipos de letra instalados…
+settings-font-missing = No se encontró el tipo de letra { $font }; se usa el tipo de letra integrado.

@@ -23,6 +23,30 @@ use crate::view::{EditorView, ViewOptions};
 use sanain_app::settings::{FONT_SIZE_DEFAULT, Settings, ThemeChoice};
 use sanain_app::update::{Status as UpdateStatus, UpdateError};
 
+/// Background font work for the editor font setting.
+enum FontMsg {
+    Families(Vec<String>),
+    /// (family, regular face bytes and index); `None` if not found.
+    Loaded(String, Option<(Vec<u8>, u32)>),
+}
+
+/// Use `face` as the first monospace font (the built-in fonts stay as
+/// fallbacks for missing glyphs); `None` restores the default.
+fn apply_editor_font(ctx: &egui::Context, face: Option<(Vec<u8>, u32)>) {
+    let mut fonts = egui::FontDefinitions::default();
+    if let Some((bytes, index)) = face {
+        let mut data = egui::FontData::from_owned(bytes);
+        data.index = index;
+        fonts
+            .font_data
+            .insert("sanain-editor".into(), std::sync::Arc::new(data));
+        if let Some(mono) = fonts.families.get_mut(&egui::FontFamily::Monospace) {
+            mono.insert(0, "sanain-editor".into());
+        }
+    }
+    ctx.set_fonts(fonts);
+}
+
 /// Sections of the Settings window.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum SettingsTab {
@@ -204,6 +228,12 @@ pub struct Shell {
     settings_tab: SettingsTab,
     /// Filter text of the shortcut list in Settings.
     shortcut_filter: String,
+    /// Installed monospaced families (None until scanned).
+    font_families: Option<Vec<String>>,
+    /// Results of background font work.
+    font_rx: Option<std::sync::mpsc::Receiver<FontMsg>>,
+    /// The editor font requested last, to apply only the latest result.
+    font_wanted: Option<String>,
     /// Folders outside a document's own folder the user allowed images
     /// from (this session only).
     allowed_image_dirs: Vec<std::path::PathBuf>,
@@ -369,6 +399,9 @@ impl Shell {
             outline_open: false,
             settings_tab: SettingsTab::General,
             shortcut_filter: String::new(),
+            font_families: None,
+            font_rx: None,
+            font_wanted: None,
             allowed_image_dirs: Vec::new(),
             outline_follow: false,
             recent: Default::default(),
@@ -818,6 +851,9 @@ impl Shell {
         let moved = &mut self.shortcut_moved;
         let tab = &mut self.settings_tab;
         let filter = &mut self.shortcut_filter;
+        let families = self.font_families.clone();
+        let scanning = self.font_rx.is_some();
+        let mut scan_fonts = false;
         let was_recording = recording.is_some();
         let mut focus_search = false;
         egui::Window::new(title)
@@ -921,6 +957,50 @@ impl Shell {
                                     .num_columns(2)
                                     .spacing([16.0, 10.0])
                                     .show(ui, |ui| {
+                                        ui.label(l("settings-font"));
+                                        let default_name = l("settings-font-default");
+                                        let current = s
+                                            .editor_font
+                                            .clone()
+                                            .unwrap_or_else(|| default_name.clone());
+                                        match &families {
+                                            None => {
+                                                scan_fonts = !scanning;
+                                                ui.horizontal(|ui| {
+                                                    ui.spinner();
+                                                    ui.weak(l("settings-font-loading"));
+                                                });
+                                            }
+                                            Some(list) => {
+                                                egui::ComboBox::from_id_salt("settings-font")
+                                                    .selected_text(current)
+                                                    .width(240.0)
+                                                    .height(320.0)
+                                                    .show_ui(ui, |ui| {
+                                                        ui.selectable_value(
+                                                            &mut s.editor_font,
+                                                            None,
+                                                            default_name,
+                                                        );
+                                                        for f in list {
+                                                            ui.selectable_value(
+                                                                &mut s.editor_font,
+                                                                Some(f.clone()),
+                                                                f,
+                                                            );
+                                                        }
+                                                    });
+                                            }
+                                        }
+                                        ui.end_row();
+                                        ui.label("");
+                                        ui.label(
+                                            egui::RichText::new(
+                                                "fn main() { let 0O = 1lI; } // äö → ≠",
+                                            )
+                                            .font(egui::FontId::monospace(s.font_size)),
+                                        );
+                                        ui.end_row();
                                         ui.label(l("settings-font-size"));
                                         ui.add(
                                             egui::DragValue::new(&mut s.font_size)
@@ -1119,6 +1199,12 @@ impl Shell {
                     }
                 }
             });
+        if scan_fonts {
+            self.font_job(|| FontMsg::Families(sanain_app::fonts::monospace_families()));
+        }
+        if self.settings.editor_font != before.editor_font {
+            self.request_editor_font();
+        }
         if self.settings != before {
             self.save_settings();
         }
@@ -1767,6 +1853,58 @@ impl Shell {
         }
         if !self.palette.open {
             self.focus_active();
+        }
+    }
+
+    /// Start a background job whose result arrives as a [`FontMsg`].
+    fn font_job(&mut self, job: impl FnOnce() -> FontMsg + Send + 'static) {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let ctx = self.ctx.clone();
+        let _ = std::thread::Builder::new()
+            .name("sanain-fonts".into())
+            .spawn(move || {
+                let _ = tx.send(job());
+                ctx.request_repaint();
+            });
+        self.font_rx = Some(rx);
+    }
+
+    /// At startup: load the saved editor font in the background.
+    pub fn start_editor_font(&mut self, ctx: &egui::Context) {
+        self.ctx = ctx.clone();
+        if self.settings.editor_font.is_some() {
+            self.request_editor_font();
+        }
+    }
+
+    /// Load (or reset) the editor font from the settings.
+    fn request_editor_font(&mut self) {
+        self.font_wanted = self.settings.editor_font.clone();
+        match self.settings.editor_font.clone() {
+            Some(family) => self.font_job(move || {
+                let face = sanain_app::fonts::load_family(&family);
+                FontMsg::Loaded(family, face)
+            }),
+            None => apply_editor_font(&self.ctx, None),
+        }
+    }
+
+    fn poll_fonts(&mut self, ctx: &egui::Context) {
+        let Some(rx) = &self.font_rx else { return };
+        let Ok(msg) = rx.try_recv() else { return };
+        self.font_rx = None;
+        match msg {
+            FontMsg::Families(f) => self.font_families = Some(f),
+            FontMsg::Loaded(family, face) => {
+                if self.font_wanted.as_deref() != Some(family.as_str()) {
+                    return;
+                }
+                if face.is_none() {
+                    let msg = self.t("settings-font-missing", &[("font", family.into())]);
+                    self.status = Some((msg, true));
+                }
+                apply_editor_font(ctx, face);
+            }
         }
     }
 
@@ -3888,6 +4026,7 @@ impl eframe::App for Shell {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
         self.ctx = ctx.clone();
+        self.poll_fonts(&ctx);
         // Files dropped onto the window open in tabs.
         let dropped: Vec<std::path::PathBuf> = ctx.input(|i| {
             i.raw
