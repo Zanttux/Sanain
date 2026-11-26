@@ -406,3 +406,5 @@ cli-help =
     Folosiți -- înaintea numelor de fișiere care încep cu o cratimă.
 cli-unknown-option = Opțiune necunoscută { $option }.
 cli-diff-needs-two = --diff necesită două fișiere: sanain --diff STÂNGA DREAPTA
+window-move-tab-left = Mută fila la stânga
+window-move-tab-right = Mută fila la dreapta

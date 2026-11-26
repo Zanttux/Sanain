@@ -368,3 +368,5 @@ cli-help =
     Gunakan -- sebelum nama berkas yang diawali tanda hubung.
 cli-unknown-option = Opsi tidak dikenal { $option }.
 cli-diff-needs-two = --diff memerlukan dua berkas: sanain --diff KIRI KANAN
+window-move-tab-left = Pindahkan Tab ke Kiri
+window-move-tab-right = Pindahkan Tab ke Kanan

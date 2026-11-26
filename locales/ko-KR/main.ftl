@@ -368,3 +368,5 @@ cli-help =
     대시로 시작하는 파일 이름 앞에는 --를 사용하세요.
 cli-unknown-option = 알 수 없는 옵션 { $option }.
 cli-diff-needs-two = --diff에는 두 파일이 필요합니다: sanain --diff 왼쪽 오른쪽
+window-move-tab-left = 탭을 왼쪽으로 이동
+window-move-tab-right = 탭을 오른쪽으로 이동

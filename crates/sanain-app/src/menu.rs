@@ -26,6 +26,8 @@ pub enum MenuAction {
     ReopenTab,
     NextTab,
     PrevTab,
+    MoveTabLeft,
+    MoveTabRight,
     Find,
     FindNext,
     FindPrev,
@@ -91,7 +93,7 @@ pub enum MenuAction {
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 81] = [
+    pub const ALL: [MenuAction; 83] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -111,6 +113,8 @@ impl MenuAction {
         Self::ReopenTab,
         Self::NextTab,
         Self::PrevTab,
+        Self::MoveTabLeft,
+        Self::MoveTabRight,
         Self::Find,
         Self::FindNext,
         Self::FindPrev,
@@ -197,6 +201,8 @@ impl MenuAction {
             Self::ReopenTab => "file.reopen-tab",
             Self::NextTab => "window.next-tab",
             Self::PrevTab => "window.prev-tab",
+            Self::MoveTabLeft => "window.move-tab-left",
+            Self::MoveTabRight => "window.move-tab-right",
             Self::Find => "edit.find",
             Self::FindNext => "edit.find-next",
             Self::FindPrev => "edit.find-prev",
@@ -289,6 +295,8 @@ impl MenuAction {
             Self::ReopenTab => "file-reopen-tab",
             Self::NextTab => "window-next-tab",
             Self::PrevTab => "window-prev-tab",
+            Self::MoveTabLeft => "window-move-tab-left",
+            Self::MoveTabRight => "window-move-tab-right",
             Self::Find => "edit-find",
             Self::FindNext => "edit-find-next",
             Self::FindPrev => "edit-find-prev",
@@ -413,6 +421,8 @@ impl MenuAction {
             Self::ReopenTab => (cmd_shift, Key::T),
             Self::NextTab => (Modifiers::CTRL, Key::Tab),
             Self::PrevTab => (Modifiers::CTRL.plus(Modifiers::SHIFT), Key::Tab),
+            Self::MoveTabLeft => (Modifiers::CTRL.plus(Modifiers::SHIFT), Key::PageUp),
+            Self::MoveTabRight => (Modifiers::CTRL.plus(Modifiers::SHIFT), Key::PageDown),
             Self::Find => (cmd, Key::F),
             Self::FindNext => (cmd, Key::G),
             Self::FindPrev => (cmd_shift, Key::G),
@@ -547,6 +557,8 @@ const FILE_ITEMS: &[Option<MenuAction>] = &[
 const WINDOW_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::NextTab),
     Some(MenuAction::PrevTab),
+    Some(MenuAction::MoveTabLeft),
+    Some(MenuAction::MoveTabRight),
     None,
     Some(MenuAction::PinTab),
     Some(MenuAction::UnpinTab),
@@ -804,6 +816,14 @@ mod native {
             MenuAction::PrevTab => (
                 Modifiers::CONTROL | Modifiers::SHIFT,
                 Key::Named(NamedKey::Tab),
+            ),
+            MenuAction::MoveTabLeft => (
+                Modifiers::CONTROL | Modifiers::SHIFT,
+                Key::Named(NamedKey::PageUp),
+            ),
+            MenuAction::MoveTabRight => (
+                Modifiers::CONTROL | Modifiers::SHIFT,
+                Key::Named(NamedKey::PageDown),
             ),
             MenuAction::Find => (cmd, ch("f")),
             MenuAction::FindNext => (cmd, ch("g")),

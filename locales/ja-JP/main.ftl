@@ -368,3 +368,5 @@ cli-help =
     ダッシュで始まるファイル名の前には -- を付けてください。
 cli-unknown-option = 不明なオプション { $option }。
 cli-diff-needs-two = --diff には 2 つのファイルが必要です: sanain --diff 左 右
+window-move-tab-left = タブを左に移動
+window-move-tab-right = タブを右に移動

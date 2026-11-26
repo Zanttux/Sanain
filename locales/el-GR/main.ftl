@@ -387,3 +387,5 @@ cli-help =
     Χρησιμοποιήστε -- πριν από ονόματα αρχείων που αρχίζουν με παύλα.
 cli-unknown-option = Άγνωστη επιλογή { $option }.
 cli-diff-needs-two = Το --diff χρειάζεται δύο αρχεία: sanain --diff ΑΡΙΣΤΕΡΑ ΔΕΞΙΑ
+window-move-tab-left = Μετακίνηση καρτέλας αριστερά
+window-move-tab-right = Μετακίνηση καρτέλας δεξιά
