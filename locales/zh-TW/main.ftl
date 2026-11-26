@@ -413,3 +413,4 @@ settings-font = 字體
 settings-font-default = 內建等寬字體
 settings-font-loading = 正在尋找已安裝的字體…
 settings-font-missing = 找不到字體 { $font }，改用內建字體。
+about-sponsor = 在 GitHub Sponsors 上支持 Sanain

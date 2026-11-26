@@ -413,3 +413,4 @@ settings-font = Phông chữ
 settings-font-default = Phông đơn cách tích hợp
 settings-font-loading = Đang tìm phông chữ đã cài đặt…
 settings-font-missing = Không tìm thấy phông chữ { $font }; đang dùng phông chữ tích hợp.
+about-sponsor = Ủng hộ Sanain trên GitHub Sponsors

@@ -81,6 +81,13 @@ Fast by design. Powerful when needed. Simple by default.
 
 Screenshots are from a real build (macOS, release profile).
 
+## Support Sanain
+
+Sanain is free for everyone, with every feature included. If it is
+useful to you, you can support its development through
+[GitHub Sponsors](https://github.com/sponsors/Zanttux). Sponsors get no
+special influence over the project (see [GOVERNANCE.md](GOVERNANCE.md)).
+
 ## Principles
 
 Offline by default. No accounts, ads or telemetry. All features are free.

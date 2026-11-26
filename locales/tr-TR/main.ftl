@@ -437,3 +437,4 @@ settings-font = Yazı tipi
 settings-font-default = Yerleşik eş aralıklı
 settings-font-loading = Yüklü yazı tipleri aranıyor…
 settings-font-missing = { $font } yazı tipi bulunamadı; yerleşik yazı tipi kullanılıyor.
+about-sponsor = Sanain'i GitHub Sponsors üzerinden destekleyin

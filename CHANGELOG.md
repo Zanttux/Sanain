@@ -5,6 +5,8 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- Support link: GitHub Sponsors in Help › About (after the usual
+  confirmation), the repository's Sponsor button and the README (#88).
 - Settings › Editor › Font: choose any installed monospaced font, with a
   preview; built-in fonts remain the fallback for missing characters
   (#83).

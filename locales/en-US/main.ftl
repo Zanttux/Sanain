@@ -439,3 +439,4 @@ settings-font = Font
 settings-font-default = Built-in monospace
 settings-font-loading = Looking for installed fonts…
 settings-font-missing = The font { $font } was not found; using the built-in font.
+about-sponsor = Support Sanain on GitHub Sponsors

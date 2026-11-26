@@ -413,3 +413,4 @@ settings-font = Font
 settings-font-default = Monospace bawaan
 settings-font-loading = Mencari font yang terpasang…
 settings-font-missing = Font { $font } tidak ditemukan; menggunakan font bawaan.
+about-sponsor = Dukung Sanain di GitHub Sponsors

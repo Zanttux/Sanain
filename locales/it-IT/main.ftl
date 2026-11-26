@@ -437,3 +437,4 @@ settings-font = Carattere
 settings-font-default = Monospaziato integrato
 settings-font-loading = Ricerca dei caratteri installati…
 settings-font-missing = Il carattere { $font } non è stato trovato; viene usato il carattere integrato.
+about-sponsor = Sostieni Sanain su GitHub Sponsors

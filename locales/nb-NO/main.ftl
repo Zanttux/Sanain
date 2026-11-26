@@ -437,3 +437,4 @@ settings-font = Skrifttype
 settings-font-default = Innebygd fastbreddeskrift
 settings-font-loading = Søker etter installerte skrifttyper…
 settings-font-missing = Fant ikke skrifttypen { $font }; bruker den innebygde skrifttypen.
+about-sponsor = Støtt Sanain på GitHub Sponsors

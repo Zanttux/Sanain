@@ -461,3 +461,4 @@ settings-font = Police
 settings-font-default = Police à chasse fixe intégrée
 settings-font-loading = Recherche des polices installées…
 settings-font-missing = La police { $font } est introuvable ; la police intégrée est utilisée.
+about-sponsor = Soutenez Sanain sur GitHub Sponsors

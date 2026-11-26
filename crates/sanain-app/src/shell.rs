@@ -2120,6 +2120,7 @@ impl Shell {
             return;
         }
         const REPO: &str = "https://github.com/Zanttux/Sanain";
+        const SPONSOR: &str = "https://github.com/sponsors/Zanttux";
         let p = theme::palette(ctx);
         let version = self.t(
             "about-version",
@@ -2132,8 +2133,10 @@ impl Shell {
             self.t("about-notices", &[]),
             self.t("about-source", &[]),
         );
+        let sponsor_l = self.t("about-sponsor", &[]);
         let mut open = true;
         let mut link = false;
+        let mut sponsor = false;
         egui::Window::new(self.t("app-about", &[]).trim_end_matches('…').to_owned())
             .id(egui::Id::unique("sanain-about"))
             .open(&mut open)
@@ -2162,6 +2165,10 @@ impl Shell {
                     if ui.link(repo_l).clicked() {
                         link = true;
                     }
+                    ui.add_space(2.0);
+                    if ui.link(sponsor_l).clicked() {
+                        sponsor = true;
+                    }
                     ui.add_space(6.0);
                 });
             });
@@ -2171,6 +2178,9 @@ impl Shell {
         if link {
             // The usual confirmation before leaving the app.
             self.dialog = Some(Dialog::OpenLink(REPO.to_owned()));
+        }
+        if sponsor {
+            self.dialog = Some(Dialog::OpenLink(SPONSOR.to_owned()));
         }
     }
 

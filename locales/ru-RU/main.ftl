@@ -485,3 +485,4 @@ settings-font = Шрифт
 settings-font-default = Встроенный моноширинный
 settings-font-loading = Поиск установленных шрифтов…
 settings-font-missing = Шрифт { $font } не найден; используется встроенный шрифт.
+about-sponsor = Поддержите Sanain на GitHub Sponsors
