@@ -21,6 +21,8 @@ pub fn take_opened_files() -> Vec<PathBuf> {
         .unwrap_or_default()
 }
 
+// Only the macOS handler (and tests) push files.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 fn push_opened(paths: Vec<PathBuf>) {
     if paths.is_empty() {
         return;
