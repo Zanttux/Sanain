@@ -8,7 +8,7 @@ are cross-platform verification and release readiness.
 ## Summary for the owner
 - 74 pull requests merged; every one passed CI on Linux, Windows and
   macOS plus the dependency check (cargo-deny, third-party notices).
-  207 automated tests pass. A fresh-context review of the recent
+  233 automated tests pass. A fresh-context review of the recent
   file-handling changes found four bugs, all fixed (#74).
 - Sanain is a usable everyday editor on macOS: tabs and split view,
   multiple cursors, macros, word wrap, find/replace with preview and
@@ -39,7 +39,7 @@ are cross-platform verification and release readiness.
   reopen → bytes verified) passes as an automated test.
 - Checks on this machine (2026-11-26): `cargo fmt --check` clean;
   `cargo clippy --workspace --all-targets --locked -D warnings` clean;
-  `cargo test --workspace --locked` 207 passed, 0 failed; `cargo deny
+  `cargo test --workspace --locked` 233 passed, 0 failed; `cargo deny
   --locked check` clean.
 - Multi-cursor selections and grapheme-aware editing commands.
 - First egui editor window (`cargo run -p sanain-app -- file`). Verified
@@ -64,7 +64,7 @@ are cross-platform verification and release readiness.
 | ID | State | Evidence |
 |---|---|---|
 | E01 | Partial | Round-trip and conflict tests in `crates/sanain-io/tests/file_lifecycle.rs` |
-| E03 | Partial | Undo/redo, grouped transactions, property test, indent/outdent of selected lines (Tab/Shift+Tab), toggle line comment, multi-cursor editing created by Alt+click, Add Cursor Above/Below (keyboard) and Alt+drag rectangular selection; Esc collapses. Select Next Occurrence (Cmd/Ctrl+D) and Skip to Next Occurrence (Cmd/Ctrl+Shift+D). Not yet: rectangular selection by keyboard, virtual space past line ends |
+| E03 | Partial | Undo/redo, grouped transactions, property test, indent/outdent of selected lines (Tab/Shift+Tab), toggle line comment, multi-cursor editing created by Alt+click, Add Cursor Above/Below (keyboard) and Alt+drag rectangular selection; Esc collapses. Select Next Occurrence (Cmd/Ctrl+D) and Skip to Next Occurrence (Cmd/Ctrl+Shift+D). Keyboard rectangles use Ctrl+Alt+Shift+Arrow (Control+Option+Shift on macOS), preserving Shift+Alt line duplication; virtual space past line ends remains unimplemented. |
 | E12 | Partial | Grapheme-cluster navigation and deletion; editor exposes the caret line, caret and selection to AccessKit (checked via the macOS accessibility API: AXValue and AXSelectedText follow the caret); high-contrast appearance; every command reachable by keyboard (menus, palette). Not yet: tested with VoiceOver speech by a person, NVDA/Orca, IME composition by a person |
 | E04 | Partial | Find/replace in the current tab: literal, regex, case, whole word, highlight, count, replace all as one undo. Replace All shows a preview (count, changed lines before/after, first 200) and applies only on confirmation, refusing if the document changed meanwhile. Search across files: see E15. Searches in documents over 1 M chars run in the background and are cancelled by newer ones (147 MB file stays responsive). |
 | E08 | Partial | Source/split/preview, GFM blocks and inlines, front matter, caret-following preview, raw HTML inert, source bytes unchanged (hash checked). Links: web with confirmation, local files, anchors, unsafe schemes blocked. Local images inside the document folder (limits enforced; remote never fetched). Go to Heading (filterable heading list). Fenced code blocks coloured by language (18 languages and common aliases, blocks up to 64 KB, parsed once per block). Outline side panel (View › Outline: heading tree, current section highlighted, click to jump). Images outside the document folder are shown only after the user allows that folder (per session, button next to the image). Not yet: Mermaid |

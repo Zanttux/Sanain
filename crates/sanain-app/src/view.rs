@@ -132,10 +132,39 @@ impl Rows {
     }
 }
 
+#[derive(Debug)]
+struct ColumnMode {
+    anchor: (usize, usize),
+    head: (usize, usize),
+}
+
+/// Shift+Alt arrows already duplicate lines. Add physical Control on all
+/// platforms (Control+Option+Shift on macOS), without Command on macOS.
+pub(crate) fn column_key(event: &Event) -> Option<Key> {
+    match event {
+        Event::Key {
+            key, modifiers: m, ..
+        } if m.ctrl
+            && m.alt
+            && m.shift
+            && !m.mac_cmd
+            && matches!(
+                key,
+                Key::ArrowUp | Key::ArrowDown | Key::ArrowLeft | Key::ArrowRight
+            ) =>
+        {
+            Some(*key)
+        }
+        _ => None,
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct EditorView {
     /// IME composition text, shown at the caret until committed.
     preedit: String,
+    /// Logical anchor and moving corner for keyboard rectangular selection.
+    column_mode: Option<ColumnMode>,
     /// Widest line seen so far, for the horizontal scroll extent.
     max_width: f32,
     focus_requested: bool,
@@ -174,6 +203,11 @@ impl EditorView {
         Rows::Wrap(m)
     }
 
+    /// Native menu shortcuts may never produce an egui key event.
+    pub fn end_column_mode(&mut self) {
+        self.column_mode = None;
+    }
+
     pub fn request_focus(&mut self) {
         self.focus_requested = true;
     }
@@ -201,6 +235,19 @@ impl EditorView {
         let id = ui.make_persistent_id("sanain-editor");
         self.widget_id = Some(id);
         let mut changed = false;
+        // Raw events include shortcuts consumed by the shell before the view.
+        // Mouse presses anywhere and consumed keys also end the mode.
+        // Unconsumed keys are handled in order below, including mixed frames.
+        if ui.input(|i| {
+            i.raw.events.iter().any(|event| {
+                matches!(event, Event::PointerButton { pressed: true, .. })
+                    || (matches!(event, Event::Key { pressed: true, .. })
+                        && column_key(event).is_none()
+                        && !i.events.contains(event))
+            })
+        }) {
+            self.column_mode = None;
+        }
 
         // Wrap to the visible width (minus gutter and scroll bar).
         let line_count0 = editor.document().rope().len_lines();
@@ -480,6 +527,13 @@ impl EditorView {
             if response.has_focus() {
                 let events = ui.input(|i| i.events.clone());
                 for event in events {
+                    if self.handle_column_event(editor, &event, tab) {
+                        self.goal_x = None;
+                        changed = true;
+                        moved_by_keyboard = true;
+                        continue;
+                    }
+
                     // With wrapping, Home/End (and Cmd+Left/Right on macOS)
                     // go to the start/end of the display row.
                     if let (
@@ -592,6 +646,9 @@ impl EditorView {
                         moved_by_keyboard |= done;
                     }
                 }
+            }
+            if !response.has_focus() {
+                self.column_mode = None;
             }
             if changed && !moved_by_keyboard {
                 self.goal_x = None;
@@ -839,6 +896,50 @@ impl EditorView {
         changed
     }
 
+    fn handle_column_event(&mut self, editor: &mut Editor, event: &Event, tab: usize) -> bool {
+        if let Some(key) = column_key(event) {
+            if !matches!(event, Event::Key { pressed: true, .. }) || !self.preedit.is_empty() {
+                return false;
+            }
+            let rope = editor.document().rope();
+            let mode = self.column_mode.get_or_insert_with(|| {
+                let anchor = sanain_core::selection::logical_position(
+                    rope,
+                    editor.selections().primary().head,
+                    tab,
+                );
+                ColumnMode {
+                    anchor,
+                    head: anchor,
+                }
+            });
+            match key {
+                Key::ArrowUp => mode.head.0 = mode.head.0.saturating_sub(1),
+                Key::ArrowDown => mode.head.0 = (mode.head.0 + 1).min(rope.len_lines() - 1),
+                Key::ArrowLeft => mode.head.1 = mode.head.1.saturating_sub(1),
+                Key::ArrowRight => mode.head.1 = mode.head.1.saturating_add(1),
+                _ => unreachable!(),
+            }
+            let pairs =
+                sanain_core::selection::rectangular_selections(rope, mode.anchor, mode.head, tab);
+            editor.execute(Command::SetSelections(pairs));
+            return true;
+        }
+        if matches!(
+            event,
+            Event::Key { pressed: true, .. }
+                | Event::Text(_)
+                | Event::Paste(_)
+                | Event::Copy
+                | Event::Cut
+                | Event::Ime(_)
+                | Event::PointerButton { pressed: true, .. }
+        ) {
+            self.column_mode = None;
+        }
+        false
+    }
+
     /// Handle one input event. Returns `Some(scroll)` if it changed state,
     /// where `scroll` asks to bring the caret into view.
     fn handle_event(
@@ -1020,6 +1121,153 @@ fn line_job(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn column_event(key: Key) -> Event {
+        Event::Key {
+            key,
+            physical_key: None,
+            pressed: true,
+            repeat: false,
+            modifiers: egui::Modifiers::CTRL | egui::Modifiers::ALT | egui::Modifiers::SHIFT,
+        }
+    }
+
+    #[test]
+    fn column_extension_then_typing_in_one_frame_keeps_every_row() {
+        for wrap in [false, true] {
+            let ctx = egui::Context::default();
+            let mut editor = Editor::new();
+            editor.execute(Command::Insert("abcd\nx\nwxyz".into()));
+            editor.execute(Command::PlaceCaret {
+                at: 2,
+                extend: false,
+            });
+            let mut view = EditorView::default();
+            let opts = ViewOptions {
+                font_size: 16.0,
+                indent: "    ".into(),
+                tab_width: 4,
+                wrap,
+                menu: ContextLabels::default(),
+            };
+            let mut text_key = column_event(Key::Q);
+            if let Event::Key { modifiers, .. } = &mut text_key {
+                *modifiers = egui::Modifiers::NONE;
+            }
+            for events in [
+                vec![column_event(Key::ArrowDown), column_event(Key::ArrowDown)],
+                vec![
+                    column_event(Key::ArrowRight),
+                    text_key,
+                    Event::Text("Q".into()),
+                ],
+            ] {
+                view.request_focus();
+                let mut output = ctx.run_ui(
+                    egui::RawInput {
+                        events,
+                        ..Default::default()
+                    },
+                    |ui| {
+                        view.show(ui, &mut editor, "Editor", &[], &[], &opts);
+                    },
+                );
+                output.textures_delta.clear();
+            }
+            assert_eq!(editor.document().text(), "abQd\nxQ\nwxQz");
+            assert!(view.column_mode.is_none());
+        }
+    }
+
+    #[test]
+    fn column_keyboard_keeps_anchor_and_replaces_every_row() {
+        let mut editor = Editor::new();
+        editor.execute(Command::Insert("abcd\nx\nwxyz".into()));
+        editor.execute(Command::PlaceCaret {
+            at: 2,
+            extend: false,
+        });
+        let mut view = EditorView::default();
+        for key in [Key::ArrowDown, Key::ArrowDown, Key::ArrowRight] {
+            assert!(view.handle_column_event(&mut editor, &column_event(key), 4));
+        }
+        let pairs: Vec<_> = editor
+            .selections()
+            .iter()
+            .map(|s| (s.anchor, s.head))
+            .collect();
+        assert_eq!(pairs, vec![(2, 3), (6, 6), (9, 10)]);
+        assert_eq!(view.column_mode.as_ref().unwrap().anchor, (0, 2));
+        assert!(!view.handle_column_event(&mut editor, &Event::Text("Q".into()), 4));
+        assert!(view.column_mode.is_none());
+        editor.execute(Command::Insert("Q".into()));
+        assert_eq!(editor.document().text(), "abQd\nxQ\nwxQz");
+        assert!(view.handle_column_event(&mut editor, &column_event(Key::ArrowUp), 4));
+        assert_eq!(view.column_mode.as_ref().unwrap().anchor, (2, 3));
+    }
+
+    #[test]
+    fn column_mode_ends_on_other_keys_and_clicks_but_not_arrow_release() {
+        let mut editor = Editor::new();
+        let mut view = EditorView::default();
+        view.handle_column_event(&mut editor, &column_event(Key::ArrowRight), 4);
+        let mut release = column_event(Key::ArrowRight);
+        if let Event::Key { pressed, .. } = &mut release {
+            *pressed = false;
+        }
+        view.handle_column_event(&mut editor, &release, 4);
+        assert!(view.column_mode.is_some());
+        view.handle_column_event(&mut editor, &column_event(Key::F1), 4);
+        assert!(view.column_mode.is_none());
+        view.handle_column_event(&mut editor, &column_event(Key::ArrowRight), 4);
+        view.handle_column_event(
+            &mut editor,
+            &Event::PointerButton {
+                pos: Pos2::ZERO,
+                button: egui::PointerButton::Primary,
+                pressed: true,
+                modifiers: egui::Modifiers::NONE,
+            },
+            4,
+        );
+        assert!(view.column_mode.is_none());
+    }
+
+    #[test]
+    fn column_shortcut_does_not_conflict_with_default_menu_bindings() {
+        let keymap = sanain_app::keymap::Keymap::default();
+        for key in [
+            Key::ArrowUp,
+            Key::ArrowDown,
+            Key::ArrowLeft,
+            Key::ArrowRight,
+        ] {
+            let event = column_event(key);
+            assert_eq!(column_key(&event), Some(key));
+            let Event::Key { modifiers, .. } = event else {
+                unreachable!()
+            };
+            for action in crate::menu::MenuAction::ALL {
+                if let Some(shortcut) = action.shortcut(&keymap) {
+                    assert!(
+                        shortcut.logical_key != key || !modifiers.matches_exact(shortcut.modifiers),
+                        "{action:?}"
+                    );
+                }
+            }
+        }
+        for modifiers in [
+            egui::Modifiers::ALT | egui::Modifiers::SHIFT,
+            egui::Modifiers::COMMAND | egui::Modifiers::ALT,
+            egui::Modifiers::ALT,
+        ] {
+            let mut event = column_event(Key::ArrowDown);
+            if let Event::Key { modifiers: m, .. } = &mut event {
+                *m = modifiers;
+            }
+            assert_eq!(column_key(&event), None);
+        }
+    }
 
     #[test]
     fn character_hit_testing_uses_both_halves_of_each_cell() {

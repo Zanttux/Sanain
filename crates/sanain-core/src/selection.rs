@@ -11,6 +11,70 @@ use ropey::Rope;
 use crate::grapheme;
 use crate::transaction::{Change, Transaction};
 
+/// Logical (line, column) of a char offset. Each grapheme occupies one
+/// column; tabs advance to the next tab stop. Line endings have no width.
+pub fn logical_position(rope: &Rope, at: usize, tab_width: usize) -> (usize, usize) {
+    let at = at.min(rope.len_chars());
+    let line = rope.char_to_line(at);
+    let end = at.min(line_content_end(rope, line));
+    let mut pos = rope.line_to_char(line);
+    let mut col = 0;
+    while pos < end {
+        let next = grapheme::next_boundary(rope, pos);
+        if next > end {
+            break;
+        }
+        col += if rope.char(pos) == '\t' {
+            tab_width.max(1) - col % tab_width.max(1)
+        } else {
+            1
+        };
+        pos = next;
+    }
+    (line, col)
+}
+
+/// Rectangular selections in char indices, ordered from anchor line to head
+/// line (the last pair is the primary caret). Columns use graphemes and tab
+/// stops, as in [`logical_position`]. A column inside a tab snaps to its start;
+/// short lines clamp before their line ending, without inserting virtual space.
+/// Horizontal direction is preserved in each (anchor, head) pair.
+pub fn rectangular_selections(
+    rope: &Rope,
+    anchor: (usize, usize),
+    head: (usize, usize),
+    tab_width: usize,
+) -> Vec<(usize, usize)> {
+    let last = rope.len_lines() - 1;
+    let (a, h) = (anchor.0.min(last), head.0.min(last));
+    let tab = tab_width.max(1);
+    let at_column = |line, goal| {
+        let mut at = rope.line_to_char(line);
+        let end = line_content_end(rope, line);
+        let mut col = 0;
+        while at < end && col < goal {
+            let width = if rope.char(at) == '\t' {
+                tab - col % tab
+            } else {
+                1
+            };
+            if width > goal - col {
+                break;
+            }
+            col += width;
+            at = grapheme::next_boundary(rope, at);
+        }
+        at
+    };
+    let mut pairs: Vec<_> = (a.min(h)..=a.max(h))
+        .map(|line| (at_column(line, anchor.1), at_column(line, head.1)))
+        .collect();
+    if h < a {
+        pairs.reverse();
+    }
+    pairs
+}
+
 /// A selection from `anchor` to `head` (the caret), in char indices.
 /// `anchor == head` is a plain cursor.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -515,6 +579,89 @@ fn replace_each(
 mod tests {
     use super::*;
     use crate::Document;
+
+    #[test]
+    fn rectangle_equal_lines_and_replacement() {
+        let rope = Rope::from_str("abcd\nefgh\nijkl");
+        let pairs = rectangular_selections(&rope, (0, 1), (2, 3), 4);
+        assert_eq!(pairs, vec![(1, 3), (6, 8), (11, 13)]);
+        let (text, _) = run(
+            &rope.to_string(),
+            pairs
+                .into_iter()
+                .map(|(a, h)| Selection::new(a, h))
+                .collect(),
+            |_, sels| insert(sels, "X"),
+        );
+        assert_eq!(text, "aXd\neXh\niXl");
+    }
+
+    #[test]
+    fn rectangle_short_and_empty_lines() {
+        let rope = Rope::from_str("abcd\nx\n\nwxyz\n");
+        assert_eq!(
+            rectangular_selections(&rope, (0, 2), (4, 4), 4),
+            vec![(2, 4), (6, 6), (7, 7), (10, 12), (13, 13)]
+        );
+        assert_eq!(
+            rectangular_selections(&Rope::new(), (5, 8), (0, 9), 4),
+            vec![(0, 0)]
+        );
+    }
+
+    #[test]
+    fn rectangle_tabs_use_stops_and_snap_inside_tabs() {
+        let rope = Rope::from_str("a\tbc\n\tx");
+        assert_eq!(
+            rectangular_selections(&rope, (0, 2), (1, 5), 4),
+            vec![(1, 3), (5, 7)]
+        );
+        assert_eq!(logical_position(&rope, 2, 4), (0, 4));
+        assert_eq!(logical_position(&rope, 6, 4), (1, 4));
+        assert_eq!(
+            rectangular_selections(&rope, (0, 2), (0, 3), 0),
+            vec![(2, 3)]
+        );
+    }
+
+    #[test]
+    fn rectangle_excludes_crlf() {
+        let rope = Rope::from_str("abc\r\nx\r\n\r\nxyz");
+        assert_eq!(
+            rectangular_selections(&rope, (0, 1), (3, 99), 4),
+            vec![(1, 3), (6, 6), (8, 8), (11, 13)]
+        );
+    }
+
+    #[test]
+    fn rectangle_upward_and_leftward_preserves_primary_corner() {
+        let rope = Rope::from_str("abcd\nefgh\nijkl");
+        assert_eq!(
+            rectangular_selections(&rope, (2, 3), (0, 1), 4),
+            vec![(13, 11), (8, 6), (3, 1)]
+        );
+        assert_eq!(
+            rectangular_selections(&rope, (1, 2), (0, 2), 4),
+            vec![(7, 7), (2, 2)]
+        );
+    }
+
+    #[test]
+    fn rectangle_emoji_and_combining_marks_are_whole_graphemes() {
+        let rope = Rope::from_str("a👨‍👩‍👧b\nx👍🏽z\ne\u{301}xy");
+        let pairs = rectangular_selections(&rope, (0, 1), (2, 2), 4);
+        let texts: Vec<_> = pairs
+            .iter()
+            .map(|&(a, h)| {
+                assert!(grapheme::is_boundary(&rope, a));
+                assert!(grapheme::is_boundary(&rope, h));
+                rope.slice(a..h).to_string()
+            })
+            .collect();
+        assert_eq!(texts, vec!["👨‍👩‍👧", "👍🏽", "x"]);
+        assert_eq!(logical_position(&rope, 6, 4), (0, 2));
+        assert_eq!(logical_position(&rope, 3, 4), (0, 1));
+    }
 
     fn run(
         text: &str,
