@@ -355,3 +355,4 @@ tabs-kept-unsaved = { $count ->
     }
 status-indent-tabs = Tab
 status-indent-spaces = Khoảng trắng: { $count }
+find-searching = Đang tìm kiếm…

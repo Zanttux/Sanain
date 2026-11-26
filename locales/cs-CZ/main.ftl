@@ -412,3 +412,4 @@ tabs-kept-unsaved = { $count ->
     }
 status-indent-tabs = Tabulátory
 status-indent-spaces = Mezery: { $count }
+find-searching = Hledání…

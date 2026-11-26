@@ -374,3 +374,4 @@ tabs-kept-unsaved = { $count ->
     }
 status-indent-tabs = Στηλοθέτες
 status-indent-spaces = Κενά: { $count }
+find-searching = Αναζήτηση…

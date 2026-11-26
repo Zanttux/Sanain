@@ -215,6 +215,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   or when changes are discarded.
 
 ### Fixed
+- Typing in the find field of a large document froze the window while
+  the whole text was copied and searched on every keystroke. Documents
+  over 1 M characters are now searched in the background; a newer search
+  cancels the older one.
 - A large file opened from the menu, or dropped onto the window, could get
   a log viewer that did not refresh while reading (it was given a stale
   UI context).

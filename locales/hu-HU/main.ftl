@@ -374,3 +374,4 @@ tabs-kept-unsaved = { $count ->
     }
 status-indent-tabs = Tabulátorok
 status-indent-spaces = Szóközök: { $count }
+find-searching = Keresés…

@@ -85,6 +85,17 @@ impl Matcher {
     }
 
     pub fn find_all(&self, rope: &Rope) -> Matches {
+        self.find_all_cancellable(rope, &std::sync::atomic::AtomicBool::new(false))
+            .unwrap_or_default()
+    }
+
+    /// [`Matcher::find_all`] that stops (returning `None`) once `cancel` is
+    /// set, checked between matches.
+    pub fn find_all_cancellable(
+        &self,
+        rope: &Rope,
+        cancel: &std::sync::atomic::AtomicBool,
+    ) -> Option<Matches> {
         let text = rope.to_string();
         let mut out = Matches::default();
         // Walk byte offsets and convert to chars incrementally (matches are
@@ -98,13 +109,18 @@ impl Matcher {
                 out.truncated = true;
                 break;
             }
+            if out.ranges.len().is_multiple_of(1024)
+                && cancel.load(std::sync::atomic::Ordering::Relaxed)
+            {
+                return None;
+            }
             chr += text[byte..m.start()].chars().count();
             let start = chr;
             chr += m.as_str().chars().count();
             byte = m.end();
             out.ranges.push(start..chr);
         }
-        out
+        Some(out)
     }
 
     /// Replace every match with `replacement` in one transaction. In regex
@@ -243,6 +259,26 @@ mod tests {
             .unwrap()
             .find_all(&Rope::from_str(text))
             .ranges
+    }
+
+    #[test]
+    fn cancelled_search_returns_none() {
+        let rope = Rope::from_str(&"ab ".repeat(5000));
+        let m = Query {
+            pattern: "ab".into(),
+            ..Query::default()
+        }
+        .compile()
+        .unwrap()
+        .unwrap();
+        let yes = std::sync::atomic::AtomicBool::new(true);
+        assert_eq!(m.find_all_cancellable(&rope, &yes), None);
+        let no = std::sync::atomic::AtomicBool::new(false);
+        assert_eq!(
+            m.find_all_cancellable(&rope, &no).unwrap().ranges.len(),
+            5000
+        );
+        assert_eq!(m.find_all(&rope).ranges.len(), 5000);
     }
 
     #[test]

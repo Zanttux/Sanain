@@ -7,6 +7,12 @@ use sanain_core::Revision;
 use sanain_core::search::{Matcher, Matches, Query};
 
 use crate::theme;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc::{Receiver, channel};
+
+/// Documents with more chars than this are searched on a background thread.
+const BACKGROUND_SEARCH: usize = 1_000_000;
 
 /// Localized lookup with up to two integer arguments.
 pub type Tr<'a> = &'a dyn Fn(&str, Option<(&str, i64)>, Option<(&str, i64)>) -> String;
@@ -30,8 +36,11 @@ pub struct FindBar {
     matcher: Option<Matcher>,
     pub matches: Matches,
     pub error: Option<String>,
-    /// What `matches` was computed for.
+    /// What `matches` was computed for (or is being computed for).
     key: Option<(TabId, Revision, Query)>,
+    /// A background search for a large document: its cancel flag and
+    /// result channel.
+    pending: Option<(Arc<AtomicBool>, Receiver<Option<Matches>>)>,
     focus_query: bool,
 }
 
@@ -45,29 +54,68 @@ impl FindBar {
         self.focus_query = true;
     }
 
+    fn cancel(&mut self) {
+        if let Some((flag, _)) = self.pending.take() {
+            flag.store(true, Ordering::Relaxed);
+        }
+    }
+
+    /// Whether a background search is still running.
+    pub fn searching(&self) -> bool {
+        self.pending.is_some()
+    }
+
     pub fn matcher(&self) -> Option<&Matcher> {
         self.matcher.as_ref()
     }
 
     /// Recompute matches if the document, tab or query changed.
-    pub fn refresh(&mut self, tab: TabId, editor: &Editor) {
+    pub fn refresh(&mut self, tab: TabId, editor: &Editor, ctx: &egui::Context) {
         if !self.open {
+            self.cancel();
             self.matches = Matches::default();
             self.key = None;
             return;
+        }
+        if let Some((_, rx)) = &self.pending
+            && let Ok(result) = rx.try_recv()
+        {
+            if let Some(m) = result {
+                self.matches = m;
+            }
+            self.pending = None;
         }
         let key = (tab, editor.document().revision(), self.query.clone());
         if self.key.as_ref() == Some(&key) {
             return;
         }
         self.key = Some(key);
+        self.cancel();
         match self.query.compile() {
             Ok(m) => {
                 self.error = None;
-                self.matches = m
-                    .as_ref()
-                    .map(|m| m.find_all(editor.document().rope()))
-                    .unwrap_or_default();
+                let rope = editor.document().rope();
+                match &m {
+                    Some(matcher) if rope.len_chars() > BACKGROUND_SEARCH => {
+                        // Large document: search a snapshot off the UI
+                        // thread; the previous matches stay until done.
+                        let (tx, rx) = channel();
+                        let cancel = Arc::new(AtomicBool::new(false));
+                        let (rope, matcher, flag, ctx) =
+                            (rope.clone(), matcher.clone(), cancel.clone(), ctx.clone());
+                        let spawned = std::thread::Builder::new()
+                            .name("sanain-find".into())
+                            .spawn(move || {
+                                let _ = tx.send(matcher.find_all_cancellable(&rope, &flag));
+                                ctx.request_repaint();
+                            });
+                        if spawned.is_ok() {
+                            self.pending = Some((cancel, rx));
+                        }
+                    }
+                    Some(matcher) => self.matches = matcher.find_all(rope),
+                    None => self.matches = Matches::default(),
+                }
                 self.matcher = m;
             }
             Err(e) => {
@@ -133,6 +181,8 @@ impl FindBar {
                 egui::RichText::new(err.lines().last().unwrap_or(err)).color(p.error)
             } else if self.query.pattern.is_empty() {
                 egui::RichText::new("")
+            } else if self.searching() {
+                egui::RichText::new(t("find-searching", None, None)).color(p.muted)
             } else if self.matches.ranges.is_empty() {
                 egui::RichText::new(t("find-no-results", None, None)).color(p.muted)
             } else {

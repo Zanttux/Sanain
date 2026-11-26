@@ -355,3 +355,4 @@ tabs-kept-unsaved = { $count ->
     }
 status-indent-tabs = Tab
 status-indent-spaces = Spasi: { $count }
+find-searching = Mencari…
