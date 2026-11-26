@@ -343,3 +343,17 @@ about-source = Codice sorgente e segnalazioni su GitHub
 tools-xml-validate = Convalida XML
 tools-yaml-validate = Convalida YAML
 tools-markup-valid = Il { $format } è valido
+file-open-recent = Apri recenti…
+file-save-all = Salva tutto
+file-revert = Ripristina versione salvata
+recent-hint = Digita per filtrare i file recenti
+recent-none = Ancora nessun file recente.
+revert-title = Scartare le modifiche a { $name }?
+revert-body = Il file viene ricaricato dal disco. Le modifiche non salvate vanno perse e non possono essere annullate.
+revert-confirm = Scarta e ricarica
+revert-done = { $name } è stato ricaricato dal disco.
+status-saved-all = { $count ->
+    [0] Niente da salvare.
+    [one] 1 file salvato.
+   *[other] { $count } file salvati.
+    }

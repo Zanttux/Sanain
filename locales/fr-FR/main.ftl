@@ -360,3 +360,18 @@ about-source = Code source et signalements sur GitHub
 tools-xml-validate = Valider le XML
 tools-yaml-validate = Valider le YAML
 tools-markup-valid = Le { $format } est valide
+file-open-recent = Ouvrir un fichier récent…
+file-save-all = Tout enregistrer
+file-revert = Revenir à la version enregistrée
+recent-hint = Tapez pour filtrer les fichiers récents
+recent-none = Aucun fichier récent pour le moment.
+revert-title = Abandonner les modifications de { $name } ?
+revert-body = Le fichier est rechargé depuis le disque. Les modifications non enregistrées sont perdues et ne peuvent pas être annulées.
+revert-confirm = Abandonner et recharger
+revert-done = { $name } a été rechargé depuis le disque.
+status-saved-all = { $count ->
+    [0] Rien à enregistrer.
+    [one] { $count } fichier enregistré.
+    [many] { $count } de fichiers enregistrés.
+   *[other] { $count } fichiers enregistrés.
+    }

@@ -326,3 +326,16 @@ about-source = GitHub のソースコードと Issue
 tools-xml-validate = XML を検証
 tools-yaml-validate = YAML を検証
 tools-markup-valid = { $format } は有効です
+file-open-recent = 最近使った項目を開く…
+file-save-all = すべてを保存
+file-revert = 保存された状態に戻す
+recent-hint = 入力して最近使ったファイルを絞り込み
+recent-none = 最近使ったファイルはまだありません。
+revert-title = { $name } への変更を破棄しますか?
+revert-body = ファイルをディスクから再読み込みします。保存されていない変更は失われ、取り消すことはできません。
+revert-confirm = 破棄して再読み込み
+revert-done = { $name } をディスクから再読み込みしました。
+status-saved-all = { $count ->
+    [0] 保存するものはありません。
+   *[other] { $count } 個のファイルを保存しました。
+    }

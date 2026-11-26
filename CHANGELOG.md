@@ -5,6 +5,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased] — 0.0.1
 
 ### Added
+- File > Open Recent (Cmd/Ctrl+Shift+E, the last 20 files), Save All
+  (Cmd/Ctrl+Option/Alt+S) and Revert to Saved (asks first when there are
+  unsaved changes). Files dropped onto the window open in tabs.
 - Log viewer: lines are coloured by level (errors, warnings, debug) and
   Go to Line (Cmd/Ctrl+L) jumps to a line, also when filtering.
 - Tools > Validate XML and Validate YAML report whether the document is
@@ -200,6 +203,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   or when changes are discarded.
 
 ### Fixed
+- A large file opened from the menu, or dropped onto the window, could get
+  a log viewer that did not refresh while reading (it was given a stale
+  UI context).
 - The status bar copied and scanned the whole document every frame to
   show its line ending; large files used several times more memory and
   CPU than needed (147 MB file: 1.43 GB → 571 MB).

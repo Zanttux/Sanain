@@ -343,3 +343,17 @@ about-source = Kildekode og fejlrapporter på GitHub
 tools-xml-validate = Valider XML
 tools-yaml-validate = Valider YAML
 tools-markup-valid = { $format } er gyldig
+file-open-recent = Åbn seneste…
+file-save-all = Gem alle
+file-revert = Gendan gemt version
+recent-hint = Skriv for at filtrere seneste filer
+recent-none = Ingen seneste filer endnu.
+revert-title = Kassér ændringer i { $name }?
+revert-body = Filen genindlæses fra disken. Ikke-gemte ændringer går tabt og kan ikke fortrydes.
+revert-confirm = Kassér og genindlæs
+revert-done = { $name } er genindlæst fra disken.
+status-saved-all = { $count ->
+    [0] Intet at gemme.
+    [one] 1 fil er gemt.
+   *[other] { $count } filer er gemt.
+    }

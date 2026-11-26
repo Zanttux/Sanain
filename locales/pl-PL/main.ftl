@@ -377,3 +377,19 @@ about-source = Kod źródłowy i zgłoszenia w serwisie GitHub
 tools-xml-validate = Sprawdź poprawność XML
 tools-yaml-validate = Sprawdź poprawność YAML
 tools-markup-valid = { $format } jest poprawny
+file-open-recent = Otwórz ostatnie…
+file-save-all = Zapisz wszystko
+file-revert = Przywróć zapisaną wersję
+recent-hint = Pisz, aby filtrować ostatnie pliki
+recent-none = Brak ostatnich plików.
+revert-title = Odrzucić zmiany w pliku { $name }?
+revert-body = Plik zostanie ponownie wczytany z dysku. Niezapisane zmiany zostaną utracone i nie można ich cofnąć.
+revert-confirm = Odrzuć i wczytaj ponownie
+revert-done = Ponownie wczytano plik { $name } z dysku.
+status-saved-all = { $count ->
+    [0] Nie ma nic do zapisania.
+    [one] Zapisano 1 plik.
+    [few] Zapisano { $count } pliki.
+    [many] Zapisano { $count } plików.
+   *[other] Zapisano { $count } pliku.
+    }

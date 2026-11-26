@@ -343,3 +343,17 @@ about-source = Lähdekoodi ja palautteet GitHubissa
 tools-xml-validate = Tarkista XML
 tools-yaml-validate = Tarkista YAML
 tools-markup-valid = Kelvollinen { $format }.
+file-open-recent = Avaa viimeaikainen…
+file-save-all = Tallenna kaikki
+file-revert = Palauta tallennettu versio
+recent-hint = Suodata viimeaikaisia tiedostoja kirjoittamalla
+recent-none = Viimeaikaisia tiedostoja ei vielä ole.
+revert-title = Hylätäänkö tiedoston { $name } muutokset?
+revert-body = Tiedosto ladataan uudelleen levyltä. Tallentamattomat muutokset menetetään, eikä niitä voi kumota.
+revert-confirm = Hylkää ja lataa uudelleen
+revert-done = { $name } ladattiin uudelleen levyltä.
+status-saved-all = { $count ->
+    [0] Ei tallennettavaa.
+    [one] 1 tiedosto tallennettiin.
+   *[other] { $count } tiedostoa tallennettiin.
+    }

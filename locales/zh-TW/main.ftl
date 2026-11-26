@@ -326,3 +326,16 @@ about-source = GitHub 上的原始碼與問題回報
 tools-xml-validate = 驗證 XML
 tools-yaml-validate = 驗證 YAML
 tools-markup-valid = { $format } 有效
+file-open-recent = 打開最近使用的項目…
+file-save-all = 全部儲存
+file-revert = 回復至已儲存的版本
+recent-hint = 輸入以篩選最近使用的檔案
+recent-none = 尚無最近使用的檔案。
+revert-title = 要丟棄「{ $name }」的變更嗎？
+revert-body = 將從磁碟重新載入檔案。未儲存的變更會遺失且無法還原。
+revert-confirm = 丟棄並重新載入
+revert-done = 已從磁碟重新載入「{ $name }」。
+status-saved-all = { $count ->
+    [0] 沒有需要儲存的內容。
+   *[other] 已儲存 { $count } 個檔案。
+    }

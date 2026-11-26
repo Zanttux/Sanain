@@ -126,6 +126,7 @@ enum Then {
 #[derive(Debug, Clone, Copy)]
 enum Action {
     PurgeHistory,
+    Revert,
     SaveThen(Then),
     Proceed(Then),
     SaveAs,
@@ -135,6 +136,8 @@ enum Action {
 #[derive(Debug, Clone)]
 enum Dialog {
     Unsaved(Then),
+    /// Confirm discarding unsaved changes to reload the file from disk.
+    ConfirmRevert,
     Conflict,
     ReadOnly,
     Error(String),
@@ -170,6 +173,7 @@ pub struct Shell {
     macro_cmds: Vec<Command>,
     replace_preview: Option<ReplacePreview>,
     about_open: bool,
+    recent: sanain_app::recent::Recent,
     /// Split editor: the tabs shown in the left and right panes, and which
     /// pane has focus (its tab is the active tab).
     split: Option<([TabId; 2], usize)>,
@@ -232,6 +236,30 @@ impl Shell {
         false
     }
 
+    /// Remember a file in Open Recent.
+    fn note_recent(&mut self, path: &Path) {
+        self.recent.push(path);
+        if let Some(dir) = &self.settings_dir {
+            let _ = self.recent.save(dir);
+        }
+    }
+
+    /// Load the recent-files list and add the files open at startup.
+    pub fn init_recent(&mut self) {
+        if let Some(dir) = &self.settings_dir {
+            self.recent = sanain_app::recent::Recent::load(dir);
+        }
+        let paths: Vec<std::path::PathBuf> = self
+            .ws
+            .tabs()
+            .iter()
+            .filter_map(|t| t.editor.file().map(|f| f.path.clone()))
+            .collect();
+        for p in paths.iter().rev() {
+            self.note_recent(p);
+        }
+    }
+
     /// Where saved versions are kept (`None` disables local history).
     pub fn set_history(&mut self, store: Option<sanain_io::history::HistoryStore>) {
         self.history = store;
@@ -269,6 +297,7 @@ impl Shell {
             macro_cmds: Vec::new(),
             replace_preview: None,
             about_open: false,
+            recent: Default::default(),
             split: None,
             right_views: HashMap::new(),
             log: None,
@@ -427,6 +456,9 @@ impl Shell {
         match outcome {
             SaveOutcome::Saved => {
                 self.record_history();
+                if let Some(path) = self.editor().file().map(|f| f.path.clone()) {
+                    self.note_recent(&path);
+                }
                 self.status = Some((self.t("status-saved", &[("name", name.into())]), false));
                 return true;
             }
@@ -590,6 +622,7 @@ impl Shell {
         }
         match self.ws.open(path) {
             Ok(_) => {
+                self.note_recent(path);
                 self.status = None;
                 self.focus_active();
             }
@@ -1395,6 +1428,37 @@ impl Shell {
                     .show(ctx, &entries, &hint)
                     .map(|line| (line, 0))
             }
+            Mode::Recent => {
+                let paths = self.recent.existing();
+                let entries: Vec<Entry<usize>> = paths
+                    .iter()
+                    .enumerate()
+                    .map(|(i, p)| Entry {
+                        action: i,
+                        label: p
+                            .file_name()
+                            .map(|n| n.to_string_lossy().into_owned())
+                            .unwrap_or_default(),
+                        shortcut: p.parent().map(short_dir).unwrap_or_default(),
+                        enabled: true,
+                    })
+                    .collect();
+                let hint = self.t(
+                    if entries.is_empty() {
+                        "recent-none"
+                    } else {
+                        "recent-hint"
+                    },
+                    &[],
+                );
+                if let Some(i) = self.palette.show(ctx, &entries, &hint)
+                    && let Some(p) = paths.get(i)
+                {
+                    let p = p.clone();
+                    self.open(&p);
+                }
+                None
+            }
             Mode::Commands => None,
         };
         if let (Some((line, _)), Some(log)) = (target, &mut self.log)
@@ -1409,6 +1473,51 @@ impl Shell {
         if !self.palette.open {
             self.focus_active();
         }
+    }
+
+    /// Reload the active file from disk in its encoding (no undo across).
+    fn revert(&mut self) {
+        let Some(path) = self.editor().file().map(|f| f.path.clone()) else {
+            return;
+        };
+        let enc = self.editor().encoding();
+        match self.ws.open_as(&path, enc) {
+            Ok(_) => {
+                let msg = self.t("revert-done", &[("name", self.display_name().into())]);
+                self.status = Some((msg, false));
+                self.focus_active();
+            }
+            Err(e) => self.dialog = Some(Dialog::Error(describe_load_error(&self.l10n, &path, &e))),
+        }
+    }
+
+    /// Save every modified tab that has a file, stopping at the first one
+    /// that needs the user (conflict, error).
+    fn save_all(&mut self) {
+        let current = self.ws.active_index();
+        let dirty: Vec<TabId> = self
+            .ws
+            .tabs()
+            .iter()
+            .filter(|t| t.editor.document().is_dirty() && t.editor.file().is_some())
+            .map(|t| t.id)
+            .collect();
+        let mut saved = 0i64;
+        for id in dirty {
+            let Some(i) = self.ws.position(id) else {
+                continue;
+            };
+            self.ws.activate(i);
+            if !self.save() {
+                return; // its dialog or error is now showing for this tab
+            }
+            saved += 1;
+        }
+        self.ws.activate(current);
+        self.status = Some((
+            self.t("status-saved-all", &[("count", saved.into())]),
+            false,
+        ));
     }
 
     fn about_window(&mut self, ctx: &egui::Context) {
@@ -2289,7 +2398,7 @@ impl Shell {
                 }
                 MenuAction::ClearHistory => self.history.is_some(),
                 MenuAction::GoToHeading => Self::is_markdown(self.editor()),
-                MenuAction::CompareSaved => self.editor().file().is_some(),
+                MenuAction::CompareSaved | MenuAction::Revert => self.editor().file().is_some(),
                 MenuAction::PlayMacro => {
                     !self.macro_cmds.is_empty() && !self.editor().is_recording()
                 }
@@ -2524,6 +2633,22 @@ impl Shell {
             }
             MenuAction::Settings => {
                 self.settings_open = true;
+                return;
+            }
+            MenuAction::OpenRecent => {
+                self.palette.open(crate::palette::Mode::Recent);
+                return;
+            }
+            MenuAction::SaveAll => {
+                self.save_all();
+                return;
+            }
+            MenuAction::Revert => {
+                if self.editor().document().is_dirty() {
+                    self.dialog = Some(Dialog::ConfirmRevert);
+                } else {
+                    self.revert();
+                }
                 return;
             }
             MenuAction::XmlValidate | MenuAction::YamlValidate => {
@@ -2928,6 +3053,10 @@ impl Shell {
                 ),
                 Dialog::Error(msg) => (msg.clone(), String::new()),
                 Dialog::OpenLink(url) => (self.t("dialog-open-link-title", &[]), url.clone()),
+                Dialog::ConfirmRevert => (
+                    self.t("revert-title", &[("name", self.display_name().into())]),
+                    self.t("revert-body", &[]),
+                ),
                 Dialog::ConfirmPurge => (
                     self.t("history-purge-title", &[]),
                     self.t("history-purge-body", &[]),
@@ -2978,6 +3107,15 @@ impl Shell {
                         if ui.button(self.t("button-save-as", &[])).clicked() {
                             close = true;
                             after = Some(Action::SaveAs);
+                        }
+                        if ui.button(self.t("button-cancel", &[])).clicked() {
+                            close = true;
+                        }
+                    }
+                    Dialog::ConfirmRevert => {
+                        if ui.button(self.t("revert-confirm", &[])).clicked() {
+                            close = true;
+                            after = Some(Action::Revert);
                         }
                         if ui.button(self.t("button-cancel", &[])).clicked() {
                             close = true;
@@ -3035,6 +3173,7 @@ impl Shell {
                 Some(Action::SaveAs) => {
                     self.save_as();
                 }
+                Some(Action::Revert) => self.revert(),
                 Some(Action::PurgeHistory) => {
                     let msg = match self
                         .history
@@ -3061,6 +3200,20 @@ impl Shell {
 impl eframe::App for Shell {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
+        self.ctx = ctx.clone();
+        // Files dropped onto the window open in tabs.
+        let dropped: Vec<std::path::PathBuf> = ctx.input(|i| {
+            i.raw
+                .dropped_files
+                .iter()
+                .map(|f| f.path().to_path_buf())
+                .collect()
+        });
+        for p in dropped {
+            if p.is_file() {
+                self.open(&p);
+            }
+        }
 
         if ctx.input(|i| i.viewport().close_requested()) && !self.allow_close {
             ctx.send_viewport_cmd(ViewportCommand::CancelClose);
@@ -3306,6 +3459,23 @@ fn json_reason_id(message: &str) -> String {
 
 /// Format a localized message. Fluent's isolation marks are stripped
 /// because egui renders them as visible boxes.
+/// A folder for display in a narrow column: the home folder as `~` and
+/// at most 40 characters, keeping the end (`…/project/src`).
+fn short_dir(dir: &Path) -> String {
+    let mut s = dir.to_string_lossy().into_owned();
+    if let Some(home) = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE"))
+        && let Some(rest) = s.strip_prefix(&*home.to_string_lossy())
+    {
+        s = format!("~{rest}");
+    }
+    let n = s.chars().count();
+    if n > 40 {
+        let tail: String = s.chars().skip(n - 39).collect();
+        s = format!("…{tail}");
+    }
+    s
+}
+
 fn tr(l10n: &Localizer, id: &str, args: &[(&str, FluentValue<'_>)]) -> String {
     let mut fa = sanain_i18n::FluentArgs::new();
     for (k, v) in args {

@@ -343,3 +343,17 @@ about-source = Broncode en meldingen op GitHub
 tools-xml-validate = Valideer XML
 tools-yaml-validate = Valideer YAML
 tools-markup-valid = { $format } is geldig
+file-open-recent = Open recent…
+file-save-all = Bewaar alles
+file-revert = Zet terug naar bewaarde versie
+recent-hint = Typ om recente bestanden te filteren
+recent-none = Nog geen recente bestanden.
+revert-title = Wijzigingen in { $name } weggooien?
+revert-body = Het bestand wordt opnieuw van schijf geladen. Niet-bewaarde wijzigingen gaan verloren en kunnen niet ongedaan worden gemaakt.
+revert-confirm = Gooi weg en laad opnieuw
+revert-done = { $name } is opnieuw van schijf geladen.
+status-saved-all = { $count ->
+    [0] Niets om te bewaren.
+    [one] 1 bestand bewaard.
+   *[other] { $count } bestanden bewaard.
+    }

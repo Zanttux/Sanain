@@ -15,6 +15,7 @@ pub enum Mode {
     Commands,
     GoToLine,
     Headings,
+    Recent,
 }
 
 /// One runnable entry as shown in the palette.
@@ -102,7 +103,13 @@ impl Palette {
                             self.selected = 0;
                         }
                         ui.add_space(4.0);
-                        let row_h = ui.text_style_height(&egui::TextStyle::Body) + 8.0;
+                        // Row: text, frame margins (2 × 4) and the spacing between rows.
+                        // (A horizontal row is at least `interact_size.y` tall.)
+                        let row_h = ui
+                            .text_style_height(&egui::TextStyle::Body)
+                            .max(ui.spacing().interact_size.y)
+                            + 8.0
+                            + ui.spacing().item_spacing.y;
                         let mut list = egui::ScrollArea::vertical();
                         if std::mem::take(&mut self.scroll_reset) {
                             list = list.vertical_scroll_offset(0.0);

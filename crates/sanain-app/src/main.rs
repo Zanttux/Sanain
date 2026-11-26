@@ -107,6 +107,7 @@ fn main() -> eframe::Result {
                 settings_dir,
             );
             shell.set_history(history);
+            shell.init_recent();
             // One log viewer at a time: the last large file named wins.
             if let Some(p) = large.last() {
                 shell.open_large(p, &cc.egui_ctx);

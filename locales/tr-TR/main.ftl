@@ -343,3 +343,17 @@ about-source = GitHub’da kaynak kodu ve sorunlar
 tools-xml-validate = XML'i Doğrula
 tools-yaml-validate = YAML'ı Doğrula
 tools-markup-valid = { $format } geçerli
+file-open-recent = Son Kullanılanı Aç…
+file-save-all = Tümünü Kaydet
+file-revert = Kaydedilmiş Sürüme Döndür
+recent-hint = Son kullanılan dosyaları süzmek için yazın
+recent-none = Henüz son kullanılan dosya yok.
+revert-title = { $name } dosyasındaki değişiklikler atılsın mı?
+revert-body = Dosya diskten yeniden yüklenir. Kaydedilmemiş değişiklikler kaybolur ve geri alınamaz.
+revert-confirm = At ve Yeniden Yükle
+revert-done = { $name } diskten yeniden yüklendi.
+status-saved-all = { $count ->
+    [0] Kaydedilecek bir şey yok.
+    [one] 1 dosya kaydedildi.
+   *[other] { $count } dosya kaydedildi.
+    }

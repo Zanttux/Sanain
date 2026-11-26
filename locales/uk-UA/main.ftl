@@ -377,3 +377,19 @@ about-source = Вихідний код і задачі на GitHub
 tools-xml-validate = Перевірити XML
 tools-yaml-validate = Перевірити YAML
 tools-markup-valid = { $format } коректний
+file-open-recent = Відкрити недавні…
+file-save-all = Зберегти все
+file-revert = Повернути збережену версію
+recent-hint = Введіть текст, щоб відфільтрувати недавні файли
+recent-none = Недавніх файлів поки немає.
+revert-title = Скасувати зміни у файлі { $name }?
+revert-body = Файл буде повторно завантажено з диска. Незбережені зміни буде втрачено без можливості скасування.
+revert-confirm = Скасувати й перезавантажити
+revert-done = Файл { $name } повторно завантажено з диска.
+status-saved-all = { $count ->
+    [0] Нічого зберігати.
+    [one] Збережено { $count } файл.
+    [few] Збережено { $count } файли.
+    [many] Збережено { $count } файлів.
+   *[other] Збережено { $count } файлу.
+    }

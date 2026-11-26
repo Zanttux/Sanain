@@ -343,3 +343,17 @@ about-source = Quellcode und Fehlermeldungen auf GitHub
 tools-xml-validate = XML prüfen
 tools-yaml-validate = YAML prüfen
 tools-markup-valid = { $format } ist gültig
+file-open-recent = Zuletzt verwendet öffnen…
+file-save-all = Alle sichern
+file-revert = Auf gesicherte Version zurücksetzen
+recent-hint = Tippen, um zuletzt verwendete Dateien zu filtern
+recent-none = Noch keine zuletzt verwendeten Dateien.
+revert-title = Änderungen an { $name } verwerfen?
+revert-body = Die Datei wird erneut vom Datenträger geladen. Nicht gesicherte Änderungen gehen verloren und können nicht widerrufen werden.
+revert-confirm = Verwerfen und neu laden
+revert-done = { $name } wurde erneut vom Datenträger geladen.
+status-saved-all = { $count ->
+    [0] Nichts zu sichern.
+    [one] 1 Datei gesichert.
+   *[other] { $count } Dateien gesichert.
+    }
