@@ -12,7 +12,7 @@ use std::io::{self, BufRead, BufReader, Read, Seek, SeekFrom};
 use std::ops::Range;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-pub use encoding_rs::{Encoding, UTF_8};
+pub use encoding_rs::{Encoding, UTF_8, UTF_16BE, UTF_16LE};
 
 /// Bytes read per indexing step.
 pub const CHUNK: usize = 4 * 1024 * 1024;
@@ -102,11 +102,60 @@ impl LineIndex {
     }
 }
 
+/// Bytes per code unit: 2 for UTF-16 (line starts stay on even offsets).
+pub fn unit(enc: &'static Encoding) -> usize {
+    if enc == UTF_16LE || enc == UTF_16BE {
+        2
+    } else {
+        1
+    }
+}
+
+/// [`starts_in`] for `enc`. For UTF-16, `base` and `chunk.len()` must be
+/// even; a line break is the unit U+000A on an even offset.
+pub fn starts_in_enc(chunk: &[u8], base: u64, enc: &'static Encoding) -> Vec<u64> {
+    let nl = match enc {
+        e if e == UTF_16LE => [b'\n', 0],
+        e if e == UTF_16BE => [0, b'\n'],
+        _ => return starts_in(chunk, base),
+    };
+    chunk
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .enumerate()
+        .filter(|(_, u)| **u == nl)
+        .map(|(i, _)| base + 2 * i as u64 + 2)
+        .collect()
+}
+
+/// Whether a line read by [`filter_lines`] ends with a line break in `enc`.
+fn ends_with_break(buf: &[u8], enc: &'static Encoding) -> bool {
+    match enc {
+        e if e == UTF_16LE => buf.len().is_multiple_of(2) && buf.ends_with(&[b'\n', 0]),
+        e if e == UTF_16BE => buf.len().is_multiple_of(2) && buf.ends_with(&[0, b'\n']),
+        _ => buf.ends_with(b"\n"),
+    }
+}
+
 /// Text encoding for display, judged from the first bytes of the file:
-/// UTF-8 if they are valid UTF-8 (a character cut at the end is allowed),
-/// otherwise an ASCII-compatible legacy encoding guessed from byte
-/// statistics, so `\n` still ends lines. UTF-16 is not handled here.
+/// UTF-16 (BOM, or the zero-byte pattern of mostly ASCII text), UTF-8 if
+/// they are valid UTF-8 (a character cut at the end is allowed), otherwise
+/// an ASCII-compatible legacy encoding guessed from byte statistics.
 pub fn detect(head: &[u8]) -> &'static Encoding {
+    if head.starts_with(&[0xFF, 0xFE]) && !head.starts_with(&[0xFF, 0xFE, 0, 0]) {
+        return UTF_16LE;
+    }
+    if head.starts_with(&[0xFE, 0xFF]) {
+        return UTF_16BE;
+    }
+    if head.contains(&0) {
+        match crate::encoding::guess_head(head) {
+            Some(crate::TextEncoding::Utf16Le) => return UTF_16LE,
+            Some(crate::TextEncoding::Utf16Be) => return UTF_16BE,
+            _ => {}
+        }
+    }
     match std::str::from_utf8(head) {
         Ok(_) => UTF_8,
         Err(e) if e.error_len().is_none() => UTF_8,
@@ -132,16 +181,24 @@ pub fn display_line(bytes: &[u8], max_bytes: usize) -> (String, bool) {
 /// [`display_line`] decoding with `enc` (malformed bytes replaced).
 pub fn display_line_in(bytes: &[u8], max_bytes: usize, enc: &'static Encoding) -> (String, bool) {
     let cut = bytes.len() > max_bytes;
-    let mut b = &bytes[..bytes.len().min(max_bytes)];
-    if !cut {
-        b = b.strip_suffix(b"\n").unwrap_or(b);
-        b = b.strip_suffix(b"\r").unwrap_or(b);
-    }
-    let text = if enc == UTF_8 {
+    let b = &bytes[..bytes.len().min(max_bytes)];
+    let mut text = if enc == UTF_8 {
         String::from_utf8_lossy(b).into_owned()
     } else {
         enc.decode_without_bom_handling(b).0.into_owned()
     };
+    if !cut {
+        if text.ends_with('\n') {
+            text.pop();
+        }
+        if text.ends_with('\r') {
+            text.pop();
+        }
+    }
+    // A byte order mark at the start of the file is not text.
+    if let Some(rest) = text.strip_prefix('\u{feff}') {
+        text = rest.to_owned();
+    }
     (text, cut)
 }
 
@@ -202,14 +259,18 @@ pub fn filter_lines(
             }
         }
         buf.clear();
-        let n = read_line_capped(&mut r, &mut buf, max_bytes)?;
+        let n = if unit(enc) == 2 {
+            read_line_capped_utf16(&mut r, &mut buf, max_bytes, enc)?
+        } else {
+            read_line_capped(&mut r, &mut buf, max_bytes)?
+        };
         if n == 0 {
             break;
         }
         pos += n as u64;
         // A final partial line (no line break yet) is left for the next
         // pass, so a growing file is not matched on half a line.
-        if !buf.ends_with(b"\n") && n <= max_bytes {
+        if !ends_with_break(&buf, enc) && n <= max_bytes {
             pos -= n as u64;
             if include_partial && keep(&display_line_in(&buf, max_bytes, enc).0) {
                 batch.push(line);
@@ -252,6 +313,43 @@ fn read_line_capped(r: &mut impl BufRead, buf: &mut Vec<u8>, max: usize) -> io::
     }
 }
 
+/// [`read_line_capped`] for UTF-16: lines end at the unit U+000A.
+fn read_line_capped_utf16(
+    r: &mut impl BufRead,
+    buf: &mut Vec<u8>,
+    max: usize,
+    enc: &'static Encoding,
+) -> io::Result<usize> {
+    let nl: [u8; 2] = if enc == UTF_16LE {
+        [b'\n', 0]
+    } else {
+        [0, b'\n']
+    };
+    let mut consumed = 0;
+    let mut unit = [0u8; 2];
+    loop {
+        let mut got = 0;
+        while got < 2 {
+            match r.read(&mut unit[got..]) {
+                Ok(0) => break,
+                Ok(k) => got += k,
+                Err(e) if e.kind() == io::ErrorKind::Interrupted => {}
+                Err(e) => return Err(e),
+            }
+        }
+        if got == 0 {
+            return Ok(consumed);
+        }
+        consumed += got;
+        if buf.len() < max + 2 {
+            buf.extend_from_slice(&unit[..got]);
+        }
+        if got < 2 || unit == nl {
+            return Ok(consumed);
+        }
+    }
+}
+
 /// Severity of a log line, for colouring.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Level {
@@ -282,6 +380,45 @@ pub fn level(line: &str) -> Option<Level> {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn utf16_logs() {
+        let text = "INFO start\r\nERROR boom ä\r\nlast";
+        let le: Vec<u8> = [0xFF, 0xFE]
+            .into_iter()
+            .chain(text.encode_utf16().flat_map(u16::to_le_bytes))
+            .collect();
+        let be: Vec<u8> = text.encode_utf16().flat_map(u16::to_be_bytes).collect();
+        assert_eq!(detect(&le), UTF_16LE);
+        assert_eq!(detect(&be), UTF_16BE, "no BOM: zero-byte pattern");
+        for (bytes, enc) in [(&le, UTF_16LE), (&be, UTF_16BE)] {
+            let mut idx = LineIndex::default();
+            idx.append(&starts_in_enc(bytes, 0, enc), bytes.len() as u64);
+            assert_eq!(idx.line_count(), 3);
+            let line = |i: usize| {
+                let r = idx.line_bytes(i).unwrap();
+                display_line_in(&bytes[r.start as usize..r.end as usize], 1000, enc).0
+            };
+            assert_eq!(
+                (line(0), line(1), line(2)),
+                ("INFO start".into(), "ERROR boom ä".into(), "last".into())
+            );
+            let mut hits = Vec::new();
+            filter_lines(
+                &bytes[..],
+                0,
+                bytes.len() as u64,
+                1000,
+                true,
+                enc,
+                &AtomicBool::new(false),
+                |l| l.contains("boom"),
+                |l, _| hits.extend(l),
+            )
+            .unwrap();
+            assert_eq!(hits, vec![1]);
+        }
+    }
 
     #[test]
     fn detects_and_decodes_legacy_logs() {

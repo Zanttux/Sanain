@@ -2031,6 +2031,10 @@ impl Shell {
         let count = tr_("log-lines", &[("count", lines.into())]);
         let enc_label = if log.encoding == sanain_io::logfile::UTF_8 {
             "UTF-8".to_owned()
+        } else if log.encoding == sanain_io::logfile::UTF_16LE {
+            "UTF-16 LE".to_owned()
+        } else if log.encoding == sanain_io::logfile::UTF_16BE {
+            "UTF-16 BE".to_owned()
         } else {
             let id = format!("enc-{}", log.encoding.name().to_ascii_lowercase());
             format!("{} ({})", tr_(&id, &[]), log.encoding.name())

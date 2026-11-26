@@ -77,6 +77,7 @@ fn spawn_index(
     path: PathBuf,
     from: u64,
     epoch: u64,
+    enc: &'static logfile::Encoding,
     tx: Sender<Msg>,
     ctx: egui::Context,
 ) -> Arc<AtomicBool> {
@@ -96,9 +97,26 @@ fn spawn_index(
                     if stop.load(Ordering::Relaxed) {
                         return Ok(());
                     }
-                    let n = f.read(&mut buf)?;
+                    let mut n = f.read(&mut buf)?;
+                    // UTF-16: index whole units only; an odd byte is read
+                    // again with the next chunk.
+                    if logfile::unit(enc) == 2 && n % 2 == 1 {
+                        n -= 1;
+                        f.seek(SeekFrom::Current(-1))?;
+                        if n == 0 {
+                            // Half a unit at the end of a growing file.
+                            let _ = tx.send(Msg::Index {
+                                epoch,
+                                starts: std::mem::take(&mut pending),
+                                end,
+                                done: true,
+                            });
+                            ctx.request_repaint();
+                            return Ok(());
+                        }
+                    }
                     if n > 0 {
-                        pending.extend(logfile::starts_in(&buf[..n], end));
+                        pending.extend(logfile::starts_in_enc(&buf[..n], end, enc));
                         end += n as u64;
                     }
                     if n == 0 || last.elapsed() > Duration::from_millis(100) {
@@ -217,7 +235,14 @@ impl LogView {
             last_poll: Instant::now(),
             ctx: ctx.clone(),
         };
-        v.indexing = Some(spawn_index(v.path.clone(), 0, 0, v.tx.clone(), ctx.clone()));
+        v.indexing = Some(spawn_index(
+            v.path.clone(),
+            0,
+            0,
+            v.encoding,
+            v.tx.clone(),
+            ctx.clone(),
+        ));
         Ok(v)
     }
 
@@ -264,6 +289,7 @@ impl LogView {
             self.path.clone(),
             0,
             self.epoch,
+            self.encoding,
             self.tx.clone(),
             self.ctx.clone(),
         ));
@@ -352,6 +378,7 @@ impl LogView {
                         self.path.clone(),
                         self.index.end(),
                         self.epoch,
+                        self.encoding,
                         self.tx.clone(),
                         self.ctx.clone(),
                     ));
