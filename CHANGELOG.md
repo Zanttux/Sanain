@@ -215,6 +215,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   or when changes are discarded.
 
 ### Fixed
+- Crash-recovery checkpoints copied the whole document on the UI thread;
+  the copy now happens on the writer thread (large files no longer pause
+  every few seconds while edited).
 - Typing in the find field of a large document froze the window while
   the whole text was copied and searched on every keystroke. Documents
   over 1 M characters are now searched in the background; a newer search
