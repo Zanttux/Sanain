@@ -198,6 +198,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   or when changes are discarded.
 
 ### Fixed
+- The status bar copied and scanned the whole document every frame to
+  show its line ending; large files used several times more memory and
+  CPU than needed (147 MB file: 1.43 GB → 571 MB).
 - Opening a file with a very long line (such as a multi-megabyte minified
   JSON file) crashed Sanain when word wrap was off or the file was too
   large to wrap: the GPU vertex buffer exceeded its limit. Long lines are

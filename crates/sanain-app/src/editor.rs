@@ -106,6 +106,7 @@ pub struct Editor {
     goal: Option<Vec<usize>>,
     /// Commands recorded for a macro, while recording.
     macro_rec: Option<Vec<Command>>,
+    line_ending_cache: std::cell::Cell<Option<(sanain_core::Revision, LineEnding)>>,
     /// Folded regions, as the char index where each fold's start line
     /// begins. Mapped through edits so folds stay on their lines.
     folds: Vec<usize>,
@@ -131,6 +132,7 @@ impl Editor {
             newline: platform_newline(),
             goal: None,
             macro_rec: None,
+            line_ending_cache: std::cell::Cell::new(None),
             folds: Vec::new(),
             fold_tab: 4,
             fold_cache: None,
@@ -174,6 +176,7 @@ impl Editor {
             newline: preferred_newline(&loaded.text),
             goal: None,
             macro_rec: None,
+            line_ending_cache: std::cell::Cell::new(None),
             folds: Vec::new(),
             fold_tab: 4,
             fold_cache: None,
@@ -206,8 +209,19 @@ impl Editor {
             .map_or(self.untitled_encoding, |f| f.encoding)
     }
 
+    /// The document's line-ending style, cached per revision (the status
+    /// bar asks every frame; scanning is linear in the text size).
     pub fn line_ending(&self) -> LineEnding {
-        match LineEnding::detect(&self.doc.text()) {
+        let rev = self.doc.revision();
+        let detected = match self.line_ending_cache.get() {
+            Some((r, le)) if r == rev => le,
+            _ => {
+                let le = LineEnding::detect_chunks(self.doc.rope().chunks());
+                self.line_ending_cache.set(Some((rev, le)));
+                le
+            }
+        };
+        match detected {
             LineEnding::None if self.newline == "\r\n" => LineEnding::CrLf,
             LineEnding::None => LineEnding::Lf,
             other => other,

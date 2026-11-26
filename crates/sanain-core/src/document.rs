@@ -21,21 +21,45 @@ pub enum LineEnding {
 
 impl LineEnding {
     pub fn detect(text: &str) -> Self {
-        let bytes = text.as_bytes();
+        Self::detect_chunks(std::iter::once(text))
+    }
+
+    /// Detect over text given in pieces (e.g. rope chunks) without
+    /// joining them. Stops early once the text is known to be mixed.
+    pub fn detect_chunks<'a>(chunks: impl IntoIterator<Item = &'a str>) -> Self {
         let (mut lf, mut crlf, mut cr) = (false, false, false);
-        let mut i = 0;
-        while i < bytes.len() {
-            match bytes[i] {
-                b'\r' if bytes.get(i + 1) == Some(&b'\n') => {
+        // A '\r' ending the previous chunk, not yet known to start "\r\n".
+        let mut pending_cr = false;
+        for chunk in chunks {
+            let bytes = chunk.as_bytes();
+            let mut i = 0;
+            if pending_cr && !bytes.is_empty() {
+                if bytes[0] == b'\n' {
                     crlf = true;
-                    i += 1;
+                    i = 1;
+                } else {
+                    cr = true;
                 }
-                b'\r' => cr = true,
-                b'\n' => lf = true,
-                _ => {}
+                pending_cr = false;
             }
-            i += 1;
+            while i < bytes.len() {
+                match bytes[i] {
+                    b'\r' if i + 1 == bytes.len() => pending_cr = true,
+                    b'\r' if bytes[i + 1] == b'\n' => {
+                        crlf = true;
+                        i += 1;
+                    }
+                    b'\r' => cr = true,
+                    b'\n' => lf = true,
+                    _ => {}
+                }
+                i += 1;
+            }
+            if u8::from(lf) + u8::from(crlf) + u8::from(cr) > 1 {
+                return Self::Mixed;
+            }
         }
+        cr |= pending_cr;
         match (lf, crlf, cr) {
             (false, false, false) => Self::None,
             (true, false, false) => Self::Lf,
@@ -222,6 +246,32 @@ impl Document {
 mod tests {
     use super::*;
     use crate::Change;
+
+    #[test]
+    fn line_ending_detection_is_chunk_independent() {
+        for text in [
+            "",
+            "a",
+            "a\nb\n",
+            "a\r\nb\r\n",
+            "a\rb\r",
+            "a\nb\r\n",
+            "a\r",
+            "\r\n",
+            "x\r\ny\rz",
+            "\r\r\n",
+        ] {
+            let whole = LineEnding::detect(text);
+            // Every split point, including inside "\r\n".
+            for k in 0..=text.len() {
+                let (a, b) = text.split_at(k);
+                assert_eq!(LineEnding::detect_chunks([a, b]), whole, "{text:?} at {k}");
+            }
+        }
+        assert_eq!(LineEnding::detect("a\r\nb\r\n"), LineEnding::CrLf);
+        assert_eq!(LineEnding::detect("a\r"), LineEnding::Cr);
+        assert_eq!(LineEnding::detect("a\nb\r\n"), LineEnding::Mixed);
+    }
 
     #[test]
     fn merged_edits_undo_and_redo_as_one_step() {
