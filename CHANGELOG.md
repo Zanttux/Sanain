@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+- Clicking × on a tab only activated it instead of closing the document
+  (since drag-to-reorder was added) (#110).
+
 ### Added
 - Windows: the icon is embedded in sanain.exe, so Explorer, shortcuts and
   pinned taskbar items show it.
