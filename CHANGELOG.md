@@ -5,6 +5,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased]
 
 ### Fixed
+- Notepad++ shortcut preset: Mod+D was both Duplicate Line and Select
+  Next Occurrence; it is Duplicate Line only, as in Notepad++. A test now
+  checks that no two commands share a shortcut in any preset (#121).
 - Windows release builds show `--help`, `--version`, `--register`,
   `--unregister` and CLI usage errors in the parent console. Output may
   appear after the shell prompt (normal Windows behaviour); GUI launches

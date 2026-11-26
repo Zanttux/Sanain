@@ -146,6 +146,8 @@ impl Preset {
             Preset::Default => &[],
             Preset::NotepadPlusPlus => &[
                 ("edit.duplicate-line", "Mod+D"),
+                // Mod+D duplicates the line in Notepad++.
+                ("edit.select-next-occurrence", "none"),
                 ("edit.delete-line", "Mod+Shift+L"),
                 ("edit.move-line-up", "Mod+Shift+ArrowUp"),
                 ("edit.move-line-down", "Mod+Shift+ArrowDown"),
@@ -201,6 +203,8 @@ impl Keymap {
             .iter()
             .find(|(id, _)| *id == command)
         {
+            // "none": the preset removes the default shortcut.
+            Some((_, "none")) => Binding::None,
             Some((_, s)) => Chord::parse(s).map_or(Binding::Default, Binding::Chord),
             None => Binding::Default,
         }
@@ -298,7 +302,7 @@ mod tests {
     fn every_preset_chord_parses() {
         for p in [Preset::Default, Preset::NotepadPlusPlus] {
             for (id, s) in p.overrides() {
-                assert!(Chord::parse(s).is_some(), "{id}: {s}");
+                assert!(*s == "none" || Chord::parse(s).is_some(), "{id}: {s}");
             }
         }
     }

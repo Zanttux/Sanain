@@ -1020,3 +1020,30 @@ mod native {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sanain_app::keymap::{Keymap, Preset};
+
+    /// No two commands share a default shortcut in any preset, on the
+    /// platform the tests run on (CI covers macOS, Windows and Linux).
+    #[test]
+    fn default_shortcuts_are_unique() {
+        for preset in [Preset::Default, Preset::NotepadPlusPlus] {
+            let keymap = Keymap {
+                preset,
+                ..Keymap::default()
+            };
+            let mut seen: Vec<(KeyboardShortcut, MenuAction)> = Vec::new();
+            for a in MenuAction::ALL {
+                if let Some(s) = a.shortcut(&keymap) {
+                    if let Some((_, other)) = seen.iter().find(|(k, _)| *k == s) {
+                        panic!("{preset:?}: {a:?} and {other:?} share {s:?}");
+                    }
+                    seen.push((s, a));
+                }
+            }
+        }
+    }
+}
