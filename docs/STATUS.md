@@ -31,6 +31,21 @@ are cross-platform verification and release readiness.
   (#79).
 
 ## Done
+- Character and word count (ROADMAP gap, Should): status-bar item
+  "Characters: N · Words: N" (selection: "N of M"), summed over all
+  selections; click for a popover with characters with/without spaces,
+  words, lines, bytes in the file's encoding (BOM included for the whole
+  file; "—" plus a note when the text cannot be encoded). Rules in
+  `text3_core::stats` (graphemes without line breaks; UAX #29 words, CJK
+  ideographs and hiragana one word each; CRLF one break). Background
+  worker in `text3_app::counts` with separate document/selection slots,
+  cancellation between lines, cache by revision and ranges; text over
+  8 MB counted only once the popover opens for that tab. Locale digit
+  grouping from new message `number-thousand`; 15 strings in all 26
+  locales. Setting `show_counts` (Settings › Editor). First status-bar
+  focus stop (`focus::status_bar_stops`). Covered by unit tests and
+  headless egui tests (labels, AccessKit label, popover, setting); GUI
+  hand-check not possible in that session (screen capture blocked).
 - New-tab button (#151): "+" after the last tab runs File › New Tab;
   pinned at the strip's right end when tabs overflow, new/active tab
   scrolled into view; tooltip "New Tab (shortcut)" from the existing

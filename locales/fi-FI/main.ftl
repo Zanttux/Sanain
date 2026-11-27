@@ -547,3 +547,22 @@ a11y-settings-sections = Asetusten osiot
 a11y-tab-strip = Avoimet tiedostot
 a11y-tab-unsaved = { $name }, tallentamattomia muutoksia
 migration-copied = Sanainin asetukset ja tiedot kopioitiin Text³:een. Sanainin kansiot jätettiin ennalleen.
+
+# Character and word count (status bar)
+# How one thousand is written with digit grouping: the characters between
+# 1 and 000 separate groups of three digits.
+number-thousand = 1{ "\u00A0" }000
+count-status = Merkit: { $chars } · Sanat: { $words }
+count-status-selection = Merkit: { $chars } / { $total-chars } · Sanat: { $words } / { $total-words }
+count-choose = Merkki-, sana-, rivi- ja tavumäärät
+count-a11y-pending = Merkkejä ja sanoja ei ole vielä laskettu. Avaa, niin ne lasketaan.
+count-heading-selection = Valinta
+count-heading-document = Asiakirja
+count-characters = Merkit
+count-characters-no-spaces = Merkit (ilman välilyöntejä)
+count-words = Sanat
+count-lines = Rivit
+count-bytes = Tavut ({ $encoding })
+count-unencodable = Kaikkia merkkejä ei voi tallentaa koodauksella { $encoding }.
+count-counting = Lasketaan…
+settings-show-counts = Näytä merkki- ja sanamäärä tilarivillä

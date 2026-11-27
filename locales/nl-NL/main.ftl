@@ -544,3 +544,22 @@ a11y-settings-sections = Instellingsonderdelen
 a11y-tab-strip = Geopende bestanden
 a11y-tab-unsaved = { $name }, niet-opgeslagen wijzigingen
 migration-copied = Instellingen en gegevens van Sanain zijn naar Text³ gekopieerd. De Sanain-mappen zijn ongewijzigd gebleven.
+
+# Character and word count (status bar)
+# How one thousand is written with digit grouping: the characters between
+# 1 and 000 separate groups of three digits.
+number-thousand = 1{ "." }000
+count-status = Tekens: { $chars } · Woorden: { $words }
+count-status-selection = Tekens: { $chars } van { $total-chars } · Woorden: { $words } van { $total-words }
+count-choose = Aantal tekens, woorden, regels en bytes
+count-a11y-pending = Tekens en woorden: nog niet geteld. Open om te tellen.
+count-heading-selection = Selectie
+count-heading-document = Document
+count-characters = Tekens
+count-characters-no-spaces = Tekens (zonder spaties)
+count-words = Woorden
+count-lines = Regels
+count-bytes = Bytes ({ $encoding })
+count-unencodable = Sommige tekens kunnen niet als { $encoding } worden opgeslagen.
+count-counting = Tellen…
+settings-show-counts = Aantal tekens en woorden tonen in de statusbalk

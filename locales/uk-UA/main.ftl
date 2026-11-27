@@ -592,3 +592,22 @@ a11y-settings-sections = Розділи налаштувань
 a11y-tab-strip = Відкриті файли
 a11y-tab-unsaved = { $name }, є незбережені зміни
 migration-copied = Налаштування та дані Sanain скопійовано до Text³. Теки Sanain залишилися без змін.
+
+# Character and word count (status bar)
+# How one thousand is written with digit grouping: the characters between
+# 1 and 000 separate groups of three digits.
+number-thousand = 1{ "\u00A0" }000
+count-status = Символи: { $chars } · Слова: { $words }
+count-status-selection = Символи: { $chars } з { $total-chars } · Слова: { $words } з { $total-words }
+count-choose = Кількість символів, слів, рядків і байтів
+count-a11y-pending = Символи й слова: ще не підраховано. Відкрийте, щоб підрахувати.
+count-heading-selection = Виділення
+count-heading-document = Документ
+count-characters = Символи
+count-characters-no-spaces = Символи (без пробілів)
+count-words = Слова
+count-lines = Рядки
+count-bytes = Байти ({ $encoding })
+count-unencodable = Деякі символи не можна зберегти в кодуванні { $encoding }.
+count-counting = Підрахунок…
+settings-show-counts = Показувати кількість символів і слів у рядку стану

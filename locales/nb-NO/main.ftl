@@ -544,3 +544,22 @@ a11y-settings-sections = Innstillingsdeler
 a11y-tab-strip = Åpne filer
 a11y-tab-unsaved = { $name }, ulagrede endringer
 migration-copied = Innstillinger og data fra Sanain ble kopiert til Text³. Sanain-mappene ble ikke endret.
+
+# Character and word count (status bar)
+# How one thousand is written with digit grouping: the characters between
+# 1 and 000 separate groups of three digits.
+number-thousand = 1{ "\u00A0" }000
+count-status = Tegn: { $chars } · Ord: { $words }
+count-status-selection = Tegn: { $chars } av { $total-chars } · Ord: { $words } av { $total-words }
+count-choose = Antall tegn, ord, linjer og byte
+count-a11y-pending = Tegn og ord: ikke telt ennå. Åpne for å telle.
+count-heading-selection = Markering
+count-heading-document = Dokument
+count-characters = Tegn
+count-characters-no-spaces = Tegn (uten mellomrom)
+count-words = Ord
+count-lines = Linjer
+count-bytes = Byte ({ $encoding })
+count-unencodable = Noen tegn kan ikke lagres som { $encoding }.
+count-counting = Teller…
+settings-show-counts = Vis antall tegn og ord på statuslinjen

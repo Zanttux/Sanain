@@ -103,6 +103,8 @@ pub struct Settings {
     pub editor_font: Option<String>,
     /// A bundled or user colour theme (its id) replacing `theme`.
     pub color_theme: Option<String>,
+    /// Show the character and word count in the status bar.
+    pub show_counts: bool,
 }
 
 impl Default for Settings {
@@ -122,6 +124,7 @@ impl Default for Settings {
             word_wrap: true,
             editor_font: None,
             color_theme: None,
+            show_counts: true,
         }
     }
 }
@@ -165,12 +168,13 @@ impl Settings {
             out.push_str(&format!("locale={l}\n"));
         }
         out.push_str(&format!(
-            "check_updates={}\nlast_update_check={}\nlocal_history={}\nword_wrap={}\nhot_exit={}\n",
+            "check_updates={}\nlast_update_check={}\nlocal_history={}\nword_wrap={}\nhot_exit={}\nshow_counts={}\n",
             self.check_updates,
             self.last_update_check,
             self.local_history,
             self.word_wrap,
-            self.hot_exit
+            self.hot_exit,
+            self.show_counts
         ));
         if let Some(f) = &self.editor_font {
             out.push_str(&format!("editor_font={f}\n"));
@@ -224,6 +228,7 @@ impl Settings {
                 "local_history" => s.local_history = v.parse().unwrap_or(true),
                 "word_wrap" => s.word_wrap = v.parse().unwrap_or(true),
                 "hot_exit" => s.hot_exit = v.parse().unwrap_or(true),
+                "show_counts" => s.show_counts = v.parse().unwrap_or(true),
                 "editor_font" if !v.is_empty() && v.len() <= 200 => {
                     s.editor_font = Some(v.to_owned())
                 }
@@ -327,6 +332,7 @@ mod tests {
             word_wrap: false,
             editor_font: Some("JetBrains Mono".into()),
             color_theme: Some("nord".into()),
+            show_counts: false,
         };
         assert_eq!(Settings::decode(&s.encode()), Some(s.clone()));
         let hc = Settings {

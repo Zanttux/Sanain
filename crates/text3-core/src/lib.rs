@@ -11,6 +11,7 @@ pub mod grapheme;
 pub mod lines;
 pub mod search;
 pub mod selection;
+pub mod stats;
 mod transaction;
 pub mod wrap;
 

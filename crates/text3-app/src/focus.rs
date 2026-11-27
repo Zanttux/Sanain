@@ -99,6 +99,19 @@ pub fn tab_strip_stops(
     out
 }
 
+/// The status bar's keyboard stops, left to right, from its buttons in
+/// the order they are created (right to left: encoding, indentation, line
+/// endings, language, then the character count). Absent ones (no
+/// indentation detected, the count hidden in Settings or a log open) are
+/// `None`.
+pub fn status_bar_stops(
+    right_to_left: impl IntoIterator<Item = Option<egui::Id>>,
+) -> Vec<egui::Id> {
+    let mut out: Vec<egui::Id> = right_to_left.into_iter().flatten().collect();
+    out.reverse();
+    out
+}
+
 /// The invisible focus stops before (`Head`) and after (`Tail`) a region
 /// whose own widgets the shell does not list.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -420,6 +433,29 @@ mod tests {
             [id(1), id(2)]
         );
         assert_eq!(tab_strip_stops([], Some(id(9))), [id(9)]);
+    }
+
+    #[test]
+    fn character_count_is_the_first_status_bar_stop() {
+        let id = |n: u32| egui::Id::unique(("s", n));
+        // Created right to left: encoding, indentation, line endings,
+        // language, count.
+        let all = [
+            Some(id(1)),
+            Some(id(2)),
+            Some(id(3)),
+            Some(id(4)),
+            Some(id(5)),
+        ];
+        let stops = status_bar_stops(all);
+        assert_eq!(stops, [id(5), id(4), id(3), id(2), id(1)]);
+        // Tab enters the status bar at the count and walks to the encoding.
+        assert_eq!(stops.first(), Some(&id(5)));
+        assert_eq!(stop_step(stops.len(), 0, true), Some(1));
+        assert_eq!(stop_step(stops.len(), 4, true), None);
+        // Hidden count and no detected indentation: the language first.
+        let some = status_bar_stops([Some(id(1)), None, Some(id(3)), Some(id(4)), None]);
+        assert_eq!(some, [id(4), id(3), id(1)]);
     }
 
     #[test]

@@ -520,3 +520,22 @@ a11y-settings-sections = Các mục cài đặt
 a11y-tab-strip = Tệp đang mở
 a11y-tab-unsaved = { $name }, có thay đổi chưa lưu
 migration-copied = Cài đặt và dữ liệu từ Sanain đã được sao chép sang Text³. Các thư mục của Sanain vẫn được giữ nguyên.
+
+# Character and word count (status bar)
+# How one thousand is written with digit grouping: the characters between
+# 1 and 000 separate groups of three digits.
+number-thousand = 1{ "." }000
+count-status = Ký tự: { $chars } · Từ: { $words }
+count-status-selection = Ký tự: { $chars } / { $total-chars } · Từ: { $words } / { $total-words }
+count-choose = Số ký tự, từ, dòng và byte
+count-a11y-pending = Ký tự và từ: chưa đếm. Mở để đếm.
+count-heading-selection = Vùng chọn
+count-heading-document = Tài liệu
+count-characters = Ký tự
+count-characters-no-spaces = Ký tự (không tính khoảng trắng)
+count-words = Từ
+count-lines = Dòng
+count-bytes = Byte ({ $encoding })
+count-unencodable = Một số ký tự không thể lưu dưới dạng { $encoding }.
+count-counting = Đang đếm…
+settings-show-counts = Hiện số ký tự và số từ trên thanh trạng thái

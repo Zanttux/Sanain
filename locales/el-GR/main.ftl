@@ -544,3 +544,22 @@ a11y-settings-sections = Ενότητες ρυθμίσεων
 a11y-tab-strip = Ανοιχτά αρχεία
 a11y-tab-unsaved = { $name }, μη αποθηκευμένες αλλαγές
 migration-copied = Οι ρυθμίσεις και τα δεδομένα του Sanain αντιγράφηκαν στο Text³. Οι φάκελοι του Sanain έμειναν αμετάβλητοι.
+
+# Character and word count (status bar)
+# How one thousand is written with digit grouping: the characters between
+# 1 and 000 separate groups of three digits.
+number-thousand = 1{ "." }000
+count-status = Χαρακτήρες: { $chars } · Λέξεις: { $words }
+count-status-selection = Χαρακτήρες: { $chars } από { $total-chars } · Λέξεις: { $words } από { $total-words }
+count-choose = Πλήθος χαρακτήρων, λέξεων, γραμμών και byte
+count-a11y-pending = Χαρακτήρες και λέξεις: δεν έχουν μετρηθεί ακόμη. Ανοίξτε για μέτρηση.
+count-heading-selection = Επιλογή
+count-heading-document = Έγγραφο
+count-characters = Χαρακτήρες
+count-characters-no-spaces = Χαρακτήρες (χωρίς κενά)
+count-words = Λέξεις
+count-lines = Γραμμές
+count-bytes = Byte ({ $encoding })
+count-unencodable = Ορισμένοι χαρακτήρες δεν μπορούν να αποθηκευτούν ως { $encoding }.
+count-counting = Μέτρηση…
+settings-show-counts = Εμφάνιση πλήθους χαρακτήρων και λέξεων στη γραμμή κατάστασης

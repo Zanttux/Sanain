@@ -544,3 +544,22 @@ a11y-settings-sections = Beállítások szakaszai
 a11y-tab-strip = Megnyitott fájlok
 a11y-tab-unsaved = { $name }, nem mentett módosítások
 migration-copied = A Sanain beállításai és adatai átmásolódtak a Text³ programba. A Sanain mappái változatlanok maradtak.
+
+# Character and word count (status bar)
+# How one thousand is written with digit grouping: the characters between
+# 1 and 000 separate groups of three digits.
+number-thousand = 1{ "\u00A0" }000
+count-status = Karakterek: { $chars } · Szavak: { $words }
+count-status-selection = Karakterek: { $chars } / { $total-chars } · Szavak: { $words } / { $total-words }
+count-choose = Karakterek, szavak, sorok és bájtok száma
+count-a11y-pending = Karakterek és szavak: még nincsenek megszámolva. Nyissa meg a számoláshoz.
+count-heading-selection = Kijelölés
+count-heading-document = Dokumentum
+count-characters = Karakterek
+count-characters-no-spaces = Karakterek (szóközök nélkül)
+count-words = Szavak
+count-lines = Sorok
+count-bytes = Bájtok ({ $encoding })
+count-unencodable = Néhány karakter nem menthető { $encoding } kódolással.
+count-counting = Számolás…
+settings-show-counts = Karakter- és szószám megjelenítése az állapotsorban

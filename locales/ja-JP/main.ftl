@@ -520,3 +520,22 @@ a11y-settings-sections = 設定のセクション
 a11y-tab-strip = 開いているファイル
 a11y-tab-unsaved = { $name }、未保存の変更あり
 migration-copied = Sanain の設定とデータを Text³ にコピーしました。Sanain のフォルダーは変更されていません。
+
+# Character and word count (status bar)
+# How one thousand is written with digit grouping: the characters between
+# 1 and 000 separate groups of three digits.
+number-thousand = 1{ "," }000
+count-status = 文字数: { $chars } · 単語数: { $words }
+count-status-selection = 文字数: { $chars } / { $total-chars } · 単語数: { $words } / { $total-words }
+count-choose = 文字数・単語数・行数・バイト数
+count-a11y-pending = 文字数と単語数はまだ数えていません。開くと数えます。
+count-heading-selection = 選択範囲
+count-heading-document = 文書
+count-characters = 文字数
+count-characters-no-spaces = 文字数 (空白を除く)
+count-words = 単語数
+count-lines = 行数
+count-bytes = バイト数 ({ $encoding })
+count-unencodable = 一部の文字は { $encoding } で保存できません。
+count-counting = カウント中…
+settings-show-counts = ステータスバーに文字数と単語数を表示する

@@ -520,3 +520,22 @@ a11y-settings-sections = Bagian pengaturan
 a11y-tab-strip = Berkas terbuka
 a11y-tab-unsaved = { $name }, ada perubahan yang belum disimpan
 migration-copied = Pengaturan dan data dari Sanain telah disalin ke Text³. Folder Sanain tidak diubah.
+
+# Character and word count (status bar)
+# How one thousand is written with digit grouping: the characters between
+# 1 and 000 separate groups of three digits.
+number-thousand = 1{ "." }000
+count-status = Karakter: { $chars } · Kata: { $words }
+count-status-selection = Karakter: { $chars } dari { $total-chars } · Kata: { $words } dari { $total-words }
+count-choose = Jumlah karakter, kata, baris, dan byte
+count-a11y-pending = Karakter dan kata: belum dihitung. Buka untuk menghitung.
+count-heading-selection = Pilihan
+count-heading-document = Dokumen
+count-characters = Karakter
+count-characters-no-spaces = Karakter (tanpa spasi)
+count-words = Kata
+count-lines = Baris
+count-bytes = Byte ({ $encoding })
+count-unencodable = Beberapa karakter tidak dapat disimpan sebagai { $encoding }.
+count-counting = Menghitung…
+settings-show-counts = Tampilkan jumlah karakter dan kata di bilah status

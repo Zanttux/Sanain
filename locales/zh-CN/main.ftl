@@ -520,3 +520,22 @@ a11y-settings-sections = 设置分区
 a11y-tab-strip = 打开的文件
 a11y-tab-unsaved = { $name }，有未保存的更改
 migration-copied = 已将 Sanain 的设置和数据复制到 Text³。Sanain 的文件夹未作更改。
+
+# Character and word count (status bar)
+# How one thousand is written with digit grouping: the characters between
+# 1 and 000 separate groups of three digits.
+number-thousand = 1{ "," }000
+count-status = 字符: { $chars } · 字词: { $words }
+count-status-selection = 字符: { $chars } / { $total-chars } · 字词: { $words } / { $total-words }
+count-choose = 字符、字词、行和字节数
+count-a11y-pending = 字符和字词：尚未统计。打开即可统计。
+count-heading-selection = 所选内容
+count-heading-document = 文档
+count-characters = 字符
+count-characters-no-spaces = 字符（不含空格）
+count-words = 字词
+count-lines = 行
+count-bytes = 字节 ({ $encoding })
+count-unencodable = 部分字符无法以 { $encoding } 保存。
+count-counting = 正在统计…
+settings-show-counts = 在状态栏中显示字符数和字词数

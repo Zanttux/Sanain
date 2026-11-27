@@ -520,3 +520,22 @@ a11y-settings-sections = 설정 섹션
 a11y-tab-strip = 열린 파일
 a11y-tab-unsaved = { $name }, 저장되지 않은 변경 사항
 migration-copied = Sanain의 설정과 데이터를 Text³ 앱으로 복사했습니다. Sanain 폴더는 변경되지 않았습니다.
+
+# Character and word count (status bar)
+# How one thousand is written with digit grouping: the characters between
+# 1 and 000 separate groups of three digits.
+number-thousand = 1{ "," }000
+count-status = 문자: { $chars } · 단어: { $words }
+count-status-selection = 문자: { $chars } / { $total-chars } · 단어: { $words } / { $total-words }
+count-choose = 문자, 단어, 줄, 바이트 수
+count-a11y-pending = 문자와 단어: 아직 세지 않았습니다. 열면 셉니다.
+count-heading-selection = 선택 영역
+count-heading-document = 문서
+count-characters = 문자
+count-characters-no-spaces = 문자 (공백 제외)
+count-words = 단어
+count-lines = 줄
+count-bytes = 바이트 ({ $encoding })
+count-unencodable = 일부 문자는 { $encoding }(으)로 저장할 수 없습니다.
+count-counting = 세는 중…
+settings-show-counts = 상태 표시줄에 문자 및 단어 수 표시

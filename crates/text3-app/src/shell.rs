@@ -272,6 +272,10 @@ pub struct Shell {
     /// Latest highlight result and the revision requested last, per tab.
     spans: HashMap<TabId, (Revision, Vec<CharSpan>)>,
     requested: HashMap<TabId, Revision>,
+    /// Character and word counts (status bar), counted in the background.
+    counts: text3_app::counts::Counter,
+    /// The counts summary was open last frame (counts large files too).
+    counts_open: bool,
     session_file: Option<std::path::PathBuf>,
     settings: Settings,
     settings_dir: Option<std::path::PathBuf>,
@@ -500,6 +504,8 @@ impl Shell {
             syntax: SyntaxWorker::start(),
             spans: HashMap::new(),
             requested: HashMap::new(),
+            counts: text3_app::counts::Counter::start(),
+            counts_open: false,
             session_file,
             settings,
             settings_dir,
@@ -1025,6 +1031,7 @@ impl Shell {
                     self.spans.remove(&id);
                     self.requested.remove(&id);
                     self.syntax.forget(id);
+                    self.counts.forget(id);
                     self.md_cache.remove(&id);
                     self.md_modes.remove(&id);
                     self.md_synced.retain(|(t, _), _| *t != id);
@@ -1440,6 +1447,9 @@ impl Shell {
                                         ui.end_row();
                                         ui.label("");
                                         ui.checkbox(&mut s.word_wrap, l("settings-word-wrap"));
+                                        ui.end_row();
+                                        ui.label("");
+                                        ui.checkbox(&mut s.show_counts, l("settings-show-counts"));
                                         ui.end_row();
                                     });
                             }
@@ -5556,6 +5566,99 @@ impl Shell {
         }
     }
 
+    /// The count item's text and its full spoken form.
+    fn count_label(&self, v: &text3_app::counts::View) -> (String, String) {
+        let num = |n: Option<u64>| n.map_or_else(|| "—".to_owned(), |n| self.l10n.number(n));
+        let doc = v.doc.map(|s| s.counts);
+        let sel = v.sel.map(|s| s.counts);
+        let label = if v.selected {
+            self.t(
+                "count-status-selection",
+                &[
+                    ("chars", num(sel.map(|c| c.chars)).into()),
+                    ("total-chars", num(doc.map(|c| c.chars)).into()),
+                    ("words", num(sel.map(|c| c.words)).into()),
+                    ("total-words", num(doc.map(|c| c.words)).into()),
+                ],
+            )
+        } else {
+            self.t(
+                "count-status",
+                &[
+                    ("chars", num(doc.map(|c| c.chars)).into()),
+                    ("words", num(doc.map(|c| c.words)).into()),
+                ],
+            )
+        };
+        let missing = doc.is_none() || (v.selected && sel.is_none());
+        let spoken = if missing {
+            self.t("count-a11y-pending", &[])
+        } else {
+            label.clone()
+        };
+        (label, spoken)
+    }
+
+    /// The counts summary: characters with and without spaces, words,
+    /// lines and bytes, for the selection and the document.
+    fn count_summary(&self, ui: &mut egui::Ui, v: &text3_app::counts::View, enc: TextEncoding) {
+        use text3_app::counts::Stats;
+        let num = |n: Option<u64>| n.map_or_else(|| "—".to_owned(), |n| self.l10n.number(n));
+        let mut columns: Vec<(Option<String>, Option<Stats>)> = Vec::new();
+        if v.selected {
+            columns.push((Some(self.t("count-heading-selection", &[])), v.sel));
+            columns.push((Some(self.t("count-heading-document", &[])), v.doc));
+        } else {
+            columns.push((None, v.doc));
+        }
+        type Field = fn(&Stats) -> Option<u64>;
+        let rows: [(String, Field); 5] = [
+            (self.t("count-characters", &[]), |s| Some(s.counts.chars)),
+            (self.t("count-characters-no-spaces", &[]), |s| {
+                Some(s.counts.non_space)
+            }),
+            (self.t("count-words", &[]), |s| Some(s.counts.words)),
+            (self.t("count-lines", &[]), |s| Some(s.counts.lines)),
+            (
+                self.t("count-bytes", &[("encoding", enc.name().into())]),
+                |s| s.bytes,
+            ),
+        ];
+        ui.set_min_width(240.0);
+        egui::Grid::new("count-summary")
+            .num_columns(columns.len() + 1)
+            .spacing([16.0, 4.0])
+            .striped(true)
+            .show(ui, |ui| {
+                if v.selected {
+                    ui.label("");
+                    for (head, _) in &columns {
+                        ui.strong(head.clone().unwrap_or_default());
+                    }
+                    ui.end_row();
+                }
+                for (name, get) in &rows {
+                    ui.label(name);
+                    for (_, stats) in &columns {
+                        ui.label(num(stats.as_ref().and_then(get)));
+                    }
+                    ui.end_row();
+                }
+            });
+        let unencodable = columns
+            .iter()
+            .any(|(_, s)| s.is_some_and(|s| s.bytes.is_none()));
+        if unencodable {
+            ui.weak(self.t("count-unencodable", &[("encoding", enc.name().into())]));
+        }
+        if v.pending {
+            ui.horizontal(|ui| {
+                ui.spinner();
+                ui.weak(self.t("count-counting", &[]));
+            });
+        }
+    }
+
     fn status_bar(&mut self, ui: &mut egui::Ui) {
         let p = theme::palette(ui.ctx());
         let id = self.ws.active().id;
@@ -5567,9 +5670,28 @@ impl Shell {
         let tip = self.t("language-choose", &[]);
         let current_choice = self.lang_override.get(&id).copied();
         let can_reopen = self.enabled(MenuAction::ReopenWithEncoding);
+        // Character and word count; not for the log viewer.
+        let count_view = (self.settings.show_counts && self.log.is_none()).then(|| {
+            let tab = self.ws.active();
+            let ed = &tab.editor;
+            let doc = ed.document();
+            self.counts.view(
+                tab.id,
+                doc.rope(),
+                doc.revision(),
+                ed.encoding(),
+                ed.selections().iter().map(|s| s.range()),
+                self.counts_open,
+            )
+        });
+        if count_view.as_ref().is_some_and(|v| v.pending) {
+            ui.ctx()
+                .request_repaint_after(std::time::Duration::from_millis(16));
+        }
+        let mut counts_open = false;
         let editor = self.editor();
-        // Keyboard stops, created right to left; reversed below.
-        let mut stops: Vec<egui::Id> = Vec::new();
+        // Keyboard stops, created right to left (absent ones `None`).
+        let mut stops: Vec<Option<egui::Id>> = Vec::new();
         ui.horizontal(|ui| {
             if editor.is_recording() {
                 ui.colored_label(p.error, "●");
@@ -5600,7 +5722,8 @@ impl Shell {
                     })
                     .response
                     .on_hover_text(self.t("status-encoding-choose", &[]));
-                stops.push(r.id);
+                stops.push(Some(r.id));
+                let mut indent_stop = None;
                 if let Some((_, ind)) = self.tab_indent.get(&self.ws.active().id) {
                     let label = match ind.text(
                         !self.settings.insert_spaces,
@@ -5620,8 +5743,9 @@ impl Shell {
                     if r.clicked() {
                         indent_settings = true;
                     }
-                    stops.push(r.id);
+                    indent_stop = Some(r.id);
                 }
+                stops.push(indent_stop);
                 let current_le = editor.line_ending();
                 let le = match current_le {
                     LineEnding::CrLf => "line-ending-crlf",
@@ -5652,7 +5776,7 @@ impl Shell {
                     })
                     .response
                     .on_hover_text(self.t("status-line-ending-choose", &[]));
-                stops.push(r.id);
+                stops.push(Some(r.id));
                 let lang = match self.language(id, editor) {
                     Some(l) => l.name().to_owned(),
                     None => plain_l.clone(),
@@ -5691,7 +5815,23 @@ impl Shell {
                     })
                     .response
                     .on_hover_text(&tip);
-                stops.push(r.id);
+                stops.push(Some(r.id));
+                // Characters and words: click for the full summary.
+                let mut count_stop = None;
+                if let Some(v) = &count_view {
+                    let (label, spoken) = self.count_label(v);
+                    let r = ui
+                        .menu_button(muted(label), |ui| {
+                            counts_open = true;
+                            self.count_summary(ui, v, editor.encoding());
+                        })
+                        .response
+                        .on_hover_text(self.t("count-choose", &[]));
+                    ui.ctx()
+                        .accesskit_node_builder(r.id, |n| n.set_label(spoken));
+                    count_stop = Some(r.id);
+                }
+                stops.push(count_stop);
                 let sels = editor.selections();
                 if sels.len() > 1 {
                     let n = sels.len() as i64;
@@ -5709,8 +5849,8 @@ impl Shell {
                 ui.colored_label(p.muted, pos);
             });
         });
-        stops.reverse();
-        self.focus.now.status = stops;
+        self.focus.now.status = crate::focus::status_bar_stops(stops);
+        self.counts_open = counts_open;
         if indent_settings {
             self.settings_tab = SettingsTab::Editor;
             self.settings_open = true;
@@ -6601,5 +6741,142 @@ mod tab_strip_tests {
         }
         h.frame(Vec::new());
         assert_eq!(h.shell.ws.len(), 2);
+    }
+}
+
+#[cfg(test)]
+mod count_tests {
+    use super::*;
+
+    struct Harness {
+        shell: Shell,
+        ctx: egui::Context,
+        time: f64,
+    }
+
+    impl Harness {
+        fn new(settings: Settings) -> Self {
+            let shell = Shell::new(
+                Workspace::new(None),
+                Localizer::new(&["en-US"]).unwrap(),
+                Vec::new(),
+                0,
+                None,
+                settings,
+                None,
+            );
+            let ctx = egui::Context::default();
+            ctx.enable_accesskit();
+            Self {
+                shell,
+                ctx,
+                time: 0.0,
+            }
+        }
+
+        /// One frame of the status bar; returns the AccessKit update.
+        fn frame(&mut self, events: Vec<egui::Event>) -> Option<egui::accesskit::TreeUpdate> {
+            self.time += 0.05;
+            let input = egui::RawInput {
+                screen_rect: Some(egui::Rect::from_min_size(
+                    egui::Pos2::ZERO,
+                    egui::vec2(1000.0, 300.0),
+                )),
+                time: Some(self.time),
+                events,
+                ..Default::default()
+            };
+            let shell = &mut self.shell;
+            let mut out = self.ctx.run_ui(input, |ui| {
+                let ctx = ui.ctx().clone();
+                egui::Panel::bottom("status").show(ui, |ui| shell.status_bar(ui));
+                shell.focus.end_frame(&ctx);
+            });
+            out.textures_delta.clear();
+            out.platform_output.accesskit_update
+        }
+
+        /// Frames until the counts arrive; the count item's spoken label.
+        fn settle(&mut self) -> String {
+            let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
+            loop {
+                let update = self.frame(Vec::new());
+                let id = *self.shell.focus.last.status.first().unwrap();
+                let label = update
+                    .and_then(|u| {
+                        u.nodes
+                            .into_iter()
+                            .find(|(n, _)| *n == id.accesskit_id())
+                            .and_then(|(_, node)| node.label().map(str::to_owned))
+                    })
+                    .unwrap_or_default();
+                if !label.is_empty() && !label.contains("not counted")
+                    || std::time::Instant::now() > deadline
+                {
+                    return label;
+                }
+                std::thread::sleep(std::time::Duration::from_millis(5));
+            }
+        }
+    }
+
+    #[test]
+    fn status_bar_shows_document_and_selection_counts() {
+        let mut h = Harness::new(Settings::default());
+        h.shell
+            .editor_mut()
+            .replace_range(0..0, "Hello world,\r\nhow are you today?\r\n");
+        let label = h.settle();
+        assert_eq!(label, "Characters: 30 · Words: 6");
+        // The count is the first status bar stop (encoding, line endings,
+        // language and count: no indentation detected in this text).
+        assert_eq!(h.shell.focus.last.status.len(), 4);
+        h.shell.editor_mut().select(0..5);
+        let label = h.settle();
+        assert_eq!(label, "Characters: 5 of 30 · Words: 1 of 6");
+    }
+
+    #[test]
+    fn large_numbers_are_grouped() {
+        let mut h = Harness::new(Settings::default());
+        h.shell
+            .editor_mut()
+            .replace_range(0..0, &"word ".repeat(1500));
+        assert_eq!(h.settle(), "Characters: 7,500 · Words: 1,500");
+    }
+
+    #[test]
+    fn clicking_the_count_opens_the_summary() {
+        let mut h = Harness::new(Settings::default());
+        h.shell.editor_mut().replace_range(0..0, "one two");
+        h.settle();
+        let id = *h.shell.focus.last.status.first().unwrap();
+        let at = h.ctx.read_response(id).unwrap().rect.center();
+        let button = |pressed| egui::Event::PointerButton {
+            pos: at,
+            button: egui::PointerButton::Primary,
+            pressed,
+            modifiers: egui::Modifiers::NONE,
+        };
+        h.frame(vec![egui::Event::PointerMoved(at)]);
+        h.frame(vec![button(true)]);
+        h.frame(vec![button(false)]);
+        h.frame(Vec::new());
+        assert!(h.shell.counts_open, "the summary popup is open");
+    }
+
+    #[test]
+    fn the_setting_hides_the_count() {
+        let settings = Settings {
+            show_counts: false,
+            ..Settings::default()
+        };
+        let mut h = Harness::new(settings);
+        h.shell.editor_mut().replace_range(0..0, "one two");
+        h.frame(Vec::new());
+        h.frame(Vec::new());
+        // Encoding, line endings and language only.
+        assert_eq!(h.shell.focus.last.status.len(), 3);
+        assert!(!h.shell.counts_open);
     }
 }
