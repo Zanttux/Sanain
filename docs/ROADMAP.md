@@ -16,7 +16,7 @@ No calendar promises. Each milestone is split into small PR-sized tasks. First v
 ## Requested by the owner (2026-11-26)
 - Shell integration: "Open with Text³" in Windows Explorer, Finder Open With / default app, Linux `.desktop` entry with MIME types (#78). Reversible, no elevation by default.
 - Paid Mac App Store and Microsoft Store builds as a support model; free builds and all features stay free (#79). Store accounts and pricing are owner decisions.
-- (2026-11-27) New-tab button: a "+" button right after the last tab in the tab strip opens a new untitled tab, as in other editors (#151). Same command as File › New Tab; localized tooltip and accessible name; reachable in the tab-strip focus order.
+- (2026-11-27) Done: new-tab button: a "+" button right after the last tab in the tab strip opens a new untitled tab, as in other editors (#151). Same command as File › New Tab; localized tooltip and accessible name; reachable in the tab-strip focus order.
 - (2026-11-27) Gaps from the competitor feature map (PRODUCT.md, Notepad++, Sublime Text, Windows Notepad), by priority:
   - Must: hot exit — quit without prompts, unsaved and untitled tabs come back on next launch (completes E06; opt-out in Settings).
   - Must: measure cold/warm startup and idle memory against the TESTING budgets before claiming "lightweight"; fix what misses.

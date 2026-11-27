@@ -10,7 +10,7 @@ are cross-platform verification and release readiness.
   builds for Windows, macOS and Linux); nightly builds follow every
   change; website at https://zanttux.github.io/text3/.
 - 102 pull requests merged; every one passed CI on Linux, Windows and
-  macOS plus the dependency check. 247 automated tests pass. Reviews by
+  macOS plus the dependency check. 446 automated tests pass. Reviews by
   fresh Claude agents and by Codex found and fixed several bugs (#74,
   #118).
 - Text³ is a usable everyday editor on macOS: tabs and split view (with
@@ -31,6 +31,14 @@ are cross-platform verification and release readiness.
   (#79).
 
 ## Done
+- New-tab button (#151): "+" after the last tab runs File › New Tab;
+  pinned at the strip's right end when tabs overflow, new/active tab
+  scrolled into view; tooltip "New Tab (shortcut)" from the existing
+  `file-new` string (no new strings); AccessKit button, last tab-strip
+  focus stop; double-click on the empty strip also opens a tab. Covered
+  by headless egui tests (click, overflow, double-click) and a focus
+  stop test; GUI hand-check on macOS was not possible in that session
+  (no Screen Recording/Accessibility permission for the agent).
 - Notepad++ security comparison (#157): its 47 public advisories and
   security commits grouped by class in docs/RISKS.md. Fixed: `reg.exe` and
   `explorer.exe` started by bare name on Windows (program-folder hijack),
