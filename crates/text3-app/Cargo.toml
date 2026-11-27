@@ -29,8 +29,12 @@ ureq = { version = "3.5", default-features = false, features = ["rustls"] }
 egui_extras = { version = "0.37", default-features = false }
 arboard = { version = "3.7", default-features = false }
 sys-locale = "0.3"
-# System font list for the editor font setting (no memory mapping).
-fontdb = { version = "0.24", default-features = false, features = ["std", "fs", "fontconfig"] }
+# System font list for the editor font setting. Memory-mapped while each
+# file's names are read: reading whole files instead pulled every system
+# font (about 600 MB on macOS, Apple Color Emoji alone 192 MB) through
+# memory at every start with an editor font set. memmap2 is already used
+# by egui's system font fallback (fontique), so no new crate.
+fontdb = { version = "0.24", default-features = false, features = ["std", "fs", "memmap", "fontconfig"] }
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "webp"] }
 
 # Windows: OpenGL renderer as well (wgpu flickers while the window is

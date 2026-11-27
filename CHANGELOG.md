@@ -49,6 +49,12 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   "Show the character and word count in the status bar" (on by default)
   hides it; the log viewer does not show it. The item is a keyboard stop
   in the status bar with a full spoken label.
+- Start-up measurement for developers: with `TEXT3_MEASURE_STARTUP=<file>`
+  Text³ appends its start-up timings (window, first frame, first frame
+  with the opened file) to the file, and with `TEXT3_MEASURE_EXIT=1`
+  exits after that frame. `scripts/measure-startup.py` runs repeated
+  cold-ish and warm launches with a scratch profile and reports median,
+  p95 and memory; results in docs/BENCHMARKS.md.
 - Hot exit: quitting (window close, Cmd+Q / Alt+F4, File › Quit, and
   system logout or shutdown where it reaches the app) no longer asks about
   each unsaved tab. Every unsaved tab's text is written to the recovery
@@ -149,6 +155,14 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   New strings in all 26 languages.
 
 ### Fixed
+- With an editor font chosen (Settings › Editor › Font), every start read
+  all system font files in full to find it (about 600 MB on macOS) and
+  memory use rose to about 530 MB for several seconds. Font files are
+  now only mapped while their names are read: about 110 MB.
+- The first window appears 20–35 ms sooner on macOS: it no longer waits
+  for the system font list (the "+" button's tooltip is formatted only
+  when it shows), and the menu bar is built right after the first frame.
+  Inside Text³.app the Dock keeps the bundle's sharper icon.
 - Character-level highlighting in Compare no longer depends on machine load for short lines (a 20 ms time limit sometimes produced no highlight).
 - Check for Updates works again: it asked GitHub for the "latest release", which leaves out pre-releases, and every Sanain release is one, so it always said there were no releases. It now reads the release list and takes the newest versioned release (skipping drafts and `nightly`).
 - With the in-window menu (Windows, Linux), Shift+F6, Shift+F3

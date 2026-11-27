@@ -41,17 +41,23 @@ pub fn portable_root() -> Option<PathBuf> {
 pub fn portable_root_for(exe: &std::path::Path) -> Option<PathBuf> {
     let dir = exe.parent()?;
     // Text³.app/Contents/MacOS/text3 → the folder holding Text³.app.
-    let bundle_parent = dir
-        .parent()
-        .filter(|c| c.ends_with("Contents"))
-        .and_then(|c| c.parent())
-        .filter(|app| app.extension().is_some_and(|e| e == "app"))
-        .and_then(|app| app.parent());
+    let bundle_parent = app_bundle_of(exe).and_then(|app| app.parent());
     [Some(dir), bundle_parent]
         .into_iter()
         .flatten()
         .find(|d| d.join(PORTABLE_MARKER).is_file() || d.join(LEGACY_PORTABLE_MARKER).is_file())
         .map(|d| d.join("data"))
+}
+
+/// The macOS app bundle (`….app`) holding `exe`, if it runs from one
+/// (`….app/Contents/MacOS/<exe>`). Only the path is looked at.
+pub fn app_bundle_of(exe: &std::path::Path) -> Option<&std::path::Path> {
+    exe.parent()
+        .filter(|d| d.ends_with("MacOS"))
+        .and_then(|d| d.parent())
+        .filter(|c| c.ends_with("Contents"))
+        .and_then(|c| c.parent())
+        .filter(|app| app.extension().is_some_and(|e| e == "app"))
 }
 
 /// The per-user configuration folder named `name` on this platform.
@@ -287,6 +293,23 @@ mod tests {
             Some(d.path().join("data")),
             "marker next to Text³.app"
         );
+    }
+
+    #[test]
+    fn app_bundle_is_recognised_from_the_path() {
+        let exe = std::path::Path::new("/Applications/Text³.app/Contents/MacOS/text3");
+        assert_eq!(
+            app_bundle_of(exe),
+            Some(std::path::Path::new("/Applications/Text³.app"))
+        );
+        for plain in [
+            "/usr/local/bin/text3",
+            "/x/target/release/text3",
+            "/x/Contents/MacOS/text3",
+            "/x/Text³.app/MacOS/text3",
+        ] {
+            assert_eq!(app_bundle_of(std::path::Path::new(plain)), None, "{plain}");
+        }
     }
 
     /// A portable Sanain folder updated with Text³ keeps using its data.

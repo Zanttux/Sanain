@@ -1,6 +1,8 @@
 //! System fonts for the editor font setting: the installed monospaced
 //! families, and the bytes of a family's regular face. Fonts are only
-//! read, never installed or changed.
+//! read, never installed or changed. The scan memory-maps each font file
+//! just long enough to read its names, so only those pages are touched;
+//! only the chosen face's file is read in full.
 
 /// Installed monospaced font families, sorted, each once. Scans the
 /// system font folders, so call it off the UI thread.
@@ -30,7 +32,9 @@ pub fn load_family(family: &str) -> Option<(Vec<u8>, u32)> {
     let face = db.face(id)?;
     let bytes = match &face.source {
         fontdb::Source::File(path) => std::fs::read(path).ok()?,
-        fontdb::Source::Binary(data) => data.as_ref().as_ref().to_vec(),
+        fontdb::Source::Binary(data) | fontdb::Source::SharedFile(_, data) => {
+            data.as_ref().as_ref().to_vec()
+        }
     };
     Some((bytes, face.index))
 }

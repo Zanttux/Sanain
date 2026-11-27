@@ -380,29 +380,46 @@ pub struct Shell {
     focus: crate::focus::FocusCycle,
     #[cfg(target_os = "macos")]
     native_menu: Option<menu::NativeMenu>,
+    /// macOS: the native menu is built once the first frame is on screen
+    /// (building it takes about 12 ms); until then no in-window menu bar.
+    #[cfg(target_os = "macos")]
+    menu_pending: bool,
 }
 
 impl Shell {
     /// Install the native menu bar where supported. Set
     /// `TEXT3_IN_WINDOW_MENU=1` (or `SANAIN_IN_WINDOW_MENU=1`) to force the
     /// in-window menu.
+    /// macOS: use the native menu bar. It is built at the start of the
+    /// second frame ([`Self::build_pending_menu`]), so the first frame is
+    /// not held up.
     pub fn install_menu(&mut self, ctx: &egui::Context) {
         #[cfg(target_os = "macos")]
         if text3_app::migrate::var_os("IN_WINDOW_MENU").is_none() {
-            let ctx = ctx.clone();
-            let label = |id: &str| self.t(id, &[]);
-            self.native_menu =
-                menu::NativeMenu::install(&label, &self.settings.keymap, move || {
-                    ctx.request_repaint()
-                });
+            self.menu_pending = true;
+            // Make sure the second frame comes without waiting for input.
+            ctx.request_repaint();
         }
         #[cfg(not(target_os = "macos"))]
         let _ = ctx;
     }
 
+    /// Build the native menu asked for by [`Self::install_menu`]. If that
+    /// fails, the in-window menu bar is shown from this frame on.
+    #[cfg(target_os = "macos")]
+    fn build_pending_menu(&mut self, ctx: &egui::Context) {
+        if !std::mem::take(&mut self.menu_pending) {
+            return;
+        }
+        let ctx = ctx.clone();
+        let label = |id: &str| self.t(id, &[]);
+        self.native_menu =
+            menu::NativeMenu::install(&label, &self.settings.keymap, move || ctx.request_repaint());
+    }
+
     fn has_native_menu(&self) -> bool {
         #[cfg(target_os = "macos")]
-        return self.native_menu.is_some();
+        return self.native_menu.is_some() || self.menu_pending;
         #[cfg(not(target_os = "macos"))]
         false
     }
@@ -568,6 +585,8 @@ impl Shell {
             focus: Default::default(),
             #[cfg(target_os = "macos")]
             native_menu: None,
+            #[cfg(target_os = "macos")]
+            menu_pending: false,
         };
         // Files that are not UTF-8/UTF-16 go to the encoding picker; other
         // failures are reported together.
@@ -5272,10 +5291,21 @@ impl Shell {
         let (strip_l, close_tab_l) = (self.t("a11y-tab-strip", &[]), self.t("tab-close", &[]));
         let missing_l = self.t("tab-missing-on-disk", &[]);
         let new_tab_l = self.t(MenuAction::New.label_id(), &[]);
-        let new_tab_tip = match MenuAction::New.shortcut(&self.settings.keymap) {
-            Some(s) => format!("{new_tab_l} ({})", ctx.format_shortcut(&s)),
-            None => new_tab_l.clone(),
-        };
+        // The tooltip's shortcut symbols (⌘, ⌥) are formatted only when it
+        // shows: `format_shortcut` checks the font has them, and ⌥ is not
+        // in the built-in fonts, so on the first frame it would wait for
+        // the system font list (20–35 ms on macOS). The accessible
+        // description is not drawn, so it needs no glyph check.
+        let new_tab_key = MenuAction::New.shortcut(&self.settings.keymap);
+        let new_tab_desc = new_tab_key.map(|s| {
+            let mac = ctx.os().is_mac();
+            let names = if mac {
+                egui::ModifierNames::SYMBOLS
+            } else {
+                egui::ModifierNames::NAMES
+            };
+            format!("{new_tab_l} ({})", s.format(&names, mac))
+        });
         // Keyboard stops: each tab with its close button, then "+".
         let mut tab_stops: Vec<(egui::Id, Option<egui::Id>)> = Vec::new();
         let mut active_stop = None;
@@ -5477,10 +5507,20 @@ impl Shell {
                 });
             let h = scroll.content_size.y.max(ui.spacing().interact_size.y);
             let (rect, r) = ui.allocate_exact_size(egui::vec2(NEW_TAB_W, h), egui::Sense::click());
-            let r = r.on_hover_text(new_tab_tip.as_str());
+            let r = r.on_hover_ui(|ui| {
+                ui.set_max_width(ui.spacing().tooltip_width);
+                let tip = match &new_tab_key {
+                    Some(s) => format!("{new_tab_l} ({})", ui.ctx().format_shortcut(s)),
+                    None => new_tab_l.clone(),
+                };
+                ui.label(tip);
+            });
             ui.ctx().accesskit_node_builder(r.id, |n| {
                 n.set_role(egui::accesskit::Role::Button);
                 n.set_label(new_tab_l.as_str());
+                if let Some(d) = &new_tab_desc {
+                    n.set_description(d.as_str());
+                }
             });
             if ui.is_rect_visible(rect) {
                 let painter = ui.painter();
@@ -6095,6 +6135,15 @@ impl eframe::App for Shell {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
         self.ctx = ctx.clone();
+        // TEXT3_MEASURE_EXIT=1: the start-up has been measured.
+        if text3_app::startprobe::frame_start() {
+            std::process::exit(0);
+        }
+        // The first frame has been presented when the second one starts.
+        #[cfg(target_os = "macos")]
+        if self.menu_pending && ctx.cumulative_frame_nr() > 0 {
+            self.build_pending_menu(&ctx);
+        }
         self.poll_fonts(&ctx);
         self.focus_frame_start(&ctx);
         // Files dropped onto the window open in tabs.
@@ -6430,6 +6479,12 @@ impl eframe::App for Shell {
         if title != self.title {
             ctx.send_viewport_cmd(ViewportCommand::Title(title.clone()));
             self.title = title;
+        }
+        if text3_app::startprobe::active() {
+            let text_shown = self.log.is_some() || self.editor().document().len_chars() > 0;
+            if text3_app::startprobe::frame_end(text_shown) {
+                ctx.request_repaint();
+            }
         }
     }
 }
