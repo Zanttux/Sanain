@@ -16,6 +16,24 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   github.com/Zanttux/text3. Older entries below keep the name Sanain.
 
 ### Added
+- Goto Anything (Edit › Go to Anything…, Cmd/Ctrl+P in both shortcut
+  presets), like Sublime Text's: one popup that fuzzy-finds open tabs,
+  recent files and the files of the project folder (the Find in Folder
+  folder if one was chosen, otherwise the active file's folder). Enter
+  opens the file (an open tab is switched to, not reopened);
+  Cmd/Ctrl+Enter opens it in the next pane of a split view; Escape
+  closes. `name:12` or `name:12:5` opens the file at that line and
+  column. A leading `:` goes to a line of the current file, `@` lists
+  its symbols (Markdown headings; functions, classes, types and modules
+  in Rust, Python, JavaScript, TypeScript/TSX, Go, C, C++, Java, C#,
+  Ruby, PHP, Lua, Bash and PowerShell, from the syntax tree) and `#`
+  lists the lines containing the text. The folder is listed in the
+  background each time the popup opens, up to 50,000 files, skipping
+  hidden files and folders (`.git` too), `node_modules`, `target`,
+  `build`, `dist`, `__pycache__` and `venv`, never following symbolic
+  links; `.gitignore` is not read. The listing stops when the popup
+  closes. Up to 500 matches are shown. Screen readers hear the field's
+  name and each option with its folder or line, and which is selected.
 - Character and word count in the status bar, like Windows Notepad and
   Notepad++: "Characters: 3,456 · Words: 600" for the document, or
   "Characters: 12 of 3,456 · Words: 3 of 600" for the selection (all

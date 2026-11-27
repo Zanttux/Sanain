@@ -24,6 +24,8 @@ pub enum Mode {
     MacroPlaySaved,
     /// Pick a saved macro to delete.
     MacroDeleteSaved,
+    /// Goto Anything: files, `:line`, `@symbol`, `#text`.
+    Anything,
 }
 
 /// One runnable entry as shown in the palette.
@@ -45,6 +47,8 @@ pub struct Palette {
     scroll_reset: bool,
     /// The input field's widget id, last shown.
     pub field: Option<egui::Id>,
+    /// The last choice was made with Cmd/Ctrl+Enter.
+    pub command_enter: bool,
 }
 
 const MAX_ROWS: usize = 12;
@@ -57,9 +61,16 @@ impl Palette {
         self.query.clear();
         self.selected = 0;
         self.focus = true;
+        self.command_enter = false;
+    }
+
+    /// The text typed so far.
+    pub fn query(&self) -> &str {
+        &self.query
     }
 
     /// Draw the palette; returns the command to run, if one was chosen.
+    /// Entries are fuzzy-filtered by their labels.
     pub fn show<T: Copy>(
         &mut self,
         ctx: &egui::Context,
@@ -69,18 +80,36 @@ impl Palette {
         if !self.open {
             return None;
         }
-        let p = theme::palette(ctx);
         let labels: Vec<&str> = entries.iter().map(|e| e.label.as_str()).collect();
         let ranked: Vec<usize> = fuzzy::rank(&self.query, &labels);
+        self.show_ranked(ctx, entries, &ranked, hint, None)
+    }
+
+    /// Draw the palette with the caller's ranking of `entries` (indices,
+    /// best first) for the current [`Self::query`], and an optional note
+    /// under the list.
+    pub fn show_ranked<T: Copy>(
+        &mut self,
+        ctx: &egui::Context,
+        entries: &[Entry<T>],
+        ranked: &[usize],
+        hint: &str,
+        note: Option<&str>,
+    ) -> Option<T> {
+        if !self.open {
+            return None;
+        }
+        let p = theme::palette(ctx);
         if self.selected >= ranked.len() {
             self.selected = ranked.len().saturating_sub(1);
         }
-        let (down, up, enter, escape) = ctx.input(|i| {
+        let (down, up, enter, escape, command) = ctx.input(|i| {
             (
                 i.key_pressed(Key::ArrowDown),
                 i.key_pressed(Key::ArrowUp),
                 i.key_pressed(Key::Enter),
                 i.key_pressed(Key::Escape),
+                i.modifiers.command,
             )
         });
         if down && !ranked.is_empty() {
@@ -210,6 +239,10 @@ impl Palette {
                                     }
                                 }
                             });
+                        if let Some(note) = note {
+                            ui.add_space(4.0);
+                            ui.colored_label(p.muted, note);
+                        }
                     });
             });
         if enter
@@ -217,6 +250,7 @@ impl Palette {
             && entries[i].enabled
         {
             chosen = Some(entries[i].action);
+            self.command_enter = command;
         }
         let clicked_outside = ctx.input(|i| i.pointer.any_pressed())
             && ctx

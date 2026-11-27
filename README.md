@@ -25,7 +25,9 @@ Rust for Windows, macOS and Linux. Website: https://zanttux.github.io/text3/
   and line operations, undo/redo, keyboard macros (also run many times
   in one undo step), word wrap, code
   folding, Go to Line and Go to Heading, command palette
-  (Cmd/Ctrl+Shift+P).
+  (Cmd/Ctrl+Shift+P), Goto Anything (Cmd/Ctrl+P: open a file from the
+  tabs, recent files or the current folder by a few letters, or jump to
+  `:line`, `@symbol` or `#text`).
 - **Find:** find and replace with regular expressions, a preview before
   Replace All, search across a folder, and Replace in Files (after a
   confirmation; open files change in their tab, the others keep their

@@ -14,9 +14,11 @@ use std::sync::atomic::AtomicUsize;
 mod folds;
 mod incremental;
 mod layers;
+mod symbols;
 
 pub use incremental::Syntax;
 use layers::{Grammar, LangConfig};
+pub use symbols::{MAX_SYMBOLS, Symbol, SymbolKind};
 
 /// PHP's own injections plus the HTML around `<?php … ?>`, highlighted as
 /// one combined HTML document.
@@ -585,6 +587,25 @@ impl Highlighter {
             )));
         };
         folds::folds(&mut self.parser, &config.hc.language, lang, source, cancel)
+    }
+
+    /// Functions, types and modules declared in `source`, in document
+    /// order, with their nesting depth (for Goto Anything's `@` mode).
+    /// Data and markup languages have none. At most [`MAX_SYMBOLS`].
+    /// Cancellable like [`Self::highlight`].
+    pub fn symbols(
+        &mut self,
+        lang: Lang,
+        source: &[u8],
+        cancel: Option<&AtomicUsize>,
+    ) -> Result<Vec<Symbol>, HighlightError> {
+        let Some(config) = self.config(Grammar::Lang(lang)) else {
+            return Err(HighlightError::Failed(format!(
+                "{} query did not compile",
+                lang.name()
+            )));
+        };
+        symbols::symbols(&mut self.parser, &config.hc.language, lang, source, cancel)
     }
 
     /// Whether every bundled grammar's query compiles (used by tests and

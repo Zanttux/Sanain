@@ -20,7 +20,7 @@ No calendar promises. Each milestone is split into small PR-sized tasks. First v
 - (2026-11-27) Gaps from the competitor feature map (PRODUCT.md, Notepad++, Sublime Text, Windows Notepad), by priority:
   - Done (2026-11-27): hot exit — quit without prompts, unsaved and untitled tabs come back on next launch (completes E06; opt-out in Settings › General). Instances sharing the recovery folder leave each other's live snapshots alone (owner files).
   - Must: measure cold/warm startup and idle memory against the TESTING budgets before claiming "lightweight"; fix what misses.
-  - Should: Goto Anything — fuzzy quick open of files in the current folder and recent files, with `:line` and `@heading/symbol` jumps.
+  - Done (2026-11-27): Goto Anything — Cmd/Ctrl+P fuzzy quick open of open tabs, recent files and the project folder (Find in Folder folder, else the active file's folder; background listing, 50k files, fixed ignore list, no `.gitignore`), with `file:line`, `:line`, `@symbol/heading` (Tree-sitter, 15 languages + Markdown) and `#text` jumps; Cmd/Ctrl+Enter opens in the other pane. Not yet: preview on highlight, `file@symbol`, `.gitignore`.
   - Done (2026-11-27): status-bar character and word count for the document and the selection (grapheme characters, UAX #29 words, summary popover with lines and bytes; counted in the background, files over 8 MB on demand; Settings › Editor to hide).
   - Should: folder sidebar (file tree of the opened folder, hidden by default per UX).
   - Should: Column Editor — insert text or a number sequence down a column/multi-cursor.

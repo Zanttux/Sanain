@@ -71,6 +71,7 @@ pub enum MenuAction {
     Outline,
     GoToLine,
     GoToHeading,
+    GotoAnything,
     SelectNextOccurrence,
     SkipOccurrence,
     RecordMacro,
@@ -106,7 +107,7 @@ pub enum MenuAction {
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 96] = [
+    pub const ALL: [MenuAction; 97] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -171,6 +172,7 @@ impl MenuAction {
         Self::Outline,
         Self::GoToLine,
         Self::GoToHeading,
+        Self::GotoAnything,
         Self::SelectNextOccurrence,
         Self::SkipOccurrence,
         Self::RecordMacro,
@@ -272,6 +274,7 @@ impl MenuAction {
             Self::Outline => "view.outline",
             Self::GoToLine => "edit.go-to-line",
             Self::GoToHeading => "edit.go-to-heading",
+            Self::GotoAnything => "edit.goto-anything",
             Self::SelectNextOccurrence => "edit.select-next-occurrence",
             Self::SkipOccurrence => "edit.skip-occurrence",
             Self::RecordMacro => "tools.record-macro",
@@ -380,6 +383,7 @@ impl MenuAction {
             Self::Outline => "view-outline",
             Self::GoToLine => "edit-go-to-line",
             Self::GoToHeading => "edit-go-to-heading",
+            Self::GotoAnything => "edit-goto-anything",
             Self::SelectNextOccurrence => "edit-select-next-occurrence",
             Self::SkipOccurrence => "edit-skip-occurrence",
             Self::RecordMacro => "tools-record-macro",
@@ -462,6 +466,7 @@ impl MenuAction {
             Self::GoToLine => (cmd, Key::L),
             Self::SplitEditor => (cmd, Key::Backslash),
             Self::GoToHeading => (cmd_shift, Key::O),
+            Self::GotoAnything => (cmd, Key::P),
             Self::SelectNextOccurrence => (cmd, Key::D),
             Self::SkipOccurrence => (cmd_shift, Key::D),
             Self::ToggleComment => (cmd, Key::Slash),
@@ -739,6 +744,7 @@ const EDIT_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::Replace),
     Some(MenuAction::FindInFolder),
     None,
+    Some(MenuAction::GotoAnything),
     Some(MenuAction::GoToLine),
     Some(MenuAction::GoToHeading),
     None,
@@ -917,6 +923,7 @@ mod native {
             MenuAction::GoToLine => (cmd, ch("l")),
             MenuAction::SplitEditor => (cmd, ch("\\")),
             MenuAction::GoToHeading => (cmd_shift, ch("o")),
+            MenuAction::GotoAnything => (cmd, ch("p")),
             MenuAction::SelectNextOccurrence => (cmd, ch("d")),
             MenuAction::SkipOccurrence => (cmd_shift, ch("d")),
             MenuAction::ToggleComment => (cmd, ch("/")),

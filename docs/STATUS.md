@@ -10,7 +10,7 @@ are cross-platform verification and release readiness.
   builds for Windows, macOS and Linux); nightly builds follow every
   change; website at https://zanttux.github.io/text3/.
 - 102 pull requests merged; every one passed CI on Linux, Windows and
-  macOS plus the dependency check. 446 automated tests pass. Reviews by
+  macOS plus the dependency check. 513 automated tests pass. Reviews by
   fresh Claude agents and by Codex found and fixed several bugs (#74,
   #118).
 - Text³ is a usable everyday editor on macOS: tabs and split view (with
@@ -31,6 +31,31 @@ are cross-platform verification and release readiness.
   (#79).
 
 ## Done
+- Goto Anything (ROADMAP gap, Should): Edit › Go to Anything…, Cmd/Ctrl+P
+  (default and Notepad++ presets; Notepad++'s Ctrl+P is Print, which
+  Text³ does not have). Palette mode `Mode::Anything` reusing the
+  palette's field, list, fuzzy matcher and AccessKit roles (new
+  `Palette::show_ranked` takes the caller's ranking and a note line;
+  Cmd/Ctrl+Enter is reported in `command_enter`). Logic in
+  `text3_app::goto` (query parsing, candidates from tabs/recent/folder
+  deduplicated by canonical path, ranking: file-name match counts
+  double plus a prefix bonus, open +6, recent +3, shorter path wins
+  ties, 500 rows), listing on a background thread through the new
+  shared `filesearch::walk` (Find in Folder uses it too; hidden entries,
+  build folders and symlinks skipped; 50,000 files; cancelled on close).
+  Project folder decision: the Find in Folder folder when set, else the
+  active file's folder (no project concept added); no `.gitignore`
+  (would need a new dependency or parser). Symbols from
+  `Highlighter::symbols` (new `text3_language::symbols`, per-language
+  node kinds, depth for indentation, 10,000 max, files ≤ 8 MB);
+  Markdown headings from the existing outline. `#text` lists up to 500
+  matching lines (literal, case-insensitive) and selects the chosen
+  match. 10 strings in all 26 locales. Unit tests (parsing, ranking,
+  merging, listing limits/ignores/symlinks/cancel, symbols per language)
+  and headless egui tests (open at line, tab reuse, `:`, `@`, `#`,
+  Cmd+Enter into the other pane, Escape stops the listing, Find in
+  Folder root, AccessKit names). GUI hand-check not possible in this
+  session.
 - Character and word count (ROADMAP gap, Should): status-bar item
   "Characters: N · Words: N" (selection: "N of M"), summed over all
   selections; click for a popover with characters with/without spaces,

@@ -63,6 +63,8 @@ enum SettingsTab {
 /// Upper bound for Play Macro Multiple Times.
 const MACRO_TIMES_MAX: usize = 10_000;
 
+mod goto_anything;
+
 /// Markdown outline (level, title, line) for a tab at a revision.
 type HeadingCache = ((TabId, Revision), Vec<(u8, String, usize)>);
 
@@ -292,6 +294,8 @@ pub struct Shell {
     about_logo: Option<egui::TextureHandle>,
     /// Markdown headings for Go to Heading, per tab and revision.
     headings: Option<HeadingCache>,
+    /// Goto Anything's file listing and caches.
+    goto: goto_anything::GotoState,
     /// The Markdown outline side panel is shown.
     outline_open: bool,
     /// Languages chosen by hand per tab (`None` = plain text).
@@ -518,6 +522,7 @@ impl Shell {
             about_open: false,
             about_logo: None,
             headings: None,
+            goto: Default::default(),
             outline_open: false,
             lang_override: HashMap::new(),
             settings_tab: SettingsTab::General,
@@ -2420,6 +2425,10 @@ impl Shell {
                         self.play_saved_macro(name);
                     }
                 }
+                None
+            }
+            Mode::Anything => {
+                self.goto_anything(ctx);
                 None
             }
             Mode::Commands => None,
@@ -5162,6 +5171,10 @@ impl Shell {
                 self.palette.open(crate::palette::Mode::Headings);
                 return;
             }
+            MenuAction::GotoAnything => {
+                self.start_goto();
+                return;
+            }
             MenuAction::Outline => {
                 self.outline_open = !self.outline_open;
                 self.outline_follow = true;
@@ -6358,6 +6371,9 @@ impl eframe::App for Shell {
                 .is_none_or(|f| Some(f) == self.palette.field)
         {
             self.focus_active();
+        }
+        if !self.palette.open || self.palette.mode != crate::palette::Mode::Anything {
+            self.end_goto();
         }
         if self.palette.open
             && self.dialog.is_none()
