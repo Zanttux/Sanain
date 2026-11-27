@@ -19,23 +19,28 @@ T = {
     "en": {
         "lang": "en", "root": "",
         "title": "Text³ — open-source text editor",
-        "desc": "Text³ is a free, open-source text editor for text, code, Markdown and data. Native, offline, no account.",
-        "nav": ["Download", "Features", "Privacy", "About"],
+        "desc": "Text³ is a free, open-source text editor for text, code, Markdown and data. It runs natively and works offline.",
+        "nav": ["Philosophy", "Features", "Download", "Privacy", "About"],
         "hero_h": "A native, open-source text editor",
-        "hero_sub": "For everyday text, code, configuration files, Markdown and data, on Windows, macOS and Linux. Formerly called Sanain.",
+        "hero_sub": "For everyday text, code, configuration files, Markdown and data. Formerly called Sanain.",
         "cta": "Download the nightly build", "src": "Source on GitHub",
         "cta_note": f"Pre-alpha, version {VERSION}. Free for everyone, every feature included.",
-        "intact_h": "Your files stay intact",
-        "intact_p": "Open a file, change nothing, save it: the bytes are the same. Encodings and line endings are kept as they were, saves are atomic, and Text³ refuses to overwrite a file another program changed in the meantime. Unsaved text survives a crash.",
-        "bytes_label": ["before ", "after  "],
+        "phil_h": "Philosophy",
+        "phil": [
+            "Text³ is a file editor, not a project tool. You open a file and edit it. The Markdown preview and the views for structured data sit beside the text, and you can close them at any time.",
+            "The window holds tabs, the editor, a menu and a status bar. Other panels appear only when you open them, and the editor has no built-in AI features.",
+            "Large changes are shown before they happen: Replace All has a preview, and Replace in Files keeps the previous version of each file in local history.",
+            "Your work stays on your computer. Text³ works offline and needs no account; the Privacy section below has the details.",
+            "Every feature is free for everyone. The code is open source under the Mozilla Public License 2.0 and developed in public on GitHub, where the plans and decisions behind it can be read.",
+        ],
         "feat_h": "What it does",
         "feats": [
-            ("Editing", "Tabs and a split view, multiple cursors, macros, word wrap, folding, a command palette, and keyboard shortcuts you can change, with a Notepad++ preset."),
-            ("Find and replace", "Regular expressions, a preview before Replace All, search across a folder and Replace in Files, with the previous version of each file kept in local history."),
-            ("Markdown", "Source, split and preview with tables, task lists, coloured code blocks, local images and an outline. Nothing in a document runs or loads from the network."),
-            ("Data and logs", "JSON, XML and YAML trees and validation, a CSV grid, side-by-side comparison, and a log viewer that opens files of any size."),
-            ("Languages", "Highlighting for 22 languages, including languages inside others (JavaScript and CSS in HTML, HTML around PHP, code blocks in Markdown). The interface is in 26 languages."),
-            ("Comfort", "Light, dark, high-contrast and bundled terminal themes, your own font, session restore, portable mode for a USB stick."),
+            ("Editing", "Tabs and a split view, multiple cursors, macros and folding. Keyboard shortcuts can be changed, and a Notepad++ preset is included."),
+            ("Find and replace", "Search with regular expressions in one file or across a folder, with a preview before Replace All."),
+            ("Markdown", "Source and preview side by side, with tables, task lists, local images and an outline. Nothing in a document runs or loads from the network."),
+            ("Data and logs", "Tree views and validation for structured formats such as JSON and YAML, a CSV grid, side-by-side comparison, and a log viewer that opens files of any size."),
+            ("Languages", "Highlighting for 22 languages, including languages inside others, such as JavaScript in HTML or code blocks in Markdown. The interface is in 26 languages."),
+            ("Comfort", "Light, dark, high-contrast and bundled terminal themes and your own font. Sessions are restored, and a portable mode runs from a USB stick."),
         ],
         "shots_h": "Screenshots",
         "shots": [("editor.png", "Editor with tabs and syntax highlighting"), ("markdown.png", "Markdown source and preview"), ("split.png", "Split editor"), ("log.png", "Log viewer with a filter")],
@@ -49,11 +54,11 @@ T = {
         ],
         "dl_warn": "These builds are not signed yet. macOS asks for confirmation the first time (right-click Text³, then Open); Windows SmartScreen may warn. Each file has a SHA-256 checksum next to it. Text³ is tested by hand on macOS; Windows and Linux are built and tested automatically.",
         "priv_h": "Privacy",
-        "priv_p": "Offline by default. No account, no ads, no telemetry. File contents never leave your computer. The only network use is an update check you can turn on, which asks GitHub whether a newer version exists.",
+        "priv_p": "Text³ works offline by default and collects no telemetry. There are no accounts or ads. File contents never leave your computer. The only network use is an update check you can turn on, which asks GitHub whether a newer version exists.",
         "made_h": "About the project",
-        "made_p": "Text³ is written by Claude, an AI model by Anthropic, working as the developer under the direction of the project's founder, who decides what it becomes. Every change goes through automated tests on three operating systems before it is merged, and the work is public on GitHub.",
+        "made_p": "Text³ is written by Claude, an AI model by Anthropic, working as the developer under the direction of the project's founder, who decides what it becomes. Every change goes through automated tests on each supported operating system before it is merged, and the work is public on GitHub.",
         "support_h": "Support",
-        "support_p": "Text³ is free, and stays free with every feature for everyone. Bug reports, ideas and translations are welcome on GitHub.",
+        "support_p": "Text³ is free, and stays free with every feature for everyone. Bug reports and translations are welcome on GitHub.",
         "issues": "Report a problem or suggest an idea",
         "footer": "Text³ is free software under the Mozilla Public License 2.0.",
     }
@@ -65,7 +70,7 @@ def e(s):
 
 def page(t):
     r = t["root"]
-    ids = ["download", "features", "privacy", "made"]
+    ids = ["philosophy", "features", "download", "privacy", "made"]
     nav = "".join(f'<a href="#{i}">{e(n)}</a>' for i, n in zip(ids, t["nav"]))
     feats = "".join(f"<div><h3>{e(h)}</h3><p>{e(p)}</p></div>" for h, p in t["feats"])
     shots = "".join(
@@ -73,7 +78,7 @@ def page(t):
         for f, c in t["shots"]
     )
     rows = "".join(f"<tr><td>{e(a)}</td><td><code>{e(b)}</code></td><td><code>{e(c)}</code></td></tr>" for a, b, c in t["dl_rows"])
-    b0, b1 = t["bytes_label"]
+    phil = "".join(f"<p>{e(p)}</p>" for p in t["phil"])
     return f"""<!doctype html>
 <html lang="{t['lang']}">
 <head>
@@ -110,11 +115,9 @@ def page(t):
   <p class="note">{e(t['cta_note'])}</p>
 </section>
 
-<section id="intact">
-  <h2>{e(t['intact_h'])}</h2>
-  <p>{e(t['intact_p'])}</p>
-  <div class="bytes" aria-hidden="true">{e(b0)}  63 61 66 c3 a9 0d 0a   <span class="same">c a f é \\r \\n</span>   UTF-8 · CRLF
-{e(b1)}  63 61 66 c3 a9 0d 0a   <span class="same">c a f é \\r \\n</span>   UTF-8 · CRLF</div>
+<section id="philosophy">
+  <h2>{e(t['phil_h'])}</h2>
+  {phil}
 </section>
 
 <section id="features">
