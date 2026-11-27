@@ -28,7 +28,7 @@ No calendar promises. Each milestone is split into small PR-sized tasks. First v
   - Could: line bookmarks (toggle, next/previous, list).
   - Could: minimap / document map.
   - Could: distraction-free (full-screen, chrome hidden) mode.
-  - Could: more highlighted languages (Notepad++ ships about 90; Sanain 22).
+  - Could: more highlighted languages (Notepad++ ships about 90; Text³ 22).
   - Could: Markdown formatting commands (bold, italic, heading, list) in source view.
   - Later (M8, separate ADR): extensions API (E16) and optional local/BYOK writing tools.
 
