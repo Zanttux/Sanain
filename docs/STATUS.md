@@ -1,6 +1,6 @@
 # Status
 
-Updated 2026-11-27. Version 0.2.0 (pre-alpha, M2 done; tagged v0.2.0). Unsigned `nightly`
+Updated 2026-11-27. Version 0.2.1 (pre-alpha, M2 done; tagged v0.2.1). Unsigned `nightly`
 pre-release published automatically from main (D23).
 M0 complete except trademark search. M1 and M2 done; next
 are cross-platform verification and release readiness.

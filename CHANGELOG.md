@@ -4,6 +4,13 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-11-27
+
+Patch release with data-safety fixes found by the disk-full drill and a
+fresh review (failed in-place saves of hard-linked files, partial macro
+backups, structured-view edits after Revert or Reopen with Encoding),
+plus the features merged since 0.2.0. Unsigned pre-release builds.
+
 ### Added
 - Mermaid flowcharts in the Markdown preview, drawn natively (no
   JavaScript, web view or network): `flowchart`/`graph` in all four
