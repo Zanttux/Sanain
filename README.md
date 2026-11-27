@@ -7,7 +7,7 @@ Fast by design. Powerful when needed. Simple by default.
 
 ![Sanain editing a Rust file with tabs and syntax highlighting](docs/screenshots/editor.png)
 
-> **Status: pre-alpha (0.2.0).** Unsigned development builds for macOS,
+> **Status: pre-alpha (0.2.1).** Unsigned development builds for macOS,
 > Windows and Linux are published automatically as the
 > [nightly pre-release](https://github.com/Zanttux/Sanain/releases/tag/nightly)
 > (macOS: right-click › Open the first time; Windows may show a
