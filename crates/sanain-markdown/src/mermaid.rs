@@ -1,9 +1,12 @@
-//! A safe, native subset of Mermaid flowcharts and sequence diagrams.
+//! A safe, native subset of Mermaid flowcharts, sequence, state and class
+//! diagrams.
 //!
 //! [`parse_diagram`] turns the text of a ```` ```mermaid ```` block into a
 //! small model: a [`Flowchart`] (laid out by [`layout`] with a simple
-//! layered, Sugiyama-style algorithm) or a [`sequence::Sequence`] (laid
-//! out by [`sequence::layout`]). Nothing here touches the network, opens
+//! layered, Sugiyama-style algorithm), a [`sequence::Sequence`] (laid
+//! out by [`sequence::layout`]), a [`state::StateDiagram`] or a
+//! [`class::ClassDiagram`] (both laid out by the flowchart layout with
+//! node sizes of their own, [`layout_sized`]). Nothing here touches the network, opens
 //! links or runs document content: `click`, `style`, `classDef`, `class`
 //! and `linkStyle` lines are ignored, and anything outside the subset is
 //! reported as an [`Error`] so the UI can show the source instead.
@@ -23,7 +26,9 @@
 //! All work is bounded by the `MAX_*` caps and is deterministic: the same
 //! text and the same label sizes always give the same picture.
 
+pub mod class;
 pub mod sequence;
+pub mod state;
 
 /// Diagram text larger than this is not drawn.
 pub const MAX_SOURCE_BYTES: usize = 16 * 1024;
@@ -142,6 +147,8 @@ pub struct Flowchart {
 pub enum Diagram {
     Flowchart(Flowchart),
     Sequence(sequence::Sequence),
+    State(state::StateDiagram),
+    Class(class::ClassDiagram),
 }
 
 /// Why a block is shown as source instead of a diagram.
@@ -164,8 +171,11 @@ pub fn parse_diagram(src: &str) -> Result<Diagram, Error> {
     let Some((_, head)) = header_line(src) else {
         return Err(Error::UnsupportedType);
     };
-    if head.split_whitespace().next() == Some("sequenceDiagram") {
-        return sequence::parse(src).map(Diagram::Sequence);
+    match head.split_whitespace().next() {
+        Some("sequenceDiagram") => return sequence::parse(src).map(Diagram::Sequence),
+        Some("stateDiagram" | "stateDiagram-v2") => return state::parse(src).map(Diagram::State),
+        Some("classDiagram" | "classDiagram-v2") => return class::parse(src).map(Diagram::Class),
+        _ => {}
     }
     parse(src).map(Diagram::Flowchart)
 }
@@ -935,12 +945,17 @@ pub fn layout(
     sp: Spacing,
     measure: &mut dyn FnMut(&str) -> (f32, f32),
 ) -> Result<Layout, Error> {
-    let n = fc.nodes.len();
-    let ns = fc.subgraphs.len();
-    let horizontal = matches!(fc.direction, Direction::Right | Direction::Left);
-    // Node sizes.
-    let sizes: Vec<(f32, f32)> = fc
-        .nodes
+    let sizes = node_sizes(fc, sp, measure);
+    layout_sized(fc, sp, &sizes, measure)
+}
+
+/// Size of each node from its label and shape.
+fn node_sizes(
+    fc: &Flowchart,
+    sp: Spacing,
+    measure: &mut dyn FnMut(&str) -> (f32, f32),
+) -> Vec<(f32, f32)> {
+    fc.nodes
         .iter()
         .map(|node| {
             let (tw, th) = measure(&node.label);
@@ -969,7 +984,24 @@ pub fn layout(
                 Shape::Rect | Shape::Round => (w, h),
             }
         })
-        .collect();
+        .collect()
+}
+
+/// Lay out `fc` with the given node sizes (same order as `fc.nodes`), for
+/// diagrams whose nodes are not plain labels (state and class diagrams).
+/// `measure` sizes edge labels and frame titles.
+pub fn layout_sized(
+    fc: &Flowchart,
+    sp: Spacing,
+    sizes: &[(f32, f32)],
+    measure: &mut dyn FnMut(&str) -> (f32, f32),
+) -> Result<Layout, Error> {
+    let n = fc.nodes.len();
+    let ns = fc.subgraphs.len();
+    let horizontal = matches!(fc.direction, Direction::Right | Direction::Left);
+    if sizes.len() != n {
+        return Err(Error::TooLarge);
+    }
     let label_sizes: Vec<Option<(f32, f32)>> = fc
         .edges
         .iter()
@@ -1035,6 +1067,20 @@ pub fn layout(
             if indeg[v] == 0 {
                 queue.push_back(v);
             }
+        }
+    }
+    // A source that only feeds later nodes sits just before its nearest
+    // successor instead of at the top (a side input, a note left of a
+    // state).
+    let mut has_pred = vec![false; n];
+    for &(_, v) in dag.iter().flatten() {
+        has_pred[v] = true;
+    }
+    for v in 0..n {
+        if !has_pred[v]
+            && let Some(m) = succ[v].iter().map(|&s| layer[s]).min()
+        {
+            layer[v] = m.saturating_sub(1);
         }
     }
     let layers = layer.iter().max().map_or(0, |m| m + 1);
@@ -1185,9 +1231,21 @@ pub fn layout(
     }
 
     // 5. Coordinates. "Cross" is along a layer, "main" across layers.
+    // Room on both sides of a node with a self-loop for the loop and its
+    // label (the loop is drawn on one side, the label beyond it).
+    let mut loop_room = vec![0f32; n];
+    for (i, e) in fc.edges.iter().enumerate() {
+        if e.from == e.to {
+            let label = label_sizes[i].map_or(0.0, |(lw, lh)| {
+                (if horizontal { lh } else { lw }) + sp.pad * 0.25
+            });
+            let room = loop_radius(sizes[e.from]) * 1.5 + label;
+            loop_room[e.from] = loop_room[e.from].max(room);
+        }
+    }
     let cross = |v: usize| -> f32 {
         if v < n {
-            if horizontal { sizes[v].1 } else { sizes[v].0 }
+            (if horizontal { sizes[v].1 } else { sizes[v].0 }) + 2.0 * loop_room[v]
         } else if v < phantom_start {
             sp.node_gap * 0.25
         } else {
@@ -1542,7 +1600,19 @@ pub fn layout(
             let p = points.first().copied().unwrap_or((0.0, 0.0));
             points = vec![p, p];
         }
-        let label_at = e.label.as_ref().map(|_| midpoint(&points));
+        let label_at = match label_sizes[i] {
+            None => None,
+            Some((lw, lh)) if e.from == e.to => {
+                let b = &nodes[e.from];
+                let out = loop_radius((b.w, b.h)) * 1.5 + sp.pad * 0.25;
+                Some(if horizontal {
+                    (b.x, b.y + b.h / 2.0 + out + lh / 2.0)
+                } else {
+                    (b.x + b.w / 2.0 + out + lw / 2.0, b.y)
+                })
+            }
+            Some(_) => Some(midpoint(&points)),
+        };
         edges.push(EdgePath { points, label_at });
     }
     Ok(Layout {
@@ -1579,9 +1649,14 @@ fn into_frame(ps: &[(f32, f32)], frame: &NodeBox) -> Option<Vec<(f32, f32)>> {
     Some(out)
 }
 
+/// Size of the self-loop drawn on a node of size `(w, h)`.
+fn loop_radius((w, h): (f32, f32)) -> f32 {
+    w.min(h) * 0.35
+}
+
 /// A small loop on the side of the node facing away from the flow.
 fn self_loop(b: &NodeBox, dir: Direction) -> Vec<(f32, f32)> {
-    let r = b.w.min(b.h) * 0.35;
+    let r = loop_radius((b.w, b.h));
     match dir {
         Direction::Down | Direction::Up => {
             let x = b.x + b.w / 2.0;
@@ -1699,13 +1774,7 @@ mod tests {
 
     #[test]
     fn other_diagram_types_are_unsupported() {
-        for src in [
-            "classDiagram\nA <|-- B",
-            "pie\n\"a\": 1",
-            "gantt",
-            "",
-            "%% only a comment",
-        ] {
+        for src in ["pie\n\"a\": 1", "gantt", "", "%% only a comment"] {
             assert_eq!(parse(src), Err(Error::UnsupportedType), "{src:?}");
             assert_eq!(parse_diagram(src), Err(Error::UnsupportedType), "{src:?}");
         }
@@ -1717,6 +1786,11 @@ mod tests {
         assert!(matches!(
             parse_diagram("---\ntitle: x\n---\n%% c\nsequenceDiagram\nA->>B: hi"),
             Ok(Diagram::Sequence(_))
+        ));
+        assert_eq!(parse("classDiagram\nA <|-- B"), Err(Error::UnsupportedType));
+        assert!(matches!(
+            parse_diagram("classDiagram\nA <|-- B"),
+            Ok(Diagram::Class(_))
         ));
         assert!(matches!(
             parse_diagram("graph TD\nA-->B"),
@@ -2007,12 +2081,12 @@ mod tests {
         assert_frames_ok(&fc, &l);
     }
 
-    fn on_edge(p: (f32, f32), f: &NodeBox) -> bool {
+    pub(crate) fn on_edge(p: (f32, f32), f: &NodeBox) -> bool {
         let (dx, dy) = ((p.0 - f.x).abs() - f.w / 2.0, (p.1 - f.y).abs() - f.h / 2.0);
         (dx.abs() < 0.5 && dy <= 0.5) || (dy.abs() < 0.5 && dx <= 0.5)
     }
 
-    fn overlaps(a: &NodeBox, b: &NodeBox) -> bool {
+    pub(crate) fn overlaps(a: &NodeBox, b: &NodeBox) -> bool {
         (a.x - b.x).abs() < (a.w + b.w) / 2.0 && (a.y - b.y).abs() < (a.h + b.h) / 2.0
     }
 
@@ -2024,7 +2098,7 @@ mod tests {
             && inner.y + inner.h / 2.0 <= outer.y + outer.h / 2.0 + e
     }
 
-    fn assert_no_overlap(l: &Layout) {
+    pub(crate) fn assert_no_overlap(l: &Layout) {
         for (i, a) in l.nodes.iter().enumerate() {
             for b in &l.nodes[i + 1..] {
                 assert!(!overlaps(a, b), "{a:?} overlaps {b:?}");
@@ -2036,7 +2110,7 @@ mod tests {
 
     /// Members are inside their frames, other nodes do not touch a frame,
     /// and two frames are either nested or apart; the title band is clear.
-    fn assert_frames_ok(fc: &Flowchart, l: &Layout) {
+    pub(crate) fn assert_frames_ok(fc: &Flowchart, l: &Layout) {
         assert_eq!(l.frames.len(), fc.subgraphs.len());
         let within = |n: &Node, k: usize| chain(fc, n.subgraph).contains(&k);
         for (k, f) in l.frames.iter().enumerate() {
@@ -2185,6 +2259,31 @@ mod tests {
         assert!(l.nodes[0].x < l.nodes[1].x);
         let (_, l) = lay("graph RL\nA --> B");
         assert!(l.nodes[0].x > l.nodes[1].x);
+        // A source feeding only a late node sits just before it.
+        let (fc, l) = lay("graph TD\na --> b --> c --> d\nside --> d");
+        assert_eq!(l.nodes[idx(&fc, "side")].y, l.nodes[idx(&fc, "c")].y);
+        // A self-loop label is beside the loop, outside the node and the
+        // loop, and inside the picture.
+        for dir in ["TD", "LR"] {
+            let (fc, l) = lay(&format!("graph {dir}\na --> b\nb -->|again| b\nb --> c"));
+            let b = l.nodes[idx(&fc, "b")];
+            let (x, y) = l.edges[1].label_at.expect("label");
+            let (lw, lh) = measure("again");
+            let lbl = NodeBox { x, y, w: lw, h: lh };
+            assert!(!overlaps(&lbl, &b), "{lbl:?} {b:?}");
+            let loop_far = l.edges[1]
+                .points
+                .iter()
+                .map(|p| if dir == "TD" { p.0 } else { p.1 })
+                .fold(f32::NEG_INFINITY, f32::max);
+            if dir == "TD" {
+                assert!(x - lw / 2.0 >= loop_far);
+            } else {
+                assert!(y - lh / 2.0 >= loop_far);
+            }
+            assert!(x + lw / 2.0 <= l.width + 0.01 && y + lh / 2.0 <= l.height + 0.01);
+            assert_no_overlap(&l);
+        }
         // Long edge A->C bends through a virtual node: 3 points.
         let (_, l) = lay("graph TD\nA --> B --> C\nA --> C");
         assert_eq!(l.edges[2].points.len(), 3);

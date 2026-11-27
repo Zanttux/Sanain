@@ -426,6 +426,14 @@ enum Laid {
         sanain_markdown::mermaid::sequence::Sequence,
         sanain_markdown::mermaid::sequence::SeqLayout,
     ),
+    State(
+        sanain_markdown::mermaid::state::StateDiagram,
+        sanain_markdown::mermaid::Layout,
+    ),
+    Class(
+        sanain_markdown::mermaid::class::ClassDiagram,
+        sanain_markdown::mermaid::class::ClassLayout,
+    ),
 }
 
 /// A laid-out diagram, or why the source is shown instead.
@@ -467,6 +475,14 @@ fn diagram_for(ui: &egui::Ui, code: &str, size: f32) -> std::rc::Rc<Diagram> {
             let l = mermaid::sequence::layout(&sq, sp, &mut measure);
             Ok(Laid::Seq(sq, l))
         }
+        D::State(sd) => {
+            let l = mermaid::state::layout(&sd, sp, &mut measure)?;
+            Ok(Laid::State(sd, l))
+        }
+        D::Class(cd) => {
+            let l = mermaid::class::layout(&cd, sp, &mut measure)?;
+            Ok(Laid::Class(cd, l))
+        }
     }));
     DIAGRAMS.with(|c| {
         let mut c = c.borrow_mut();
@@ -485,8 +501,12 @@ fn mermaid(ui: &mut egui::Ui, code: &str, st: &Style<'_>) {
     use sanain_markdown::mermaid::Error;
     let size = (st.size * 0.9).round();
     match &*diagram_for(ui, code, size) {
-        Ok(Laid::Flow(fc, l)) => draw_diagram(ui, fc, l, size, st),
+        Ok(Laid::Flow(fc, l)) => draw_diagram(ui, fc, l, None, size, st),
         Ok(Laid::Seq(sq, l)) => draw_sequence(ui, sq, l, size, st),
+        Ok(Laid::State(sd, l)) => {
+            draw_diagram(ui, &sd.graph, l, Some((&sd.kinds, &sd.regions)), size, st);
+        }
+        Ok(Laid::Class(cd, l)) => draw_class(ui, cd, l, size, st),
         Err(e) => {
             let id = match e {
                 Error::UnsupportedType => "preview-mermaid-unsupported-type",
@@ -598,10 +618,68 @@ fn link_head(
     }
 }
 
+/// Subgraph, composite-state or namespace frames, outer first (parents
+/// come before children). `dashed` frames (concurrent regions) have no
+/// fill and no title.
+#[allow(clippy::too_many_arguments)]
+fn draw_frames(
+    painter: &egui::Painter,
+    fc: &sanain_markdown::mermaid::Flowchart,
+    l: &sanain_markdown::mermaid::Layout,
+    dashed: &dyn Fn(usize) -> bool,
+    at: &dyn Fn(f32, f32) -> egui::Pos2,
+    scale: f32,
+    font: &FontId,
+    pad: f32,
+    p: &Palette,
+) {
+    use egui::{Align2, StrokeKind, pos2, vec2};
+    for (k, (sg, f)) in fc.subgraphs.iter().zip(&l.frames).enumerate() {
+        let r = egui::Rect::from_center_size(at(f.x, f.y), vec2(f.w, f.h) * scale);
+        let line = Stroke::new(1.0 * scale.max(0.6), p.border.lerp_to_gamma(p.muted, 0.4));
+        if dashed(k) {
+            let dash = 4.0 * scale.max(0.5);
+            let pts = [
+                r.left_top(),
+                r.right_top(),
+                r.right_bottom(),
+                r.left_bottom(),
+                r.left_top(),
+            ];
+            painter.extend(egui::Shape::dashed_line(&pts, line, dash, dash));
+            continue;
+        }
+        let fill = p.canvas.lerp_to_gamma(p.surface, 0.45);
+        painter.rect(r, 6.0 * scale, fill, line, StrokeKind::Inside);
+        let band = l.title_band.get(k).copied().unwrap_or(0.0) * scale;
+        let clip = painter.with_clip_rect(r.intersect(painter.clip_rect()));
+        diagram_text(
+            &clip,
+            &sg.title,
+            font,
+            pos2(r.left() + pad, r.top() + pad * 0.5 + band / 2.0),
+            Align2::LEFT_CENTER,
+            body(p),
+            None,
+        );
+    }
+}
+
+/// Note colours shared by sequence, state and class diagrams.
+fn note_style(p: &Palette, scale: f32) -> (Color32, Stroke) {
+    (
+        p.surface.lerp_to_gamma(p.warning, 0.18),
+        Stroke::new(1.0 * scale.max(0.6), p.warning.lerp_to_gamma(p.border, 0.5)),
+    )
+}
+
+/// A flowchart, or a state diagram when `state` gives the node kinds and
+/// which frames are concurrent regions.
 fn draw_diagram(
     ui: &mut egui::Ui,
     fc: &sanain_markdown::mermaid::Flowchart,
     l: &sanain_markdown::mermaid::Layout,
+    state: Option<(&[sanain_markdown::mermaid::state::Kind], &[bool])>,
     size: f32,
     st: &Style<'_>,
 ) {
@@ -624,30 +702,11 @@ fn draw_diagram(
             bg,
         );
     };
+    use sanain_markdown::mermaid::state::Kind;
     let pad = sanain_markdown::mermaid::Spacing::for_font(size).pad * scale;
-    // Subgraph frames, outer first (parents come before children).
-    for (k, (sg, f)) in fc.subgraphs.iter().zip(&l.frames).enumerate() {
-        let r = egui::Rect::from_center_size(at(f.x, f.y), vec2(f.w, f.h) * scale);
-        let fill = p.canvas.lerp_to_gamma(p.surface, 0.45);
-        painter.rect(
-            r,
-            6.0 * scale,
-            fill,
-            Stroke::new(1.0 * scale.max(0.6), p.border.lerp_to_gamma(p.muted, 0.4)),
-            StrokeKind::Inside,
-        );
-        let band = l.title_band.get(k).copied().unwrap_or(0.0) * scale;
-        let clip = painter.with_clip_rect(r.intersect(painter.clip_rect()));
-        diagram_text(
-            &clip,
-            &sg.title,
-            &font,
-            pos2(r.left() + pad, r.top() + pad * 0.5 + band / 2.0),
-            Align2::LEFT_CENTER,
-            body(p),
-            None,
-        );
-    }
+    let regions = state.map_or(&[][..], |s| s.1);
+    let dashed = |k: usize| regions.get(k).copied().unwrap_or(false);
+    draw_frames(&painter, fc, l, &dashed, &at, scale, &font, pad, p);
     let edge_color = p.text.lerp_to_gamma(p.muted, 0.5);
     // Edges under nodes.
     for (e, path) in fc.edges.iter().zip(&l.edges) {
@@ -675,11 +734,35 @@ fn draw_diagram(
         );
         link_head(&painter, e.tail, pts[0], pts[1], edge_color, scale, width);
     }
-    for (node, b) in fc.nodes.iter().zip(&l.nodes) {
+    let (note_fill, note_stroke) = note_style(p, scale);
+    for (i, (node, b)) in fc.nodes.iter().zip(&l.nodes).enumerate() {
         let c = at(b.x, b.y);
         let half = vec2(b.w, b.h) * scale / 2.0;
         let r = egui::Rect::from_center_size(c, half * 2.0);
         let stroke = Stroke::new(1.3 * scale.max(0.6), p.accent);
+        let kind = state.and_then(|s| s.0.get(i).copied());
+        match kind {
+            Some(Kind::Start) => {
+                painter.circle_filled(c, half.x.min(half.y), p.text);
+                continue;
+            }
+            Some(Kind::End) => {
+                let outer = half.x.min(half.y);
+                painter.circle_stroke(c, outer, Stroke::new(1.4 * scale.max(0.6), p.text));
+                painter.circle_filled(c, outer * 0.6, p.text);
+                continue;
+            }
+            Some(Kind::Fork | Kind::Join) => {
+                painter.rect_filled(r, 1.5 * scale, p.text);
+                continue;
+            }
+            Some(Kind::Note) => {
+                painter.rect(r, 2.0, note_fill, note_stroke, StrokeKind::Inside);
+                label(&node.label, c, p.text, None);
+                continue;
+            }
+            _ => {}
+        }
         let poly = |pts: Vec<Pos2>| {
             painter.add(S::convex_polygon(pts, p.surface, stroke));
         };
@@ -760,6 +843,210 @@ fn draw_diagram(
             && e.stroke != Line::Invisible
         {
             label(text, at(x, y), body(p), Some(p.canvas));
+        }
+    }
+}
+
+/// Class relationship end at `tip`, coming from `from`: open arrow,
+/// hollow triangle, or filled or hollow diamond.
+fn class_end(
+    painter: &egui::Painter,
+    end: sanain_markdown::mermaid::class::End,
+    tip: egui::Pos2,
+    from: egui::Pos2,
+    color: Color32,
+    hollow: Color32,
+    scale: f32,
+) {
+    use sanain_markdown::mermaid::class::End;
+    let dir = (tip - from).normalized();
+    let len = 11.0 * scale.max(0.5);
+    let side = dir.rot90() * len * 0.45;
+    let stroke = Stroke::new(1.3 * scale.max(0.6), color);
+    match end {
+        End::None => {}
+        End::Arrow => {
+            let base = tip - dir * len * 0.8;
+            painter.add(egui::Shape::line(
+                vec![base + side, tip, base - side],
+                stroke,
+            ));
+        }
+        End::Triangle => {
+            let base = tip - dir * len;
+            painter.add(egui::Shape::convex_polygon(
+                vec![tip, base + side, base - side],
+                hollow,
+                stroke,
+            ));
+        }
+        End::Diamond | End::DiamondOpen => {
+            let mid = tip - dir * len * 0.65;
+            let side = side * 0.85;
+            let fill = if end == End::Diamond { color } else { hollow };
+            painter.add(egui::Shape::convex_polygon(
+                vec![tip, mid + side, tip - dir * len * 1.3, mid - side],
+                fill,
+                stroke,
+            ));
+        }
+    }
+}
+
+fn draw_class(
+    ui: &mut egui::Ui,
+    cd: &sanain_markdown::mermaid::class::ClassDiagram,
+    l: &sanain_markdown::mermaid::class::ClassLayout,
+    size: f32,
+    st: &Style<'_>,
+) {
+    use egui::{Align2, Pos2, Shape as S, StrokeKind, pos2, vec2};
+    use sanain_markdown::mermaid::class::{Classifier, annotation_text};
+    let p = st.p;
+    let base = &l.base;
+    let Some((painter, origin, scale)) = diagram_canvas(ui, base.width, base.height, size, p)
+    else {
+        return;
+    };
+    let at = |x: f32, y: f32| pos2(origin.x + x * scale, origin.y + y * scale);
+    let font = diagram_font((size * scale).max(4.0));
+    let pad = sanain_markdown::mermaid::Spacing::for_font(size).pad * scale;
+    draw_frames(
+        &painter,
+        &cd.graph,
+        base,
+        &|_| false,
+        &at,
+        scale,
+        &font,
+        pad,
+        p,
+    );
+    let edge_color = p.text.lerp_to_gamma(p.muted, 0.5);
+    let dash = 4.0 * scale.max(0.5);
+    let thin = Stroke::new(1.3 * scale.max(0.6), edge_color);
+    let line = |pts: &[Pos2], dashed: bool| {
+        if dashed {
+            painter.extend(S::dashed_line(pts, thin, dash, dash));
+        } else {
+            painter.add(S::line(pts.to_vec(), thin));
+        }
+    };
+    // Relations, then note links (dotted, no ends).
+    for (i, path) in base.edges.iter().enumerate() {
+        if path.points.len() < 2 {
+            continue;
+        }
+        let pts: Vec<Pos2> = path.points.iter().map(|&(x, y)| at(x, y)).collect();
+        match cd.relations.get(i) {
+            Some(r) => line(&pts, r.dashed),
+            None => line(&pts, true),
+        }
+    }
+    // Ends above the lines, so hollow ends hide the line under them.
+    for (r, path) in cd.relations.iter().zip(&base.edges) {
+        if path.points.len() < 2 {
+            continue;
+        }
+        let pts: Vec<Pos2> = path.points.iter().map(|&(x, y)| at(x, y)).collect();
+        let k = pts.len() - 1;
+        class_end(
+            &painter,
+            r.to_end,
+            pts[k],
+            pts[k - 1],
+            edge_color,
+            p.canvas,
+            scale,
+        );
+        class_end(
+            &painter, r.from_end, pts[0], pts[1], edge_color, p.canvas, scale,
+        );
+    }
+    let stroke = Stroke::new(1.3 * scale.max(0.6), p.accent);
+    for ((c, b), bx) in cd.classes.iter().zip(&base.nodes).zip(&l.boxes) {
+        let r = egui::Rect::from_center_size(at(b.x, b.y), vec2(b.w, b.h) * scale);
+        painter.rect(r, 2.0, p.surface, stroke, StrokeKind::Inside);
+        for y in [bx.header, bx.attributes] {
+            let y = r.top() + y * scale;
+            painter.line_segment([pos2(r.left(), y), pos2(r.right(), y)], stroke);
+        }
+        let mut rows = bx.rows.iter().map(|y| r.top() + y * scale);
+        let mut centred = |t: &str, color: Color32| {
+            if let Some(y) = rows.next() {
+                diagram_text(
+                    &painter,
+                    t,
+                    &font,
+                    pos2(r.center().x, y),
+                    Align2::CENTER_CENTER,
+                    color,
+                    None,
+                );
+            }
+        };
+        if let Some(a) = &c.annotation {
+            centred(&annotation_text(a), body(p));
+        }
+        centred(&c.name, p.text);
+        for m in c.attributes.iter().chain(&c.methods) {
+            let Some(y) = rows.next() else { break };
+            let mut job = LayoutJob::default();
+            job.append(
+                &m.text,
+                0.0,
+                TextFormat {
+                    font_id: font.clone(),
+                    color: p.text,
+                    italics: m.classifier == Classifier::Abstract,
+                    underline: if m.classifier == Classifier::Static {
+                        Stroke::new(1.0, p.text)
+                    } else {
+                        Stroke::NONE
+                    },
+                    ..Default::default()
+                },
+            );
+            let g = painter.layout_job(job);
+            let tr = Align2::LEFT_CENTER.anchor_size(pos2(r.left() + pad, y), g.rect.size());
+            painter.galley(tr.min - g.rect.min.to_vec2(), g, p.text);
+        }
+    }
+    let (note_fill, note_stroke) = note_style(p, scale);
+    for (text, b) in cd.notes.iter().zip(&base.nodes[cd.classes.len()..]) {
+        let r = egui::Rect::from_center_size(at(b.x, b.y), vec2(b.w, b.h) * scale);
+        painter.rect(r, 2.0, note_fill, note_stroke, StrokeKind::Inside);
+        diagram_text(
+            &painter,
+            text,
+            &font,
+            r.center(),
+            Align2::CENTER_CENTER,
+            p.text,
+            None,
+        );
+    }
+    // Labels and cardinalities on top, on the canvas colour.
+    let label = |t: &str, (x, y): (f32, f32)| {
+        diagram_text(
+            &painter,
+            t,
+            &font,
+            at(x, y),
+            Align2::CENTER_CENTER,
+            body(p),
+            Some(p.canvas),
+        );
+    };
+    for ((r, path), cards) in cd.relations.iter().zip(&base.edges).zip(&l.cards) {
+        if let (Some(t), Some(pt)) = (&r.label, path.label_at) {
+            label(t, pt);
+        }
+        if let (Some(t), Some(pt)) = (&r.from_card, cards[0]) {
+            label(t, pt);
+        }
+        if let (Some(t), Some(pt)) = (&r.to_card, cards[1]) {
+            label(t, pt);
         }
     }
 }
@@ -896,8 +1183,7 @@ fn draw_sequence(
         }
     }
     // Notes.
-    let note_fill = p.surface.lerp_to_gamma(p.warning, 0.18);
-    let note_stroke = Stroke::new(1.0 * scale.max(0.6), p.warning.lerp_to_gamma(p.border, 0.5));
+    let (note_fill, note_stroke) = note_style(p, scale);
     for nb in &l.notes {
         let Some(Item::Note { text: t, .. }) = sq.items.get(nb.item) else {
             continue;
