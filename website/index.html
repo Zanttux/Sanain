@@ -3,35 +3,40 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sanain — the power of words</title>
-<meta name="description" content="Sanain is a free, open-source text editor for text, code, Markdown and data. Native, offline, no account.">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Text³ — open-source text editor</title>
+<meta name="description" content="Text³ is a free, open-source text editor for text, code, Markdown and data. Native, offline, no account.">
+<link rel="canonical" href="https://zanttux.github.io/text3/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Text³">
+<meta property="og:description" content="Text³ is a free, open-source text editor for text, code, Markdown and data. Native, offline, no account.">
+<meta property="og:url" content="https://zanttux.github.io/text3/">
+<meta property="og:image" content="https://zanttux.github.io/text3/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="wrap">
-<header class="top">
-  <a class="brand" href="./"><img src="icon.svg" alt="">Sanain</a>
-  <nav class="top"><a href="#download">Download</a><a href="#features">Features</a><a href="#privacy">Privacy</a><a href="#made">How it&#x27;s made</a></nav>
-</header>
-
-<div class="buffer" role="img" aria-label="The power of words. A free, open-source text editor for everyday text, code, configuration files, Markdown and data. Native on Windows, macOS and Linux.">
-  <div class="tabs"><span class="tab on">welcome.md</span><span class="tab">notes.txt</span><span class="tab">config.toml</span></div>
-  <pre><span class="gutter">1<br>2<br><br>3</span><code><span class="kw">#</span> The power
-of words.<span class="caret"></span>
-
-<span class="dim">A free, open-source text editor for everyday text, code, configuration files, Markdown and data. Native on Windows, macOS and Linux.</span></code></pre>
-  <div class="status"><span><b>Ln 2, Col 10</b></span><span>Markdown</span><span>LF</span><span>UTF-8</span></div>
-</div>
-<div class="cta">
-  <a class="btn" href="https://github.com/Zanttux/Sanain/releases/tag/nightly">Download the nightly build</a>
-  <a class="btn ghost" href="https://github.com/Zanttux/Sanain">Source on GitHub</a>
-  <span class="note">Pre-alpha, version 0.2.1. Free for everyone, every feature included.</span>
-</div>
+<header class="top"><div class="wrap">
+  <a class="brand" href="./">Text³</a>
+  <nav class="top"><a href="#download">Download</a><a href="#features">Features</a><a href="#privacy">Privacy</a><a href="#made">About</a></nav>
+</div></header>
+<main class="wrap">
+<section class="hero">
+  <img class="lockup" src="text3-lockup.svg" alt="Text³" width="440" height="276">
+  <h1>A native, open-source text editor</h1>
+  <p class="lede">For everyday text, code, configuration files, Markdown and data, on Windows, macOS and Linux. Formerly called Sanain.</p>
+  <div class="cta">
+    <a class="btn" href="https://github.com/Zanttux/text3/releases/tag/nightly">Download the nightly build</a>
+    <a class="btn ghost" href="https://github.com/Zanttux/text3">Source on GitHub</a>
+  </div>
+  <p class="note">Pre-alpha, version 0.2.1. Free for everyone, every feature included.</p>
+</section>
 
 <section id="intact">
   <h2>Your files stay intact</h2>
-  <p class="lede">Open a file, change nothing, save it: the bytes are the same. Encodings and line endings are kept as they were, saves are atomic, and Sanain refuses to overwrite a file another program changed in the meantime. Unsaved text survives a crash.</p>
+  <p>Open a file, change nothing, save it: the bytes are the same. Encodings and line endings are kept as they were, saves are atomic, and Text³ refuses to overwrite a file another program changed in the meantime. Unsaved text survives a crash.</p>
   <div class="bytes" aria-hidden="true">before   63 61 66 c3 a9 0d 0a   <span class="same">c a f é \r \n</span>   UTF-8 · CRLF
 after    63 61 66 c3 a9 0d 0a   <span class="same">c a f é \r \n</span>   UTF-8 · CRLF</div>
 </section>
@@ -48,9 +53,9 @@ after    63 61 66 c3 a9 0d 0a   <span class="same">c a f é \r \n</span>   UTF-8
 
 <section id="download">
   <h2>Download</h2>
-  <p>Builds are made automatically from every change and published as the nightly pre-release. <a href="https://github.com/Zanttux/Sanain/releases/tag/nightly">github.com/Zanttux/Sanain/releases/tag/nightly</a></p>
-  <div class="table-scroll"><table class="dl"><thead><tr><th>System</th><th>Installer</th><th>Portable</th></tr></thead><tbody><tr><td>Windows 10/11 (x64)</td><td><code>sanain-…-windows-x86_64-setup.exe</code></td><td><code>sanain-…-windows-x86_64-portable.zip</code></td></tr><tr><td>macOS 11+ (Apple Silicon)</td><td><code>sanain-…-macos-aarch64.dmg</code></td><td><code>sanain-…-macos-aarch64-portable.zip</code></td></tr><tr><td>Linux (x86-64)</td><td><code>sanain_…_amd64.deb</code></td><td><code>sanain-…-linux-x86_64-portable.tar.gz</code></td></tr></tbody></table></div>
-  <p class="warn">These builds are not signed yet. macOS asks for confirmation the first time (right-click Sanain, then Open); Windows SmartScreen may warn. Each file has a SHA-256 checksum next to it. Sanain is tested by hand on macOS; Windows and Linux are built and tested automatically.</p>
+  <p>Builds are made automatically from every change and published as the nightly pre-release. <a href="https://github.com/Zanttux/text3/releases/tag/nightly">github.com/Zanttux/text3/releases/tag/nightly</a></p>
+  <div class="table-scroll"><table class="dl"><thead><tr><th>System</th><th>Installer</th><th>Portable</th></tr></thead><tbody><tr><td>Windows 10/11 (x64)</td><td><code>text3-…-windows-x86_64-setup.exe</code></td><td><code>text3-…-windows-x86_64-portable.zip</code></td></tr><tr><td>macOS 11+ (Apple Silicon)</td><td><code>text3-…-macos-aarch64.dmg</code></td><td><code>text3-…-macos-aarch64-portable.zip</code></td></tr><tr><td>Linux (x86-64)</td><td><code>text3_…_amd64.deb</code></td><td><code>text3-…-linux-x86_64-portable.tar.gz</code></td></tr></tbody></table></div>
+  <p class="warn">These builds are not signed yet. macOS asks for confirmation the first time (right-click Text³, then Open); Windows SmartScreen may warn. Each file has a SHA-256 checksum next to it. Text³ is tested by hand on macOS; Windows and Linux are built and tested automatically.</p>
 </section>
 
 <section id="privacy">
@@ -59,15 +64,15 @@ after    63 61 66 c3 a9 0d 0a   <span class="same">c a f é \r \n</span>   UTF-8
 </section>
 
 <section id="made">
-  <h2>How it&#x27;s made</h2>
-  <p>AI-built. Human-led. Community-driven. Sanain is written by Claude, an AI model by Anthropic, working as the developer under the direction of the project&#x27;s founder, who decides what it becomes. Every change goes through automated tests on three operating systems before it is merged, and the work is public on GitHub.</p>
+  <h2>About the project</h2>
+  <p>Text³ is written by Claude, an AI model by Anthropic, working as the developer under the direction of the project&#x27;s founder, who decides what it becomes. Every change goes through automated tests on three operating systems before it is merged, and the work is public on GitHub.</p>
 </section>
 
 <section id="support">
   <h2>Support</h2>
-  <p>Sanain is free, and stays free with every feature for everyone. Bug reports, ideas and translations are welcome on GitHub. <a href="https://github.com/Zanttux/Sanain/issues">Report a problem or suggest an idea</a></p>
+  <p>Text³ is free, and stays free with every feature for everyone. Bug reports, ideas and translations are welcome on GitHub. <a href="https://github.com/Zanttux/text3/issues">Report a problem or suggest an idea</a></p>
 </section>
-</div>
-<footer><div class="wrap">Sanain is free software under the Mozilla Public License 2.0. <a href="https://github.com/Zanttux/Sanain">GitHub</a> · <a href="https://github.com/Zanttux/Sanain/blob/main/PRIVACY.md">PRIVACY.md</a></div></footer>
+</main>
+<footer><div class="wrap">Text³ is free software under the Mozilla Public License 2.0. <a href="https://github.com/Zanttux/text3">GitHub</a> · <a href="https://github.com/Zanttux/text3/blob/main/PRIVACY.md">PRIVACY.md</a></div></footer>
 </body>
 </html>

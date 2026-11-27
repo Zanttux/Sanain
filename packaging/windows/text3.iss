@@ -24,6 +24,9 @@ LicenseFile={#SourceDir}\LICENSE
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+; Artwork rendered by scripts/make-icons.py (100 % and 200 % sizes).
+WizardImageFile={#RepoRoot}\packaging\windows\wizard-image-100.bmp,{#RepoRoot}\packaging\windows\wizard-image-200.bmp
+WizardSmallImageFile={#RepoRoot}\packaging\windows\wizard-small-100.bmp,{#RepoRoot}\packaging\windows\wizard-small-200.bmp
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 

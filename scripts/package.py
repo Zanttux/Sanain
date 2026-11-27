@@ -112,19 +112,86 @@ def windows_installer(ver, stage, dist, name):
     return os.path.join(dist, out + ".exe")
 
 
+APP = "Text³.app"
+VOLUME = "Text³"
+
+# Finder layout of the DMG window: 660x420 with the lockup at the top
+# (packaging/macos/dmg-background.tiff), the app and the Applications link
+# below it, the documents out of sight below the window.
+DMG_LAYOUT = """
+tell application "Finder"
+  tell disk "{volume}"
+    open
+    set current view of container window to icon view
+    set toolbar visible of container window to false
+    set statusbar visible of container window to false
+    set the bounds of container window to {{200, 120, 860, 562}}
+    set opts to the icon view options of container window
+    set arrangement of opts to not arranged
+    set icon size of opts to 96
+    set text size of opts to 13
+    set background picture of opts to file ".background:background.tiff"
+    set position of item "{app}" of container window to {{180, 300}}
+    set position of item "Applications" of container window to {{480, 300}}
+    {docs}
+    update without registering applications
+    delay 1
+    close
+  end tell
+end tell
+"""
+
+
+def dmg_layout(rw, docs):
+    """Apply the window layout to the read-write image `rw`. Needs Finder
+    (a logged-in session); on failure the DMG keeps Finder's default
+    layout, which still works."""
+    mount = subprocess.run(
+        ["hdiutil", "attach", "-readwrite", "-noverify", "-noautoopen", rw],
+        check=True, capture_output=True, text=True,
+    ).stdout
+    device = mount.split()[0]
+    try:
+        hidden = "\n    ".join(
+            f'set position of item "{d}" of container window to {{{100 + 150 * i}, 600}}'
+            for i, d in enumerate(docs)
+        )
+        script = DMG_LAYOUT.format(volume=VOLUME, app=APP, docs=hidden)
+        subprocess.run(["osascript", "-e", script], check=True, timeout=60)
+        return True
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as e:
+        print(f"DMG window layout skipped ({e}); default layout kept", file=sys.stderr)
+        return False
+    finally:
+        subprocess.run(["sync"], check=False)
+        subprocess.run(["hdiutil", "detach", device, "-quiet"], check=False)
+
+
 def macos_dmg(stage_app, dist, name, notices):
     tmp = os.path.join(dist, name + "-dmg")
     shutil.rmtree(tmp, ignore_errors=True)
     os.makedirs(tmp)
-    shutil.copytree(stage_app, os.path.join(tmp, "Text³.app"), symlinks=True)
+    shutil.copytree(stage_app, os.path.join(tmp, APP), symlinks=True)
     os.symlink("/Applications", os.path.join(tmp, "Applications"))
+    docs = DOCS + ["THIRD_PARTY_NOTICES.md"]
     for doc in DOCS:
         shutil.copy2(os.path.join(ROOT, doc), os.path.join(tmp, doc))
     shutil.copy2(notices, os.path.join(tmp, "THIRD_PARTY_NOTICES.md"))
+    os.makedirs(os.path.join(tmp, ".background"))
+    shutil.copy2(
+        os.path.join(ROOT, "packaging", "macos", "dmg-background.tiff"),
+        os.path.join(tmp, ".background", "background.tiff"),
+    )
     dmg = os.path.join(dist, name + ".dmg")
-    if os.path.exists(dmg):
-        os.remove(dmg)
-    run("hdiutil", "create", "-volname", "Text³", "-srcfolder", tmp, "-ov", "-format", "UDZO", dmg)
+    rw = os.path.join(dist, name + "-rw.dmg")
+    for f in (dmg, rw):
+        if os.path.exists(f):
+            os.remove(f)
+    run("hdiutil", "create", "-volname", VOLUME, "-srcfolder", tmp, "-ov", "-format", "UDRW", rw)
+    if os.environ.get("TEXT3_DMG_LAYOUT", "1") != "0":
+        dmg_layout(rw, docs)
+    run("hdiutil", "convert", rw, "-format", "UDZO", "-o", dmg)
+    os.remove(rw)
     shutil.rmtree(tmp)
     return dmg
 
@@ -139,10 +206,13 @@ def linux_deb(ver, arch, dist, notices):
         return path
     shutil.copy2(os.path.join(ROOT, "target", "release", "text3"), p("usr", "bin", "text3"))
     os.chmod(p("usr", "bin", "text3"), 0o755)
-    shutil.copy2(
-        os.path.join(ROOT, "packaging", "icons", "text3-256.png"),
-        p("usr", "share", "icons", "hicolor", "256x256", "apps", "io.github.zanttux.text3.png"),
-    )
+    # Compatibility: the command's name before the rename.
+    os.symlink("text3", p("usr", "bin", "sanain"))
+    for n in (16, 24, 32, 48, 64, 128, 256, 512):
+        shutil.copy2(
+            os.path.join(ROOT, "packaging", "icons", f"text3-{n}.png"),
+            p("usr", "share", "icons", "hicolor", f"{n}x{n}", "apps", "io.github.zanttux.text3.png"),
+        )
     shutil.copy2(
         os.path.join(ROOT, "packaging", "linux", "io.github.zanttux.text3.desktop"),
         p("usr", "share", "applications", "io.github.zanttux.text3.desktop"),
@@ -173,6 +243,10 @@ def linux_deb(ver, arch, dist, notices):
             f"Installed-Size: {size_kb}\n"
             f"Depends: {depends}\n"
             "Section: editors\n"
+            # Rename from Sanain: installing text3 replaces the sanain package.
+            "Provides: sanain\n"
+            "Conflicts: sanain\n"
+            "Replaces: sanain\n"
             "Priority: optional\n"
             "Homepage: https://github.com/Zanttux/text3\n"
             "Description: Native text editor for text, code, Markdown and data\n"
@@ -208,6 +282,9 @@ def main():
             run("cargo", "build", "--release", "--locked", "-p", "text3-app")
         exe = "text3.exe" if system == "windows" else "text3"
         shutil.copy2(os.path.join(ROOT, "target", "release", exe), os.path.join(stage, exe))
+        if system == "linux":
+            # Compatibility: the command's name before the rename.
+            os.symlink("text3", os.path.join(stage, "sanain"))
 
     for doc in DOCS:
         shutil.copy2(os.path.join(ROOT, doc), os.path.join(stage, doc))
