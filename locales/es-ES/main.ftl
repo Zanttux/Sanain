@@ -536,3 +536,4 @@ status-indent-choose = Ajustes de sangría
 a11y-settings-sections = Secciones de ajustes
 a11y-tab-strip = Archivos abiertos
 a11y-tab-unsaved = { $name }, cambios sin guardar
+migration-copied = Los ajustes y datos de Sanain se copiaron a Text³. Las carpetas de Sanain no se han modificado.

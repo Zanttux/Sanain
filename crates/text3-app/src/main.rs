@@ -64,15 +64,19 @@ fn main() -> eframe::Result {
         paths.push(l.clone());
     }
 
+    // First start after the rename: copy the Sanain folders (once, never
+    // overwriting, old folders untouched; text3_app::migrate).
+    let migrated = text3_app::migrate::run(&text3_app::migrate::default_pairs());
+
     let settings_dir = Settings::default_dir();
     let settings = settings_dir
         .as_deref()
         .map(Settings::load)
         .unwrap_or_default();
 
-    // Language: SANAIN_LOCALE, then the user's choice, then the system.
-    let requested: Vec<String> = std::env::var("SANAIN_LOCALE")
-        .ok()
+    // Language: TEXT3_LOCALE (or SANAIN_LOCALE), then the user's choice,
+    // then the system.
+    let requested: Vec<String> = text3_app::migrate::var("LOCALE")
         .into_iter()
         .chain(settings.locale.clone())
         .chain(sys_locale::get_locales())
@@ -122,8 +126,9 @@ fn main() -> eframe::Result {
         _ => {}
     }
 
-    // Crash recovery. SANAIN_RECOVERY_DIR overrides the location.
-    let recovery_dir = std::env::var_os("SANAIN_RECOVERY_DIR")
+    // Crash recovery. TEXT3_RECOVERY_DIR (or SANAIN_RECOVERY_DIR) overrides
+    // the location.
+    let recovery_dir = text3_app::migrate::var_os("RECOVERY_DIR")
         .map(PathBuf::from)
         .or_else(|| text3_app::settings::portable_root().map(|r| r.join("recovery")))
         .or_else(RecoveryStore::default_dir);
@@ -152,7 +157,7 @@ fn main() -> eframe::Result {
     let mut split = None;
     if paths.is_empty()
         && settings.restore_session
-        && std::env::var_os("SANAIN_NO_SESSION").is_none()
+        && text3_app::migrate::var_os("NO_SESSION").is_none()
         && let Some(session) = session_file.as_deref().and_then(Session::load)
     {
         split = workspace.restore_session(&session);
@@ -192,6 +197,9 @@ fn main() -> eframe::Result {
             let wake = cc.egui_ctx.clone();
             text3_platform::on_opened_files(move || wake.request_repaint());
             shell.init_recent();
+            if migrated > 0 {
+                shell.notify(shell.tr("migration-copied"));
+            }
             // One log viewer at a time: the last large file named wins.
             if let Some(p) = large.last() {
                 shell.open_large(p, &cc.egui_ctx);
@@ -274,12 +282,13 @@ fn app_icon() -> std::sync::Arc<eframe::egui::IconData> {
 }
 
 /// Windows uses OpenGL (glow): wgpu flickers and lags while the window is
-/// moved on some drivers (#95). `SANAIN_RENDERER=wgpu` or `glow` overrides
+/// moved on some drivers (#95). `TEXT3_RENDERER=wgpu` or `glow` (also as
+/// `SANAIN_RENDERER`) overrides
 /// it where both are built in.
 fn renderer() -> eframe::Renderer {
     #[cfg(windows)]
     {
-        if std::env::var("SANAIN_RENDERER").as_deref() == Ok("wgpu") {
+        if text3_app::migrate::var("RENDERER").as_deref() == Some("wgpu") {
             return eframe::Renderer::Wgpu;
         }
         eframe::Renderer::Glow

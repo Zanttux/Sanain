@@ -512,3 +512,4 @@ status-indent-choose = 缩进设置
 a11y-settings-sections = 设置分区
 a11y-tab-strip = 打开的文件
 a11y-tab-unsaved = { $name }，有未保存的更改
+migration-copied = 已将 Sanain 的设置和数据复制到 Text³。Sanain 的文件夹未作更改。

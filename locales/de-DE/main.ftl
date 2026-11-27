@@ -536,3 +536,4 @@ status-indent-choose = Einrückungseinstellungen
 a11y-settings-sections = Einstellungsbereiche
 a11y-tab-strip = Geöffnete Dateien
 a11y-tab-unsaved = { $name }, ungespeicherte Änderungen
+migration-copied = Einstellungen und Daten von Sanain wurden nach Text³ kopiert. Die Sanain-Ordner bleiben unverändert.

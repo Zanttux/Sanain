@@ -1,6 +1,6 @@
 //! Disk-full drill on a real, nearly full filesystem.
 //!
-//! Gated by `SANAIN_FULL_DIR`, which must point to a directory on a small
+//! Gated by `TEXT3_FULL_DIR` (or the old `SANAIN_FULL_DIR`), which must point to a directory on a small
 //! throwaway filesystem (a 1 MiB tmpfs on Linux CI, a small VHD on Windows,
 //! a small disk image on macOS; see docs/TESTING.md). Without it the test
 //! prints "skipped" and passes. The test fills the filesystem itself, leaves
@@ -69,7 +69,7 @@ impl Ballast {
             if written > MAX_FILL {
                 drop(f);
                 let _ = fs::remove_file(&path);
-                panic!("SANAIN_FULL_DIR has over {MAX_FILL} bytes free; use a small filesystem");
+                panic!("TEXT3_FULL_DIR has over {MAX_FILL} bytes free; use a small filesystem");
             }
         }
         // Make sure the space is really allocated; a delayed allocation
@@ -140,8 +140,8 @@ fn expect_io_disk_full<T: std::fmt::Debug>(what: &str, r: io::Result<T>) {
 
 #[test]
 fn writes_fail_cleanly_on_a_full_disk() {
-    let Some(root) = std::env::var_os("SANAIN_FULL_DIR") else {
-        eprintln!("skipped: set SANAIN_FULL_DIR to a directory on a small filesystem");
+    let Some(root) = text3_app::migrate::var_os("FULL_DIR") else {
+        eprintln!("skipped: set TEXT3_FULL_DIR to a directory on a small filesystem");
         return;
     };
     let drill = Drill(PathBuf::from(root).join(format!("text3-drill-{}", std::process::id())));

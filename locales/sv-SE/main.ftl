@@ -536,3 +536,4 @@ status-indent-choose = Indragsinställningar
 a11y-settings-sections = Inställningsavsnitt
 a11y-tab-strip = Öppna filer
 a11y-tab-unsaved = { $name }, osparade ändringar
+migration-copied = Inställningar och data från Sanain kopierades till Text³. Sanain-mapparna lämnades oförändrade.

@@ -8,6 +8,9 @@
 //! - Windows: per-user registry keys (HKCU) for "Edit with Text³" in the
 //!   Explorer context menu of every file and an "Open with" entry, written
 //!   with `reg.exe`.
+//! - Both `--register` and `--unregister` also remove what Sanain (the
+//!   name before Text³) registered, so no stale "Edit with Sanain" entry
+//!   pointing at a removed program is left behind.
 //! - macOS: nothing to register; Info.plist declares the document types and
 //!   text3-platform handles Finder's open events (ADR 0003).
 
@@ -19,6 +22,10 @@ pub const DESKTOP_FILE: &str = "io.github.zanttux.text3.desktop";
 /// Icon name in the hicolor theme (installed by [`register_freedesktop`]).
 pub const ICON_NAME: &str = "io.github.zanttux.text3";
 const ICON_PNG: &[u8] = include_bytes!("../../../packaging/icons/text3-256.png");
+
+/// Desktop entry and icon name written by Sanain before the rename.
+pub const LEGACY_DESKTOP_FILE: &str = "io.github.zanttux.Sanain.desktop";
+pub const LEGACY_ICON_NAME: &str = "io.github.zanttux.Sanain";
 
 /// MIME types offered in "Open With": text and common code/data formats.
 pub const MIME_TYPES: &[&str] = &[
@@ -88,7 +95,8 @@ pub fn register_freedesktop(exe: &Path, apps: Option<PathBuf>) -> std::io::Resul
     std::fs::create_dir_all(&dir)?;
     let path = dir.join(DESKTOP_FILE);
     text3_io::write_atomic(&path, desktop_entry(exe).as_bytes(), None)?;
-    if let Some(icon) = icon_path(&dir) {
+    remove_legacy_freedesktop(&dir);
+    if let Some(icon) = icon_path(&dir, ICON_NAME) {
         if let Some(parent) = icon.parent() {
             std::fs::create_dir_all(parent)?;
         }
@@ -103,24 +111,38 @@ pub fn unregister_freedesktop(apps: Option<PathBuf>) -> std::io::Result<bool> {
     let Some(dir) = apps.or_else(applications_dir) else {
         return Ok(false);
     };
-    if let Some(icon) = icon_path(&dir) {
+    if let Some(icon) = icon_path(&dir, ICON_NAME) {
         let _ = std::fs::remove_file(icon);
     }
+    let legacy = remove_legacy_freedesktop(&dir);
     match std::fs::remove_file(dir.join(DESKTOP_FILE)) {
         Ok(()) => {
             refresh_desktop_database(&dir);
             Ok(true)
         }
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(false),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            if legacy {
+                refresh_desktop_database(&dir);
+            }
+            Ok(legacy)
+        }
         Err(e) => Err(e),
     }
 }
 
+/// Remove Sanain's desktop entry and icon; returns whether the entry existed.
+fn remove_legacy_freedesktop(apps: &Path) -> bool {
+    if let Some(icon) = icon_path(apps, LEGACY_ICON_NAME) {
+        let _ = std::fs::remove_file(icon);
+    }
+    std::fs::remove_file(apps.join(LEGACY_DESKTOP_FILE)).is_ok()
+}
+
 /// `<data>/icons/hicolor/256x256/apps/<name>.png` next to `<data>/applications`.
-fn icon_path(apps: &Path) -> Option<PathBuf> {
+fn icon_path(apps: &Path, name: &str) -> Option<PathBuf> {
     apps.parent().map(|data| {
         data.join("icons/hicolor/256x256/apps")
-            .join(format!("{ICON_NAME}.png"))
+            .join(format!("{name}.png"))
     })
 }
 
@@ -147,8 +169,14 @@ pub fn plain_path(p: &Path) -> PathBuf {
     }
 }
 
+/// Keys Sanain wrote before the rename; removed by register and unregister.
+pub const LEGACY_WINDOWS_KEYS: [&str; 2] = [
+    r"HKCU\Software\Classes\*\shell\Sanain",
+    r"HKCU\Software\Classes\Applications\sanain.exe",
+];
+
 /// `reg.exe` argument lists that register (`true`) or remove the Windows
-/// per-user keys for `exe`.
+/// per-user keys for `exe`. Both also delete Sanain's old keys.
 pub fn windows_reg_commands(exe: &Path, register: bool) -> Vec<Vec<String>> {
     let exe = exe.to_string_lossy().into_owned();
     let name = Path::new(&exe).file_name().map_or_else(
@@ -159,8 +187,9 @@ pub fn windows_reg_commands(exe: &Path, register: bool) -> Vec<Vec<String>> {
     let app = format!(r"HKCU\Software\Classes\Applications\{name}");
     let command = format!("\"{exe}\" \"%1\"");
     let s = |v: &[&str]| v.iter().map(|x| (*x).to_owned()).collect::<Vec<_>>();
+    let legacy = LEGACY_WINDOWS_KEYS.iter().map(|k| s(&["delete", k, "/f"]));
     if register {
-        vec![
+        let mut cmds = vec![
             s(&["add", &menu, "/ve", "/d", "Edit with Text³", "/f"]),
             s(&["add", &menu, "/v", "Icon", "/d", &exe, "/f"]),
             s(&[
@@ -180,14 +209,18 @@ pub fn windows_reg_commands(exe: &Path, register: bool) -> Vec<Vec<String>> {
                 &command,
                 "/f",
             ]),
-        ]
+        ];
+        cmds.extend(legacy);
+        cmds
     } else {
-        vec![s(&["delete", &menu, "/f"]), s(&["delete", &app, "/f"])]
+        let mut cmds = vec![s(&["delete", &menu, "/f"]), s(&["delete", &app, "/f"])];
+        cmds.extend(legacy);
+        cmds
     }
 }
 
 /// Run the Windows registration commands. Removing keys that do not exist
-/// is not an error.
+/// is not an error (deletions are best effort, additions must succeed).
 pub fn windows_apply(exe: &Path, register: bool) -> std::io::Result<()> {
     for args in windows_reg_commands(exe, register) {
         let status = std::process::Command::new("reg")
@@ -195,7 +228,7 @@ pub fn windows_apply(exe: &Path, register: bool) -> std::io::Result<()> {
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null())
             .status()?;
-        if register && !status.success() {
+        if args[0] == "add" && !status.success() {
             return Err(std::io::Error::other(format!(
                 "reg {} failed",
                 args.join(" ")
@@ -240,6 +273,35 @@ mod tests {
         );
     }
 
+    /// Sanain's old entry and icon go away on register and on unregister.
+    #[test]
+    fn freedesktop_removes_the_sanain_entry() {
+        let d = tempfile::tempdir().unwrap();
+        let apps = d.path().join("applications");
+        let old_icon = d
+            .path()
+            .join("icons/hicolor/256x256/apps/io.github.zanttux.Sanain.png");
+        let plant = || {
+            std::fs::create_dir_all(&apps).unwrap();
+            std::fs::create_dir_all(old_icon.parent().unwrap()).unwrap();
+            std::fs::write(apps.join(LEGACY_DESKTOP_FILE), "[Desktop Entry]\n").unwrap();
+            std::fs::write(&old_icon, b"png").unwrap();
+        };
+        plant();
+        register_freedesktop(Path::new("/usr/bin/text3"), Some(apps.clone())).unwrap();
+        assert!(!apps.join(LEGACY_DESKTOP_FILE).exists());
+        assert!(!old_icon.exists());
+        assert!(apps.join(DESKTOP_FILE).is_file());
+        unregister_freedesktop(Some(apps.clone())).unwrap();
+        plant();
+        assert!(
+            unregister_freedesktop(Some(apps.clone())).unwrap(),
+            "only the Sanain entry: still reported as removed"
+        );
+        assert!(!apps.join(LEGACY_DESKTOP_FILE).exists());
+        assert!(!old_icon.exists());
+    }
+
     #[test]
     fn verbatim_prefix_removed() {
         assert_eq!(
@@ -270,7 +332,13 @@ mod tests {
             "per user only"
         );
         let undo = windows_reg_commands(Path::new(r"C:\Apps\Text3\text3.exe"), false);
-        assert_eq!(undo.len(), 2);
+        assert_eq!(undo.len(), 4);
+        for key in LEGACY_WINDOWS_KEYS {
+            let delete = vec!["delete".to_owned(), key.to_owned(), "/f".to_owned()];
+            assert!(undo.contains(&delete), "unregister removes {key}");
+            assert!(cmds.contains(&delete), "register removes {key}");
+        }
+        assert!(undo.iter().all(|c| c[0] == "delete"));
     }
 
     /// What `--register` writes: the canonical executable path without the

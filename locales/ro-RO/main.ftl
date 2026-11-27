@@ -560,3 +560,4 @@ status-indent-choose = Setări de indentare
 a11y-settings-sections = Secțiuni de setări
 a11y-tab-strip = Fișiere deschise
 a11y-tab-unsaved = { $name }, modificări nesalvate
+migration-copied = Setările și datele din Sanain au fost copiate în Text³. Folderele Sanain au rămas neschimbate.

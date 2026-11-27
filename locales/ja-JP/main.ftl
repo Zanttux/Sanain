@@ -512,3 +512,4 @@ status-indent-choose = インデント設定
 a11y-settings-sections = 設定のセクション
 a11y-tab-strip = 開いているファイル
 a11y-tab-unsaved = { $name }、未保存の変更あり
+migration-copied = Sanain の設定とデータを Text³ にコピーしました。Sanain のフォルダーは変更されていません。

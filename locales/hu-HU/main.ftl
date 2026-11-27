@@ -536,3 +536,4 @@ status-indent-choose = Behúzási beállítások
 a11y-settings-sections = Beállítások szakaszai
 a11y-tab-strip = Megnyitott fájlok
 a11y-tab-unsaved = { $name }, nem mentett módosítások
+migration-copied = A Sanain beállításai és adatai átmásolódtak a Text³ programba. A Sanain mappái változatlanok maradtak.

@@ -536,3 +536,4 @@ status-indent-choose = Ρυθμίσεις εσοχής
 a11y-settings-sections = Ενότητες ρυθμίσεων
 a11y-tab-strip = Ανοιχτά αρχεία
 a11y-tab-unsaved = { $name }, μη αποθηκευμένες αλλαγές
+migration-copied = Οι ρυθμίσεις και τα δεδομένα του Sanain αντιγράφηκαν στο Text³. Οι φάκελοι του Sanain έμειναν αμετάβλητοι.

@@ -23,11 +23,15 @@ pub enum ThemeChoice {
 }
 
 /// Name of the marker file that turns on portable mode.
-pub const PORTABLE_MARKER: &str = "sanain-portable";
+pub const PORTABLE_MARKER: &str = "text3-portable";
+/// The marker's name before the rename; still honoured, so a portable
+/// Sanain folder updated with Text³ keeps its data folder.
+pub const LEGACY_PORTABLE_MARKER: &str = "sanain-portable";
 
-/// Portable mode: with a `sanain-portable` file next to the executable (or
-/// next to Text³.app on macOS), settings, recovery and history live in a
-/// `data` folder beside it instead of the user profile.
+/// Portable mode: with a `text3-portable` (or `sanain-portable`) file next
+/// to the executable (or next to Text³.app on macOS), settings, recovery
+/// and history live in a `data` folder beside it instead of the user
+/// profile.
 pub fn portable_root() -> Option<PathBuf> {
     let exe = std::env::current_exe().ok()?;
     portable_root_for(&exe)
@@ -36,7 +40,7 @@ pub fn portable_root() -> Option<PathBuf> {
 /// [`portable_root`] for a given executable path.
 pub fn portable_root_for(exe: &std::path::Path) -> Option<PathBuf> {
     let dir = exe.parent()?;
-    // Text³.app/Contents/MacOS/sanain → the folder holding Text³.app.
+    // Text³.app/Contents/MacOS/text3 → the folder holding Text³.app.
     let bundle_parent = dir
         .parent()
         .filter(|c| c.ends_with("Contents"))
@@ -46,8 +50,26 @@ pub fn portable_root_for(exe: &std::path::Path) -> Option<PathBuf> {
     [Some(dir), bundle_parent]
         .into_iter()
         .flatten()
-        .find(|d| d.join(PORTABLE_MARKER).is_file())
+        .find(|d| d.join(PORTABLE_MARKER).is_file() || d.join(LEGACY_PORTABLE_MARKER).is_file())
         .map(|d| d.join("data"))
+}
+
+/// The per-user configuration folder named `name` on this platform.
+fn platform_config_dir(name: &str) -> Option<PathBuf> {
+    let env = |k: &str| {
+        std::env::var_os(k)
+            .filter(|v| !v.is_empty())
+            .map(PathBuf::from)
+    };
+    if cfg!(target_os = "macos") {
+        env("HOME").map(|h| h.join("Library/Application Support").join(name))
+    } else if cfg!(windows) {
+        env("APPDATA").map(|d| d.join(name))
+    } else {
+        env("XDG_CONFIG_HOME")
+            .or_else(|| env("HOME").map(|h| h.join(".config")))
+            .map(|d| d.join(name))
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -101,28 +123,26 @@ impl Default for Settings {
 
 impl Settings {
     /// Per-user configuration directory, e.g.
-    /// `~/Library/Application Support/Text³` on macOS.
+    /// `~/Library/Application Support/text3` on macOS. `TEXT3_CONFIG_DIR`
+    /// (or the old `SANAIN_CONFIG_DIR`) and portable mode override it.
     pub fn default_dir() -> Option<PathBuf> {
-        let env = |k: &str| {
-            std::env::var_os(k)
-                .filter(|v| !v.is_empty())
-                .map(PathBuf::from)
-        };
-        if let Some(d) = env("SANAIN_CONFIG_DIR") {
-            return Some(d);
+        if let Some(d) = crate::migrate::var_os("CONFIG_DIR") {
+            return Some(PathBuf::from(d));
         }
         if let Some(root) = portable_root() {
             return Some(root.join("settings"));
         }
-        if cfg!(target_os = "macos") {
-            env("HOME").map(|h| h.join("Library/Application Support/Sanain"))
-        } else if cfg!(windows) {
-            env("APPDATA").map(|d| d.join("Sanain"))
+        platform_config_dir("text3")
+    }
+
+    /// Where Sanain kept its settings before the rename (copied once by
+    /// [`crate::migrate`]).
+    pub fn legacy_default_dir() -> Option<PathBuf> {
+        platform_config_dir(if cfg!(any(target_os = "macos", windows)) {
+            "Sanain"
         } else {
-            env("XDG_CONFIG_HOME")
-                .or_else(|| env("HOME").map(|h| h.join(".config")))
-                .map(|d| d.join("sanain"))
-        }
+            "sanain"
+        })
     }
 
     pub fn encode(&self) -> String {
@@ -241,17 +261,37 @@ mod tests {
     #[test]
     fn portable_marker() {
         let d = tempfile::tempdir().unwrap();
-        let exe = d.path().join("sanain");
+        let exe = d.path().join("text3");
         assert_eq!(portable_root_for(&exe), None);
         std::fs::write(d.path().join(PORTABLE_MARKER), "").unwrap();
         assert_eq!(portable_root_for(&exe), Some(d.path().join("data")));
-        let mac = d.path().join("Sanain.app/Contents/MacOS/sanain");
+        let mac = d.path().join("Text³.app/Contents/MacOS/text3");
         std::fs::create_dir_all(mac.parent().unwrap()).unwrap();
         assert_eq!(
             portable_root_for(&mac),
             Some(d.path().join("data")),
-            "marker next to Sanain.app"
+            "marker next to Text³.app"
         );
+    }
+
+    /// A portable Sanain folder updated with Text³ keeps using its data.
+    #[test]
+    fn legacy_portable_marker() {
+        let d = tempfile::tempdir().unwrap();
+        let exe = d.path().join("text3");
+        std::fs::write(d.path().join(LEGACY_PORTABLE_MARKER), "").unwrap();
+        assert_eq!(portable_root_for(&exe), Some(d.path().join("data")));
+    }
+
+    #[test]
+    fn new_and_legacy_folders_differ_only_in_name() {
+        let (Some(new), Some(old)) = (platform_config_dir("text3"), Settings::legacy_default_dir())
+        else {
+            return; // no HOME/APPDATA in this environment
+        };
+        assert_eq!(new.parent(), old.parent());
+        assert_eq!(new.file_name().unwrap(), "text3");
+        assert!(old.ends_with("Sanain") || old.ends_with("sanain"));
     }
     use super::*;
 

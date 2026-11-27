@@ -560,3 +560,4 @@ status-indent-choose = Paramètres de retrait
 a11y-settings-sections = Sections des paramètres
 a11y-tab-strip = Fichiers ouverts
 a11y-tab-unsaved = { $name }, modifications non enregistrées
+migration-copied = Les réglages et données de Sanain ont été copiés dans Text³. Les dossiers de Sanain n’ont pas été modifiés.

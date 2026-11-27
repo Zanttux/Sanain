@@ -9,6 +9,7 @@ pub mod fuzzy;
 pub mod images;
 pub mod keymap;
 pub mod macros;
+pub mod migrate;
 pub mod npp_shortcuts;
 pub mod panes;
 pub mod recent;

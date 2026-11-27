@@ -512,3 +512,4 @@ status-indent-choose = Pengaturan indentasi
 a11y-settings-sections = Bagian pengaturan
 a11y-tab-strip = Berkas terbuka
 a11y-tab-unsaved = { $name }, ada perubahan yang belum disimpan
+migration-copied = Pengaturan dan data dari Sanain telah disalin ke Text³. Folder Sanain tidak diubah.

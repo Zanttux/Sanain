@@ -560,3 +560,4 @@ status-indent-choose = Configurações de recuo
 a11y-settings-sections = Seções das configurações
 a11y-tab-strip = Arquivos abertos
 a11y-tab-unsaved = { $name }, alterações não salvas
+migration-copied = As configurações e os dados do Sanain foram copiados para o Text³. As pastas do Sanain não foram alteradas.

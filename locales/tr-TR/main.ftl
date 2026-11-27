@@ -536,3 +536,4 @@ status-indent-choose = Girinti ayarları
 a11y-settings-sections = Ayar bölümleri
 a11y-tab-strip = Açık dosyalar
 a11y-tab-unsaved = { $name }, kaydedilmemiş değişiklikler
+migration-copied = Sanain ayarları ve verileri Text³ uygulamasına kopyalandı. Sanain klasörleri değiştirilmedi.

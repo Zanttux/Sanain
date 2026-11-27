@@ -512,3 +512,4 @@ status-indent-choose = Cài đặt thụt lề
 a11y-settings-sections = Các mục cài đặt
 a11y-tab-strip = Tệp đang mở
 a11y-tab-unsaved = { $name }, có thay đổi chưa lưu
+migration-copied = Cài đặt và dữ liệu từ Sanain đã được sao chép sang Text³. Các thư mục của Sanain vẫn được giữ nguyên.

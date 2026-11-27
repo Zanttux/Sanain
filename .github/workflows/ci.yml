@@ -35,40 +35,40 @@ jobs:
       - name: disk-full drill (4 MiB tmpfs)
         if: runner.os == 'Linux'
         run: |
-          sudo mkdir -p /mnt/sanain-full
-          sudo mount -t tmpfs -o size=4m tmpfs /mnt/sanain-full
-          sudo chown "$(id -u):$(id -g)" /mnt/sanain-full
-          SANAIN_FULL_DIR=/mnt/sanain-full cargo test -p text3-app --test disk_full --locked -- --nocapture
-          sudo umount /mnt/sanain-full
+          sudo mkdir -p /mnt/text3-full
+          sudo mount -t tmpfs -o size=4m tmpfs /mnt/text3-full
+          sudo chown "$(id -u):$(id -g)" /mnt/text3-full
+          TEXT3_FULL_DIR=/mnt/text3-full cargo test -p text3-app --test disk_full --locked -- --nocapture
+          sudo umount /mnt/text3-full
       - name: disk-full drill (2 MiB HFS+ image)
         if: runner.os == 'macOS'
         run: |
-          img="$RUNNER_TEMP/sanain-full.dmg"
-          mnt="$RUNNER_TEMP/sanain-full"
+          img="$RUNNER_TEMP/text3-full.dmg"
+          mnt="$RUNNER_TEMP/text3-full"
           for i in 1 2 3; do
-            hdiutil create -size 2m -fs HFS+ -volname SanainFull -layout NONE -ov "$img" && break
+            hdiutil create -size 2m -fs HFS+ -volname Text3Full -layout NONE -ov "$img" && break
             sleep 5
           done
           hdiutil attach -nobrowse -mountpoint "$mnt" "$img"
-          SANAIN_FULL_DIR="$mnt" cargo test -p text3-app --test disk_full --locked -- --nocapture
+          TEXT3_FULL_DIR="$mnt" cargo test -p text3-app --test disk_full --locked -- --nocapture
           hdiutil detach "$mnt"
       - name: disk-full drill (8 MiB NTFS VHD)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $vhd = Join-Path $env:RUNNER_TEMP 'sanain-full.vhdx'
-          $script = Join-Path $env:RUNNER_TEMP 'sanain-full.diskpart'
+          $vhd = Join-Path $env:RUNNER_TEMP 'text3-full.vhdx'
+          $script = Join-Path $env:RUNNER_TEMP 'text3-full.diskpart'
           @(
             "create vdisk file=`"$vhd`" maximum=8 type=fixed",
             "select vdisk file=`"$vhd`"",
             'attach vdisk',
             'create partition primary',
-            'format fs=ntfs quick label=SanainFull',
+            'format fs=ntfs quick label=Text3Full',
             'assign letter=S'
           ) | Set-Content -Encoding ascii $script
           diskpart /s $script
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $env:SANAIN_FULL_DIR = 'S:\'
+          $env:TEXT3_FULL_DIR = 'S:\'
           cargo test -p text3-app --test disk_full --locked -- --nocapture
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 

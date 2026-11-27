@@ -512,3 +512,4 @@ status-indent-choose = 들여쓰기 설정
 a11y-settings-sections = 설정 섹션
 a11y-tab-strip = 열린 파일
 a11y-tab-unsaved = { $name }, 저장되지 않은 변경 사항
+migration-copied = Sanain의 설정과 데이터를 Text³ 앱으로 복사했습니다. Sanain 폴더는 변경되지 않았습니다.

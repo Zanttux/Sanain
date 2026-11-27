@@ -560,3 +560,4 @@ status-indent-choose = Definições de avanço
 a11y-settings-sections = Secções das definições
 a11y-tab-strip = Ficheiros abertos
 a11y-tab-unsaved = { $name }, alterações não guardadas
+migration-copied = As definições e os dados do Sanain foram copiados para o Text³. As pastas do Sanain não foram alteradas.

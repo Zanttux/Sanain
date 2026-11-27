@@ -584,3 +584,4 @@ status-indent-choose = Настройки отступов
 a11y-settings-sections = Разделы настроек
 a11y-tab-strip = Открытые файлы
 a11y-tab-unsaved = { $name }, есть несохранённые изменения
+migration-copied = Настройки и данные Sanain скопированы в Text³. Папки Sanain остались без изменений.

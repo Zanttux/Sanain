@@ -539,3 +539,4 @@ status-indent-choose = Sisennysasetukset
 a11y-settings-sections = Asetusten osiot
 a11y-tab-strip = Avoimet tiedostot
 a11y-tab-unsaved = { $name }, tallentamattomia muutoksia
+migration-copied = Sanainin asetukset ja tiedot kopioitiin Text³:een. Sanainin kansiot jätettiin ennalleen.

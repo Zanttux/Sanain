@@ -35,6 +35,20 @@ Name: "finnish"; MessagesFile: "compiler:Languages\Finnish.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 Name: "openwith"; Description: "Add {#AppName} to ""Open with"" and the Explorer context menu"; GroupDescription: "Integration:"
 
+[InstallDelete]
+; Upgrading a Sanain installation (same AppId, same folder): remove the
+; old program and its shortcuts. User data is never touched here; Text³
+; copies it to its own folders on first start (docs/REBRAND.md).
+Type: files; Name: "{app}\sanain.exe"
+Type: files; Name: "{autoprograms}\Sanain.lnk"
+Type: files; Name: "{autodesktop}\Sanain.lnk"
+
+[Registry]
+; Sanain's "Edit with Sanain" and Open with entries would point at the
+; removed sanain.exe. text3.exe --register/--unregister also remove them.
+Root: HKCU; Subkey: "Software\Classes\*\shell\Sanain"; ValueType: none; Flags: deletekey dontcreatekey
+Root: HKCU; Subkey: "Software\Classes\Applications\sanain.exe"; ValueType: none; Flags: deletekey dontcreatekey
+
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 

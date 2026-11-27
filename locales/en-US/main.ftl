@@ -538,3 +538,4 @@ status-indent-choose = Indentation settings
 a11y-settings-sections = Settings sections
 a11y-tab-strip = Open files
 a11y-tab-unsaved = { $name }, unsaved changes
+migration-copied = Settings and data from Sanain were copied to Text³. The Sanain folders were left unchanged.

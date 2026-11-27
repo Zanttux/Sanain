@@ -536,3 +536,4 @@ status-indent-choose = Inspringingsinstellingen
 a11y-settings-sections = Instellingsonderdelen
 a11y-tab-strip = Geopende bestanden
 a11y-tab-unsaved = { $name }, niet-opgeslagen wijzigingen
+migration-copied = Instellingen en gegevens van Sanain zijn naar Text³ gekopieerd. De Sanain-mappen zijn ongewijzigd gebleven.

@@ -67,21 +67,39 @@ impl RecoveryStore {
     }
 
     /// The platform's per-user location, e.g.
-    /// `~/Library/Application Support/Text³/Recovery` on macOS.
+    /// `~/Library/Application Support/text3/Recovery` on macOS.
     pub fn default_dir() -> Option<PathBuf> {
+        Self::platform_dir("text3")
+    }
+
+    /// Where Sanain kept crash recovery before the rename to Text³ (its
+    /// parent folder also holds the session and local history).
+    pub fn legacy_default_dir() -> Option<PathBuf> {
+        Self::platform_dir(if cfg!(any(target_os = "macos", windows)) {
+            "Sanain"
+        } else {
+            "sanain"
+        })
+    }
+
+    fn platform_dir(name: &str) -> Option<PathBuf> {
         let env = |k: &str| {
             std::env::var_os(k)
                 .filter(|v| !v.is_empty())
                 .map(PathBuf::from)
         };
         if cfg!(target_os = "macos") {
-            env("HOME").map(|h| h.join("Library/Application Support/Sanain/Recovery"))
+            env("HOME").map(|h| {
+                h.join("Library/Application Support")
+                    .join(name)
+                    .join("Recovery")
+            })
         } else if cfg!(windows) {
-            env("LOCALAPPDATA").map(|d| d.join("Sanain").join("Recovery"))
+            env("LOCALAPPDATA").map(|d| d.join(name).join("Recovery"))
         } else {
             env("XDG_DATA_HOME")
                 .or_else(|| env("HOME").map(|h| h.join(".local/share")))
-                .map(|d| d.join("sanain").join("recovery"))
+                .map(|d| d.join(name).join("recovery"))
         }
     }
 

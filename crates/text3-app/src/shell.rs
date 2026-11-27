@@ -362,10 +362,11 @@ pub struct Shell {
 
 impl Shell {
     /// Install the native menu bar where supported. Set
-    /// `SANAIN_IN_WINDOW_MENU=1` to force the in-window menu.
+    /// `TEXT3_IN_WINDOW_MENU=1` (or `SANAIN_IN_WINDOW_MENU=1`) to force the
+    /// in-window menu.
     pub fn install_menu(&mut self, ctx: &egui::Context) {
         #[cfg(target_os = "macos")]
-        if std::env::var_os("SANAIN_IN_WINDOW_MENU").is_none() {
+        if text3_app::migrate::var_os("IN_WINDOW_MENU").is_none() {
             let ctx = ctx.clone();
             let label = |id: &str| self.t(id, &[]);
             self.native_menu =
@@ -439,6 +440,16 @@ impl Shell {
     }
 
     /// Where saved versions are kept (`None` disables local history).
+    /// Show a one-off message in the status bar.
+    pub fn notify(&mut self, message: String) {
+        self.status = Some((message, false));
+    }
+
+    /// A localized message without arguments.
+    pub fn tr(&self, id: &str) -> String {
+        self.t(id, &[])
+    }
+
     pub fn set_history(&mut self, store: Option<text3_io::history::HistoryStore>) {
         self.history = store;
     }
