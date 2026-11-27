@@ -7,7 +7,9 @@
 //!   event, not as program arguments. [`prepare_open_documents`] handles
 //!   that event and [`take_opened_files`] hands the paths to the app.
 //! - Windows: [`attach_parent_console`] makes CLI output visible in the
-//!   invoking console without allocating a console window.
+//!   invoking console without allocating a console window, and
+//!   [`system_program`] names programs that ship with the system by their
+//!   full path.
 
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -41,6 +43,69 @@ pub fn attach_parent_console() -> bool {
     {
         false
     }
+}
+
+/// Where a program that ships with the operating system lives.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SystemDir {
+    /// Windows `System32` (`reg.exe`); `/usr/bin` on macOS (`open`).
+    System,
+    /// The Windows folder itself (`explorer.exe`); `/usr/bin` on macOS.
+    Windows,
+}
+
+/// Full path of `name`, a program that ships with Windows or macOS, so it
+/// is started without searching for it. On Windows `Command::new("reg")`
+/// looks in the folder of the running `text3.exe` before `System32`, so a
+/// `reg.exe` planted next to a downloaded copy (e.g. in Downloads) would
+/// run instead (Notepad++ CVE-2025-49144 class). `None` on other systems
+/// (PATH is the user's own choice there and the program folder is not
+/// searched), for a `name` that is not a bare file name, or when the
+/// folder cannot be found; callers must then not fall back to the bare
+/// name on Windows.
+pub fn system_program(name: &str, dir: SystemDir) -> Option<PathBuf> {
+    if name.is_empty() || name.contains(['/', '\\', ':']) || name == "." || name == ".." {
+        return None;
+    }
+    system_dir(dir).map(|d| d.join(name))
+}
+
+#[cfg(windows)]
+fn system_dir(dir: SystemDir) -> Option<PathBuf> {
+    use std::os::windows::ffi::OsStringExt;
+    use windows_sys::Win32::System::SystemInformation::{
+        GetSystemDirectoryW, GetSystemWindowsDirectoryW,
+    };
+    let mut buf = vec![0u16; 1024];
+    let cap = u32::try_from(buf.len()).ok()?;
+    // SAFETY: `buf` is valid for `cap` u16 writes. Both functions write at
+    // most `cap` characters including the terminating NUL and return the
+    // length without it, the size needed when `buf` is too small (always
+    // >= `cap`), or 0 on failure; both cases are rejected below before
+    // the buffer is read.
+    #[allow(unsafe_code)]
+    let n = unsafe {
+        match dir {
+            SystemDir::System => GetSystemDirectoryW(buf.as_mut_ptr(), cap),
+            SystemDir::Windows => GetSystemWindowsDirectoryW(buf.as_mut_ptr(), cap),
+        }
+    } as usize;
+    if n == 0 || n >= buf.len() {
+        return None;
+    }
+    buf.truncate(n);
+    let path = PathBuf::from(std::ffi::OsString::from_wide(&buf));
+    path.is_absolute().then_some(path)
+}
+
+#[cfg(target_os = "macos")]
+fn system_dir(_: SystemDir) -> Option<PathBuf> {
+    Some(PathBuf::from("/usr/bin"))
+}
+
+#[cfg(not(any(windows, target_os = "macos")))]
+fn system_dir(_: SystemDir) -> Option<PathBuf> {
+    None
 }
 
 /// Files the system asked Text³ to open since the last call.
@@ -83,10 +148,15 @@ pub fn on_opened_files(wake: impl Fn() + Send + 'static) {
     }
 }
 
-/// Turn a `file://` URL string into a path (percent-decoded).
+/// Turn a `file://` URL string into a path (percent-decoded). URLs that
+/// name another host (`file://server/share/x`) give `None`: they are not
+/// local files, and turning them into a relative path would be wrong.
 pub fn file_url_to_path(url: &str) -> Option<PathBuf> {
     let rest = url.strip_prefix("file://")?;
     let rest = rest.strip_prefix("localhost").unwrap_or(rest);
+    if !rest.starts_with('/') {
+        return None;
+    }
     let mut bytes = Vec::with_capacity(rest.len());
     let mut it = rest.bytes();
     while let Some(b) = it.next() {
@@ -222,6 +292,7 @@ mod macos {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
 
     #[cfg(not(windows))]
     #[test]
@@ -241,6 +312,37 @@ mod tests {
         );
         assert_eq!(file_url_to_path("https://example.org/x"), None);
         assert_eq!(file_url_to_path("file:///bad%2"), None);
+        assert_eq!(file_url_to_path("file://server/share/x"), None);
+    }
+
+    #[test]
+    fn system_programs_are_full_paths() {
+        for bad in ["", ".", "..", "a/reg.exe", r"..\reg.exe", "C:reg.exe"] {
+            assert_eq!(system_program(bad, SystemDir::System), None, "{bad}");
+        }
+        let reg = system_program("reg.exe", SystemDir::System);
+        let explorer = system_program("explorer.exe", SystemDir::Windows);
+        if cfg!(windows) {
+            let reg = reg.expect("System32");
+            assert!(reg.is_absolute() && reg.is_file(), "{}", reg.display());
+            assert!(
+                reg.parent()
+                    .and_then(|p| p.file_name())
+                    .is_some_and(|n| n.eq_ignore_ascii_case("system32")),
+                "{}",
+                reg.display()
+            );
+            let explorer = explorer.expect("Windows folder");
+            assert!(explorer.is_file(), "{}", explorer.display());
+        } else if cfg!(target_os = "macos") {
+            assert_eq!(
+                system_program("open", SystemDir::System),
+                Some(PathBuf::from("/usr/bin/open"))
+            );
+            assert!(Path::new("/usr/bin/open").is_file());
+        } else {
+            assert_eq!((reg, explorer), (None, None));
+        }
     }
 
     #[test]

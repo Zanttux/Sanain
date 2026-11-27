@@ -819,15 +819,25 @@ impl Shell {
         else {
             return;
         };
+        // System programs by full path: a bare name is looked up in the
+        // folder of text3.exe first on Windows (planted explorer.exe).
+        use text3_platform::{SystemDir, system_program};
+        let missing = || std::io::Error::other("the system folder was not found");
         let spawned = if cfg!(target_os = "macos") {
-            std::process::Command::new("open")
-                .arg("-R")
-                .arg(&path)
-                .spawn()
+            system_program("open", SystemDir::System)
+                .ok_or_else(missing)
+                .and_then(|open| {
+                    std::process::Command::new(open)
+                        .arg("-R")
+                        .arg(&path)
+                        .spawn()
+                })
         } else if cfg!(windows) {
             let mut arg = std::ffi::OsString::from("/select,");
             arg.push(&path);
-            std::process::Command::new("explorer").arg(arg).spawn()
+            system_program("explorer.exe", SystemDir::Windows)
+                .ok_or_else(missing)
+                .and_then(|explorer| std::process::Command::new(explorer).arg(arg).spawn())
         } else {
             let dir = path.parent().unwrap_or(&path).to_owned();
             std::process::Command::new("xdg-open").arg(dir).spawn()
