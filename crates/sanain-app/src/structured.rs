@@ -30,6 +30,9 @@ pub struct GridState {
     scroll: bool,
     /// The table's column resize handles on the last frame.
     resize_handles: Vec<egui::Id>,
+    /// Tab past the last cell (`Some(true)`) or Shift+Tab before the
+    /// first (`Some(false)`) this frame: the caller moves focus on.
+    pub leave: Option<bool>,
 }
 
 #[derive(Debug)]
@@ -246,14 +249,15 @@ pub fn csv(
     let grid_focused = focus.has_focus() && state.editing.is_none();
     if grid_focused {
         // Tab moves between cells, except past the last cell (Shift+Tab:
-        // before the first), where it leaves the grid as anywhere else.
+        // before the first), where the caller moves focus out of the grid
+        // (`state.leave`). The grid keeps Tab from egui, whose filter is
+        // set a frame ahead and cannot know whether Shift comes with it.
         let at = state.selected.unwrap_or((0, 0));
-        let leaves = tab_leaves(at, rows, cols, ui.input(|i| i.modifiers.shift));
         ui.memory_mut(|m| {
             m.set_focus_lock_filter(
                 id,
                 egui::EventFilter {
-                    tab: !leaves,
+                    tab: true,
                     horizontal_arrows: true,
                     vertical_arrows: true,
                     escape: false,
@@ -274,11 +278,19 @@ pub fn csv(
         if pressed(Key::ArrowRight) {
             state.step(rows, cols, 0, 1, false);
         }
-        if !leaves {
-            if ui.input_mut(|i| i.consume_key(egui::Modifiers::SHIFT, Key::Tab)) {
+        // The Tab that brought focus here is not a move inside the grid.
+        let fresh = focus.gained_focus();
+        if !fresh && ui.input_mut(|i| i.consume_key(egui::Modifiers::SHIFT, Key::Tab)) {
+            if tab_leaves(at, rows, cols, true) {
+                state.leave = Some(false);
+            } else {
                 state.step(rows, cols, 0, -1, true);
             }
-            if pressed(Key::Tab) {
+        }
+        if !fresh && pressed(Key::Tab) {
+            if tab_leaves(at, rows, cols, false) {
+                state.leave = Some(true);
+            } else {
                 state.step(rows, cols, 0, 1, true);
             }
         }

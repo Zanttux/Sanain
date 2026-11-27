@@ -87,6 +87,8 @@ pub enum MenuAction {
     ClosePane,
     FocusNextPane,
     FocusPrevPane,
+    FocusNextRegion,
+    FocusPrevRegion,
     About,
     XmlValidate,
     XmlFormat,
@@ -104,7 +106,7 @@ pub enum MenuAction {
 }
 
 impl MenuAction {
-    pub const ALL: [MenuAction; 94] = [
+    pub const ALL: [MenuAction; 96] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -185,6 +187,8 @@ impl MenuAction {
         Self::ClosePane,
         Self::FocusNextPane,
         Self::FocusPrevPane,
+        Self::FocusNextRegion,
+        Self::FocusPrevRegion,
         Self::About,
         Self::XmlValidate,
         Self::XmlFormat,
@@ -285,6 +289,8 @@ impl MenuAction {
             Self::ClosePane => "view.close-pane",
             Self::FocusNextPane => "view.focus-next-pane",
             Self::FocusPrevPane => "view.focus-prev-pane",
+            Self::FocusNextRegion => "view.focus-next-region",
+            Self::FocusPrevRegion => "view.focus-prev-region",
             Self::About => "app.about",
             Self::XmlValidate => "tools.xml-validate",
             Self::XmlFormat => "tools.xml-format",
@@ -390,6 +396,8 @@ impl MenuAction {
             Self::ClosePane => "view-close-pane",
             Self::FocusNextPane => "view-focus-next-pane",
             Self::FocusPrevPane => "view-focus-prev-pane",
+            Self::FocusNextRegion => "view-focus-next-region",
+            Self::FocusPrevRegion => "view-focus-prev-region",
             Self::About => "app-about",
             Self::XmlValidate => "tools-xml-validate",
             Self::XmlFormat => "tools-xml-format",
@@ -466,6 +474,8 @@ impl MenuAction {
             Self::CloseTab => (cmd, Key::W),
             Self::ReopenTab => (cmd_shift, Key::T),
             Self::NextTab => (Modifiers::CTRL, Key::Tab),
+            Self::FocusNextRegion => (Modifiers::NONE, Key::F6),
+            Self::FocusPrevRegion => (Modifiers::SHIFT, Key::F6),
             Self::PrevTab => (Modifiers::CTRL.plus(Modifiers::SHIFT), Key::Tab),
             Self::MoveTabLeft => (Modifiers::CTRL.plus(Modifiers::SHIFT), Key::PageUp),
             Self::MoveTabRight => (Modifiers::CTRL.plus(Modifiers::SHIFT), Key::PageDown),
@@ -706,6 +716,8 @@ const VIEW_ITEMS: &[Option<MenuAction>] = &[
     Some(MenuAction::ClosePane),
     Some(MenuAction::FocusNextPane),
     Some(MenuAction::FocusPrevPane),
+    Some(MenuAction::FocusNextRegion),
+    Some(MenuAction::FocusPrevRegion),
     None,
     Some(MenuAction::ZoomIn),
     Some(MenuAction::ZoomOut),
@@ -919,6 +931,8 @@ mod native {
             MenuAction::CloseTab => (cmd, ch("w")),
             MenuAction::ReopenTab => (cmd_shift, ch("t")),
             MenuAction::NextTab => (Modifiers::CONTROL, Key::Named(NamedKey::Tab)),
+            MenuAction::FocusNextRegion => (Modifiers::empty(), Key::Named(NamedKey::F6)),
+            MenuAction::FocusPrevRegion => (Modifiers::SHIFT, Key::Named(NamedKey::F6)),
             MenuAction::PrevTab => (
                 Modifiers::CONTROL | Modifiers::SHIFT,
                 Key::Named(NamedKey::Tab),
@@ -1182,6 +1196,8 @@ mod tests {
             MenuAction::ClosePane,
             MenuAction::FocusNextPane,
             MenuAction::FocusPrevPane,
+            MenuAction::FocusNextRegion,
+            MenuAction::FocusPrevRegion,
         ] {
             assert_eq!(MenuAction::from_id(a.command_id()), Some(a));
             let id = a.label_id();

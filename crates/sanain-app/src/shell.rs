@@ -15,6 +15,7 @@ use sanain_io::{LoadError, TextEncoding};
 use sanain_language::Lang;
 
 use crate::find::{FindBar, FindEvent};
+use crate::focus::{Edge, Entry as FocusEntry, Region};
 use crate::menu::{self, MenuAction};
 use crate::palette::{Entry, Palette};
 use crate::preview;
@@ -134,6 +135,12 @@ fn encoding_choices(reopen: bool) -> Vec<TextEncoding> {
 /// Keyboard focus id of a tab's CSV grid.
 fn grid_id(id: TabId) -> egui::Id {
     egui::Id::unique(("sanain-csv-grid", id))
+}
+
+/// The Markdown preview of tab `id` in pane slot `slot`, which takes
+/// keyboard focus when the pane shows only the preview.
+fn preview_focus_id(id: TabId, slot: usize) -> egui::Id {
+    egui::Id::unique(("sanain-md-preview", id, slot))
 }
 
 /// Keyboard focus id of a tab's JSON or XML tree.
@@ -280,6 +287,8 @@ pub struct Shell {
     lang_override: HashMap<TabId, Option<Lang>>,
     /// Section shown in Settings.
     settings_tab: SettingsTab,
+    /// Give the selected section tab keyboard focus (Settings opened).
+    settings_focus: bool,
     /// Filter text of the shortcut list in Settings.
     shortcut_filter: String,
     /// Installed monospaced families (None until scanned).
@@ -343,6 +352,8 @@ pub struct Shell {
     themes: (Vec<crate::themes::ThemeEntry>, Vec<(String, String)>),
     /// Set once the session was recorded for the current quit attempt.
     quit_recorded: bool,
+    /// Keyboard focus between regions (F6, Tab at region edges).
+    focus: crate::focus::FocusCycle,
     #[cfg(target_os = "macos")]
     native_menu: Option<menu::NativeMenu>,
 }
@@ -476,6 +487,7 @@ impl Shell {
             outline_open: false,
             lang_override: HashMap::new(),
             settings_tab: SettingsTab::General,
+            settings_focus: false,
             shortcut_filter: String::new(),
             font_families: None,
             font_rx: None,
@@ -511,6 +523,7 @@ impl Shell {
             applied_theme: None,
             themes: (Vec::new(), Vec::new()),
             quit_recorded: false,
+            focus: Default::default(),
             #[cfg(target_os = "macos")]
             native_menu: None,
         };
@@ -629,6 +642,12 @@ impl Shell {
                 _ => tree_id(id),
             };
             self.ctx.memory_mut(|m| m.request_focus(target));
+            return;
+        }
+        if self.pane_mode(id) == PaneContent::Preview {
+            let slot = self.split.as_ref().map_or(0, |s| s.focused().slot);
+            self.ctx
+                .memory_mut(|m| m.request_focus(preview_focus_id(id, slot)));
             return;
         }
         self.active_view(id).request_focus();
@@ -1008,6 +1027,7 @@ impl Shell {
         let mut scan_fonts = false;
         let was_recording = recording.is_some();
         let mut focus_search = false;
+        let focus_tab = std::mem::take(&mut self.settings_focus);
         egui::Window::new(title)
             .id(egui::Id::unique("sanain-settings"))
             .open(&mut open)
@@ -1017,19 +1037,46 @@ impl Shell {
             .min_size([520.0, 320.0])
             .show(ctx, |ui| {
                 ui.horizontal_top(|ui| {
-                    // Section list.
+                    // Section list: a tab list. Only the selected tab is a
+                    // Tab stop; arrow keys move between the tabs, Tab goes on
+                    // into the section.
+                    const SECTIONS: [(SettingsTab, &str); 4] = [
+                        (SettingsTab::General, "settings-tab-general"),
+                        (SettingsTab::Editor, "settings-tab-editor"),
+                        (SettingsTab::Appearance, "settings-tab-appearance"),
+                        (SettingsTab::Shortcuts, "settings-shortcuts"),
+                    ];
                     ui.vertical(|ui| {
                         ui.set_width(150.0);
-                        for (t, id) in [
-                            (SettingsTab::General, "settings-tab-general"),
-                            (SettingsTab::Editor, "settings-tab-editor"),
-                            (SettingsTab::Appearance, "settings-tab-appearance"),
-                            (SettingsTab::Shortcuts, "settings-shortcuts"),
-                        ] {
+                        ui.ctx().accesskit_node_builder(ui.unique_id(), |n| {
+                            n.set_role(egui::accesskit::Role::TabList);
+                            n.set_label(l("a11y-settings-sections"));
+                        });
+                        let mut ids = [egui::Id::NULL; SECTIONS.len()];
+                        let mut focused = None;
+                        for (k, (t, id)) in SECTIONS.into_iter().enumerate() {
+                            let selected = *tab == t;
+                            let sense = if selected {
+                                egui::Sense::click()
+                            } else {
+                                egui::Sense::CLICK
+                            };
                             let r = ui.add_sized(
                                 [150.0, 26.0],
-                                egui::Button::selectable(*tab == t, l(id)),
+                                egui::Button::selectable(selected, l(id)).sense(sense),
                             );
+                            ui.ctx().accesskit_node_builder(r.id, |n| {
+                                n.set_role(egui::accesskit::Role::Tab);
+                                n.clear_toggled();
+                                n.set_selected(selected);
+                            });
+                            ids[k] = r.id;
+                            if r.has_focus() {
+                                focused = Some(k);
+                            }
+                            if selected && focus_tab {
+                                ui.memory_mut(|m| m.request_focus(r.id));
+                            }
                             if r.clicked() {
                                 if t == SettingsTab::Shortcuts && *tab != t {
                                     focus_search = true;
@@ -1037,9 +1084,52 @@ impl Shell {
                                 *tab = t;
                             }
                         }
+                        if let Some(k) = focused {
+                            ui.memory_mut(|m| {
+                                m.set_focus_lock_filter(
+                                    ids[k],
+                                    egui::EventFilter {
+                                        horizontal_arrows: true,
+                                        vertical_arrows: true,
+                                        ..Default::default()
+                                    },
+                                );
+                            });
+                            let n = SECTIONS.len();
+                            let to = ui.input_mut(|i| {
+                                use egui::{Key, Modifiers as M};
+                                if i.consume_key(M::NONE, Key::ArrowDown)
+                                    || i.consume_key(M::NONE, Key::ArrowRight)
+                                {
+                                    Some((k + 1) % n)
+                                } else if i.consume_key(M::NONE, Key::ArrowUp)
+                                    || i.consume_key(M::NONE, Key::ArrowLeft)
+                                {
+                                    Some((k + n - 1) % n)
+                                } else if i.consume_key(M::NONE, Key::Home) {
+                                    Some(0)
+                                } else if i.consume_key(M::NONE, Key::End) {
+                                    Some(n - 1)
+                                } else {
+                                    None
+                                }
+                            });
+                            if let Some(j) = to {
+                                *tab = SECTIONS[j].0;
+                                ui.memory_mut(|m| m.request_focus(ids[j]));
+                            }
+                        }
                     });
                     ui.separator();
+                    let section = SECTIONS
+                        .iter()
+                        .find(|(t, _)| *t == *tab)
+                        .map_or(String::new(), |(_, id)| l(id));
                     ui.vertical(|ui| {
+                        ui.ctx().accesskit_node_builder(ui.unique_id(), |n| {
+                            n.set_role(egui::accesskit::Role::TabPanel);
+                            n.set_label(section);
+                        });
                         ui.set_min_height(ui.available_height());
                         ui.set_min_width(480.0);
                         match *tab {
@@ -2321,7 +2411,8 @@ impl Shell {
         let p = theme::palette(ui.ctx());
         let mut jump = None;
         let mut close = false;
-        egui::Panel::left("outline")
+        let focus = &mut self.focus;
+        let r = egui::Panel::left("outline")
             .resizable(true)
             .default_size(220.0)
             .frame(
@@ -2330,6 +2421,7 @@ impl Shell {
                     .inner_margin(egui::Margin::same(8)),
             )
             .show(ui, |ui| {
+                focus.edge(ui, Region::Outline, Edge::Head);
                 ui.horizontal(|ui| {
                     ui.strong(title.trim_end_matches('…'));
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -2345,7 +2437,6 @@ impl Shell {
                 ui.separator();
                 if outline.is_empty() {
                     ui.colored_label(p.muted, empty);
-                    return;
                 }
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     for (i, (level, text, line)) in outline.iter().enumerate() {
@@ -2361,7 +2452,13 @@ impl Shell {
                         });
                     }
                 });
+                focus.edge(ui, Region::Outline, Edge::Tail);
             });
+        self.focus.now.layout.outline = true;
+        self.focus
+            .now
+            .rects
+            .push((Region::Outline, r.response.rect));
         self.outline_follow = false;
         if close {
             self.outline_open = false;
@@ -3647,7 +3744,48 @@ impl Shell {
             }
             PaneContent::Structured => {
                 self.structured_area(ui, id);
+                // Tab past the grid's last cell: on to the next region (the
+                // pane is drawn before it is listed, so it is the next one).
+                if let Some(forward) = self.csv_grids.get_mut(&id).and_then(|g| g.leave.take()) {
+                    // Shift+Tab before the first cell: the widget before
+                    // the grid, as egui would.
+                    if !forward {
+                        self.focus.back_from = Some(grid_id(id));
+                        ui.ctx().request_repaint();
+                        return false;
+                    }
+                    let pane = Region::Pane(self.focus.now.panes.len());
+                    let order = self.focus.order();
+                    if let Some(r) = crate::focus::step(&order, Some(pane), forward) {
+                        let entry = if forward {
+                            FocusEntry::First
+                        } else {
+                            FocusEntry::Last
+                        };
+                        self.focus.go.get_or_insert((r, entry));
+                    }
+                }
                 false
+            }
+        }
+    }
+
+    /// The widget that takes keyboard focus in a pane showing `id`.
+    fn pane_entry(&self, id: TabId, slot: usize) -> Option<egui::Id> {
+        match self.pane_mode(id) {
+            PaneContent::Editor | PaneContent::EditorAndPreview => if slot == 0 {
+                self.views.get(&id)
+            } else {
+                self.pane_views.get(&(slot, id))
+            }
+            .and_then(|v| v.widget_id),
+            PaneContent::Preview => Some(preview_focus_id(id, slot)),
+            PaneContent::Structured => {
+                let ed = &self.ws.tabs()[self.ws.position(id)?].editor;
+                Some(match Self::data_kind(ed) {
+                    Some(DataKind::Csv | DataKind::Tsv) => grid_id(id),
+                    _ => tree_id(id),
+                })
             }
         }
     }
@@ -3748,6 +3886,130 @@ impl Shell {
         self.focus_active();
     }
 
+    /// Move keyboard focus into `region`: a listed stop at once; a region
+    /// whose widgets are not listed through its edge stop, before the
+    /// next regions are drawn.
+    fn go_region(&mut self, region: Region, entry: FocusEntry) {
+        let ctx = self.ctx.clone();
+        let d = &self.focus.last;
+        let target = match region {
+            Region::Tabs => match entry {
+                FocusEntry::First => d.tabs.first().copied(),
+                FocusEntry::Last => d.tabs.last().copied(),
+                FocusEntry::Main => d.active_tab.or_else(|| d.tabs.first().copied()),
+            },
+            Region::Status => match entry {
+                FocusEntry::Last => d.status.last().copied(),
+                FocusEntry::First | FocusEntry::Main => d.status.first().copied(),
+            },
+            Region::Pane(n) => {
+                let Some(pane) = d.panes.get(n).copied() else {
+                    return;
+                };
+                self.focus_pane(pane.slot);
+                // Tab: the pane's first widget (a grid's delimiter
+                // buttons come before the grid); F6 and Shift+Tab: its
+                // view.
+                pane.entry.filter(|_| entry != FocusEntry::First)
+            }
+            Region::Find | Region::Outline | Region::Folder => None,
+        };
+        match target {
+            Some(id) => ctx.memory_mut(|m| m.request_focus(id)),
+            // Before anything is drawn (next frame, or this one when
+            // called from the frame start).
+            None => {
+                self.focus.pending = Some((region, entry));
+                ctx.request_repaint();
+            }
+        }
+    }
+
+    /// F6 / Shift+F6: the next (previous) region.
+    fn cycle_region(&mut self, forward: bool) {
+        let ctx = self.ctx.clone();
+        let current = ctx
+            .memory(|m| m.focused())
+            .and_then(|f| self.focus.region_of(&ctx, f));
+        if let Some(r) = crate::focus::step(&self.focus.order(), current, forward) {
+            self.go_region(r, FocusEntry::Main);
+        }
+    }
+
+    /// Act on focus noted by an edge stop this frame.
+    fn take_focus_go(&mut self) {
+        if let Some((r, e)) = self.focus.go.take() {
+            self.go_region(r, e);
+        }
+    }
+
+    /// Before anything is drawn: Tab through the tab strip and the status
+    /// bar in their visual order and out of them to the neighbouring
+    /// region, and Escape from them back to the document.
+    fn focus_frame_start(&mut self, ctx: &egui::Context) {
+        let tab = self.focus.note_tab(ctx);
+        // Ctrl+Shift+Tab switches tabs; egui on macOS would also take it
+        // as Shift+Tab (it ignores Control there).
+        if ctx.input(|i| {
+            i.events.iter().any(|e| {
+                matches!(e, egui::Event::Key { key: egui::Key::Tab, pressed: true, modifiers, .. }
+                    if modifiers.ctrl || modifiers.command || modifiers.alt)
+            })
+        }) {
+            ctx.memory_mut(|m| m.move_focus(egui::FocusDirection::None));
+        }
+        if self.dialog.is_some() {
+            return;
+        }
+        let focused = ctx.memory(|m| m.focused());
+        if let (Some(forward), Some(f)) = (tab, focused) {
+            let d = &self.focus.last;
+            let found = [(Region::Tabs, &d.tabs), (Region::Status, &d.status)]
+                .into_iter()
+                .find_map(|(r, stops)| {
+                    stops
+                        .iter()
+                        .position(|s| *s == f)
+                        .map(|k| (r, k, stops.clone()))
+                });
+            if let Some((region, k, stops)) = found {
+                // egui would follow creation order: take the key over.
+                ctx.memory_mut(|m| m.move_focus(egui::FocusDirection::None));
+                ctx.input_mut(|i| {
+                    i.consume_key(egui::Modifiers::SHIFT, egui::Key::Tab)
+                        || i.consume_key(egui::Modifiers::NONE, egui::Key::Tab)
+                });
+                match crate::focus::stop_step(stops.len(), k, forward) {
+                    Some(j) => ctx.memory_mut(|m| m.request_focus(stops[j])),
+                    None => {
+                        let order = self.focus.order();
+                        if let Some(next) = crate::focus::step(&order, Some(region), forward) {
+                            let entry = if forward {
+                                FocusEntry::First
+                            } else {
+                                FocusEntry::Last
+                            };
+                            self.go_region(next, entry);
+                        }
+                    }
+                }
+            }
+        }
+        let escape = ctx.input(|i| i.key_pressed(egui::Key::Escape) && i.modifiers.is_none());
+        let d = &self.focus.last;
+        if let Some(f) = self.focus.prev_focus
+            && escape
+            && (d.status.contains(&f) || d.tabs.contains(&f))
+        {
+            if self.focus.popup_was_open {
+                // Escape closed the button's menu: stay on the button.
+                ctx.memory_mut(|m| m.request_focus(f));
+            } else {
+                self.focus_active();
+            }
+        }
+    }
+
     /// Up to four panes, side by side or stacked, each showing its tab as
     /// the single area would. Interacting with a pane makes its tab
     /// active, so menus and shortcuts act on it. Dragging a divider resizes
@@ -3818,9 +4080,20 @@ impl Shell {
             // A click anywhere in the pane (preview, tree) focuses it.
             let pressed =
                 child.input(|i| i.pointer.any_pressed()) && child.rect_contains_pointer(rect);
+            let k = self.focus.now.panes.len();
             let used = child
-                .push_id((id, slot), |ui| self.pane_area(ui, id, slot))
+                .push_id((id, slot), |ui| {
+                    self.focus.edge(ui, Region::Pane(k), Edge::Head);
+                    let used = self.pane_area(ui, id, slot);
+                    self.focus.edge(ui, Region::Pane(k), Edge::Tail);
+                    used
+                })
                 .inner;
+            self.focus.now.panes.push(crate::focus::PaneStop {
+                slot,
+                entry: self.pane_entry(id, slot),
+                rect,
+            });
             self.pane_ax = None;
             // Drawn after the content so a filled preview cannot hide it.
             if slot == focus_slot {
@@ -4030,25 +4303,34 @@ impl Shell {
             format: &format,
             image: &image,
         };
-        egui::Frame::NONE
-            .fill(p.canvas)
-            .inner_margin(egui::Margin::symmetric(24, 16))
-            .show(ui, |ui| {
-                egui::ScrollArea::vertical()
-                    .id_salt(("md-preview", id))
-                    .auto_shrink(false)
-                    .show(ui, |ui| {
-                        ui.set_max_width(760.0_f32.min(ui.available_width()));
-                        event = preview::show(
-                            ui,
-                            &blocks,
-                            &style,
-                            caret_line,
-                            scroll,
-                            anchor.as_deref(),
-                        );
-                    });
-            });
+        // Focusable as a whole (Tab, F6), so a preview-only pane has a
+        // keyboard stop; links inside follow it.
+        let region = egui::UiBuilder::new()
+            .scope_id(preview_focus_id(id, pane))
+            .sense(egui::Sense::focusable_noninteractive())
+            .accessibility_role(egui::accesskit::Role::Document)
+            .accessibility_label(tr(l10n, "view-markdown-preview", &[]));
+        ui.scope_builder(region, |ui| {
+            egui::Frame::NONE
+                .fill(p.canvas)
+                .inner_margin(egui::Margin::symmetric(24, 16))
+                .show(ui, |ui| {
+                    egui::ScrollArea::vertical()
+                        .id_salt(("md-preview", id))
+                        .auto_shrink(false)
+                        .show(ui, |ui| {
+                            ui.set_max_width(760.0_f32.min(ui.available_width()));
+                            event = preview::show(
+                                ui,
+                                &blocks,
+                                &style,
+                                caret_line,
+                                scroll,
+                                anchor.as_deref(),
+                            );
+                        });
+                });
+        });
         if event.is_some() {
             // Links resolve against the active tab: the clicked pane's.
             self.focus_pane(pane);
@@ -4426,6 +4708,7 @@ impl Shell {
             }
             MenuAction::Settings => {
                 self.settings_open = true;
+                self.settings_focus = true;
                 return;
             }
             MenuAction::CloseOthers => {
@@ -4566,6 +4849,14 @@ impl Shell {
             }
             MenuAction::FocusPrevPane => {
                 self.cycle_pane(false);
+                return;
+            }
+            MenuAction::FocusNextRegion => {
+                self.cycle_region(true);
+                return;
+            }
+            MenuAction::FocusPrevRegion => {
+                self.cycle_region(false);
                 return;
             }
             MenuAction::CompareSaved => {
@@ -4769,16 +5060,29 @@ impl Shell {
             self.t("tab-unpin", &[]),
             self.t("file-close-tab", &[]),
         );
+        let (strip_l, close_tab_l) = (self.t("a11y-tab-strip", &[]), self.t("tab-close", &[]));
+        // Keyboard stops, left to right: each tab, then its close button.
+        let mut stops: Vec<egui::Id> = Vec::new();
+        let mut active_stop = None;
         egui::ScrollArea::horizontal()
             .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
+                    ui.ctx().accesskit_node_builder(ui.unique_id(), |n| {
+                        n.set_role(egui::accesskit::Role::TabList);
+                        n.set_label(strip_l.as_str());
+                    });
                     ui.spacing_mut().item_spacing.x = 0.0;
                     let active = self.ws.active_index();
                     for (i, tab) in self.ws.tabs().iter().enumerate() {
                         let is_active = i == active;
                         let dirty = tab.editor.document().is_dirty();
                         let name = self.name_of(&tab.editor);
+                        let ax_name = if dirty {
+                            self.t("a11y-tab-unsaved", &[("name", name.as_str().into())])
+                        } else {
+                            name.clone()
+                        };
                         let frame = egui::Frame::NONE
                             .fill(if is_active { p.canvas } else { p.surface })
                             .inner_margin(egui::Margin {
@@ -4791,21 +5095,16 @@ impl Shell {
                         // area below is registered later and wins egui's hit
                         // test, so clicks on × are matched by position.
                         let mut close_rect: Option<egui::Rect> = None;
+                        let mut close_id = None;
                         let r = frame.show(ui, |ui| {
                             ui.horizontal(|ui| {
                                 ui.spacing_mut().item_spacing.x = 6.0;
                                 let color = if is_active { p.text } else { p.muted };
-                                let label = ui.add(
+                                // Clicks go to the whole tab (below).
+                                ui.add(
                                     egui::Label::new(egui::RichText::new(&name).color(color))
-                                        .selectable(false)
-                                        .sense(egui::Sense::click()),
+                                        .selectable(false),
                                 );
-                                if label.clicked() {
-                                    activate = Some(i);
-                                }
-                                if label.middle_clicked() {
-                                    close = Some(tab.id);
-                                }
                                 if tab.pinned && !dirty {
                                     // Pinned tabs show a pin, not a close
                                     // button (closing stays in the menus).
@@ -4830,8 +5129,12 @@ impl Shell {
                                         .frame(false)
                                         .min_size(egui::vec2(16.0, 16.0)),
                                     )
-                                    .on_hover_text(self.t("tab-close", &[]));
+                                    .on_hover_text(close_tab_l.as_str());
+                                ui.ctx().accesskit_node_builder(btn.id, |n| {
+                                    n.set_label(close_tab_l.as_str());
+                                });
                                 close_rect = Some(btn.rect);
+                                close_id = Some(btn.id);
                                 if btn.clicked() {
                                     close = Some(tab.id);
                                 }
@@ -4856,7 +5159,25 @@ impl Shell {
                             );
                         }
                         rects.push(rect);
-                        let r = r.response.interact(egui::Sense::click_and_drag());
+                        // A widget of its own over the tab: the frame's id is
+                        // re-registered without focus every frame, which
+                        // would drop keyboard focus.
+                        let r = ui.interact(
+                            rect,
+                            egui::Id::unique(("sanain-tab", tab.id)),
+                            egui::Sense::click_and_drag(),
+                        );
+                        ui.ctx().accesskit_node_builder(r.id, |n| {
+                            n.set_role(egui::accesskit::Role::Tab);
+                            n.set_label(ax_name.as_str());
+                            n.set_selected(is_active);
+                            n.add_action(egui::accesskit::Action::Click);
+                        });
+                        stops.push(r.id);
+                        if is_active {
+                            active_stop = Some(r.id);
+                        }
+                        stops.extend(close_id);
                         if r.clicked() {
                             let on_close = close_rect.is_some_and(|c| {
                                 r.interact_pointer_pos().is_some_and(|p| c.contains(p))
@@ -4913,6 +5234,8 @@ impl Shell {
                     }
                 });
             });
+        self.focus.now.tabs = stops;
+        self.focus.now.active_tab = active_stop;
         // Drag to reorder: the drop position is the gap nearest the pointer.
         let target = |x: f32| rects.iter().take_while(|r| r.center().x < x).count();
         if let (Some(from), Some(pos)) = (dragging, ctx.pointer_latest_pos()) {
@@ -4956,11 +5279,16 @@ impl Shell {
         let p = theme::palette(ui.ctx());
         let id = self.ws.active().id;
         let mut choice: Option<Option<Option<Lang>>> = None;
+        let mut action: Option<MenuAction> = None;
+        let mut indent_settings = false;
         let auto_l = self.t("language-auto", &[]);
         let plain_l = self.t("language-plain", &[]);
         let tip = self.t("language-choose", &[]);
         let current_choice = self.lang_override.get(&id).copied();
+        let can_reopen = self.enabled(MenuAction::ReopenWithEncoding);
         let editor = self.editor();
+        // Keyboard stops, created right to left; reversed below.
+        let mut stops: Vec<egui::Id> = Vec::new();
         ui.horizontal(|ui| {
             if editor.is_recording() {
                 ui.colored_label(p.error, "●");
@@ -4972,7 +5300,26 @@ impl Shell {
                 crate::structured::announce(ui, r.id);
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.colored_label(p.muted, editor.encoding().name());
+                let muted = |t: String| egui::RichText::new(t).color(p.muted);
+                // Encoding: reopen or save with another one.
+                let r = ui
+                    .menu_button(muted(editor.encoding().name().to_owned()), |ui| {
+                        for (a, enabled) in [
+                            (MenuAction::ReopenWithEncoding, can_reopen),
+                            (MenuAction::SaveWithEncoding, true),
+                        ] {
+                            if ui
+                                .add_enabled(enabled, egui::Button::new(self.t(a.label_id(), &[])))
+                                .clicked()
+                            {
+                                action = Some(a);
+                                ui.close();
+                            }
+                        }
+                    })
+                    .response
+                    .on_hover_text(self.t("status-encoding-choose", &[]));
+                stops.push(r.id);
                 if let Some((_, ind)) = self.tab_indent.get(&self.ws.active().id) {
                     let label = match ind.text(
                         !self.settings.insert_spaces,
@@ -4984,52 +5331,86 @@ impl Shell {
                             &[("count", (t.len() as i64).into())],
                         ),
                     };
-                    ui.colored_label(p.muted, label);
+                    // Indentation: the Editor settings. Framed like the menu
+                    // buttons beside it.
+                    let r = ui
+                        .add(egui::Button::new(muted(label)))
+                        .on_hover_text(self.t("status-indent-choose", &[]));
+                    if r.clicked() {
+                        indent_settings = true;
+                    }
+                    stops.push(r.id);
                 }
-                let le = match editor.line_ending() {
+                let current_le = editor.line_ending();
+                let le = match current_le {
                     LineEnding::CrLf => "line-ending-crlf",
                     LineEnding::Cr => "line-ending-cr",
                     LineEnding::Mixed => "line-ending-mixed",
                     LineEnding::Lf | LineEnding::None => "line-ending-lf",
                 };
-                ui.colored_label(p.muted, self.t(le, &[]));
+                // Line endings: convert the document.
+                let r = ui
+                    .menu_button(muted(self.t(le, &[])), |ui| {
+                        for (a, label, on) in [
+                            (
+                                MenuAction::ToLf,
+                                "line-ending-lf",
+                                matches!(current_le, LineEnding::Lf | LineEnding::None),
+                            ),
+                            (
+                                MenuAction::ToCrLf,
+                                "line-ending-crlf",
+                                current_le == LineEnding::CrLf,
+                            ),
+                        ] {
+                            if ui.selectable_label(on, self.t(label, &[])).clicked() {
+                                action = Some(a);
+                                ui.close();
+                            }
+                        }
+                    })
+                    .response
+                    .on_hover_text(self.t("status-line-ending-choose", &[]));
+                stops.push(r.id);
                 let lang = match self.language(id, editor) {
                     Some(l) => l.name().to_owned(),
                     None => plain_l.clone(),
                 };
                 // Click the language to choose another one for this tab.
-                ui.menu_button(egui::RichText::new(lang).color(p.muted), |ui| {
-                    if ui
-                        .selectable_label(current_choice.is_none(), &auto_l)
-                        .clicked()
-                    {
-                        choice = Some(None);
-                        ui.close();
-                    }
-                    if ui
-                        .selectable_label(current_choice == Some(None), &plain_l)
-                        .clicked()
-                    {
-                        choice = Some(Some(None));
-                        ui.close();
-                    }
-                    ui.separator();
-                    egui::ScrollArea::vertical()
-                        .max_height(320.0)
-                        .show(ui, |ui| {
-                            for l in Lang::ALL {
-                                if ui
-                                    .selectable_label(current_choice == Some(Some(l)), l.name())
-                                    .clicked()
-                                {
-                                    choice = Some(Some(Some(l)));
-                                    ui.close();
+                let r = ui
+                    .menu_button(muted(lang), |ui| {
+                        if ui
+                            .selectable_label(current_choice.is_none(), &auto_l)
+                            .clicked()
+                        {
+                            choice = Some(None);
+                            ui.close();
+                        }
+                        if ui
+                            .selectable_label(current_choice == Some(None), &plain_l)
+                            .clicked()
+                        {
+                            choice = Some(Some(None));
+                            ui.close();
+                        }
+                        ui.separator();
+                        egui::ScrollArea::vertical()
+                            .max_height(320.0)
+                            .show(ui, |ui| {
+                                for l in Lang::ALL {
+                                    if ui
+                                        .selectable_label(current_choice == Some(Some(l)), l.name())
+                                        .clicked()
+                                    {
+                                        choice = Some(Some(Some(l)));
+                                        ui.close();
+                                    }
                                 }
-                            }
-                        });
-                })
-                .response
-                .on_hover_text(&tip);
+                            });
+                    })
+                    .response
+                    .on_hover_text(&tip);
+                stops.push(r.id);
                 let sels = editor.selections();
                 if sels.len() > 1 {
                     let n = sels.len() as i64;
@@ -5047,6 +5428,17 @@ impl Shell {
                 ui.colored_label(p.muted, pos);
             });
         });
+        stops.reverse();
+        self.focus.now.status = stops;
+        if indent_settings {
+            self.settings_tab = SettingsTab::Editor;
+            self.settings_open = true;
+            self.settings_focus = true;
+        }
+        if let Some(a) = action {
+            let ctx = ui.ctx().clone();
+            self.dispatch(a, &ctx);
+        }
         match choice {
             Some(None) => {
                 self.lang_override.remove(&id);
@@ -5257,6 +5649,7 @@ impl eframe::App for Shell {
         let ctx = ui.ctx().clone();
         self.ctx = ctx.clone();
         self.poll_fonts(&ctx);
+        self.focus_frame_start(&ctx);
         // Files dropped onto the window open in tabs.
         // Files opened from the system (Finder on macOS) are handled the same way.
         let mut dropped: Vec<std::path::PathBuf> = ctx.input(|i| {
@@ -5308,15 +5701,31 @@ impl eframe::App for Shell {
                 }
                 if let Some(s) = a.shortcut(&self.settings.keymap)
                     && ctx.input_mut(|i| {
-                        // Arrow shortcuts must match all modifiers: egui's
-                        // logical matching ignores extra Shift/Alt and would
-                        // steal rectangular selection or duplicate-line keys.
+                        // Arrow, Tab and function key shortcuts must match
+                        // all modifiers: egui's logical matching ignores
+                        // extra Shift/Alt and would steal rectangular
+                        // selection or duplicate-line keys, and run F6 for
+                        // Shift+F6 (Ctrl+Tab for Ctrl+Shift+Tab).
+                        use egui::Key as K;
                         if matches!(
                             s.logical_key,
-                            egui::Key::ArrowUp
-                                | egui::Key::ArrowDown
-                                | egui::Key::ArrowLeft
-                                | egui::Key::ArrowRight
+                            K::ArrowUp
+                                | K::ArrowDown
+                                | K::ArrowLeft
+                                | K::ArrowRight
+                                | K::Tab
+                                | K::F1
+                                | K::F2
+                                | K::F3
+                                | K::F4
+                                | K::F5
+                                | K::F6
+                                | K::F7
+                                | K::F8
+                                | K::F9
+                                | K::F10
+                                | K::F11
+                                | K::F12
                         ) {
                             let mut consumed = false;
                             i.events.retain(|event| {
@@ -5357,6 +5766,15 @@ impl eframe::App for Shell {
         if let Some(m) = &self.native_menu {
             m.set_enabled(|a| self.enabled(a));
         }
+        if let Some((region, entry)) = self.focus.pending.take() {
+            self.focus.enter(&ctx, region, entry);
+        }
+        if let Some(from) = self.focus.back_from.take() {
+            ctx.memory_mut(|m| {
+                m.request_focus(from);
+                m.move_focus(egui::FocusDirection::Previous);
+            });
+        }
 
         let p = theme::palette(&ctx);
         egui::Panel::top("tabs")
@@ -5382,15 +5800,21 @@ impl eframe::App for Shell {
                 .fill(p.surface)
                 .inner_margin(egui::Margin::symmetric(8, 6));
             let mut event = None;
-            egui::Panel::top("find").frame(frame).show(ui, |ui| {
+            let focus = &mut self.focus;
+            let r = egui::Panel::top("find").frame(frame).show(ui, |ui| {
+                focus.edge(ui, Region::Find, Edge::Head);
                 event = self.find.show(ui, &t, current);
+                focus.edge(ui, Region::Find, Edge::Tail);
             });
+            self.focus.now.layout.find = true;
+            self.focus.now.rects.push((Region::Find, r.response.rect));
             if let Some(e) = event {
                 self.find_event(e);
             }
         }
         self.update_syntax(&ctx);
-        egui::Panel::bottom("status").show(ui, |ui| self.status_bar(ui));
+        let r = egui::Panel::bottom("status").show(ui, |ui| self.status_bar(ui));
+        self.focus.now.rects.push((Region::Status, r.response.rect));
         if self.folder.open {
             let l10n = &self.l10n;
             let t = |id: &str, a: Option<(&str, i64)>, b: Option<(&str, i64)>| {
@@ -5402,7 +5826,8 @@ impl eframe::App for Shell {
                 tr(l10n, id, &args)
             };
             let mut event = None;
-            egui::Panel::bottom("folder-search")
+            let focus = &mut self.focus;
+            let r = egui::Panel::bottom("folder-search")
                 .resizable(true)
                 .default_size(240.0)
                 .frame(
@@ -5410,7 +5835,13 @@ impl eframe::App for Shell {
                         .fill(p.surface)
                         .inner_margin(egui::Margin::same(8)),
                 )
-                .show(ui, |ui| event = self.folder.ui(ui, &t));
+                .show(ui, |ui| {
+                    focus.edge(ui, Region::Folder, Edge::Head);
+                    event = self.folder.ui(ui, &t);
+                    focus.edge(ui, Region::Folder, Edge::Tail);
+                });
+            self.focus.now.layout.folder = true;
+            self.focus.now.rects.push((Region::Folder, r.response.rect));
             use crate::folderpanel::PanelEvent;
             match event {
                 Some(PanelEvent::Close) => {
@@ -5442,12 +5873,30 @@ impl eframe::App for Shell {
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE.fill(p.canvas))
             .show(ui, |ui| {
-                if self.log_area(ui) || self.compare_area(ui) || self.split_area(ui) {
+                let active = self.ws.active().id;
+                let comparing = self.compare.as_ref().is_some_and(|c| c.left == active);
+                if self.log.is_none() && !comparing && self.split_area(ui) {
                     return;
                 }
-                let id = self.ws.active().id;
-                self.pane_area(ui, id, 0);
+                // One area: the log, a comparison or the active tab.
+                let rect = ui.max_rect();
+                let pane = Region::Pane(0);
+                self.focus.edge(ui, pane, Edge::Head);
+                let entry = if self.log_area(ui) || self.compare_area(ui) {
+                    None
+                } else {
+                    let id = self.ws.active().id;
+                    self.pane_area(ui, id, 0);
+                    self.pane_entry(id, 0)
+                };
+                self.focus.edge(ui, pane, Edge::Tail);
+                self.focus.now.panes.push(crate::focus::PaneStop {
+                    slot: 0,
+                    entry,
+                    rect,
+                });
             });
+        self.take_focus_go();
 
         self.poll_update();
         self.dialogs(&ctx);
@@ -5498,6 +5947,7 @@ impl eframe::App for Shell {
             }
         }
         self.apply_theme(&ctx);
+        self.focus.end_frame(&ctx);
 
         let (wait, error) = self.ws.tick(std::time::Instant::now());
         if let Some(wait) = wait {

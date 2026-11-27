@@ -5,6 +5,21 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased]
 
 ### Added
+- Keyboard focus moves between the parts of the window in a fixed order:
+  tab strip, find bar, outline, each pane in turn, folder search, status
+  bar, and round again. F6 goes to the next part and Shift+F6 to the
+  previous one (View → Focus Next Region / Focus Previous Region; both
+  can be changed in Settings → Keyboard shortcuts). Tab and Shift+Tab
+  follow the same order past the first or last item of a part instead
+  of egui's creation order, which never reached the document from the
+  tab strip and looped inside the first tab. In the text editor Tab
+  still indents; use F6, Escape or Ctrl+Tab to leave it. Escape from the
+  tab strip or the status bar returns to the document (after closing a
+  status-bar menu, focus stays on its button).
+- The status bar's encoding, line ending and indentation are buttons
+  like the language: encoding offers Reopen with Encoding and Save with
+  Encoding, line ending converts to LF or CRLF, indentation opens the
+  Editor settings. Tab moves through them left to right.
 - Mermaid state and class diagrams in the Markdown preview, drawn
   natively with the same layered layout as flowcharts (no JavaScript,
   web view or network). `stateDiagram`/`stateDiagram-v2`: states with
@@ -31,6 +46,17 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   self-link's label is drawn beside its loop instead of over it.
 
 ### Changed
+- Tabs are a tab list for screen readers ("Open files"): each tab is a
+  tab named by its file (", unsaved changes" when dirty) with its
+  selected state, followed by its close button, now named "Close tab".
+  The tab and its close button are the strip's only Tab stops.
+- The Settings sections (General, Editor, Appearance, Keyboard
+  shortcuts) are a tab list instead of toggle buttons: the selected
+  section is the one Tab stop, Up/Down (Left/Right, Home/End) move
+  between sections, Tab goes on into the section, which is a named tab
+  panel. Opening Settings puts focus on the selected section.
+- A Markdown preview is focusable as a whole ("Markdown Preview"), so a
+  pane showing only the preview has a keyboard stop.
 - Accessibility of the newer views, for keyboard and screen-reader users.
   The CSV grid is a table for screen readers: every cell has its row,
   column and header name and its value, and the active cell follows the
@@ -52,6 +78,14 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   New strings in all 26 languages.
 
 ### Fixed
+- With the in-window menu (Windows, Linux), Shift+F6, Shift+F3
+  (Notepad++ preset) and Ctrl+Shift+Tab ran the command of the same key
+  without Shift; Tab and function-key shortcuts now match their
+  modifiers exactly. On macOS,
+  Ctrl+Shift+Tab no longer also moves focus as Shift+Tab would.
+- In the CSV grid, Shift+Tab from the last cell moves left instead of
+  leaving the grid, and the Tab that moves focus into the grid no longer
+  also moves the selection.
 - Tab past the last cell of the CSV grid (Shift+Tab before the first)
   leaves the grid instead of staying there, and skips the column resize
   handles. Cells and tree labels are no longer separate Tab stops.
