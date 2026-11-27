@@ -14,7 +14,7 @@
 No calendar promises. Each milestone is split into small PR-sized tasks. First vertical slice: open UTF-8 file, edit, undo, save atomically, reopen and verify bytes. Do not build all crates upfront; add boundaries as needed. Track requirement IDs and evidence in STATUS.md.
 
 ## Requested by the owner (2026-11-26)
-- Shell integration: "Open with Sanain" in Windows Explorer, Finder Open With / default app, Linux `.desktop` entry with MIME types (#78). Reversible, no elevation by default.
+- Shell integration: "Open with Text³" in Windows Explorer, Finder Open With / default app, Linux `.desktop` entry with MIME types (#78). Reversible, no elevation by default.
 - Paid Mac App Store and Microsoft Store builds as a support model; free builds and all features stay free (#79). Store accounts and pricing are owner decisions.
 - (2026-11-27) New-tab button: a "+" button right after the last tab in the tab strip opens a new untitled tab, as in other editors (#151). Same command as File › New Tab; localized tooltip and accessible name; reachable in the tab-strip focus order.
 - (2026-11-27) Gaps from the competitor feature map (PRODUCT.md, Notepad++, Sublime Text, Windows Notepad), by priority:
@@ -28,7 +28,7 @@ No calendar promises. Each milestone is split into small PR-sized tasks. First v
   - Could: line bookmarks (toggle, next/previous, list).
   - Could: minimap / document map.
   - Could: distraction-free (full-screen, chrome hidden) mode.
-  - Could: more highlighted languages (Notepad++ ships about 90; Sanain 22).
+  - Could: more highlighted languages (Notepad++ ships about 90; Text³ 22).
   - Could: Markdown formatting commands (bold, italic, heading, list) in source view.
   - Later (M8, separate ADR): extensions API (E16) and optional local/BYOK writing tools.
 

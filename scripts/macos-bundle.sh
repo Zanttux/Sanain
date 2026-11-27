@@ -1,16 +1,16 @@
 #!/bin/sh
-# Build Sanain.app (unsigned) into target/<profile>/Sanain.app.
+# Build Text³.app (unsigned) into target/<profile>/Text³.app.
 # Usage: scripts/macos-bundle.sh [release|debug] [--open [file]]
 set -eu
 cd "$(dirname "$0")/.."
 profile=${1:-release}
-if [ "$profile" = release ]; then cargo build --release --locked -p sanain-app; else cargo build --locked -p sanain-app; fi
+if [ "$profile" = release ]; then cargo build --release --locked -p text3-app; else cargo build --locked -p text3-app; fi
 version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
-app="target/$profile/Sanain.app"
+app="target/$profile/Text³.app"
 rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
-cp "target/$profile/sanain" "$app/Contents/MacOS/sanain"
-cp packaging/icons/Sanain.icns "$app/Contents/Resources/Sanain.icns"
+cp "target/$profile/text3" "$app/Contents/MacOS/text3"
+cp packaging/icons/text3.icns packaging/icons/text3-document.icns "$app/Contents/Resources/"
 sed "s/@VERSION@/$version/g" packaging/macos/Info.plist > "$app/Contents/Info.plist"
 echo "$app"
 if [ "${2:-}" = --open ]; then

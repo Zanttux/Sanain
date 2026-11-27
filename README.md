@@ -1,15 +1,16 @@
-# Sanain
-**The power of words.**
+<img src="assets/brand/text3-lockup.svg" alt="Text³" width="360">
 
-A native, open-source text editor for everyday text, code, configuration
-files, Markdown and data. Website: https://zanttux.github.io/Sanain/ Written in Rust for Windows, macOS and Linux.
-Fast by design. Powerful when needed. Simple by default.
+# Text³
 
-![Sanain editing a Rust file with tabs and syntax highlighting](docs/screenshots/editor.png)
+Text³ ("Text Cubed", formerly Sanain) is a native, open-source text editor
+for everyday text, code, configuration files, Markdown and data, written in
+Rust for Windows, macOS and Linux. Website: https://zanttux.github.io/text3/
+
+![Text³ editing a Rust file with tabs and syntax highlighting](docs/screenshots/editor.png)
 
 > **Status: pre-alpha (0.2.1).** Unsigned development builds for macOS,
 > Windows and Linux are published automatically as the
-> [nightly pre-release](https://github.com/Zanttux/Sanain/releases/tag/nightly)
+> [nightly pre-release](https://github.com/Zanttux/text3/releases/tag/nightly)
 > (macOS: right-click › Open the first time; Windows may show a
 > SmartScreen warning). Tested by hand on macOS; Windows and Linux are
 > built and tested in CI but not yet tried interactively.
@@ -30,7 +31,7 @@ Fast by design. Powerful when needed. Simple by default.
   confirmation; open files change in their tab, the others keep their
   previous version in local history).
 - **Your files stay intact:** unchanged files save byte for byte, line
-  endings and encodings are preserved, saves are atomic, and Sanain refuses
+  endings and encodings are preserved, saves are atomic, and Text³ refuses
   to overwrite a file another program changed. A full disk or a missing
   permission is explained and leaves the file untouched. Unsaved text
   survives a crash and comes back on the next launch. Hard-linked files
@@ -39,8 +40,8 @@ Fast by design. Powerful when needed. Simple by default.
   any file can be compared with its saved version.
 - **Files:** Open Recent, Save All, Revert to Saved, drag and drop,
   Copy File Path, Show in Finder/Explorer. Command line:
-  `sanain FILE…`, `sanain --diff LEFT RIGHT`, `--help`, and
-  `sanain --register` to appear in "Open With" (Linux, Windows).
+  `text3 FILE…`, `text3 --diff LEFT RIGHT`, `--help`, and
+  `text3 --register` to appear in "Open With" (Linux, Windows).
 - **Encodings:** UTF-8 and UTF-16 (with or without a byte order mark,
   detected), plus legacy encodings such as Windows-1252, ISO-8859-15 and
   Shift_JIS, suggested from the file's contents and used only when they
@@ -72,7 +73,7 @@ Fast by design. Powerful when needed. Simple by default.
   welcome (see [docs/LOCALIZATION.md](docs/LOCALIZATION.md)).
 - **Updates:** Check for Updates asks GitHub whether a newer release
   exists and links to it. A daily check can be turned on in Settings; it
-  is off by default. Sanain never downloads or installs anything itself.
+  is off by default. Text³ never downloads or installs anything itself.
 
 | Markdown split view | Find and replace |
 |---|---|
@@ -95,7 +96,7 @@ says otherwise. See [PRIVACY.md](PRIVACY.md).
 `scripts/package.py` builds unsigned packages for the current platform:
 an installer (Windows per-user setup, macOS `.dmg`, Linux `.deb`) and a
 portable archive that keeps its settings and data in its own folder
-(delete the `sanain-portable` file to use your profile instead), each
+(delete the `text3-portable` file to use your profile instead), each
 with the license, third-party notices and a checksum; the `Package` workflow builds all
 three and publishes them as the `nightly` pre-release on every change.
 
@@ -104,7 +105,7 @@ three and publishes them as the `nightly` pre-release on every change.
 Requires Rust via [rustup](https://rustup.rs); the toolchain version is
 pinned in `rust-toolchain.toml`.
 
-    cargo run --release -p sanain-app -- path/to/file.txt
+    cargo run --release -p text3-app -- path/to/file.txt
 
 On macOS, build and open the app bundle (correct app name and menu bar):
 
@@ -116,10 +117,9 @@ Run the checks used in CI:
     cargo clippy --workspace --all-targets --locked -- -D warnings
     cargo test --workspace --locked
 
-## How Sanain is made
+## How Text³ is made
 
-**AI-built. Human-led. Community-driven.** Claude, an AI model by
-Anthropic, writes and maintains the code, tests and documentation under the
+Claude, an AI model by Anthropic, writes and maintains the code, tests and documentation under the
 direction of the project's founder. Human contributions are welcome; see
 [CONTRIBUTING.md](CONTRIBUTING.md). We disclose AI involvement accurately
 and do not claim that dependencies or community patches are AI-written.

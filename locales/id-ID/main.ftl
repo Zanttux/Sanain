@@ -1,5 +1,5 @@
 # Machine translation by Claude (AI); review by a native speaker required before release.
-app-name = Sanain
+app-name = Text³
 menu-file = Berkas
 file-open = Buka…
 file-save = Simpan
@@ -15,8 +15,8 @@ edit-redo = Ulangi
 edit-select-all = Pilih Semua
 untitled = Tanpa Judul
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = Brs { $line }, Kol { $column }
 status-selections = { $count ->
@@ -50,8 +50,8 @@ menu-window = Jendela
 edit-cut = Potong
 edit-copy = Salin
 edit-paste = Tempel
-app-quit = Keluar dari Sanain
-app-hide = Sembunyikan Sanain
+app-quit = Keluar dari Text³
+app-hide = Sembunyikan Text³
 app-hide-others = Sembunyikan Lainnya
 app-show-all = Tampilkan Semua
 window-minimize = Minimalkan
@@ -106,7 +106,7 @@ settings-theme-dark = Gelap
 settings-restore-session = Buka ulang berkas dari sesi terakhir
 settings-language = Bahasa
 settings-language-system = Ikuti sistem
-settings-language-note = Perubahan bahasa berlaku setelah Sanain dimulai ulang.
+settings-language-note = Perubahan bahasa berlaku setelah Text³ dimulai ulang.
 settings-save-failed = Tidak dapat menyimpan pengaturan: { $reason }
 view-command-palette = Palet Perintah…
 palette-placeholder = Ketik perintah
@@ -239,7 +239,7 @@ view-unfold = Buka Lipatan
 view-unfold-all = Buka Semua Lipatan
 settings-shortcuts = Pintasan keyboard
 settings-keymap-preset = Prasetel
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = Ubah
 settings-shortcut-reset = Atur Ulang
@@ -257,12 +257,12 @@ folder-search-summary = { $count ->
     }
 app-check-updates = Periksa Pembaruan…
 update-checking = Memeriksa pembaruan…
-update-up-to-date = Sanain { $version } adalah versi terbaru.
-update-no-releases = Belum ada rilis Sanain yang diterbitkan.
+update-up-to-date = Text³ { $version } adalah versi terbaru.
+update-no-releases = Belum ada rilis Text³ yang diterbitkan.
 update-failed = Tidak dapat memeriksa pembaruan: { $reason }
 update-invalid = respons tak terduga
-update-available-title = Sanain { $version } tersedia
-update-available-body = Buka halaman unduhan untuk mendapatkannya. Sanain tidak mengunduh atau memasang apa pun dengan sendirinya.
+update-available-title = Text³ { $version } tersedia
+update-available-body = Buka halaman unduhan untuk mendapatkannya. Text³ tidak mengunduh atau memasang apa pun dengan sendirinya.
 update-open-page = Buka Halaman Unduhan
 update-later = Nanti
 settings-check-updates = Periksa pembaruan sekali sehari
@@ -349,12 +349,11 @@ replace-preview-more = Hanya 200 baris pertama yang berubah yang ditampilkan.
 replace-preview-stale = Dokumen telah berubah; tidak ada yang diganti. Jalankan Ganti Semua lagi.
 encoding-detected = Dibuka sebagai { $encoding } (terdeteksi dari isi berkas).
 encoding-suggested = Disarankan dari isi berkas: { $encoding }. Periksa pratinjau sebelum membuka.
-app-about = Tentang Sanain
+app-about = Tentang Text³
 menu-help = Bantuan
-about-tagline = Kekuatan kata.
 about-version = Versi { $version }
 about-license = Bebas dan sumber terbuka di bawah Mozilla Public License 2.0.
-about-ai = Dibangun oleh AI. Dipimpin manusia. Digerakkan komunitas.
+about-ai = Dikembangkan dengan bantuan AI (Claude dari Anthropic) di bawah arahan pengelolanya.
 about-notices = Komponen pihak ketiga beserta lisensinya tercantum dalam THIRD_PARTY_NOTICES, yang disertakan di setiap rilis.
 about-source = Kode sumber dan laporan masalah di GitHub
 tools-xml-validate = Validasi XML
@@ -395,13 +394,13 @@ tools-compare-file = Bandingkan dengan Berkas…
 compare-file-failed = Tidak dapat membandingkan dengan { $name }: { $reason }
 cli-help =
     Penggunaan:
-      sanain [BERKAS…]            buka berkas
-      sanain --diff KIRI KANAN    bandingkan dua berkas berdampingan
-      sanain --version            tampilkan versi
-      sanain --help               tampilkan bantuan ini
+      text3 [BERKAS…]             buka berkas
+      text3 --diff KIRI KANAN     bandingkan dua berkas berdampingan
+      text3 --version             tampilkan versi
+      text3 --help                tampilkan bantuan ini
     Gunakan -- sebelum nama berkas yang diawali tanda hubung.
 cli-unknown-option = Opsi tidak dikenal { $option }.
-cli-diff-needs-two = --diff memerlukan dua berkas: sanain --diff KIRI KANAN
+cli-diff-needs-two = --diff memerlukan dua berkas: text3 --diff KIRI KANAN
 window-move-tab-left = Pindahkan Tab ke Kiri
 window-move-tab-right = Pindahkan Tab ke Kanan
 edit-skip-occurrence = Lewati ke Kemunculan Berikutnya
@@ -433,12 +432,12 @@ image-outside = Gambar ini berada di luar folder dokumen.
 image-allow = Tampilkan gambar dari folder ini
 cli-help-integration =
     Integrasi dengan pengelola berkas (hanya pengguna saat ini):
-      sanain --register           tambahkan Sanain ke "Buka Dengan" (Linux, Windows)
-      sanain --unregister         hapus lagi dari sana
-cli-registered = Sanain telah ditambahkan ke "Buka Dengan". { $place }
-cli-unregistered = Sanain telah dihapus dari "Buka Dengan".
+      text3 --register            tambahkan Text³ ke "Buka Dengan" (Linux, Windows)
+      text3 --unregister          hapus lagi dari sana
+cli-registered = Text³ telah ditambahkan ke "Buka Dengan". { $place }
+cli-unregistered = Text³ telah dihapus dari "Buka Dengan".
 cli-register-failed = Integrasi pengelola berkas tidak dapat diubah: { $reason }
-cli-register-macos = Di macOS tidak ada yang perlu didaftarkan: setelah Sanain.app berada di folder Aplikasi, Finder akan menawarkannya di "Buka Dengan".
+cli-register-macos = Di macOS tidak ada yang perlu didaftarkan: setelah Text³.app berada di folder Aplikasi, Finder akan menawarkannya di "Buka Dengan".
 settings-tab-general = Umum
 settings-tab-editor = Editor
 settings-tab-appearance = Tampilan
@@ -513,3 +512,4 @@ status-indent-choose = Pengaturan indentasi
 a11y-settings-sections = Bagian pengaturan
 a11y-tab-strip = Berkas terbuka
 a11y-tab-unsaved = { $name }, ada perubahan yang belum disimpan
+migration-copied = Pengaturan dan data dari Sanain telah disalin ke Text³. Folder Sanain tidak diubah.

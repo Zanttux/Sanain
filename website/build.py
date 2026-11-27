@@ -1,27 +1,32 @@
 #!/usr/bin/env python3
 """Generate website/index.html (English only, owner decision #105).
+Brand: docs/BRAND.md (neutral white/gray surfaces, ink text, green accent
+only, lockup on white, system fonts, no slogans).
 Run: python3 website/build.py"""
 import html
 import os
+import re
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-REPO = "https://github.com/Zanttux/Sanain"
+REPO = "https://github.com/Zanttux/text3"
+SITE = "https://zanttux.github.io/text3/"
 NIGHTLY = REPO + "/releases/tag/nightly"
+
+with open(os.path.join(HERE, "..", "Cargo.toml"), encoding="utf-8") as _f:
+    VERSION = re.search(r'^version = "([^"]+)"', _f.read(), re.M).group(1)
 
 T = {
     "en": {
         "lang": "en", "root": "",
-        "title": "Sanain — the power of words",
-        "desc": "Sanain is a free, open-source text editor for text, code, Markdown and data. Native, offline, no account.",
-        "nav": ["Download", "Features", "Privacy", "How it's made"],
-        "tab": "welcome.md",
-        "hero_l1": "The power", "hero_l2": "of words.",
-        "hero_sub": "A free, open-source text editor for everyday text, code, configuration files, Markdown and data. Native on Windows, macOS and Linux.",
-        "status": ["Ln 2, Col 10", "Markdown", "LF", "UTF-8"],
+        "title": "Text³ — open-source text editor",
+        "desc": "Text³ is a free, open-source text editor for text, code, Markdown and data. Native, offline, no account.",
+        "nav": ["Download", "Features", "Privacy", "About"],
+        "hero_h": "A native, open-source text editor",
+        "hero_sub": "For everyday text, code, configuration files, Markdown and data, on Windows, macOS and Linux. Formerly called Sanain.",
         "cta": "Download the nightly build", "src": "Source on GitHub",
-        "cta_note": "Pre-alpha, version 0.2.1. Free for everyone, every feature included.",
+        "cta_note": f"Pre-alpha, version {VERSION}. Free for everyone, every feature included.",
         "intact_h": "Your files stay intact",
-        "intact_p": "Open a file, change nothing, save it: the bytes are the same. Encodings and line endings are kept as they were, saves are atomic, and Sanain refuses to overwrite a file another program changed in the meantime. Unsaved text survives a crash.",
+        "intact_p": "Open a file, change nothing, save it: the bytes are the same. Encodings and line endings are kept as they were, saves are atomic, and Text³ refuses to overwrite a file another program changed in the meantime. Unsaved text survives a crash.",
         "bytes_label": ["before ", "after  "],
         "feat_h": "What it does",
         "feats": [
@@ -38,19 +43,19 @@ T = {
         "dl_p": "Builds are made automatically from every change and published as the nightly pre-release.",
         "dl_head": ["System", "Installer", "Portable"],
         "dl_rows": [
-            ("Windows 10/11 (x64)", "sanain-…-windows-x86_64-setup.exe", "sanain-…-windows-x86_64-portable.zip"),
-            ("macOS 11+ (Apple Silicon)", "sanain-…-macos-aarch64.dmg", "sanain-…-macos-aarch64-portable.zip"),
-            ("Linux (x86-64)", "sanain_…_amd64.deb", "sanain-…-linux-x86_64-portable.tar.gz"),
+            ("Windows 10/11 (x64)", "text3-…-windows-x86_64-setup.exe", "text3-…-windows-x86_64-portable.zip"),
+            ("macOS 11+ (Apple Silicon)", "text3-…-macos-aarch64.dmg", "text3-…-macos-aarch64-portable.zip"),
+            ("Linux (x86-64)", "text3_…_amd64.deb", "text3-…-linux-x86_64-portable.tar.gz"),
         ],
-        "dl_warn": "These builds are not signed yet. macOS asks for confirmation the first time (right-click Sanain, then Open); Windows SmartScreen may warn. Each file has a SHA-256 checksum next to it. Sanain is tested by hand on macOS; Windows and Linux are built and tested automatically.",
+        "dl_warn": "These builds are not signed yet. macOS asks for confirmation the first time (right-click Text³, then Open); Windows SmartScreen may warn. Each file has a SHA-256 checksum next to it. Text³ is tested by hand on macOS; Windows and Linux are built and tested automatically.",
         "priv_h": "Privacy",
         "priv_p": "Offline by default. No account, no ads, no telemetry. File contents never leave your computer. The only network use is an update check you can turn on, which asks GitHub whether a newer version exists.",
-        "made_h": "How it's made",
-        "made_p": "AI-built. Human-led. Community-driven. Sanain is written by Claude, an AI model by Anthropic, working as the developer under the direction of the project's founder, who decides what it becomes. Every change goes through automated tests on three operating systems before it is merged, and the work is public on GitHub.",
+        "made_h": "About the project",
+        "made_p": "Text³ is written by Claude, an AI model by Anthropic, working as the developer under the direction of the project's founder, who decides what it becomes. Every change goes through automated tests on three operating systems before it is merged, and the work is public on GitHub.",
         "support_h": "Support",
-        "support_p": "Sanain is free, and stays free with every feature for everyone. Bug reports, ideas and translations are welcome on GitHub.",
+        "support_p": "Text³ is free, and stays free with every feature for everyone. Bug reports, ideas and translations are welcome on GitHub.",
         "issues": "Report a problem or suggest an idea",
-        "footer": "Sanain is free software under the Mozilla Public License 2.0.",
+        "footer": "Text³ is free software under the Mozilla Public License 2.0.",
     }
 
 }
@@ -68,7 +73,6 @@ def page(t):
         for f, c in t["shots"]
     )
     rows = "".join(f"<tr><td>{e(a)}</td><td><code>{e(b)}</code></td><td><code>{e(c)}</code></td></tr>" for a, b, c in t["dl_rows"])
-    st = t["status"]
     b0, b1 = t["bytes_label"]
     return f"""<!doctype html>
 <html lang="{t['lang']}">
@@ -77,33 +81,38 @@ def page(t):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{e(t['title'])}</title>
 <meta name="description" content="{e(t['desc'])}">
-<link rel="icon" href="{r}icon.svg" type="image/svg+xml">
+<link rel="canonical" href="{SITE}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Text³">
+<meta property="og:description" content="{e(t['desc'])}">
+<meta property="og:url" content="{SITE}">
+<meta property="og:image" content="{SITE}social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="{r}favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="{r}icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="{r}apple-touch-icon.png">
 <link rel="stylesheet" href="{r}style.css">
 </head>
 <body>
-<div class="wrap">
-<header class="top">
-  <a class="brand" href="./"><img src="{r}icon.svg" alt="">Sanain</a>
+<header class="top"><div class="wrap">
+  <a class="brand" href="./">Text³</a>
   <nav class="top">{nav}</nav>
-</header>
-
-<div class="buffer" role="img" aria-label="{e(t['hero_l1'] + ' ' + t['hero_l2'] + ' ' + t['hero_sub'])}">
-  <div class="tabs"><span class="tab on">{e(t['tab'])}</span><span class="tab">notes.txt</span><span class="tab">config.toml</span></div>
-  <pre><span class="gutter">1<br>2<br><br>3</span><code><span class="kw">#</span> {e(t['hero_l1'])}
-{e(t['hero_l2'])}<span class="caret"></span>
-
-<span class="dim">{e(t['hero_sub'])}</span></code></pre>
-  <div class="status"><span><b>{e(st[0])}</b></span><span>{e(st[1])}</span><span>{e(st[2])}</span><span>{e(st[3])}</span></div>
-</div>
-<div class="cta">
-  <a class="btn" href="{NIGHTLY}">{e(t['cta'])}</a>
-  <a class="btn ghost" href="{REPO}">{e(t['src'])}</a>
-  <span class="note">{e(t['cta_note'])}</span>
-</div>
+</div></header>
+<main class="wrap">
+<section class="hero">
+  <img class="lockup" src="{r}text3-lockup.svg" alt="Text³" width="440" height="276">
+  <h1>{e(t['hero_h'])}</h1>
+  <p class="lede">{e(t['hero_sub'])}</p>
+  <div class="cta">
+    <a class="btn" href="{NIGHTLY}">{e(t['cta'])}</a>
+    <a class="btn ghost" href="{REPO}">{e(t['src'])}</a>
+  </div>
+  <p class="note">{e(t['cta_note'])}</p>
+</section>
 
 <section id="intact">
   <h2>{e(t['intact_h'])}</h2>
-  <p class="lede">{e(t['intact_p'])}</p>
+  <p>{e(t['intact_p'])}</p>
   <div class="bytes" aria-hidden="true">{e(b0)}  63 61 66 c3 a9 0d 0a   <span class="same">c a f é \\r \\n</span>   UTF-8 · CRLF
 {e(b1)}  63 61 66 c3 a9 0d 0a   <span class="same">c a f é \\r \\n</span>   UTF-8 · CRLF</div>
 </section>
@@ -139,7 +148,7 @@ def page(t):
   <h2>{e(t['support_h'])}</h2>
   <p>{e(t['support_p'])} <a href="{REPO}/issues">{e(t['issues'])}</a></p>
 </section>
-</div>
+</main>
 <footer><div class="wrap">{e(t['footer'])} <a href="{REPO}">GitHub</a> · <a href="{REPO}/blob/main/PRIVACY.md">PRIVACY.md</a></div></footer>
 </body>
 </html>

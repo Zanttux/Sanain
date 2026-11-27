@@ -1,0 +1,53 @@
+[package]
+name = "text3-app"
+description = "The Text³ desktop application."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "text3"
+path = "src/main.rs"
+
+[dependencies]
+text3-core = { path = "../text3-core" }
+text3-io = { path = "../text3-io" }
+text3-platform = { path = "../text3-platform" }
+text3-i18n = { path = "../text3-i18n" }
+text3-language = { path = "../text3-language" }
+text3-markdown = { path = "../text3-markdown" }
+text3-tools = { path = "../text3-tools" }
+ropey.workspace = true
+eframe = { version = "0.37", default-features = false, features = ["accesskit", "clipboard", "links", "default_fonts", "system_fonts", "wgpu", "wayland", "x11"] }
+rfd = "0.18"
+# Notepad++ shortcuts.xml import (already used by text3-tools).
+quick-xml = "0.42"
+ureq = { version = "3.5", default-features = false, features = ["rustls"] }
+egui_extras = { version = "0.37", default-features = false }
+arboard = { version = "3.7", default-features = false }
+sys-locale = "0.3"
+# System font list for the editor font setting (no memory mapping).
+fontdb = { version = "0.24", default-features = false, features = ["std", "fs", "fontconfig"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "webp"] }
+
+# Windows: OpenGL renderer as well (wgpu flickers while the window is
+# moved or resized on some drivers, #95); chosen at startup in main.rs.
+[target.'cfg(windows)'.dependencies]
+eframe = { version = "0.37", default-features = false, features = ["glow"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+muda = { version = "0.22", default-features = false }
+
+# Windows: embed the icon in text3.exe (build.rs).
+[target.'cfg(windows)'.build-dependencies]
+embed-resource = "3"
+
+[dev-dependencies]
+encoding_rs = "0.8.44"
+tempfile.workspace = true
+
+[lints]
+workspace = true

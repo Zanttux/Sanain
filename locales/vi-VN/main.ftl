@@ -1,5 +1,5 @@
 # Machine translation by Claude (AI); review by a native speaker required before release.
-app-name = Sanain
+app-name = Text³
 menu-file = Tệp
 file-open = Mở…
 file-save = Lưu
@@ -15,8 +15,8 @@ edit-redo = Làm lại
 edit-select-all = Chọn tất cả
 untitled = Không tên
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = Dòng { $line }, Cột { $column }
 status-selections = { $count ->
@@ -50,8 +50,8 @@ menu-window = Cửa sổ
 edit-cut = Cắt
 edit-copy = Sao chép
 edit-paste = Dán
-app-quit = Thoát Sanain
-app-hide = Ẩn Sanain
+app-quit = Thoát Text³
+app-hide = Ẩn Text³
 app-hide-others = Ẩn ứng dụng khác
 app-show-all = Hiện tất cả
 window-minimize = Thu nhỏ
@@ -106,7 +106,7 @@ settings-theme-dark = Tối
 settings-restore-session = Mở lại các tệp từ phiên trước
 settings-language = Ngôn ngữ
 settings-language-system = Theo hệ thống
-settings-language-note = Thay đổi ngôn ngữ có hiệu lực sau khi khởi động lại Sanain.
+settings-language-note = Thay đổi ngôn ngữ có hiệu lực sau khi khởi động lại Text³.
 settings-save-failed = Không thể lưu cài đặt: { $reason }
 view-command-palette = Bảng lệnh…
 palette-placeholder = Nhập lệnh
@@ -239,7 +239,7 @@ view-unfold = Mở rộng
 view-unfold-all = Mở rộng tất cả
 settings-shortcuts = Phím tắt
 settings-keymap-preset = Cấu hình sẵn
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = Thay đổi
 settings-shortcut-reset = Đặt lại
@@ -257,12 +257,12 @@ folder-search-summary = { $count ->
     }
 app-check-updates = Kiểm tra bản cập nhật…
 update-checking = Đang kiểm tra bản cập nhật…
-update-up-to-date = Sanain { $version } là phiên bản mới nhất.
-update-no-releases = Chưa có bản phát hành Sanain nào được công bố.
+update-up-to-date = Text³ { $version } là phiên bản mới nhất.
+update-no-releases = Chưa có bản phát hành Text³ nào được công bố.
 update-failed = Không thể kiểm tra bản cập nhật: { $reason }
 update-invalid = phản hồi không mong đợi
-update-available-title = Đã có Sanain { $version }
-update-available-body = Mở trang tải xuống để tải về. Sanain không tự tải xuống hay cài đặt bất cứ thứ gì.
+update-available-title = Đã có Text³ { $version }
+update-available-body = Mở trang tải xuống để tải về. Text³ không tự tải xuống hay cài đặt bất cứ thứ gì.
 update-open-page = Mở trang tải xuống
 update-later = Để sau
 settings-check-updates = Kiểm tra bản cập nhật mỗi ngày một lần
@@ -349,12 +349,11 @@ replace-preview-more = Chỉ hiển thị 200 dòng thay đổi đầu tiên.
 replace-preview-stale = Tài liệu đã thay đổi; không có gì được thay thế. Hãy chạy lại Thay thế tất cả.
 encoding-detected = Đã mở dưới dạng { $encoding } (phát hiện từ nội dung tệp).
 encoding-suggested = Đề xuất dựa trên nội dung tệp: { $encoding }. Hãy kiểm tra bản xem trước trước khi mở.
-app-about = Giới thiệu về Sanain
+app-about = Giới thiệu về Text³
 menu-help = Trợ giúp
-about-tagline = Sức mạnh của ngôn từ.
 about-version = Phiên bản { $version }
 about-license = Phần mềm tự do và mã nguồn mở theo Mozilla Public License 2.0.
-about-ai = AI xây dựng. Con người dẫn dắt. Cộng đồng phát triển.
+about-ai = Được phát triển với sự hỗ trợ của AI (Claude của Anthropic) dưới sự chỉ đạo của người duy trì.
 about-notices = Các thành phần của bên thứ ba và giấy phép của chúng được liệt kê trong THIRD_PARTY_NOTICES, đi kèm mỗi bản phát hành.
 about-source = Mã nguồn và báo lỗi trên GitHub
 tools-xml-validate = Kiểm tra XML
@@ -395,13 +394,13 @@ tools-compare-file = So sánh với tệp…
 compare-file-failed = Không thể so sánh với { $name }: { $reason }
 cli-help =
     Cách dùng:
-      sanain [TỆP…]              mở tệp
-      sanain --diff TRÁI PHẢI    so sánh hai tệp cạnh nhau
-      sanain --version           hiển thị phiên bản
-      sanain --help              hiển thị trợ giúp này
+      text3 [TỆP…]               mở tệp
+      text3 --diff TRÁI PHẢI     so sánh hai tệp cạnh nhau
+      text3 --version            hiển thị phiên bản
+      text3 --help               hiển thị trợ giúp này
     Dùng -- trước tên tệp bắt đầu bằng dấu gạch ngang.
 cli-unknown-option = Tùy chọn không xác định { $option }.
-cli-diff-needs-two = --diff cần hai tệp: sanain --diff TRÁI PHẢI
+cli-diff-needs-two = --diff cần hai tệp: text3 --diff TRÁI PHẢI
 window-move-tab-left = Di chuyển thẻ sang trái
 window-move-tab-right = Di chuyển thẻ sang phải
 edit-skip-occurrence = Bỏ qua đến lần xuất hiện tiếp theo
@@ -433,12 +432,12 @@ image-outside = Hình ảnh này nằm ngoài thư mục của tài liệu.
 image-allow = Hiển thị hình ảnh từ thư mục này
 cli-help-integration =
     Tích hợp với trình quản lý tệp (chỉ người dùng hiện tại):
-      sanain --register           thêm Sanain vào "Mở bằng" (Linux, Windows)
-      sanain --unregister         gỡ lại khỏi đó
-cli-registered = Đã thêm Sanain vào "Mở bằng". { $place }
-cli-unregistered = Đã gỡ Sanain khỏi "Mở bằng".
+      text3 --register            thêm Text³ vào "Mở bằng" (Linux, Windows)
+      text3 --unregister          gỡ lại khỏi đó
+cli-registered = Đã thêm Text³ vào "Mở bằng". { $place }
+cli-unregistered = Đã gỡ Text³ khỏi "Mở bằng".
 cli-register-failed = Không thể thay đổi tích hợp với trình quản lý tệp: { $reason }
-cli-register-macos = Trên macOS không cần đăng ký gì: khi Sanain.app nằm trong thư mục Ứng dụng, Finder sẽ hiển thị nó trong "Mở bằng".
+cli-register-macos = Trên macOS không cần đăng ký gì: khi Text³.app nằm trong thư mục Ứng dụng, Finder sẽ hiển thị nó trong "Mở bằng".
 settings-tab-general = Chung
 settings-tab-editor = Trình soạn thảo
 settings-tab-appearance = Giao diện
@@ -513,3 +512,4 @@ status-indent-choose = Cài đặt thụt lề
 a11y-settings-sections = Các mục cài đặt
 a11y-tab-strip = Tệp đang mở
 a11y-tab-unsaved = { $name }, có thay đổi chưa lưu
+migration-copied = Cài đặt và dữ liệu từ Sanain đã được sao chép sang Text³. Các thư mục của Sanain vẫn được giữ nguyên.

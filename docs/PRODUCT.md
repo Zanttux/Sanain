@@ -1,6 +1,6 @@
 # Product requirements
 ## Mission
-Sanain is a product, not a separate research program. One editor for everyday text, code, configuration, Markdown and logs. File-first, not project-first. Plain text opens immediately; richer views are optional and reversible. No IDE, notebook database or collaboration platform in v1.
+Text³ is a product, not a separate research program. One editor for everyday text, code, configuration, Markdown and logs. File-first, not project-first. Plain text opens immediately; richer views are optional and reversible. No IDE, notebook database or collaboration platform in v1.
 
 ## Users
 Windows power users, developers switching platforms, sysadmins, technical writers and casual scratchpad users. Core jobs: open/edit/save, recover scratch notes, search many files, inspect structured text, read Markdown, compare files.
@@ -28,12 +28,12 @@ Windows power users, developers switching platforms, sysadmins, technical writer
 P0 means stable v1 scope, not first prototype. P1 follows stable unless human reprioritizes. All features remain free. Default UI has tabs, editor, menu, status bar; no permanent AI/sidebar clutter. Settings include restore behavior, privacy, font, tab width, encoding, theme, keymap. No destructive operation without preview/confirmation where appropriate.
 
 ## Competitor feature map (2026-11)
-Checked 2026-11-27. Sanain status verified against STATUS.md, `locales/en-US/main.ftl` and `crates/sanain-app/src`: **Has**, **Partial**, **Missing**. Ranks are judgement from the cited evidence, not a measured poll; review-site pages (G2, Capterra) block automated reading and were seen only through search summaries.
+Checked 2026-11-27. Text³ status verified against STATUS.md, `locales/en-US/main.ftl` and `crates/text3-app/src`: **Has**, **Partial**, **Missing**. Ranks are judgement from the cited evidence, not a measured poll; review-site pages (G2, Capterra) block automated reading and were seen only through search summaries.
 
 **Choice of the three.** Stack Overflow Developer Survey, "IDE" question, all respondents: 2025 — VS Code 75.9 %, Visual Studio 29 %, Notepad++ 27.4 %, IntelliJ 27.1 %, Vim 24.3 %, Neovim 14 %, Nano 12.2 %, Sublime Text 10.5 % [S1]; 2026 — VS Code 70.9 %, Notepad++ 27.8 % [S2]. Picked: **Notepad++** (most-used dedicated text editor among developers), **Windows Notepad** (bundled with Windows, about 1.4 billion monthly active devices [S3]; not in the survey, so its rank rests on install base, not preference — weak evidence for "most liked"), **Sublime Text** (highest-ranked GUI notepad-style editor after Notepad++). Excluded: VS Code and Visual Studio (IDE/extension platforms, not notepad-style; Sanain's mission excludes an IDE), Vim/Neovim/Nano (terminal editors), Notepad3, Kate, gedit/GNOME Text Editor, BBEdit, CotEditor (not in the survey's top list; no comparable usage figures found).
 
 ### Notepad++
-| # | Liked feature (evidence) | Sanain |
+| # | Liked feature (evidence) | Text³ |
 |---|---|---|
 | 1 | Lightweight, fast, free and open source [S4][S5] | Partial — free/FOSS; startup and memory not measured (empty window ~139 MB RSS, BENCHMARKS) |
 | 2 | Syntax highlighting and folding for ~90 languages [S4] | Partial — 22 languages, folding |
@@ -47,7 +47,7 @@ Checked 2026-11-27. Sanain status verified against STATUS.md, `locales/en-US/mai
 | 10 | Encoding detection and conversion [S5] | Has |
 
 ### Sublime Text
-| # | Liked feature (evidence) | Sanain |
+| # | Liked feature (evidence) | Text³ |
 |---|---|---|
 | 1 | Instant startup, low resource use [S10][S11] | Partial — unmeasured |
 | 2 | Large files with highlighting and folding [S10][S11] | Partial — 147 MB file edits (571 MB RSS); log viewer for any size |
@@ -61,7 +61,7 @@ Checked 2026-11-27. Sanain status verified against STATUS.md, `locales/en-US/mai
 | 10 | Folder sidebar (SideBarEnhancements 3.0 M installs) [S13] | Missing (only Find in Folder panel) |
 
 ### Windows Notepad
-| # | Liked feature (evidence) | Sanain |
+| # | Liked feature (evidence) | Text³ |
 |---|---|---|
 | 1 | Always there, opens instantly, plain text only [S14][S15] | Partial — plain text default; not preinstalled; startup unmeasured |
 | 2 | Tabs [S16] | Has |

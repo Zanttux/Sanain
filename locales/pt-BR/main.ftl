@@ -1,5 +1,5 @@
 # Machine translation by Claude (AI); review by a native speaker required before release.
-app-name = Sanain
+app-name = Text³
 menu-file = Arquivo
 file-open = Abrir…
 file-save = Salvar
@@ -17,8 +17,8 @@ edit-redo = Refazer
 edit-select-all = Selecionar tudo
 untitled = Sem título
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = Ln { $line }, Col { $column }
 status-selections = { $count ->
@@ -54,8 +54,8 @@ menu-window = Janela
 edit-cut = Recortar
 edit-copy = Copiar
 edit-paste = Colar
-app-quit = Encerrar Sanain
-app-hide = Ocultar Sanain
+app-quit = Encerrar Text³
+app-hide = Ocultar Text³
 app-hide-others = Ocultar outros
 app-show-all = Mostrar tudo
 window-minimize = Minimizar
@@ -114,7 +114,7 @@ settings-theme-dark = Escuro
 settings-restore-session = Reabrir arquivos da última sessão
 settings-language = Idioma
 settings-language-system = Seguir o sistema
-settings-language-note = As alterações de idioma serão aplicadas após reiniciar o Sanain.
+settings-language-note = As alterações de idioma serão aplicadas após reiniciar o Text³.
 settings-save-failed = Não foi possível salvar as configurações: { $reason }
 view-command-palette = Paleta de comandos…
 palette-placeholder = Digite um comando
@@ -251,7 +251,7 @@ view-unfold = Expandir
 view-unfold-all = Expandir tudo
 settings-shortcuts = Atalhos de teclado
 settings-keymap-preset = Predefinição
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = Alterar
 settings-shortcut-reset = Redefinir
@@ -273,12 +273,12 @@ folder-search-summary = { $count ->
     }
 app-check-updates = Verificar Atualizações…
 update-checking = Verificando atualizações…
-update-up-to-date = Sanain { $version } é a versão mais recente.
-update-no-releases = Nenhuma versão do Sanain foi publicada ainda.
+update-up-to-date = Text³ { $version } é a versão mais recente.
+update-no-releases = Nenhuma versão do Text³ foi publicada ainda.
 update-failed = Não foi possível verificar atualizações: { $reason }
 update-invalid = resposta inesperada
-update-available-title = Sanain { $version } está disponível
-update-available-body = Abra a página de download para obtê-lo. O Sanain não baixa nem instala nada por conta própria.
+update-available-title = Text³ { $version } está disponível
+update-available-body = Abra a página de download para obtê-lo. O Text³ não baixa nem instala nada por conta própria.
 update-open-page = Abrir Página de Download
 update-later = Mais tarde
 settings-check-updates = Verificar atualizações uma vez por dia
@@ -383,12 +383,11 @@ replace-preview-more = Apenas as primeiras 200 linhas alteradas são exibidas.
 replace-preview-stale = O documento foi alterado; nada foi substituído. Execute Substituir tudo novamente.
 encoding-detected = Aberto como { $encoding } (detectado a partir do conteúdo do arquivo).
 encoding-suggested = Sugerida com base no conteúdo do arquivo: { $encoding }. Verifique a pré-visualização antes de abrir.
-app-about = Sobre o Sanain
+app-about = Sobre o Text³
 menu-help = Ajuda
-about-tagline = O poder das palavras.
 about-version = Versão { $version }
 about-license = Livre e de código aberto sob a Mozilla Public License 2.0.
-about-ai = Criado por IA. Liderado por pessoas. Movido pela comunidade.
+about-ai = Desenvolvido com ajuda de IA (Claude, da Anthropic) sob a direção do mantenedor.
 about-notices = Os componentes de terceiros e suas licenças estão listados em THIRD_PARTY_NOTICES, incluído em cada versão.
 about-source = Código-fonte e issues no GitHub
 tools-xml-validate = Validar XML
@@ -433,13 +432,13 @@ tools-compare-file = Comparar com um arquivo…
 compare-file-failed = Não foi possível comparar com { $name }: { $reason }
 cli-help =
     Uso:
-      sanain [ARQUIVO…]                 abrir arquivos
-      sanain --diff ESQUERDA DIREITA    comparar dois arquivos lado a lado
-      sanain --version                  mostrar a versão
-      sanain --help                     mostrar esta ajuda
+      text3 [ARQUIVO…]                  abrir arquivos
+      text3 --diff ESQUERDA DIREITA     comparar dois arquivos lado a lado
+      text3 --version                   mostrar a versão
+      text3 --help                      mostrar esta ajuda
     Use -- antes de nomes de arquivo que começam com hífen.
 cli-unknown-option = Opção desconhecida { $option }.
-cli-diff-needs-two = --diff precisa de dois arquivos: sanain --diff ESQUERDA DIREITA
+cli-diff-needs-two = --diff precisa de dois arquivos: text3 --diff ESQUERDA DIREITA
 window-move-tab-left = Mover aba para a esquerda
 window-move-tab-right = Mover aba para a direita
 edit-skip-occurrence = Pular para a próxima ocorrência
@@ -481,12 +480,12 @@ image-outside = Esta imagem está fora da pasta do documento.
 image-allow = Exibir imagens desta pasta
 cli-help-integration =
     Integração com o gerenciador de arquivos (somente o usuário atual):
-      sanain --register           adiciona o Sanain a "Abrir com" (Linux, Windows)
-      sanain --unregister         remove-o novamente
-cli-registered = O Sanain foi adicionado a "Abrir com". { $place }
-cli-unregistered = O Sanain foi removido de "Abrir com".
+      text3 --register            adiciona o Text³ a "Abrir com" (Linux, Windows)
+      text3 --unregister          remove-o novamente
+cli-registered = O Text³ foi adicionado a "Abrir com". { $place }
+cli-unregistered = O Text³ foi removido de "Abrir com".
 cli-register-failed = Não foi possível alterar a integração com o gerenciador de arquivos: { $reason }
-cli-register-macos = No macOS não é preciso registrar nada: quando o Sanain.app estiver na pasta Aplicativos, o Finder o oferecerá em "Abrir com".
+cli-register-macos = No macOS não é preciso registrar nada: quando o Text³.app estiver na pasta Aplicativos, o Finder o oferecerá em "Abrir com".
 settings-tab-general = Geral
 settings-tab-editor = Editor
 settings-tab-appearance = Aparência
@@ -561,3 +560,4 @@ status-indent-choose = Configurações de recuo
 a11y-settings-sections = Seções das configurações
 a11y-tab-strip = Arquivos abertos
 a11y-tab-unsaved = { $name }, alterações não salvas
+migration-copied = As configurações e os dados do Sanain foram copiados para o Text³. As pastas do Sanain não foram alteradas.

@@ -1,5 +1,5 @@
 # Machine translation by Claude (AI); review by a native speaker required before release.
-app-name = Sanain
+app-name = Text³
 menu-file = Αρχείο
 file-open = Άνοιγμα…
 file-save = Αποθήκευση
@@ -16,8 +16,8 @@ edit-redo = Επανάληψη
 edit-select-all = Επιλογή όλων
 untitled = Χωρίς τίτλο
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = Γρ. { $line }, Στ. { $column }
 status-selections = { $count ->
@@ -52,8 +52,8 @@ menu-window = Παράθυρο
 edit-cut = Αποκοπή
 edit-copy = Αντιγραφή
 edit-paste = Επικόλληση
-app-quit = Έξοδος από το Sanain
-app-hide = Απόκρυψη του Sanain
+app-quit = Έξοδος από το Text³
+app-hide = Απόκρυψη του Text³
 app-hide-others = Απόκρυψη των υπολοίπων
 app-show-all = Εμφάνιση όλων
 window-minimize = Ελαχιστοποίηση
@@ -110,7 +110,7 @@ settings-theme-dark = Σκούρο
 settings-restore-session = Επανάνοιγμα αρχείων από την προηγούμενη περίοδο λειτουργίας
 settings-language = Γλώσσα
 settings-language-system = Όπως το σύστημα
-settings-language-note = Οι αλλαγές γλώσσας εφαρμόζονται μετά την επανεκκίνηση του Sanain.
+settings-language-note = Οι αλλαγές γλώσσας εφαρμόζονται μετά την επανεκκίνηση του Text³.
 settings-save-failed = Δεν ήταν δυνατή η αποθήκευση των ρυθμίσεων: { $reason }
 view-command-palette = Παλέτα εντολών…
 palette-placeholder = Πληκτρολογήστε μια εντολή
@@ -245,7 +245,7 @@ view-unfold = Ανάπτυξη
 view-unfold-all = Ανάπτυξη όλων
 settings-shortcuts = Συντομεύσεις πληκτρολογίου
 settings-keymap-preset = Προεπιλογή
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = Αλλαγή
 settings-shortcut-reset = Επαναφορά
@@ -265,12 +265,12 @@ folder-search-summary = { $count ->
     }
 app-check-updates = Έλεγχος για ενημερώσεις…
 update-checking = Έλεγχος για ενημερώσεις…
-update-up-to-date = Το Sanain { $version } είναι η νεότερη έκδοση.
-update-no-releases = Δεν έχουν δημοσιευτεί ακόμη εκδόσεις του Sanain.
+update-up-to-date = Το Text³ { $version } είναι η νεότερη έκδοση.
+update-no-releases = Δεν έχουν δημοσιευτεί ακόμη εκδόσεις του Text³.
 update-failed = Δεν ήταν δυνατός ο έλεγχος για ενημερώσεις: { $reason }
 update-invalid = μη αναμενόμενη απόκριση
-update-available-title = Το Sanain { $version } είναι διαθέσιμο
-update-available-body = Ανοίξτε τη σελίδα λήψης για να το αποκτήσετε. Το Sanain δεν κατεβάζει ούτε εγκαθιστά τίποτα από μόνο του.
+update-available-title = Το Text³ { $version } είναι διαθέσιμο
+update-available-body = Ανοίξτε τη σελίδα λήψης για να το αποκτήσετε. Το Text³ δεν κατεβάζει ούτε εγκαθιστά τίποτα από μόνο του.
 update-open-page = Άνοιγμα σελίδας λήψης
 update-later = Αργότερα
 settings-check-updates = Έλεγχος για ενημερώσεις μία φορά την ημέρα
@@ -366,12 +366,11 @@ replace-preview-more = Εμφανίζονται μόνο οι πρώτες 200 �
 replace-preview-stale = Το έγγραφο άλλαξε· δεν αντικαταστάθηκε τίποτα. Εκτελέστε ξανά την Αντικατάσταση όλων.
 encoding-detected = Άνοιξε ως { $encoding } (εντοπίστηκε από τα περιεχόμενα του αρχείου).
 encoding-suggested = Προτείνεται από τα περιεχόμενα του αρχείου: { $encoding }. Ελέγξτε την προεπισκόπηση πριν από το άνοιγμα.
-app-about = Σχετικά με το Sanain
+app-about = Σχετικά με το Text³
 menu-help = Βοήθεια
-about-tagline = Η δύναμη των λέξεων.
 about-version = Έκδοση { $version }
 about-license = Ελεύθερο λογισμικό ανοιχτού κώδικα με την άδεια Mozilla Public License 2.0.
-about-ai = Φτιαγμένο από AI. Με ανθρώπινη καθοδήγηση. Με τη δύναμη της κοινότητας.
+about-ai = Αναπτύσσεται με τη βοήθεια ΤΝ (Claude της Anthropic) υπό την καθοδήγηση του υπεύθυνου του έργου.
 about-notices = Τα στοιχεία τρίτων και οι άδειές τους αναφέρονται στο αρχείο THIRD_PARTY_NOTICES, που περιλαμβάνεται σε κάθε έκδοση.
 about-source = Πηγαίος κώδικας και αναφορές προβλημάτων στο GitHub
 tools-xml-validate = Επικύρωση XML
@@ -414,13 +413,13 @@ tools-compare-file = Σύγκριση με αρχείο…
 compare-file-failed = Δεν ήταν δυνατή η σύγκριση με το { $name }: { $reason }
 cli-help =
     Χρήση:
-      sanain [ΑΡΧΕΙΟ…]                άνοιγμα αρχείων
-      sanain --diff ΑΡΙΣΤΕΡΑ ΔΕΞΙΑ    σύγκριση δύο αρχείων δίπλα-δίπλα
-      sanain --version                εμφάνιση της έκδοσης
-      sanain --help                   εμφάνιση αυτής της βοήθειας
+      text3 [ΑΡΧΕΙΟ…]                 άνοιγμα αρχείων
+      text3 --diff ΑΡΙΣΤΕΡΑ ΔΕΞΙΑ     σύγκριση δύο αρχείων δίπλα-δίπλα
+      text3 --version                 εμφάνιση της έκδοσης
+      text3 --help                    εμφάνιση αυτής της βοήθειας
     Χρησιμοποιήστε -- πριν από ονόματα αρχείων που αρχίζουν με παύλα.
 cli-unknown-option = Άγνωστη επιλογή { $option }.
-cli-diff-needs-two = Το --diff χρειάζεται δύο αρχεία: sanain --diff ΑΡΙΣΤΕΡΑ ΔΕΞΙΑ
+cli-diff-needs-two = Το --diff χρειάζεται δύο αρχεία: text3 --diff ΑΡΙΣΤΕΡΑ ΔΕΞΙΑ
 window-move-tab-left = Μετακίνηση καρτέλας αριστερά
 window-move-tab-right = Μετακίνηση καρτέλας δεξιά
 edit-skip-occurrence = Μετάβαση στην επόμενη εμφάνιση
@@ -457,12 +456,12 @@ image-outside = Αυτή η εικόνα βρίσκεται εκτός του φ
 image-allow = Εμφάνιση εικόνων από αυτόν τον φάκελο
 cli-help-integration =
     Ενσωμάτωση στη διαχείριση αρχείων (μόνο για τον τρέχοντα χρήστη):
-      sanain --register           προσθήκη του Sanain στο «Άνοιγμα με» (Linux, Windows)
-      sanain --unregister         αφαίρεσή του ξανά
-cli-registered = Το Sanain προστέθηκε στο «Άνοιγμα με». { $place }
-cli-unregistered = Το Sanain αφαιρέθηκε από το «Άνοιγμα με».
+      text3 --register            προσθήκη του Text³ στο «Άνοιγμα με» (Linux, Windows)
+      text3 --unregister          αφαίρεσή του ξανά
+cli-registered = Το Text³ προστέθηκε στο «Άνοιγμα με». { $place }
+cli-unregistered = Το Text³ αφαιρέθηκε από το «Άνοιγμα με».
 cli-register-failed = Δεν ήταν δυνατή η αλλαγή της ενσωμάτωσης στη διαχείριση αρχείων: { $reason }
-cli-register-macos = Στο macOS δεν χρειάζεται καμία καταχώριση: μόλις το Sanain.app βρίσκεται στον φάκελο «Εφαρμογές», το Finder το προσφέρει στο «Άνοιγμα με».
+cli-register-macos = Στο macOS δεν χρειάζεται καμία καταχώριση: μόλις το Text³.app βρίσκεται στον φάκελο «Εφαρμογές», το Finder το προσφέρει στο «Άνοιγμα με».
 settings-tab-general = Γενικά
 settings-tab-editor = Επεξεργαστής
 settings-tab-appearance = Εμφάνιση
@@ -537,3 +536,4 @@ status-indent-choose = Ρυθμίσεις εσοχής
 a11y-settings-sections = Ενότητες ρυθμίσεων
 a11y-tab-strip = Ανοιχτά αρχεία
 a11y-tab-unsaved = { $name }, μη αποθηκευμένες αλλαγές
+migration-copied = Οι ρυθμίσεις και τα δεδομένα του Sanain αντιγράφηκαν στο Text³. Οι φάκελοι του Sanain έμειναν αμετάβλητοι.

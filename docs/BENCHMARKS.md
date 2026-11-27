@@ -24,7 +24,7 @@ Informal observations (single runs, not baselines):
   time from submitting a one-character edit in the middle of the file
   to the syntax worker's result (spans and folds), 30 edits alternately
   inserting and deleting `x`, synthetic generated sources
-  (`cargo test --release -p sanain-app --lib -- --ignored --nocapture
+  (`cargo test --release -p text3-app --lib -- --ignored --nocapture
   bench_`). Before → after, median / p95:
   Rust 1024 KB 173.9 / 177.7 ms → 12.2 / 13.4 ms;
   JSON 512 KB 81.1 / 83.1 ms → 3.3 / 3.4 ms;

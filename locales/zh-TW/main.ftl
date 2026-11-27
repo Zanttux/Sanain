@@ -1,5 +1,5 @@
 # Machine translation by Claude (AI); review by a native speaker required before release.
-app-name = Sanain
+app-name = Text³
 menu-file = 檔案
 file-open = 打開…
 file-save = 儲存
@@ -15,8 +15,8 @@ edit-redo = 重做
 edit-select-all = 全選
 untitled = 未命名
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = 行 { $line }，欄 { $column }
 status-selections = { $count ->
@@ -50,8 +50,8 @@ menu-window = 視窗
 edit-cut = 剪下
 edit-copy = 拷貝
 edit-paste = 貼上
-app-quit = 結束 Sanain
-app-hide = 隱藏 Sanain
+app-quit = 結束 Text³
+app-hide = 隱藏 Text³
 app-hide-others = 隱藏其他
 app-show-all = 顯示全部
 window-minimize = 縮到最小
@@ -106,7 +106,7 @@ settings-theme-dark = 深色
 settings-restore-session = 重新打開上次工作階段中的檔案
 settings-language = 語言
 settings-language-system = 跟隨系統
-settings-language-note = 語言變更將在重新啟動 Sanain 後生效。
+settings-language-note = 語言變更將在重新啟動 Text³ 後生效。
 settings-save-failed = 無法儲存設定：{ $reason }
 view-command-palette = 命令面板…
 palette-placeholder = 輸入命令
@@ -239,7 +239,7 @@ view-unfold = 展開
 view-unfold-all = 全部展開
 settings-shortcuts = 鍵盤快速鍵
 settings-keymap-preset = 預設組
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = 更改
 settings-shortcut-reset = 重置
@@ -257,12 +257,12 @@ folder-search-summary = { $files ->
     }
 app-check-updates = 檢查更新項目…
 update-checking = 正在檢查更新項目…
-update-up-to-date = Sanain { $version } 是最新版本。
-update-no-releases = Sanain 尚未發布任何版本。
+update-up-to-date = Text³ { $version } 是最新版本。
+update-no-releases = Text³ 尚未發布任何版本。
 update-failed = 無法檢查更新項目：{ $reason }
 update-invalid = 非預期的回應
-update-available-title = Sanain { $version } 現已推出
-update-available-body = 請開啟下載頁面取得。Sanain 不會自行下載或安裝任何內容。
+update-available-title = Text³ { $version } 現已推出
+update-available-body = 請開啟下載頁面取得。Text³ 不會自行下載或安裝任何內容。
 update-open-page = 開啟下載頁面
 update-later = 稍後
 settings-check-updates = 每天檢查一次更新項目
@@ -349,12 +349,11 @@ replace-preview-more = 僅顯示前 200 行變更。
 replace-preview-stale = 文件已變更，未取代任何內容。請重新執行「全部取代」。
 encoding-detected = 已以 { $encoding } 打開（根據檔案內容偵測）。
 encoding-suggested = 根據檔案內容建議的編碼：{ $encoding }。打開前請檢查預覽。
-app-about = 關於 Sanain
+app-about = 關於 Text³
 menu-help = 說明
-about-tagline = 文字的力量。
 about-version = 版本 { $version }
 about-license = 依 Mozilla Public License 2.0 授權的自由開放原始碼軟體。
-about-ai = AI 打造，人類主導，社群驅動。
+about-ai = 在維護者的指導下，借助 AI（Anthropic 的 Claude）開發。
 about-notices = 第三方元件及其授權條款列於 THIRD_PARTY_NOTICES，隨每個版本一併提供。
 about-source = GitHub 上的原始碼與問題回報
 tools-xml-validate = 驗證 XML
@@ -395,13 +394,13 @@ tools-compare-file = 與檔案比較…
 compare-file-failed = 無法與 { $name } 比較：{ $reason }
 cli-help =
     用法：
-      sanain [檔案…]         開啟檔案
-      sanain --diff 左 右    並排比較兩個檔案
-      sanain --version       顯示版本
-      sanain --help          顯示此說明
+      text3 [檔案…]          開啟檔案
+      text3 --diff 左 右     並排比較兩個檔案
+      text3 --version        顯示版本
+      text3 --help           顯示此說明
     以連字號開頭的檔案名稱前請使用 --。
 cli-unknown-option = 未知的選項 { $option }。
-cli-diff-needs-two = --diff 需要兩個檔案：sanain --diff 左 右
+cli-diff-needs-two = --diff 需要兩個檔案：text3 --diff 左 右
 window-move-tab-left = 向左移動標籤頁
 window-move-tab-right = 向右移動標籤頁
 edit-skip-occurrence = 跳至下一個符合項目
@@ -433,12 +432,12 @@ image-outside = 此影像位於文件所在檔案夾之外。
 image-allow = 顯示此檔案夾中的影像
 cli-help-integration =
     與檔案管理器整合（僅限目前使用者）：
-      sanain --register           將 Sanain 加入「開啟檔案」（Linux、Windows）
-      sanain --unregister         再次移除
-cli-registered = 已將 Sanain 加入「開啟檔案」。{ $place }
-cli-unregistered = 已從「開啟檔案」中移除 Sanain。
+      text3 --register            將 Text³ 加入「開啟檔案」（Linux、Windows）
+      text3 --unregister          再次移除
+cli-registered = 已將 Text³ 加入「開啟檔案」。{ $place }
+cli-unregistered = 已從「開啟檔案」中移除 Text³。
 cli-register-failed = 無法變更檔案管理器整合：{ $reason }
-cli-register-macos = macOS 上無需註冊：只要 Sanain.app 位於「應用程式」檔案夾中，Finder 就會在「開啟檔案」中提供它。
+cli-register-macos = macOS 上無需註冊：只要 Text³.app 位於「應用程式」檔案夾中，Finder 就會在「開啟檔案」中提供它。
 settings-tab-general = 一般
 settings-tab-editor = 編輯器
 settings-tab-appearance = 外觀
@@ -513,3 +512,4 @@ status-indent-choose = 縮排設定
 a11y-settings-sections = 設定區段
 a11y-tab-strip = 已開啟的檔案
 a11y-tab-unsaved = { $name }，有未儲存的變更
+migration-copied = 已將 Sanain 的設定和資料複製到 Text³。Sanain 的資料夾未作變更。

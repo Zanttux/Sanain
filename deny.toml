@@ -12,7 +12,7 @@ unmaintained = "workspace"
 yanked = "warn"
 
 [licenses]
-# Permissive licenses compatible with distributing Sanain under MPL-2.0.
+# Permissive licenses compatible with distributing Text³ under MPL-2.0.
 allow = [
     "MPL-2.0",
     "MIT",

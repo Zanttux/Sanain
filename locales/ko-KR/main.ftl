@@ -1,5 +1,5 @@
 # Machine translation by Claude (AI); review by a native speaker required before release.
-app-name = Sanain
+app-name = Text³
 menu-file = 파일
 file-open = 열기…
 file-save = 저장
@@ -15,8 +15,8 @@ edit-redo = 다시 실행
 edit-select-all = 모두 선택
 untitled = 제목 없음
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = 줄 { $line }, 열 { $column }
 status-selections = { $count ->
@@ -50,8 +50,8 @@ menu-window = 윈도우
 edit-cut = 잘라내기
 edit-copy = 복사하기
 edit-paste = 붙여넣기
-app-quit = Sanain 종료
-app-hide = Sanain 가리기
+app-quit = Text³ 종료
+app-hide = Text³ 가리기
 app-hide-others = 기타 가리기
 app-show-all = 모두 보기
 window-minimize = 최소화
@@ -106,7 +106,7 @@ settings-theme-dark = 다크
 settings-restore-session = 지난 세션의 파일 다시 열기
 settings-language = 언어
 settings-language-system = 시스템 설정 따르기
-settings-language-note = 언어 변경은 Sanain을 다시 시작한 후 적용됩니다.
+settings-language-note = 언어 변경은 Text³ 앱을 다시 시작한 후 적용됩니다.
 settings-save-failed = 설정을 저장할 수 없습니다: { $reason }
 view-command-palette = 명령 팔레트…
 palette-placeholder = 명령 입력
@@ -239,7 +239,7 @@ view-unfold = 펼치기
 view-unfold-all = 모두 펼치기
 settings-shortcuts = 키보드 단축키
 settings-keymap-preset = 사전 설정
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = 변경
 settings-shortcut-reset = 재설정
@@ -257,12 +257,12 @@ folder-search-summary = { $files ->
     }
 app-check-updates = 업데이트 확인…
 update-checking = 업데이트 확인 중…
-update-up-to-date = Sanain { $version }이(가) 최신 버전입니다.
-update-no-releases = 아직 게시된 Sanain 릴리스가 없습니다.
+update-up-to-date = Text³ { $version }이(가) 최신 버전입니다.
+update-no-releases = 아직 게시된 Text³ 릴리스가 없습니다.
 update-failed = 업데이트를 확인할 수 없음: { $reason }
 update-invalid = 예기치 않은 응답
-update-available-title = Sanain { $version } 사용 가능
-update-available-body = 다운로드 페이지를 열어 받으세요. Sanain은 스스로 아무것도 다운로드하거나 설치하지 않습니다.
+update-available-title = Text³ { $version } 사용 가능
+update-available-body = 다운로드 페이지를 열어 받으세요. Text³ 앱은 스스로 아무것도 다운로드하거나 설치하지 않습니다.
 update-open-page = 다운로드 페이지 열기
 update-later = 나중에
 settings-check-updates = 하루에 한 번 업데이트 확인
@@ -349,12 +349,11 @@ replace-preview-more = 변경되는 처음 200줄만 표시됩니다.
 replace-preview-stale = 문서가 변경되어 아무것도 바꾸지 않았습니다. 모두 바꾸기를 다시 실행하세요.
 encoding-detected = { $encoding }(으)로 열었습니다(파일 내용에서 감지됨).
 encoding-suggested = 파일 내용으로 추천된 인코딩: { $encoding }. 열기 전에 미리 보기를 확인하세요.
-app-about = Sanain 정보
+app-about = Text³ 정보
 menu-help = 도움말
-about-tagline = 말의 힘.
 about-version = 버전 { $version }
 about-license = Mozilla Public License 2.0에 따른 자유 오픈 소스 소프트웨어입니다.
-about-ai = AI가 만들고, 사람이 이끌고, 커뮤니티가 키웁니다.
+about-ai = 메인테이너의 지휘 아래 AI(Anthropic의 Claude)의 도움으로 개발되었습니다.
 about-notices = 타사 구성 요소와 해당 라이선스는 모든 릴리스에 포함된 THIRD_PARTY_NOTICES에 나와 있습니다.
 about-source = GitHub의 소스 코드 및 이슈
 tools-xml-validate = XML 검사
@@ -395,13 +394,13 @@ tools-compare-file = 파일과 비교…
 compare-file-failed = { $name }와(과) 비교할 수 없습니다: { $reason }
 cli-help =
     사용법:
-      sanain [파일…]               파일 열기
-      sanain --diff 왼쪽 오른쪽    두 파일을 나란히 비교
-      sanain --version             버전 표시
-      sanain --help                이 도움말 표시
+      text3 [파일…]                파일 열기
+      text3 --diff 왼쪽 오른쪽     두 파일을 나란히 비교
+      text3 --version              버전 표시
+      text3 --help                 이 도움말 표시
     대시로 시작하는 파일 이름 앞에는 --를 사용하세요.
 cli-unknown-option = 알 수 없는 옵션 { $option }.
-cli-diff-needs-two = --diff에는 두 파일이 필요합니다: sanain --diff 왼쪽 오른쪽
+cli-diff-needs-two = --diff에는 두 파일이 필요합니다: text3 --diff 왼쪽 오른쪽
 window-move-tab-left = 탭을 왼쪽으로 이동
 window-move-tab-right = 탭을 오른쪽으로 이동
 edit-skip-occurrence = 다음 항목으로 건너뛰기
@@ -433,12 +432,12 @@ image-outside = 이 이미지는 문서의 폴더 밖에 있습니다.
 image-allow = 이 폴더의 이미지 표시
 cli-help-integration =
     파일 관리자 통합 (현재 사용자만):
-      sanain --register           "연결 프로그램"에 Sanain 추가 (Linux, Windows)
-      sanain --unregister         다시 제거
-cli-registered = Sanain을 "연결 프로그램"에 추가했습니다. { $place }
-cli-unregistered = Sanain을 "연결 프로그램"에서 제거했습니다.
+      text3 --register            "연결 프로그램"에 Text³ 추가 (Linux, Windows)
+      text3 --unregister          다시 제거
+cli-registered = Text³ 앱을 "연결 프로그램"에 추가했습니다. { $place }
+cli-unregistered = Text³ 앱을 "연결 프로그램"에서 제거했습니다.
 cli-register-failed = 파일 관리자 통합을 변경할 수 없습니다: { $reason }
-cli-register-macos = macOS에서는 등록할 필요가 없습니다. Sanain.app이 응용 프로그램 폴더에 있으면 Finder가 "연결 프로그램"에 표시합니다.
+cli-register-macos = macOS에서는 등록할 필요가 없습니다. Text³.app이 응용 프로그램 폴더에 있으면 Finder가 "연결 프로그램"에 표시합니다.
 settings-tab-general = 일반
 settings-tab-editor = 편집기
 settings-tab-appearance = 모양
@@ -513,3 +512,4 @@ status-indent-choose = 들여쓰기 설정
 a11y-settings-sections = 설정 섹션
 a11y-tab-strip = 열린 파일
 a11y-tab-unsaved = { $name }, 저장되지 않은 변경 사항
+migration-copied = Sanain의 설정과 데이터를 Text³ 앱으로 복사했습니다. Sanain 폴더는 변경되지 않았습니다.

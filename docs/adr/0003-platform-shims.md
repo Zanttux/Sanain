@@ -7,7 +7,7 @@ The workspace forbids `unsafe` code. Some operating-system features that
 users expect are not offered by the window library (winit/eframe):
 
 - macOS sends files opened from Finder (Open With, double click, dropping
-  on the Dock icon, `open -a Sanain file`) as an `odoc` Apple event, not as
+  on the Dock icon, `open -a Text³ file`) as an `odoc` Apple event, not as
   program arguments. winit does not handle it, and it does not install an
   application delegate either.
 - Windows GUI-subsystem builds need to attach to the parent console so
@@ -17,7 +17,7 @@ Reaching these needs Objective-C or Win32 calls that the binding crates
 mark `unsafe`.
 
 ## Decision
-`crates/sanain-platform` holds such shims, and only them.
+`crates/text3-platform` holds such shims, and only them.
 
 - The crate sets `unsafe_code = "deny"` (the rest of the workspace keeps
   `forbid`); each block opts in with `#[allow(unsafe_code)]` and a
@@ -31,7 +31,7 @@ mark `unsafe`.
   documents for replacing AppKit's default handlers, before launch files
   are delivered. Paths are queued and opened by the shell like dropped
   files. `Info.plist` declares text document types with
-  `LSHandlerRank = Alternate`, so Sanain appears in Open With without
+  `LSHandlerRank = Alternate`, so Text³ appears in Open With without
   claiming any type by default.
 - Bindings: `objc2` and `objc2-foundation`, already in the dependency tree
   through winit (MIT).
@@ -44,7 +44,7 @@ mark `unsafe`.
 
 ## Consequences
 - The existing macOS unsafe sites and one Windows unsafe block stay in
-  `sanain-platform/src/lib.rs`, individually documented and reviewable.
+  `text3-platform/src/lib.rs`, individually documented and reviewable.
 - Windows attachment sets standard handles for processes without a console;
   Rust printing uses `GetStdHandle`, so no stream rebinding is needed.
   Output may appear after the shell prompt because shells do not wait for

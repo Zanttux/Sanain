@@ -1,5 +1,5 @@
 # Machine translation by Claude (AI); review by a native speaker required before release.
-app-name = Sanain
+app-name = Text³
 menu-file = Dosya
 file-open = Aç…
 file-save = Kaydet
@@ -16,8 +16,8 @@ edit-redo = Yinele
 edit-select-all = Tümünü Seç
 untitled = Adsız
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = Sat { $line }, Süt { $column }
 status-selections = { $count ->
@@ -52,8 +52,8 @@ menu-window = Pencere
 edit-cut = Kes
 edit-copy = Kopyala
 edit-paste = Yapıştır
-app-quit = Sanain'den Çık
-app-hide = Sanain'i Gizle
+app-quit = Text³ Uygulamasından Çık
+app-hide = Text³ Uygulamasını Gizle
 app-hide-others = Diğerlerini Gizle
 app-show-all = Tümünü Göster
 window-minimize = Simge Durumuna Küçült
@@ -110,7 +110,7 @@ settings-theme-dark = Koyu
 settings-restore-session = Önceki oturumdaki dosyaları yeniden aç
 settings-language = Dil
 settings-language-system = Sistemle aynı
-settings-language-note = Dil değişiklikleri Sanain yeniden başlatıldıktan sonra uygulanır.
+settings-language-note = Dil değişiklikleri Text³ yeniden başlatıldıktan sonra uygulanır.
 settings-save-failed = Ayarlar kaydedilemedi: { $reason }
 view-command-palette = Komut Paleti…
 palette-placeholder = Bir komut yazın
@@ -245,7 +245,7 @@ view-unfold = Genişlet
 view-unfold-all = Tümünü Genişlet
 settings-shortcuts = Klavye kısayolları
 settings-keymap-preset = Hazır ayar
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = Değiştir
 settings-shortcut-reset = Sıfırla
@@ -265,12 +265,12 @@ folder-search-summary = { $count ->
     }
 app-check-updates = Güncellemeleri Denetle…
 update-checking = Güncellemeler denetleniyor…
-update-up-to-date = Sanain { $version } en yeni sürümdür.
-update-no-releases = Henüz yayımlanmış bir Sanain sürümü yok.
+update-up-to-date = Text³ { $version } en yeni sürümdür.
+update-no-releases = Henüz yayımlanmış bir Text³ sürümü yok.
 update-failed = Güncellemeler denetlenemedi: { $reason }
 update-invalid = beklenmeyen yanıt
-update-available-title = Sanain { $version } kullanılabilir
-update-available-body = Edinmek için indirme sayfasını açın. Sanain kendiliğinden hiçbir şey indirmez veya yüklemez.
+update-available-title = Text³ { $version } kullanılabilir
+update-available-body = Edinmek için indirme sayfasını açın. Text³ kendiliğinden hiçbir şey indirmez veya yüklemez.
 update-open-page = İndirme Sayfasını Aç
 update-later = Daha Sonra
 settings-check-updates = Güncellemeleri günde bir kez denetle
@@ -366,12 +366,11 @@ replace-preview-more = Yalnızca değişen ilk 200 satır gösteriliyor.
 replace-preview-stale = Belge değişti; hiçbir şey değiştirilmedi. Tümünü Değiştir'i yeniden çalıştırın.
 encoding-detected = { $encoding } olarak açıldı (dosya içeriğinden algılandı).
 encoding-suggested = Dosya içeriğine göre önerilen: { $encoding }. Açmadan önce önizlemeyi kontrol edin.
-app-about = Sanain Hakkında
+app-about = Text³ Hakkında
 menu-help = Yardım
-about-tagline = Kelimelerin gücü.
 about-version = Sürüm { $version }
 about-license = Mozilla Public License 2.0 kapsamında özgür ve açık kaynaklıdır.
-about-ai = Yapay zekâ yaptı. İnsanlar yönetiyor. Topluluk geliştiriyor.
+about-ai = Bakımcısının yönetiminde yapay zekâ desteğiyle (Anthropic’in Claude’u) geliştirilmektedir.
 about-notices = Üçüncü taraf bileşenler ve lisansları, her sürüme dahil olan THIRD_PARTY_NOTICES dosyasında listelenmiştir.
 about-source = GitHub’da kaynak kodu ve sorunlar
 tools-xml-validate = XML'i Doğrula
@@ -414,13 +413,13 @@ tools-compare-file = Dosyayla Karşılaştır…
 compare-file-failed = { $name } ile karşılaştırılamadı: { $reason }
 cli-help =
     Kullanım:
-      sanain [DOSYA…]          dosyaları aç
-      sanain --diff SOL SAĞ    iki dosyayı yan yana karşılaştır
-      sanain --version         sürümü göster
-      sanain --help            bu yardımı göster
+      text3 [DOSYA…]           dosyaları aç
+      text3 --diff SOL SAĞ     iki dosyayı yan yana karşılaştır
+      text3 --version          sürümü göster
+      text3 --help             bu yardımı göster
     Tire ile başlayan dosya adlarından önce -- kullanın.
 cli-unknown-option = Bilinmeyen seçenek { $option }.
-cli-diff-needs-two = --diff iki dosya gerektirir: sanain --diff SOL SAĞ
+cli-diff-needs-two = --diff iki dosya gerektirir: text3 --diff SOL SAĞ
 window-move-tab-left = Sekmeyi Sola Taşı
 window-move-tab-right = Sekmeyi Sağa Taşı
 edit-skip-occurrence = Sonraki Eşleşmeye Atla
@@ -457,12 +456,12 @@ image-outside = Bu görüntü belgenin klasörünün dışında.
 image-allow = Bu klasördeki görüntüleri göster
 cli-help-integration =
     Dosya yöneticisi tümleştirmesi (yalnızca geçerli kullanıcı):
-      sanain --register           Sanain'i "Birlikte Aç" menüsüne ekle (Linux, Windows)
-      sanain --unregister         yeniden kaldır
-cli-registered = Sanain "Birlikte Aç" menüsüne eklendi. { $place }
-cli-unregistered = Sanain "Birlikte Aç" menüsünden kaldırıldı.
+      text3 --register            Text³ uygulamasını "Birlikte Aç" menüsüne ekle (Linux, Windows)
+      text3 --unregister          yeniden kaldır
+cli-registered = Text³ "Birlikte Aç" menüsüne eklendi. { $place }
+cli-unregistered = Text³ "Birlikte Aç" menüsünden kaldırıldı.
 cli-register-failed = Dosya yöneticisi tümleştirmesi değiştirilemedi: { $reason }
-cli-register-macos = macOS'ta hiçbir şeyin kaydedilmesi gerekmez: Sanain.app Uygulamalar klasörüne konduğunda Finder onu "Birlikte Aç" menüsünde sunar.
+cli-register-macos = macOS'ta hiçbir şeyin kaydedilmesi gerekmez: Text³.app Uygulamalar klasörüne konduğunda Finder onu "Birlikte Aç" menüsünde sunar.
 settings-tab-general = Genel
 settings-tab-editor = Düzenleyici
 settings-tab-appearance = Görünüm
@@ -537,3 +536,4 @@ status-indent-choose = Girinti ayarları
 a11y-settings-sections = Ayar bölümleri
 a11y-tab-strip = Açık dosyalar
 a11y-tab-unsaved = { $name }, kaydedilmemiş değişiklikler
+migration-copied = Sanain ayarları ve verileri Text³ uygulamasına kopyalandı. Sanain klasörleri değiştirilmedi.

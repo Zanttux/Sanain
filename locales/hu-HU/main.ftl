@@ -1,5 +1,5 @@
 # Machine translation by Claude (AI); review by a native speaker required before release.
-app-name = Sanain
+app-name = Text³
 menu-file = Fájl
 file-open = Megnyitás…
 file-save = Mentés
@@ -16,8 +16,8 @@ edit-redo = Ismétlés
 edit-select-all = Összes kijelölése
 untitled = Névtelen
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = Sor { $line }, oszlop { $column }
 status-selections = { $count ->
@@ -52,8 +52,8 @@ menu-window = Ablak
 edit-cut = Kivágás
 edit-copy = Másolás
 edit-paste = Beillesztés
-app-quit = Kilépés a Sanainból
-app-hide = Sanain elrejtése
+app-quit = Kilépés a Text³ programból
+app-hide = Text³ elrejtése
 app-hide-others = Többi elrejtése
 app-show-all = Összes megjelenítése
 window-minimize = Kis méret
@@ -110,7 +110,7 @@ settings-theme-dark = Sötét
 settings-restore-session = Az előző munkamenet fájljainak újranyitása
 settings-language = Nyelv
 settings-language-system = Rendszerbeállítás szerint
-settings-language-note = A nyelv módosítása a Sanain újraindítása után lép életbe.
+settings-language-note = A nyelv módosítása a Text³ újraindítása után lép életbe.
 settings-save-failed = Nem sikerült menteni a beállításokat: { $reason }
 view-command-palette = Parancspaletta…
 palette-placeholder = Írjon be egy parancsot
@@ -245,7 +245,7 @@ view-unfold = Kibontás
 view-unfold-all = Összes kibontása
 settings-shortcuts = Billentyűparancsok
 settings-keymap-preset = Előbeállítás
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = Módosítás
 settings-shortcut-reset = Visszaállítás
@@ -265,12 +265,12 @@ folder-search-summary = { $count ->
     }
 app-check-updates = Frissítések keresése…
 update-checking = Frissítések keresése…
-update-up-to-date = A Sanain { $version } a legújabb verzió.
-update-no-releases = A Sanainból még nem jelent meg kiadás.
+update-up-to-date = A Text³ { $version } a legújabb verzió.
+update-no-releases = A Text³ programból még nem jelent meg kiadás.
 update-failed = Nem sikerült frissítéseket keresni: { $reason }
 update-invalid = váratlan válasz
-update-available-title = Elérhető a Sanain { $version }
-update-available-body = A letöltéshez nyissa meg a letöltési oldalt. A Sanain magától semmit sem tölt le és nem telepít.
+update-available-title = Elérhető a Text³ { $version }
+update-available-body = A letöltéshez nyissa meg a letöltési oldalt. A Text³ magától semmit sem tölt le és nem telepít.
 update-open-page = Letöltési oldal megnyitása
 update-later = Később
 settings-check-updates = Frissítések keresése naponta egyszer
@@ -366,12 +366,11 @@ replace-preview-more = Csak az első 200 módosuló sor látható.
 replace-preview-stale = A dokumentum megváltozott, semmi sem lett lecserélve. Futtassa újra az Összes cseréje parancsot.
 encoding-detected = Megnyitva { $encoding } kódolással (a fájl tartalmából felismerve).
 encoding-suggested = A fájl tartalma alapján javasolt: { $encoding }. Megnyitás előtt ellenőrizze az előnézetet.
-app-about = A Sanain névjegye
+app-about = A Text³ névjegye
 menu-help = Súgó
-about-tagline = A szavak ereje.
 about-version = Verzió: { $version }
 about-license = Szabad és nyílt forráskódú szoftver a Mozilla Public License 2.0 licenc alatt.
-about-ai = MI építette. Ember vezeti. A közösség formálja.
+about-ai = MI segítségével (az Anthropic Claude modelljével) fejlesztve, a karbantartó irányításával.
 about-notices = A külső komponensek és licenceik a THIRD_PARTY_NOTICES fájlban találhatók, amely minden kiadás része.
 about-source = Forráskód és hibajegyek a GitHubon
 tools-xml-validate = XML ellenőrzése
@@ -414,13 +413,13 @@ tools-compare-file = Összehasonlítás fájllal…
 compare-file-failed = Nem sikerült összehasonlítani a(z) { $name } fájllal: { $reason }
 cli-help =
     Használat:
-      sanain [FÁJL…]            fájlok megnyitása
-      sanain --diff BAL JOBB    két fájl összehasonlítása egymás mellett
-      sanain --version          a verzió megjelenítése
-      sanain --help             ennek a súgónak a megjelenítése
+      text3 [FÁJL…]             fájlok megnyitása
+      text3 --diff BAL JOBB     két fájl összehasonlítása egymás mellett
+      text3 --version           a verzió megjelenítése
+      text3 --help              ennek a súgónak a megjelenítése
     Kötőjellel kezdődő fájlnevek előtt használja a -- jelet.
 cli-unknown-option = Ismeretlen kapcsoló: { $option }.
-cli-diff-needs-two = A --diff két fájlt igényel: sanain --diff BAL JOBB
+cli-diff-needs-two = A --diff két fájlt igényel: text3 --diff BAL JOBB
 window-move-tab-left = Lap mozgatása balra
 window-move-tab-right = Lap mozgatása jobbra
 edit-skip-occurrence = Ugrás a következő előfordulásra
@@ -457,12 +456,12 @@ image-outside = Ez a kép a dokumentum mappáján kívül található.
 image-allow = Képek megjelenítése ebből a mappából
 cli-help-integration =
     Integráció a fájlkezelővel (csak az aktuális felhasználónak):
-      sanain --register           a Sanain hozzáadása a „Megnyitás ezzel” menühöz (Linux, Windows)
-      sanain --unregister         eltávolítás onnan
-cli-registered = A Sanain bekerült a „Megnyitás ezzel” menübe. { $place }
-cli-unregistered = A Sanain kikerült a „Megnyitás ezzel” menüből.
+      text3 --register            a Text³ hozzáadása a „Megnyitás ezzel” menühöz (Linux, Windows)
+      text3 --unregister          eltávolítás onnan
+cli-registered = A Text³ bekerült a „Megnyitás ezzel” menübe. { $place }
+cli-unregistered = A Text³ kikerült a „Megnyitás ezzel” menüből.
 cli-register-failed = A fájlkezelő-integrációt nem sikerült módosítani: { $reason }
-cli-register-macos = macOS-en semmit sem kell regisztrálni: amint a Sanain.app az Alkalmazások mappában van, a Finder felkínálja a „Megnyitás ezzel” menüben.
+cli-register-macos = macOS-en semmit sem kell regisztrálni: amint a Text³.app az Alkalmazások mappában van, a Finder felkínálja a „Megnyitás ezzel” menüben.
 settings-tab-general = Általános
 settings-tab-editor = Szerkesztő
 settings-tab-appearance = Megjelenés
@@ -537,3 +536,4 @@ status-indent-choose = Behúzási beállítások
 a11y-settings-sections = Beállítások szakaszai
 a11y-tab-strip = Megnyitott fájlok
 a11y-tab-unsaved = { $name }, nem mentett módosítások
+migration-copied = A Sanain beállításai és adatai átmásolódtak a Text³ programba. A Sanain mappái változatlanok maradtak.

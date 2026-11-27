@@ -1,7 +1,8 @@
 name: Website
 
 # Publishes website/ (plus the screenshots and icon from docs/ and assets/)
-# to GitHub Pages: https://zanttux.github.io/Sanain/
+# to GitHub Pages: https://zanttux.github.io/text3/ (the old /Sanain/
+# address does not redirect)
 on:
   workflow_dispatch:
   push:
@@ -9,7 +10,8 @@ on:
     paths:
       - website/**
       - docs/screenshots/**
-      - assets/brand/icon.svg
+      - assets/brand/text3-lockup.svg
+      - assets/brand/social-preview.png
       - .github/workflows/pages.yml
 
 permissions:
@@ -37,8 +39,8 @@ jobs:
         run: |
           python3 website/build.py
           mkdir -p _site/screenshots
-          cp website/index.html website/style.css _site/
-          cp assets/brand/icon.svg _site/icon.svg
+          cp website/index.html website/style.css website/favicon-32.png website/icon-192.png website/apple-touch-icon.png _site/
+          cp assets/brand/text3-lockup.svg assets/brand/social-preview.png _site/
           cp docs/screenshots/editor.png docs/screenshots/markdown.png docs/screenshots/split.png docs/screenshots/log.png _site/screenshots/
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0

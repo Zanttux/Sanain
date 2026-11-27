@@ -1,5 +1,5 @@
 # Machine translation by Claude (AI); review by a native speaker required before release.
-app-name = Sanain
+app-name = Text³
 menu-file = Arkiv
 file-open = Öppna…
 file-save = Spara
@@ -16,8 +16,8 @@ edit-redo = Gör om
 edit-select-all = Markera allt
 untitled = Namnlös
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = Rad { $line }, kol { $column }
 status-selections = { $count ->
@@ -52,8 +52,8 @@ menu-window = Fönster
 edit-cut = Klipp ut
 edit-copy = Kopiera
 edit-paste = Klistra in
-app-quit = Avsluta Sanain
-app-hide = Göm Sanain
+app-quit = Avsluta Text³
+app-hide = Göm Text³
 app-hide-others = Göm övriga
 app-show-all = Visa alla
 window-minimize = Minimera
@@ -110,7 +110,7 @@ settings-theme-dark = Mörkt
 settings-restore-session = Öppna filer från förra sessionen igen
 settings-language = Språk
 settings-language-system = Följ systemet
-settings-language-note = Språkändringar börjar gälla när Sanain startas om.
+settings-language-note = Språkändringar börjar gälla när Text³ startas om.
 settings-save-failed = Det gick inte att spara inställningarna: { $reason }
 view-command-palette = Kommandopalett…
 palette-placeholder = Skriv ett kommando
@@ -245,7 +245,7 @@ view-unfold = Fäll ut
 view-unfold-all = Fäll ut alla
 settings-shortcuts = Kortkommandon
 settings-keymap-preset = Förinställning
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = Ändra
 settings-shortcut-reset = Återställ
@@ -265,12 +265,12 @@ folder-search-summary = { $count ->
     }
 app-check-updates = Sök efter uppdateringar…
 update-checking = Söker efter uppdateringar…
-update-up-to-date = Sanain { $version } är den senaste versionen.
-update-no-releases = Inga versioner av Sanain har publicerats ännu.
+update-up-to-date = Text³ { $version } är den senaste versionen.
+update-no-releases = Inga versioner av Text³ har publicerats ännu.
 update-failed = Kunde inte söka efter uppdateringar: { $reason }
 update-invalid = oväntat svar
-update-available-title = Sanain { $version } är tillgänglig
-update-available-body = Öppna nedladdningssidan för att hämta den. Sanain laddar inte ned eller installerar något på egen hand.
+update-available-title = Text³ { $version } är tillgänglig
+update-available-body = Öppna nedladdningssidan för att hämta den. Text³ laddar inte ned eller installerar något på egen hand.
 update-open-page = Öppna nedladdningssidan
 update-later = Senare
 settings-check-updates = Sök efter uppdateringar en gång om dagen
@@ -366,12 +366,11 @@ replace-preview-more = Endast de första 200 ändrade raderna visas.
 replace-preview-stale = Dokumentet har ändrats; inget ersattes. Kör Ersätt alla igen.
 encoding-detected = Öppnad som { $encoding } (identifierad utifrån filens innehåll).
 encoding-suggested = Föreslagen utifrån filens innehåll: { $encoding }. Kontrollera förhandsgranskningen innan du öppnar.
-app-about = Om Sanain
+app-about = Om Text³
 menu-help = Hjälp
-about-tagline = Ordens kraft.
 about-version = Version { $version }
 about-license = Fri och öppen källkod under Mozilla Public License 2.0.
-about-ai = Byggd av AI. Ledd av människor. Driven av gemenskapen.
+about-ai = Utvecklat med AI-hjälp (Claude från Anthropic) under ledning av projektets förvaltare.
 about-notices = Komponenter från tredje part och deras licenser listas i THIRD_PARTY_NOTICES, som ingår i varje version.
 about-source = Källkod och ärenden på GitHub
 tools-xml-validate = Validera XML
@@ -414,13 +413,13 @@ tools-compare-file = Jämför med fil…
 compare-file-failed = Det gick inte att jämföra med { $name }: { $reason }
 cli-help =
     Användning:
-      sanain [FIL…]                  öppna filer
-      sanain --diff VÄNSTER HÖGER    jämför två filer sida vid sida
-      sanain --version               visa versionen
-      sanain --help                  visa den här hjälpen
+      text3 [FIL…]                   öppna filer
+      text3 --diff VÄNSTER HÖGER     jämför två filer sida vid sida
+      text3 --version                visa versionen
+      text3 --help                   visa den här hjälpen
     Använd -- före filnamn som börjar med bindestreck.
 cli-unknown-option = Okänt alternativ { $option }.
-cli-diff-needs-two = --diff behöver två filer: sanain --diff VÄNSTER HÖGER
+cli-diff-needs-two = --diff behöver två filer: text3 --diff VÄNSTER HÖGER
 window-move-tab-left = Flytta flik åt vänster
 window-move-tab-right = Flytta flik åt höger
 edit-skip-occurrence = Hoppa till nästa förekomst
@@ -457,12 +456,12 @@ image-outside = Den här bilden ligger utanför dokumentets mapp.
 image-allow = Visa bilder från den här mappen
 cli-help-integration =
     Integrering med filhanteraren (endast aktuell användare):
-      sanain --register           lägg till Sanain i ”Öppna med” (Linux, Windows)
-      sanain --unregister         ta bort det igen
-cli-registered = Sanain lades till i ”Öppna med”. { $place }
-cli-unregistered = Sanain togs bort från ”Öppna med”.
+      text3 --register            lägg till Text³ i ”Öppna med” (Linux, Windows)
+      text3 --unregister          ta bort det igen
+cli-registered = Text³ lades till i ”Öppna med”. { $place }
+cli-unregistered = Text³ togs bort från ”Öppna med”.
 cli-register-failed = Integreringen med filhanteraren kunde inte ändras: { $reason }
-cli-register-macos = I macOS behöver ingenting registreras: när Sanain.app ligger i mappen Program erbjuder Finder den under ”Öppna med”.
+cli-register-macos = I macOS behöver ingenting registreras: när Text³.app ligger i mappen Program erbjuder Finder den under ”Öppna med”.
 settings-tab-general = Allmänt
 settings-tab-editor = Redigerare
 settings-tab-appearance = Utseende
@@ -537,3 +536,4 @@ status-indent-choose = Indragsinställningar
 a11y-settings-sections = Inställningsavsnitt
 a11y-tab-strip = Öppna filer
 a11y-tab-unsaved = { $name }, osparade ändringar
+migration-copied = Inställningar och data från Sanain kopierades till Text³. Sanain-mapparna lämnades oförändrade.

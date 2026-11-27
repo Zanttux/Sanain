@@ -1,5 +1,5 @@
 # Machine translation by Claude (AI); review by a native speaker required before release.
-app-name = Sanain
+app-name = Text³
 menu-file = Fil
 file-open = Åpne…
 file-save = Lagre
@@ -16,8 +16,8 @@ edit-redo = Gjør om
 edit-select-all = Merk alt
 untitled = Uten navn
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = Linje { $line }, kol. { $column }
 status-selections = { $count ->
@@ -52,8 +52,8 @@ menu-window = Vindu
 edit-cut = Klipp ut
 edit-copy = Kopier
 edit-paste = Lim inn
-app-quit = Avslutt Sanain
-app-hide = Skjul Sanain
+app-quit = Avslutt Text³
+app-hide = Skjul Text³
 app-hide-others = Skjul andre
 app-show-all = Vis alle
 window-minimize = Minimer
@@ -110,7 +110,7 @@ settings-theme-dark = Mørkt
 settings-restore-session = Åpne filer fra forrige økt på nytt
 settings-language = Språk
 settings-language-system = Følg systemet
-settings-language-note = Språkendringer trer i kraft når Sanain startes på nytt.
+settings-language-note = Språkendringer trer i kraft når Text³ startes på nytt.
 settings-save-failed = Kunne ikke lagre innstillingene: { $reason }
 view-command-palette = Kommandopalett…
 palette-placeholder = Skriv inn en kommando
@@ -245,7 +245,7 @@ view-unfold = Brett ut
 view-unfold-all = Brett ut alle
 settings-shortcuts = Hurtigtaster
 settings-keymap-preset = Forhåndsinnstilling
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = Endre
 settings-shortcut-reset = Tilbakestill
@@ -265,12 +265,12 @@ folder-search-summary = { $count ->
     }
 app-check-updates = Se etter oppdateringer…
 update-checking = Ser etter oppdateringer…
-update-up-to-date = Sanain { $version } er den nyeste versjonen.
-update-no-releases = Ingen versjoner av Sanain er publisert ennå.
+update-up-to-date = Text³ { $version } er den nyeste versjonen.
+update-no-releases = Ingen versjoner av Text³ er publisert ennå.
 update-failed = Kunne ikke se etter oppdateringer: { $reason }
 update-invalid = uventet svar
-update-available-title = Sanain { $version } er tilgjengelig
-update-available-body = Åpne nedlastingssiden for å hente den. Sanain laster ikke ned eller installerer noe av seg selv.
+update-available-title = Text³ { $version } er tilgjengelig
+update-available-body = Åpne nedlastingssiden for å hente den. Text³ laster ikke ned eller installerer noe av seg selv.
 update-open-page = Åpne nedlastingsside
 update-later = Senere
 settings-check-updates = Se etter oppdateringer én gang om dagen
@@ -366,12 +366,11 @@ replace-preview-more = Bare de første 200 endrede linjene vises.
 replace-preview-stale = Dokumentet er endret; ingenting ble erstattet. Kjør Erstatt alle på nytt.
 encoding-detected = Åpnet som { $encoding } (oppdaget fra innholdet i filen).
 encoding-suggested = Foreslått ut fra innholdet i filen: { $encoding }. Kontroller forhåndsvisningen før du åpner.
-app-about = Om Sanain
+app-about = Om Text³
 menu-help = Hjelp
-about-tagline = Ordenes kraft.
 about-version = Versjon { $version }
 about-license = Fri og åpen kildekode under Mozilla Public License 2.0.
-about-ai = Bygget av KI. Ledet av mennesker. Drevet av fellesskapet.
+about-ai = Utviklet med KI-hjelp (Claude fra Anthropic) under ledelse av prosjektets vedlikeholder.
 about-notices = Tredjepartskomponenter og lisensene deres er oppført i THIRD_PARTY_NOTICES, som følger med hver utgivelse.
 about-source = Kildekode og feilrapporter på GitHub
 tools-xml-validate = Valider XML
@@ -414,13 +413,13 @@ tools-compare-file = Sammenlign med fil…
 compare-file-failed = Kunne ikke sammenligne med { $name }: { $reason }
 cli-help =
     Bruk:
-      sanain [FIL…]                  åpne filer
-      sanain --diff VENSTRE HØYRE    sammenlign to filer side om side
-      sanain --version               vis versjonen
-      sanain --help                  vis denne hjelpen
+      text3 [FIL…]                   åpne filer
+      text3 --diff VENSTRE HØYRE     sammenlign to filer side om side
+      text3 --version                vis versjonen
+      text3 --help                   vis denne hjelpen
     Bruk -- foran filnavn som begynner med bindestrek.
 cli-unknown-option = Ukjent valg { $option }.
-cli-diff-needs-two = --diff trenger to filer: sanain --diff VENSTRE HØYRE
+cli-diff-needs-two = --diff trenger to filer: text3 --diff VENSTRE HØYRE
 window-move-tab-left = Flytt fane til venstre
 window-move-tab-right = Flytt fane til høyre
 edit-skip-occurrence = Hopp til neste forekomst
@@ -457,12 +456,12 @@ image-outside = Dette bildet ligger utenfor dokumentets mappe.
 image-allow = Vis bilder fra denne mappen
 cli-help-integration =
     Integrasjon med filbehandleren (bare for gjeldende bruker):
-      sanain --register           legg Sanain til i «Åpne med» (Linux, Windows)
-      sanain --unregister         fjern den igjen
-cli-registered = Sanain ble lagt til i «Åpne med». { $place }
-cli-unregistered = Sanain ble fjernet fra «Åpne med».
+      text3 --register            legg Text³ til i «Åpne med» (Linux, Windows)
+      text3 --unregister          fjern den igjen
+cli-registered = Text³ ble lagt til i «Åpne med». { $place }
+cli-unregistered = Text³ ble fjernet fra «Åpne med».
 cli-register-failed = Integrasjonen med filbehandleren kunne ikke endres: { $reason }
-cli-register-macos = På macOS trenger ingenting å registreres: Når Sanain.app ligger i Programmer-mappen, tilbyr Finder den under «Åpne med».
+cli-register-macos = På macOS trenger ingenting å registreres: Når Text³.app ligger i Programmer-mappen, tilbyr Finder den under «Åpne med».
 settings-tab-general = Generelt
 settings-tab-editor = Redigering
 settings-tab-appearance = Utseende
@@ -537,3 +536,4 @@ status-indent-choose = Innrykksinnstillinger
 a11y-settings-sections = Innstillingsdeler
 a11y-tab-strip = Åpne filer
 a11y-tab-unsaved = { $name }, ulagrede endringer
+migration-copied = Innstillinger og data fra Sanain ble kopiert til Text³. Sanain-mappene ble ikke endret.

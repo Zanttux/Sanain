@@ -1,5 +1,5 @@
 # Machine translation by Claude (AI); review by a native speaker required before release.
-app-name = Sanain
+app-name = Text³
 menu-file = Fișier
 file-open = Deschide…
 file-save = Salvează
@@ -17,8 +17,8 @@ edit-redo = Refă
 edit-select-all = Selectează tot
 untitled = Fără titlu
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = Rd { $line }, Col { $column }
 status-selections = { $count ->
@@ -54,8 +54,8 @@ menu-window = Fereastră
 edit-cut = Decupează
 edit-copy = Copiază
 edit-paste = Lipește
-app-quit = Ieși din Sanain
-app-hide = Ascunde Sanain
+app-quit = Ieși din Text³
+app-hide = Ascunde Text³
 app-hide-others = Ascunde celelalte
 app-show-all = Afișează tot
 window-minimize = Minimizează
@@ -114,7 +114,7 @@ settings-theme-dark = Întunecat
 settings-restore-session = Redeschide fișierele din sesiunea anterioară
 settings-language = Limbă
 settings-language-system = Ca sistemul
-settings-language-note = Schimbarea limbii se aplică după repornirea Sanain.
+settings-language-note = Schimbarea limbii se aplică după repornirea Text³.
 settings-save-failed = Nu s-au putut salva setările: { $reason }
 view-command-palette = Paleta de comenzi…
 palette-placeholder = Tastați o comandă
@@ -251,7 +251,7 @@ view-unfold = Depliază
 view-unfold-all = Depliază tot
 settings-shortcuts = Comenzi rapide de la tastatură
 settings-keymap-preset = Presetare
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = Modifică
 settings-shortcut-reset = Resetează
@@ -273,12 +273,12 @@ folder-search-summary = { $count ->
     }
 app-check-updates = Caută actualizări…
 update-checking = Se caută actualizări…
-update-up-to-date = Sanain { $version } este cea mai nouă versiune.
-update-no-releases = Nu a fost publicată încă nicio versiune Sanain.
+update-up-to-date = Text³ { $version } este cea mai nouă versiune.
+update-no-releases = Nu a fost publicată încă nicio versiune Text³.
 update-failed = Nu s-a putut căuta actualizări: { $reason }
 update-invalid = răspuns neașteptat
-update-available-title = Sanain { $version } este disponibil
-update-available-body = Deschide pagina de descărcare pentru a-l obține. Sanain nu descarcă și nu instalează nimic de la sine.
+update-available-title = Text³ { $version } este disponibil
+update-available-body = Deschide pagina de descărcare pentru a-l obține. Text³ nu descarcă și nu instalează nimic de la sine.
 update-open-page = Deschide pagina de descărcare
 update-later = Mai târziu
 settings-check-updates = Caută actualizări o dată pe zi
@@ -383,12 +383,11 @@ replace-preview-more = Sunt afișate doar primele 200 de rânduri modificate.
 replace-preview-stale = Documentul s-a modificat; nu s-a înlocuit nimic. Rulați din nou Înlocuiește tot.
 encoding-detected = Deschis ca { $encoding } (detectat din conținutul fișierului).
 encoding-suggested = Sugerată pe baza conținutului fișierului: { $encoding }. Verificați previzualizarea înainte de deschidere.
-app-about = Despre Sanain
+app-about = Despre Text³
 menu-help = Ajutor
-about-tagline = Puterea cuvintelor.
 about-version = Versiunea { $version }
 about-license = Liber și open source sub licența Mozilla Public License 2.0.
-about-ai = Construit de AI. Condus de oameni. Susținut de comunitate.
+about-ai = Dezvoltat cu ajutorul AI (Claude de la Anthropic) sub îndrumarea întreținătorului.
 about-notices = Componentele terțe și licențele lor sunt enumerate în THIRD_PARTY_NOTICES, inclus în fiecare versiune.
 about-source = Cod sursă și probleme pe GitHub
 tools-xml-validate = Validează XML
@@ -433,13 +432,13 @@ tools-compare-file = Compară cu un fișier…
 compare-file-failed = Nu s-a putut compara cu { $name }: { $reason }
 cli-help =
     Utilizare:
-      sanain [FIȘIER…]                deschide fișiere
-      sanain --diff STÂNGA DREAPTA    compară două fișiere unul lângă altul
-      sanain --version                afișează versiunea
-      sanain --help                   afișează acest ajutor
+      text3 [FIȘIER…]                 deschide fișiere
+      text3 --diff STÂNGA DREAPTA     compară două fișiere unul lângă altul
+      text3 --version                 afișează versiunea
+      text3 --help                    afișează acest ajutor
     Folosiți -- înaintea numelor de fișiere care încep cu o cratimă.
 cli-unknown-option = Opțiune necunoscută { $option }.
-cli-diff-needs-two = --diff necesită două fișiere: sanain --diff STÂNGA DREAPTA
+cli-diff-needs-two = --diff necesită două fișiere: text3 --diff STÂNGA DREAPTA
 window-move-tab-left = Mută fila la stânga
 window-move-tab-right = Mută fila la dreapta
 edit-skip-occurrence = Sari la următoarea apariție
@@ -481,12 +480,12 @@ image-outside = Această imagine se află în afara dosarului documentului.
 image-allow = Afișează imaginile din acest dosar
 cli-help-integration =
     Integrare cu managerul de fișiere (doar pentru utilizatorul curent):
-      sanain --register           adaugă Sanain la „Deschide cu” (Linux, Windows)
-      sanain --unregister         îl elimină din nou
-cli-registered = Sanain a fost adăugat la „Deschide cu”. { $place }
-cli-unregistered = Sanain a fost eliminat din „Deschide cu”.
+      text3 --register            adaugă Text³ la „Deschide cu” (Linux, Windows)
+      text3 --unregister          îl elimină din nou
+cli-registered = Text³ a fost adăugat la „Deschide cu”. { $place }
+cli-unregistered = Text³ a fost eliminat din „Deschide cu”.
 cli-register-failed = Integrarea cu managerul de fișiere nu a putut fi modificată: { $reason }
-cli-register-macos = Pe macOS nu trebuie înregistrat nimic: odată ce Sanain.app se află în dosarul Aplicații, Finder îl oferă în „Deschide cu”.
+cli-register-macos = Pe macOS nu trebuie înregistrat nimic: odată ce Text³.app se află în dosarul Aplicații, Finder îl oferă în „Deschide cu”.
 settings-tab-general = General
 settings-tab-editor = Editor
 settings-tab-appearance = Aspect
@@ -561,3 +560,4 @@ status-indent-choose = Setări de indentare
 a11y-settings-sections = Secțiuni de setări
 a11y-tab-strip = Fișiere deschise
 a11y-tab-unsaved = { $name }, modificări nesalvate
+migration-copied = Setările și datele din Sanain au fost copiate în Text³. Folderele Sanain au rămas neschimbate.

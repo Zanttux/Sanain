@@ -4,6 +4,17 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+- Sanain is now **Text³** ("Text Cubed"; owner decision D27). The window
+  title, About, menus (including the macOS app menu), installer, Linux
+  desktop entry, website and all 26 interface languages use the new name
+  and the approved lynx artwork; the About window shows the lockup on a
+  white plate instead of the old tagline, and the AI disclosure is a plain
+  sentence instead of a slogan. The command is `text3`, the crates are
+  `text3-*`, release files are named `text3-<version>-…`, the Linux
+  desktop id is `io.github.zanttux.text3` and the project lives at
+  github.com/Zanttux/text3. Older entries below keep the name Sanain.
+
 ### Added
 - Keyboard focus moves between the parts of the window in a fixed order:
   tab strip, find bar, outline, each pane in turn, folder search, status
