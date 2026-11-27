@@ -30,6 +30,36 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   a later node now sits just before it instead of at the top, and a
   self-link's label is drawn beside its loop instead of over it.
 
+### Changed
+- Accessibility of the newer views, for keyboard and screen-reader users.
+  The CSV grid is a table for screen readers: every cell has its row,
+  column and header name and its value, and the active cell follows the
+  selection; the JSON, XML and YAML trees are trees whose items say what
+  the row shows, their level and whether they are expanded. In both,
+  Shift+F10 or the Menu key opens the selected item's menu next to it
+  with the first entry focused, and Escape or a menu action brings focus
+  back. Trees also take Right (expand, then first child) and Left
+  (collapse, then parent). Split panes are named "Pane 1 of 2: file",
+  the active one says so, and each pane's editor carries its pane in its
+  name. Mermaid diagrams in the preview are images with a short summary
+  ("Flowchart. Nodes: 7, links: 8.") and the diagram source as their
+  description. Inline editors, the macro and Go to Line prompts and the
+  shortcut search field have names; each Change and Reset button in the
+  Keyboard shortcuts settings names its command, and Change says when it
+  is waiting for a key. Status-bar messages, the Notepad++ import result
+  and field errors are announced when they appear. The keyboard focus
+  of the grid and trees is drawn as a ring on the selected cell or row.
+  New strings in all 26 languages.
+
+### Fixed
+- Tab past the last cell of the CSV grid (Shift+Tab before the first)
+  leaves the grid instead of staying there, and skips the column resize
+  handles. Cells and tree labels are no longer separate Tab stops.
+- Keyboard focus returns to the document after a command run from the
+  command palette (it was lost, so typing went nowhere until a click).
+- Turning on the structured view, or moving to a pane that shows one,
+  puts keyboard focus in the grid or tree.
+
 ## [0.2.1] — 2026-11-27
 
 Patch release with data-safety fixes found by the disk-full drill and a

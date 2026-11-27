@@ -10,6 +10,7 @@ use eframe::egui::{
     self, Color32, CursorIcon, FontFamily, FontId, RichText, Sense, Stroke, text::LayoutJob,
     text::TextFormat,
 };
+use sanain_i18n::FluentValue;
 use sanain_markdown::{Align, Block, BlockKind, Inline, MAX_DEPTH};
 
 use crate::theme::Palette;
@@ -21,6 +22,8 @@ pub struct Style<'a> {
     pub p: &'a Palette,
     pub size: f32,
     pub untranslated: &'a dyn Fn(&str) -> String,
+    /// Localize a message with arguments (accessibility text).
+    pub format: crate::structured::Tr<'a>,
     /// Resolve and load an image by its Markdown URL.
     pub image: &'a dyn Fn(&str) -> crate::imagecache::ImageView,
 }
@@ -501,12 +504,36 @@ fn mermaid(ui: &mut egui::Ui, code: &str, st: &Style<'_>) {
     use sanain_markdown::mermaid::Error;
     let size = (st.size * 0.9).round();
     match &*diagram_for(ui, code, size) {
-        Ok(Laid::Flow(fc, l)) => draw_diagram(ui, fc, l, None, size, st),
-        Ok(Laid::Seq(sq, l)) => draw_sequence(ui, sq, l, size, st),
-        Ok(Laid::State(sd, l)) => {
-            draw_diagram(ui, &sd.graph, l, Some((&sd.kinds, &sd.regions)), size, st);
+        Ok(laid) => {
+            let drawn = ui.scope(|ui| {
+                match laid {
+                    Laid::Flow(fc, l) => draw_diagram(ui, fc, l, None, size, st),
+                    Laid::Seq(sq, l) => draw_sequence(ui, sq, l, size, st),
+                    Laid::State(sd, l) => {
+                        draw_diagram(ui, &sd.graph, l, Some((&sd.kinds, &sd.regions)), size, st);
+                    }
+                    Laid::Class(cd, l) => draw_class(ui, cd, l, size, st),
+                }
+                ui.unique_id()
+            });
+            // The drawing is paint only: screen readers get an image named
+            // by a short summary, with the source as its description.
+            let (id, counts) = diagram_summary(laid);
+            let args = counts.map(|(k, n)| (k, FluentValue::from(n as i64)));
+            let summary = (st.format)(id, &args);
+            let rect = drawn.response.rect;
+            ui.ctx().accesskit_node_builder(drawn.inner, |n| {
+                n.set_role(egui::accesskit::Role::Image);
+                n.set_label(summary);
+                n.set_description(code.trim_end());
+                n.set_bounds(egui::accesskit::Rect {
+                    x0: rect.min.x.into(),
+                    y0: rect.min.y.into(),
+                    x1: rect.max.x.into(),
+                    y1: rect.max.y.into(),
+                });
+            });
         }
-        Ok(Laid::Class(cd, l)) => draw_class(ui, cd, l, size, st),
         Err(e) => {
             let id = match e {
                 Error::UnsupportedType => "preview-mermaid-unsupported-type",
@@ -520,6 +547,58 @@ fn mermaid(ui: &mut egui::Ui, code: &str, st: &Style<'_>) {
             );
             code_frame(ui, code.trim_end_matches('\n'), st);
         }
+    }
+}
+
+/// What a screen reader hears for a drawn diagram: the message id of its
+/// kind and the two counts the message names.
+fn diagram_summary(d: &Laid) -> (&'static str, [(&'static str, usize); 2]) {
+    use sanain_markdown::mermaid::{sequence::Item, state::Kind};
+    match d {
+        Laid::Flow(fc, _) => (
+            "a11y-mermaid-flowchart",
+            [("nodes", fc.nodes.len()), ("links", fc.edges.len())],
+        ),
+        Laid::Seq(sq, _) => {
+            let messages = sq
+                .items
+                .iter()
+                .filter(|i| matches!(i, Item::Message { .. }))
+                .count();
+            (
+                "a11y-mermaid-sequence",
+                [
+                    ("participants", sq.participants.len()),
+                    ("messages", messages),
+                ],
+            )
+        }
+        Laid::State(sd, _) => {
+            let kind = |n: usize| sd.kinds.get(n).copied();
+            // Named states, simple or composite; not the start and end
+            // dots, choices, forks, joins or notes.
+            let simple = (0..sd.graph.nodes.len())
+                .filter(|&n| kind(n) == Some(Kind::State))
+                .count();
+            let composite = sd.regions.iter().filter(|r| !**r).count();
+            let transitions = sd
+                .graph
+                .edges
+                .iter()
+                .filter(|e| kind(e.from) != Some(Kind::Note) && kind(e.to) != Some(Kind::Note))
+                .count();
+            (
+                "a11y-mermaid-state",
+                [("states", simple + composite), ("transitions", transitions)],
+            )
+        }
+        Laid::Class(cd, _) => (
+            "a11y-mermaid-class",
+            [
+                ("classes", cd.classes.len()),
+                ("relations", cd.relations.len()),
+            ],
+        ),
     }
 }
 
@@ -1368,6 +1447,67 @@ fn body(p: &Palette) -> Color32 {
 
 #[cfg(test)]
 mod tests {
+
+    fn laid(code: &str) -> super::Laid {
+        use sanain_markdown::mermaid::{self, Diagram as D};
+        let sp = mermaid::Spacing::for_font(14.0);
+        let mut measure = |t: &str| (t.chars().count() as f32 * 7.0, 14.0);
+        match mermaid::parse_diagram(code).expect("parses") {
+            D::Flowchart(fc) => {
+                let l = mermaid::layout(&fc, sp, &mut measure).expect("layout");
+                super::Laid::Flow(fc, l)
+            }
+            D::Sequence(sq) => {
+                let l = mermaid::sequence::layout(&sq, sp, &mut measure);
+                super::Laid::Seq(sq, l)
+            }
+            D::State(sd) => {
+                let l = mermaid::state::layout(&sd, sp, &mut measure).expect("layout");
+                super::Laid::State(sd, l)
+            }
+            D::Class(cd) => {
+                let l = mermaid::class::layout(&cd, sp, &mut measure).expect("layout");
+                super::Laid::Class(cd, l)
+            }
+        }
+    }
+
+    fn spoken(tag: &str, code: &str) -> String {
+        let l = sanain_i18n::Localizer::new(&[tag]).expect("locale");
+        let (id, counts) = super::diagram_summary(&laid(code));
+        let mut args = sanain_i18n::FluentArgs::new();
+        for (k, n) in counts {
+            args.set(k, n as i64);
+        }
+        l.format(id, Some(&args))
+            .replace(['\u{2068}', '\u{2069}'], "")
+    }
+
+    #[test]
+    fn diagrams_are_summarised_for_screen_readers() {
+        let flow = "flowchart TD\n  A[Start] --> B{Ok?}\n  B -->|yes| C[Done]\n  B -- no --> A\n";
+        assert_eq!(spoken("en-US", flow), "Flowchart. Nodes: 3, links: 3.");
+        assert_eq!(
+            spoken("fi-FI", flow),
+            "Vuokaavio. Solmuja: 3, yhteyksiä: 3."
+        );
+        let seq =
+            "sequenceDiagram\n  Alice->>Bob: Hi\n  Note over Bob: thinks\n  Bob-->>Alice: Hello\n";
+        assert_eq!(
+            spoken("en-US", seq),
+            "Sequence diagram. Participants: 2, messages: 2."
+        );
+        let state = "stateDiagram-v2\n  [*] --> Idle\n  Idle --> Busy\n  state Busy {\n    [*] --> Work\n  }\n  Busy --> [*]\n  note right of Idle: waits\n";
+        assert_eq!(
+            spoken("en-US", state),
+            "State diagram. States: 3, transitions: 4."
+        );
+        let class = "classDiagram\n  Animal <|-- Duck\n  Animal <|-- Fish\n  class Zoo\n";
+        assert_eq!(
+            spoken("en-US", class),
+            "Class diagram. Classes: 4, relationships: 2."
+        );
+    }
 
     #[test]
     fn code_block_colours() {
