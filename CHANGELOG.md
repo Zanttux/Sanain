@@ -4,6 +4,13 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+- The Windows installer speaks all 26 interface languages (#169) and
+  picks the Windows display language without asking when it is one of
+  them. Its texts are Inno Setup's translations (kept in
+  packaging/windows/languages); the task names are machine translations
+  awaiting review, like the interface's.
+
 ### Fixed
 - macOS: the downloaded Text³.app no longer reports "damaged and can't be
   opened" (#166). The bundle is now sealed with an ad-hoc signature, so

@@ -21,3 +21,12 @@ reviewed. Corrections are welcome as pull requests; a language counts as
 reviewed when a fluent speaker has checked every message in the running
 app. CI checks that every file parses, uses only en-US message IDs and the
 same variables.
+
+## Installers
+The Windows installer offers the same 26 languages. Its own texts come
+from Inno Setup's translations (packaging/windows/languages, copied from
+the Inno Setup 6.7.1 sources); the few texts Text³ adds are in
+`[CustomMessages]` of packaging/windows/text3.iss and follow the same
+review rule as the interface (D24). A new interface language needs a
+matching `[Languages]` entry there. The macOS disk image window has no
+text.
