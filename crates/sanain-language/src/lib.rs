@@ -8,14 +8,15 @@
 use std::collections::HashMap;
 use std::ops::Range;
 use std::path::Path;
+use std::sync::Arc;
 use std::sync::atomic::AtomicUsize;
-
-use tree_sitter_highlight::{HighlightConfiguration, HighlightEvent};
 
 mod folds;
 mod incremental;
+mod layers;
 
 pub use incremental::Syntax;
+use layers::{Grammar, LangConfig};
 
 /// PHP's own injections plus the HTML around `<?php … ?>`, highlighted as
 /// one combined HTML document.
@@ -29,13 +30,32 @@ static PHP_INJECTIONS: std::sync::LazyLock<String> = std::sync::LazyLock::new(||
 /// The injection name the Markdown block grammar gives inline content.
 const MARKDOWN_INLINE: &str = "markdown_inline";
 
-/// Markdown's block injections. Inline content must include the block
-/// node's anonymous children (its text), which the upstream query leaves
-/// to the editor (Helix: `include-unnamed-children`).
+/// Markdown's block injections. Inline content, fenced code and HTML
+/// blocks must include the block node's anonymous children (its text),
+/// which the upstream query leaves to the editor (Helix:
+/// `include-unnamed-children`).
 static MARKDOWN_INJECTIONS: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
-    tree_sitter_md::INJECTION_QUERY_BLOCK.replace(
-        "(#set! injection.language \"markdown_inline\"))",
-        "(#set! injection.language \"markdown_inline\")\n  (#set! injection.include-children))",
+    tree_sitter_md::INJECTION_QUERY_BLOCK
+        .replace(
+            "(#set! injection.language \"markdown_inline\"))",
+            "(#set! injection.language \"markdown_inline\")\n  (#set! injection.include-children))",
+        )
+        .replace(
+            "(code_fence_content) @injection.content)",
+            "(code_fence_content) @injection.content\n  (#set! injection.include-children))",
+        )
+        .replace(
+            "((html_block) @injection.content\n  (#set! injection.language \"html\"))",
+            "((html_block) @injection.content\n  (#set! injection.language \"html\")\n  (#set! injection.include-children))",
+        )
+});
+
+/// Markdown's inline injections: HTML tags with their text (see
+/// [`MARKDOWN_INJECTIONS`]).
+static MARKDOWN_INLINE_INJECTIONS: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
+    tree_sitter_md::INJECTION_QUERY_INLINE.replace(
+        "((html_tag) @injection.content\n  (#set! injection.language \"html\"))",
+        "((html_tag) @injection.content\n  (#set! injection.language \"html\")\n  (#set! injection.include-children))",
     )
 });
 
@@ -138,19 +158,6 @@ impl Lang {
             Lang::Markdown => MARKDOWN_INJECTIONS.as_str(),
             Lang::Php => PHP_INJECTIONS.as_str(),
             _ => "",
-        }
-    }
-
-    /// Languages this one can embed (see [`Self::injections_query`]).
-    fn embedded(self) -> &'static [Lang] {
-        match self {
-            Lang::Html => &[Lang::JavaScript, Lang::Css],
-            Lang::JavaScript => &[Lang::Css, Lang::Html],
-            // Fenced code blocks are found by `fence_langs`.
-            Lang::Markdown => &[Lang::Html, Lang::Yaml, Lang::Toml],
-            // Heredocs may name their language (`<<<HTML`).
-            Lang::Php => &[Lang::Html, Lang::JavaScript, Lang::Css],
-            _ => &[],
         }
     }
 
@@ -497,16 +504,12 @@ pub enum HighlightError {
 
 /// Reusable highlighter. Not `Sync`; keep one per worker thread.
 pub struct Highlighter {
-    configs: HashMap<Lang, Option<HighlightConfiguration>>,
-    /// Markdown's inline grammar, injected into its block grammar.
-    md_inline: Option<Option<HighlightConfiguration>>,
-    inner: tree_sitter_highlight::Highlighter,
-    /// Parser for folding and [`Self::analyze`] (the highlighter keeps
-    /// its own).
+    /// Grammars and queries, loaded when first needed.
+    configs: HashMap<Grammar, Option<Arc<LangConfig>>>,
+    /// Parser for highlighting, folding and [`Self::analyze`].
     parser: tree_sitter::Parser,
-    /// Query cursor and capture styles for [`Self::analyze`].
+    /// Query cursor for highlighting and [`Self::analyze`].
     cursor: tree_sitter::QueryCursor,
-    styles: HashMap<Lang, Vec<Option<Style>>>,
 }
 
 impl std::fmt::Debug for Highlighter {
@@ -525,94 +528,104 @@ impl Highlighter {
     pub fn new() -> Self {
         Self {
             configs: HashMap::new(),
-            md_inline: None,
-            inner: tree_sitter_highlight::Highlighter::new(),
             parser: tree_sitter::Parser::new(),
             cursor: tree_sitter::QueryCursor::new(),
-            styles: HashMap::new(),
         }
     }
 
-    fn config(&mut self, lang: Lang) -> Option<&HighlightConfiguration> {
+    fn config(&mut self, grammar: Grammar) -> Option<Arc<LangConfig>> {
         self.configs
-            .entry(lang)
-            .or_insert_with(|| {
-                let (language, query) = lang.grammar();
-                let mut c = HighlightConfiguration::new(
-                    language,
-                    lang.name(),
-                    &query,
-                    lang.injections_query(),
-                    "",
-                )
-                .ok()?;
-                c.configure(&NAMES);
-                Some(c)
-            })
-            .as_ref()
+            .entry(grammar)
+            .or_insert_with(|| LangConfig::load(grammar).map(Arc::new))
+            .clone()
     }
 
-    /// Highlight `source`. Setting `cancel` to a non-zero value from another
-    /// thread stops the work early with [`HighlightError::Cancelled`].
+    /// The grammar an injection names: Markdown's inline grammar, or a
+    /// language by its name or a common alias (as in a code fence).
+    fn resolve(&mut self, name: &str) -> Option<(Grammar, Arc<LangConfig>)> {
+        let grammar = if name == MARKDOWN_INLINE {
+            Grammar::MdInline
+        } else {
+            Grammar::Lang(Lang::from_fence(name)?)
+        };
+        Some((grammar, self.config(grammar)?))
+    }
+
+    /// Highlight `source`, with the languages injected into it (scripts
+    /// and styles in HTML, fenced code in Markdown, …), like
+    /// `tree_sitter_highlight` does. Setting `cancel` to a non-zero value
+    /// from another thread stops the work early with
+    /// [`HighlightError::Cancelled`].
     pub fn highlight(
         &mut self,
         lang: Lang,
         source: &[u8],
         cancel: Option<&AtomicUsize>,
     ) -> Result<Vec<Span>, HighlightError> {
-        // Split borrows: the configuration lives in `configs`, the parser
-        // state in `inner`.
-        if self.config(lang).is_none() {
+        self.analyze_fresh(lang, source, cancel)
+            .map(|(_, spans)| spans)
+    }
+
+    /// Foldable line ranges of `source`, from its syntax tree. In each
+    /// range, `start` is the line the fold starts on (it stays visible)
+    /// and `start + 1..end` are the lines it hides. A closing bracket or
+    /// tag on the node's last line stays visible. Sorted by start, at most
+    /// one (the outermost) per start line. Lines are counted by `\n`.
+    /// Cancellable like [`Self::highlight`].
+    pub fn folds(
+        &mut self,
+        lang: Lang,
+        source: &[u8],
+        cancel: Option<&AtomicUsize>,
+    ) -> Result<Vec<Range<usize>>, HighlightError> {
+        let Some(config) = self.config(Grammar::Lang(lang)) else {
             return Err(HighlightError::Failed(format!(
                 "{} query did not compile",
                 lang.name()
             )));
-        }
-        // Languages that may be embedded (e.g. JavaScript in HTML) must be
-        // ready before highlighting borrows the configurations.
-        for l in lang.embedded() {
-            let _ = self.config(*l);
-        }
-        if lang == Lang::Markdown {
-            for l in fence_langs(source) {
-                let _ = self.config(l);
-            }
-            self.md_inline.get_or_insert_with(|| {
-                let mut c = HighlightConfiguration::new(
-                    tree_sitter_md::INLINE_LANGUAGE.into(),
-                    MARKDOWN_INLINE,
-                    tree_sitter_md::HIGHLIGHT_QUERY_INLINE,
-                    tree_sitter_md::INJECTION_QUERY_INLINE,
-                    "",
-                )
-                .ok()?;
-                c.configure(&NAMES);
-                Some(c)
-            });
-        }
-        let Self {
-            configs,
-            md_inline,
-            inner,
-            ..
-        } = self;
-        let Some(Some(config)) = configs.get(&lang) else {
-            return Ok(Vec::new());
         };
+        folds::folds(&mut self.parser, &config.hc.language, lang, source, cancel)
+    }
+
+    /// Whether every bundled grammar's query compiles (used by tests and
+    /// diagnostics).
+    pub fn check_all(&mut self) -> Vec<Lang> {
+        let mut failed: Vec<Lang> = Lang::ALL
+            .into_iter()
+            .filter(|&l| self.config(Grammar::Lang(l)).is_none())
+            .collect();
+        if self.config(Grammar::MdInline).is_none() {
+            failed.push(Lang::Markdown);
+        }
+        failed
+    }
+
+    /// `source` highlighted by `tree_sitter_highlight` itself, every
+    /// grammar loaded, as the reference for [`Self::highlight`].
+    #[cfg(test)]
+    pub(crate) fn reference(&mut self, lang: Lang, source: &[u8]) -> Vec<Span> {
+        use tree_sitter_highlight::HighlightEvent;
+        for l in Lang::ALL {
+            let _ = self.config(Grammar::Lang(l));
+        }
+        let _ = self.config(Grammar::MdInline);
+        let configs = &self.configs;
+        let get = |g: Grammar| configs.get(&g).and_then(|c| c.as_ref()).map(|c| &c.hc);
+        let config = get(Grammar::Lang(lang)).unwrap();
+        let mut inner = tree_sitter_highlight::Highlighter::new();
         let events = inner
-            .highlight(config, source, None, cancel, |name| {
+            .highlight(config, source, None, None, |name| {
                 if name == MARKDOWN_INLINE {
-                    return md_inline.as_ref().and_then(Option::as_ref);
+                    get(Grammar::MdInline)
+                } else {
+                    Lang::from_fence(name).and_then(|l| get(Grammar::Lang(l)))
                 }
-                Lang::from_fence(name)
-                    .and_then(|l| configs.get(&l))
-                    .and_then(Option::as_ref)
             })
-            .map_err(map_err)?;
+            .unwrap();
         let mut spans: Vec<Span> = Vec::new();
         let mut stack: Vec<Style> = Vec::new();
         for event in events {
-            match event.map_err(map_err)? {
+            match event.unwrap() {
                 HighlightEvent::HighlightStart(h) => {
                     stack.push(STYLES.get(h.0).copied().unwrap_or(Style::Variable));
                 }
@@ -633,67 +646,7 @@ impl Highlighter {
                 }
             }
         }
-        Ok(spans)
-    }
-
-    /// Foldable line ranges of `source`, from its syntax tree. In each
-    /// range, `start` is the line the fold starts on (it stays visible)
-    /// and `start + 1..end` are the lines it hides. A closing bracket or
-    /// tag on the node's last line stays visible. Sorted by start, at most
-    /// one (the outermost) per start line. Lines are counted by `\n`.
-    /// Cancellable like [`Self::highlight`].
-    pub fn folds(
-        &mut self,
-        lang: Lang,
-        source: &[u8],
-        cancel: Option<&AtomicUsize>,
-    ) -> Result<Vec<Range<usize>>, HighlightError> {
-        let Some(config) = self.config(lang) else {
-            return Err(HighlightError::Failed(format!(
-                "{} query did not compile",
-                lang.name()
-            )));
-        };
-        let language = config.language.clone();
-        folds::folds(&mut self.parser, &language, lang, source, cancel)
-    }
-
-    /// Whether every bundled grammar's query compiles (used by tests and
-    /// diagnostics).
-    pub fn check_all(&mut self) -> Vec<Lang> {
-        Lang::ALL
-            .into_iter()
-            .filter(|&l| self.config(l).is_none())
-            .collect()
-    }
-}
-
-/// Languages named by the code fences (` ```rust `, `~~~ py`) of a
-/// Markdown document, so their configurations are ready before
-/// highlighting.
-fn fence_langs(source: &[u8]) -> Vec<Lang> {
-    let mut out: Vec<Lang> = Vec::new();
-    for line in source.split(|&b| b == b'\n') {
-        let t = line.trim_ascii_start();
-        let Some(rest) = t.strip_prefix(b"```").or_else(|| t.strip_prefix(b"~~~")) else {
-            continue;
-        };
-        let skip = rest.iter().take_while(|&&b| b == b'`' || b == b'~').count();
-        let info = String::from_utf8_lossy(rest.get(skip..).unwrap_or_default());
-        let info = info.trim_start();
-        if let Some(l) = Lang::from_fence(info)
-            && !out.contains(&l)
-        {
-            out.push(l);
-        }
-    }
-    out
-}
-
-fn map_err(e: tree_sitter_highlight::Error) -> HighlightError {
-    match e {
-        tree_sitter_highlight::Error::Cancelled => HighlightError::Cancelled,
-        other => HighlightError::Failed(other.to_string()),
+        spans
     }
 }
 
@@ -747,11 +700,6 @@ mod tests {
         assert_eq!(at("`span"), Some(Style::Punctuation), "code delimiter");
         assert_eq!(at("span`"), Some(Style::String), "inline code");
         assert_eq!(at("fn f"), Some(Style::Keyword), "Rust inside the fence");
-        assert_eq!(fence_langs(src.as_bytes()), vec![Lang::Rust]);
-        assert_eq!(
-            fence_langs(b"  ~~~~ py title=x\n````js\n```\n```nope\n"),
-            vec![Lang::Python, Lang::JavaScript]
-        );
     }
 
     #[test]
@@ -817,6 +765,34 @@ mod tests {
             .into_iter()
             .map(|s| (src[s.range].to_owned(), s.style))
             .collect()
+    }
+
+    #[test]
+    fn markdown_injections_include_the_text() {
+        assert_eq!(
+            MARKDOWN_INJECTIONS
+                .matches("injection.include-children")
+                .count(),
+            3
+        );
+        assert_eq!(
+            MARKDOWN_INLINE_INJECTIONS
+                .matches("injection.include-children")
+                .count(),
+            1
+        );
+        // The whole fence is Rust: `()` and `{}` are punctuation.
+        let src = "```rust\nfn f() {}\n```\n\n<b>x</b> and <i>y</i>\n";
+        let spans = Highlighter::new()
+            .highlight(Lang::Markdown, src.as_bytes(), None)
+            .unwrap();
+        let at = |needle: &str| {
+            let i = src.find(needle).unwrap();
+            spans.iter().find(|s| s.range.contains(&i)).map(|s| s.style)
+        };
+        assert_eq!(at("()"), Some(Style::Punctuation));
+        assert_eq!(at("{}"), Some(Style::Punctuation));
+        assert_eq!(at("b>x"), Some(Style::Tag), "inline HTML");
     }
 
     #[test]

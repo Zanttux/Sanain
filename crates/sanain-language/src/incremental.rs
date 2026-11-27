@@ -1,59 +1,50 @@
-//! Incremental syntax analysis: the syntax tree, highlight spans and
+//! Incremental syntax analysis: the syntax trees, highlight spans and
 //! folds of one document, updated after an edit instead of recomputed.
 //!
-//! The previous [`Syntax`] keeps its text and tree. A new snapshot is
-//! compared with the old text (common prefix and suffix), which gives one
-//! [`InputEdit`] covering every change; the old tree is edited and parsed
-//! again, reusing the unchanged parts. No edit history is needed, so the
-//! result cannot drift from the text whatever happened in between (undo,
-//! reload, several edits).
+//! The previous [`Syntax`] keeps its text and its language layers (see
+//! [`crate::layers`]). A new snapshot is compared with the old text
+//! (common prefix and suffix), which gives one [`InputEdit`] covering
+//! every change; the top tree is edited and parsed again, reusing the
+//! unchanged parts. No edit history is needed, so the result cannot drift
+//! from the text whatever happened in between (undo, reload, several
+//! edits).
 //!
-//! Highlights of languages without injections come from running the
-//! highlight query over the tree (the same algorithm as
-//! `tree_sitter_highlight` for a single layer), and after an edit only
-//! over the region that may have changed: the edit and the ranges whose
-//! structure changed, widened to the enclosing syntax nodes and whole
-//! lines. Spans outside it are kept and shifted. Languages with
-//! injections (HTML, JavaScript, Markdown, PHP) are highlighted from
-//! scratch by `tree_sitter_highlight`; their folds still use the
-//! incremental tree. Folds are collected from the whole tree.
+//! Injections (JavaScript in HTML, Markdown's inline grammar and fenced
+//! code, the HTML around PHP) are looked for again only where the
+//! enclosing tree changed; an injected layer is parsed again
+//! (incrementally) only when the edit or a change of its ranges reaches
+//! it, and other layers are shifted. Highlights are computed only for the
+//! region that may have changed: the edit and the ranges whose structure
+//! changed in any layer, widened to the enclosing syntax nodes and whole
+//! lines, merged over the layers like `tree_sitter_highlight` does. Spans
+//! outside it are kept and shifted. Folds are collected from the whole top
+//! tree.
 //!
-//! An incremental result is exact for the tree it has (tested for trees
+//! An incremental result is exact for the trees it has (tested for trees
 //! without syntax errors; inside error nodes Tree-sitter's changed ranges
-//! can miss a change). The tree itself can differ from a fresh parse in
-//! broken or ambiguous code, so [`Syntax::is_fresh`] tells callers when
+//! can miss a change). The trees themselves can differ from a fresh parse
+//! in broken or ambiguous code, so [`Syntax::is_fresh`] tells callers when
 //! to analyse again from scratch to get the canonical result.
 
-use std::collections::HashSet;
 use std::ops::{ControlFlow, Range};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use tree_sitter::{
-    InputEdit, Node, ParseOptions, Parser, Point, Query, QueryCursor, StreamingIterator, Tree,
-};
+use tree_sitter::{InputEdit, ParseOptions, Parser, Point, Range as TsRange, Tree};
 
-use crate::{HighlightError, Highlighter, Lang, NAMES, STYLES, Span, Style, folds};
-
-/// How many ancestors of an edited node are highlighted again with it, as
-/// a margin: highlight patterns also look at a node's parent (a
-/// function's name, a key in a pair). Changes of the parent itself show
-/// up in Tree-sitter's changed ranges.
-const CONTEXT: usize = 1;
+use crate::layers::{self, Ctx, Layer, whole_lines};
+use crate::{HighlightError, Highlighter, Lang, Span, folds};
 
 /// When the region to highlight again exceeds this share of the document
 /// (1/n), the whole document is highlighted instead.
 const FULL_FRACTION: usize = 2;
 
-/// Check the cancellation flag every this many query captures.
-const CANCEL_INTERVAL: usize = 100;
-
-/// Syntax state of one document: its text, tree, highlight spans and
-/// folds. Pass it back to [`Highlighter::analyze`] with the next snapshot
-/// to update it incrementally.
+/// Syntax state of one document: its text, language layers, highlight
+/// spans and folds. Pass it back to [`Highlighter::analyze`] with the next
+/// snapshot to update it incrementally.
 pub struct Syntax {
     lang: Lang,
     text: String,
-    tree: Tree,
+    top: Layer,
     spans: Vec<Span>,
     folds: Vec<Range<usize>>,
     rehighlighted: Range<usize>,
@@ -99,12 +90,12 @@ impl Syntax {
         self.rehighlighted.clone()
     }
 
-    /// Whether the tree was parsed from scratch. An incrementally updated
-    /// tree is a valid parse of the text but not always the same one: in
-    /// ambiguous or broken code, Tree-sitter can reuse old subtrees where
-    /// a fresh parse would recover or decide differently. Callers that
-    /// need the canonical result analyse the text again without `prev`
-    /// (the syntax worker does when typing pauses).
+    /// Whether the trees were parsed from scratch. An incrementally
+    /// updated tree is a valid parse of the text but not always the same
+    /// one: in ambiguous or broken code, Tree-sitter can reuse old
+    /// subtrees where a fresh parse would recover or decide differently.
+    /// Callers that need the canonical result analyse the text again
+    /// without `prev` (the syntax worker does when typing pauses).
     pub fn is_fresh(&self) -> bool {
         !self.incremental
     }
@@ -175,17 +166,23 @@ fn input_edit(old: &str, new: &str, (start, old_end, new_end): (usize, usize, us
     }
 }
 
-/// Parse `source`, reusing `old` (already edited) when given. Cancellable.
+/// Parse `ranges` of `source` (all of it when empty), reusing `old`
+/// (already edited) when given. Cancellable. `None` when Tree-sitter
+/// refuses the ranges.
 pub(crate) fn parse(
     parser: &mut Parser,
     language: &tree_sitter::Language,
     source: &[u8],
+    ranges: &[TsRange],
     old: Option<&Tree>,
     cancel: Option<&AtomicUsize>,
-) -> Result<Tree, HighlightError> {
+) -> Result<Option<Tree>, HighlightError> {
     parser
         .set_language(language)
         .map_err(|e| HighlightError::Failed(e.to_string()))?;
+    if parser.set_included_ranges(ranges).is_err() {
+        return Ok(None);
+    }
     let mut cancelled = false;
     let mut progress = |_: &tree_sitter::ParseState| {
         if cancel.is_some_and(|c| c.load(Ordering::Relaxed) != 0) {
@@ -204,188 +201,10 @@ pub(crate) fn parse(
     // The parser keeps partial state after an interruption.
     parser.reset();
     match tree {
-        Some(tree) => Ok(tree),
+        Some(tree) => Ok(Some(tree)),
         None if cancelled => Err(HighlightError::Cancelled),
         None => Err(HighlightError::Failed("parsing failed".into())),
     }
-}
-
-/// Styles for a query's capture names, chosen like
-/// `HighlightConfiguration::configure` does for [`NAMES`]: the longest
-/// recognised name whose every part is among the capture's parts.
-pub(crate) fn style_map(capture_names: &[&str]) -> Vec<Option<Style>> {
-    capture_names
-        .iter()
-        .map(|capture| {
-            let parts: Vec<&str> = capture.split('.').collect();
-            let mut best: Option<usize> = None;
-            let mut best_len = 0;
-            for (i, name) in NAMES.iter().enumerate() {
-                let mut len = 0;
-                let mut all = true;
-                for part in name.split('.') {
-                    len += 1;
-                    if !parts.contains(&part) {
-                        all = false;
-                        break;
-                    }
-                }
-                if all && len > best_len {
-                    best = Some(i);
-                    best_len = len;
-                }
-            }
-            best.and_then(|i| STYLES.get(i).copied())
-        })
-        .collect()
-}
-
-/// Spans of `range` of `source` from the highlight query, with the
-/// semantics of `tree_sitter_highlight` for one layer without locals or
-/// injections: captures in document order, the last pattern capturing a
-/// node wins (earlier matches of that node are dropped), and nested
-/// highlights override the enclosing one until they end. Also returns the
-/// extent of the highlighted nodes that intersect `range`.
-fn query_spans(
-    cursor: &mut QueryCursor,
-    query: &Query,
-    styles: &[Option<Style>],
-    root: Node<'_>,
-    source: &[u8],
-    range: Range<usize>,
-    cancel: Option<&AtomicUsize>,
-) -> Result<(Vec<Span>, Range<usize>), HighlightError> {
-    struct Out {
-        spans: Vec<Span>,
-        pos: usize,
-        end: usize,
-    }
-    impl Out {
-        /// Style the source from the current position up to `to`.
-        fn emit(&mut self, to: usize, style: Option<Style>) {
-            let to = to.min(self.end);
-            if to <= self.pos {
-                return;
-            }
-            if let Some(style) = style {
-                match self.spans.last_mut() {
-                    Some(last) if last.style == style && last.range.end == self.pos => {
-                        last.range.end = to;
-                    }
-                    _ => self.spans.push(Span {
-                        range: self.pos..to,
-                        style,
-                    }),
-                }
-            }
-            self.pos = to;
-        }
-    }
-
-    cursor.set_byte_range(range.clone());
-    let mut captures = cursor.captures(query, root, source);
-    let mut out = Out {
-        spans: Vec::new(),
-        pos: range.start,
-        end: range.end,
-    };
-    let mut extent = range.clone();
-    // Highlights in effect: where each ends, innermost last.
-    let mut stack: Vec<(usize, Style)> = Vec::new();
-    let mut removed: HashSet<u32> = HashSet::new();
-    // The node being captured and the capture that currently wins for it.
-    let mut group: Option<(Node<'_>, u32)> = None;
-    let mut group_match = 0u32;
-    let finish = |node: Node<'_>,
-                  capture: u32,
-                  out: &mut Out,
-                  stack: &mut Vec<(usize, Style)>,
-                  extent: &mut Range<usize>| {
-        let (start, end) = (node.start_byte(), node.end_byte());
-        while let Some(&(e, style)) = stack.last()
-            && e <= start
-        {
-            out.emit(e, Some(style));
-            stack.pop();
-        }
-        if let Some(style) = styles.get(capture as usize).copied().flatten() {
-            out.emit(start, stack.last().map(|s| s.1));
-            stack.push((end, style));
-            extent.start = extent.start.min(start);
-            extent.end = extent.end.max(end);
-        }
-    };
-    let mut count = 0usize;
-    while let Some((m, index)) = captures.next() {
-        count += 1;
-        if count.is_multiple_of(CANCEL_INTERVAL)
-            && cancel.is_some_and(|c| c.load(Ordering::Relaxed) != 0)
-        {
-            return Err(HighlightError::Cancelled);
-        }
-        if removed.contains(&m.id()) {
-            continue;
-        }
-        let Some(capture) = m.captures().get(*index) else {
-            continue;
-        };
-        match group {
-            Some((node, _)) if node == capture.node => {
-                // A later pattern for the same node replaces the earlier
-                // one, whose match is dropped.
-                removed.insert(group_match);
-            }
-            Some((node, c)) => finish(node, c, &mut out, &mut stack, &mut extent),
-            None => {}
-        }
-        group = Some((capture.node, capture.index));
-        group_match = m.id();
-    }
-    if let Some((node, c)) = group {
-        finish(node, c, &mut out, &mut stack, &mut extent);
-    }
-    while let Some((e, style)) = stack.pop() {
-        out.emit(e, Some(style));
-    }
-    Ok((out.spans, extent))
-}
-
-/// Line-aligned `range` of `text`: from the start of its first line
-/// through the end of its last (including the line break).
-fn whole_lines(text: &[u8], range: Range<usize>) -> Range<usize> {
-    let start = text[..range.start]
-        .iter()
-        .rposition(|&b| b == b'\n')
-        .map_or(0, |i| i + 1);
-    let end = text[range.end..]
-        .iter()
-        .position(|&b| b == b'\n')
-        .map_or(text.len(), |i| range.end + i + 1);
-    start..end
-}
-
-/// The region to highlight again after `edit`: the edited text and the
-/// ranges whose structure changed, each widened to [`CONTEXT`] ancestors
-/// of the node there and then to whole lines.
-fn dirty(old: &Tree, new: &Tree, text: &[u8], edit: &InputEdit) -> Range<usize> {
-    let root = new.root_node();
-    let spots = std::iter::once(edit.start_byte..edit.new_end_byte)
-        .chain(old.changed_ranges(new).map(|r| r.start_byte..r.end_byte));
-    let mut region = edit.start_byte..edit.new_end_byte;
-    for spot in spots {
-        let end = spot.end.min(text.len());
-        let start = spot.start.min(end);
-        let mut node = root.descendant_for_byte_range(start, end).unwrap_or(root);
-        for _ in 0..CONTEXT {
-            match node.parent() {
-                Some(p) if p != root => node = p,
-                _ => break,
-            }
-        }
-        region.start = region.start.min(start).min(node.start_byte());
-        region.end = region.end.max(end).max(node.end_byte().min(text.len()));
-    }
-    whole_lines(text, region)
 }
 
 /// `old` spans (of the text before the edit) outside `region` (of the
@@ -436,13 +255,34 @@ fn splice(old: &[Span], fresh: Vec<Span>, region: &Range<usize>, edit: &InputEdi
 }
 
 impl Highlighter {
+    /// Parse `source` with everything injected into it and highlight it
+    /// from scratch.
+    pub(crate) fn analyze_fresh(
+        &mut self,
+        lang: Lang,
+        source: &[u8],
+        cancel: Option<&AtomicUsize>,
+    ) -> Result<(Layer, Vec<Span>), HighlightError> {
+        let mut ctx = Ctx {
+            hl: self,
+            source,
+            cancel,
+            host_name: lang.name(),
+            spots: Vec::new(),
+        };
+        let mut top = ctx.build_top(lang)?;
+        let (spans, _) =
+            layers::highlight(&mut top, &mut self.cursor, source, 0..source.len(), cancel)?;
+        Ok((top, spans))
+    }
+
     /// Highlight and fold `text`. With `prev`, the analysis of an earlier
-    /// version of the same document, the tree is updated incrementally
-    /// and, for languages without injections, only the region that may
-    /// have changed is highlighted again. Without `prev` the result
-    /// equals [`Self::highlight`] and [`Self::folds`]; with it, see the
-    /// module documentation and [`Syntax::is_fresh`]. Cancellable like
-    /// [`Self::highlight`]; `prev` is left untouched either way.
+    /// version of the same document, the trees are updated incrementally
+    /// and only the region that may have changed is highlighted again.
+    /// Without `prev` the result equals [`Self::highlight`] and
+    /// [`Self::folds`]; with it, see the module documentation and
+    /// [`Syntax::is_fresh`]. Cancellable like [`Self::highlight`]; `prev`
+    /// is left untouched either way.
     pub fn analyze(
         &mut self,
         lang: Lang,
@@ -450,13 +290,6 @@ impl Highlighter {
         prev: Option<&Syntax>,
         cancel: Option<&AtomicUsize>,
     ) -> Result<Syntax, HighlightError> {
-        let Some(config) = self.config(lang) else {
-            return Err(HighlightError::Failed(format!(
-                "{} query did not compile",
-                lang.name()
-            )));
-        };
-        let language = config.language.clone();
         let prev = prev.filter(|p| p.lang == lang);
         let change = match prev {
             Some(p) => match diff(&p.text, &text) {
@@ -465,7 +298,7 @@ impl Highlighter {
                     return Ok(Syntax {
                         lang,
                         text,
-                        tree: p.tree.clone(),
+                        top: p.top.clone(),
                         spans: p.spans.clone(),
                         folds: p.folds.clone(),
                         rehighlighted: 0..0,
@@ -476,113 +309,64 @@ impl Highlighter {
             None => None,
         };
         let source = text.as_bytes();
-        let (tree, old_tree) = match &change {
-            Some((p, edit)) => {
-                let mut old = p.tree.clone();
-                old.edit(edit);
-                let tree = parse(&mut self.parser, &language, source, Some(&old), cancel)?;
-                (tree, Some(old))
-            }
-            None => (
-                parse(&mut self.parser, &language, source, None, cancel)?,
-                None,
-            ),
-        };
-        let incremental = change.is_some();
-        let folds = folds::collect(lang, tree.root_node(), source);
-        if !lang.injections_query().is_empty() {
-            let spans = self.highlight(lang, source, cancel)?;
+        let Some((p, edit)) = change else {
+            let (top, spans) = self.analyze_fresh(lang, source, cancel)?;
+            let folds = folds::collect(lang, top.tree.root_node(), source);
             return Ok(Syntax {
                 lang,
-                tree,
+                rehighlighted: 0..text.len(),
+                text,
+                top,
                 spans,
                 folds,
-                rehighlighted: 0..text.len(),
-                incremental,
-                text,
-            });
-        }
-        let Some(query) = self
-            .configs
-            .get(&lang)
-            .and_then(Option::as_ref)
-            .map(|c| &c.query)
-        else {
-            return Ok(Syntax {
-                lang,
-                tree,
-                spans: Vec::new(),
-                folds,
-                rehighlighted: 0..text.len(),
-                incremental,
-                text,
+                incremental: false,
             });
         };
-        let styles = self
-            .styles
-            .entry(lang)
-            .or_insert_with(|| style_map(query.capture_names()));
-        let root = tree.root_node();
+        let mut top = p.top.clone();
+        let mut ctx = Ctx {
+            hl: self,
+            source,
+            cancel,
+            host_name: lang.name(),
+            spots: Vec::new(),
+        };
+        ctx.update_top(&mut top, &edit)?;
+        let spots = std::mem::take(&mut ctx.spots);
+        let folds = folds::collect(lang, top.tree.root_node(), source);
+        let mut region = edit.start_byte..edit.new_end_byte;
+        for s in spots {
+            region.start = region.start.min(s.start);
+            region.end = region.end.max(s.end);
+        }
+        let mut region = whole_lines(source, region);
         let full = 0..source.len();
-        let (spans, rehighlighted) = match (&change, &old_tree) {
-            (Some((p, edit)), Some(old)) => {
-                let mut region = dirty(old, &tree, source, edit);
-                loop {
-                    if region.len() * FULL_FRACTION >= source.len() {
-                        let (spans, _) = query_spans(
-                            &mut self.cursor,
-                            query,
-                            styles,
-                            root,
-                            source,
-                            full.clone(),
-                            cancel,
-                        )?;
-                        break (spans, full);
-                    }
-                    let (fresh, extent) = query_spans(
-                        &mut self.cursor,
-                        query,
-                        styles,
-                        root,
-                        source,
-                        region.clone(),
-                        cancel,
-                    )?;
-                    // A highlighted node reaching outside the region may
-                    // have changed outside it too: widen and repeat.
-                    if extent.start < region.start || extent.end > region.end {
-                        region = whole_lines(
-                            source,
-                            region.start.min(extent.start)
-                                ..region.end.max(extent.end).min(source.len()),
-                        );
-                        continue;
-                    }
-                    break (splice(&p.spans, fresh, &region, edit), region);
-                }
+        let (spans, rehighlighted) = loop {
+            if region.len() * FULL_FRACTION >= source.len() {
+                let (spans, _) =
+                    layers::highlight(&mut top, &mut self.cursor, source, full.clone(), cancel)?;
+                break (spans, full);
             }
-            _ => {
-                let (spans, _) = query_spans(
-                    &mut self.cursor,
-                    query,
-                    styles,
-                    root,
+            let (fresh, extent) =
+                layers::highlight(&mut top, &mut self.cursor, source, region.clone(), cancel)?;
+            // A highlighted node reaching outside the region may have
+            // changed outside it too: widen and repeat.
+            if extent.start < region.start || extent.end > region.end {
+                region = whole_lines(
                     source,
-                    full.clone(),
-                    cancel,
-                )?;
-                (spans, full)
+                    region.start.min(extent.start)..region.end.max(extent.end),
+                );
+                continue;
             }
+            break (splice(&p.spans, fresh, &region, &edit), region);
         };
         Ok(Syntax {
             lang,
             text,
-            tree,
+            top,
             spans,
             folds,
             rehighlighted,
-            incremental,
+            incremental: true,
         })
     }
 }
@@ -590,6 +374,7 @@ impl Highlighter {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tree_sitter::QueryCursor;
 
     /// Deterministic pseudo-random numbers (xorshift).
     struct Rng(u64);
@@ -637,19 +422,27 @@ mod tests {
             Lang::Lua => {
                 "-- c\nlocal function f{i}(x)\n  if x then\n    return { a = 1, 'b' }\n  end\nend\n\n"
             }
+            Lang::JavaScript => {
+                "// c {i}\nconst a{i} = html`<p class=\"x\">${v}</p>`;\nconst r{i} = /a+b/g;\nfunction f{i}(x) { return html`<b>${x}</b>` + x; }\n\n"
+            }
             Lang::TypeScript => {
                 "// c\nexport class A{i} implements B {\n  private x: number = 1;\n  f(y: string): string { return `t${y}`; }\n}\n\n"
             }
             Lang::Html => {
-                "<div class=\"a{i}\">\n  <p>t &amp; u</p>\n  <script>const n = {i};</script>\n  <style>a { color: red; }</style>\n</div>\n"
+                "<div class=\"a{i}\">\n  <p>t &amp; u</p>\n  <script>\n    const n = {i};\n    let s = `a${n}`;\n  </script>\n  <style>a { color: red; }</style>\n</div>\n"
             }
-            Lang::Php => "<p>{i}</p>\n<?php\nfunction f{i}($a) {\n  return 'x' . $a; // c\n}\n?>\n",
+            Lang::Php => {
+                "<p class=\"c{i}\">{i}</p>\n<?php\nfunction f{i}($a) {\n  return 'x' . $a; // c\n}\n$h = <<<HTML\n<b>{i}</b>\nHTML;\n?>\n<script>let a = {i};</script>\n<a href=\"<?php echo $u; ?>\">l</a>\n"
+            }
             Lang::Markdown => {
-                "# Title {i}\n\nSome *text* and `code`.\n\n```rust\nfn f() {}\n```\n\n- item\n\n"
+                "# Title {i}\n\nSome *text* and `code` with <br> html.\n\n```rust\nfn f() {}\n```\n\n- item\n\n<div>\n<i>x</i>\n</div>\n\n```html\n<script>let x = 1;</script>\n```\n\n"
             }
             _ => "x{i}\n",
         };
         let mut s = String::new();
+        if lang == Lang::Markdown {
+            s.push_str("---\ntitle: x\n---\n\n");
+        }
         if lang == Lang::Json {
             s.push_str("{\n");
         }
@@ -683,6 +476,26 @@ mod tests {
             .collect()
     }
 
+    /// Text that opens or closes injections.
+    const INJECTING: [&str; 16] = [
+        "```",
+        "```rust\n",
+        "\n```\n",
+        "```py\n",
+        "<script>",
+        "</script>",
+        "<style>",
+        "<?php ",
+        " ?>",
+        "html`<b>${x}</b>`",
+        "css`",
+        "<b>",
+        "*",
+        "\n---\n",
+        "<<<HTML\n",
+        "<!--",
+    ];
+
     fn mutate(rng: &mut Rng, lang: Lang, text: &mut String) {
         let at = char_boundary(text, rng.below(text.len() + 1));
         let lines = line_starts(text);
@@ -691,7 +504,7 @@ mod tests {
             let end = lines.get(i + 1).copied().unwrap_or(text.len());
             start..end
         };
-        match rng.below(36) {
+        match rng.below(40) {
             0 => {
                 // Paste a copy of some text elsewhere.
                 let from = char_boundary(text, rng.below(text.len() + 1));
@@ -741,11 +554,17 @@ mod tests {
                     .map_or(at, |i| at + i);
                 text.insert(word, if rng.below(2) == 0 { 'z' } else { '7' });
             }
+            36..=37 => text.insert_str(at, INJECTING[rng.below(INJECTING.len())]),
+            38 => {
+                // Open or close an injection at the start of a line.
+                let r = line(rng.below(lines.len()));
+                text.insert_str(r.start, INJECTING[rng.below(INJECTING.len())]);
+            }
             _ => text.insert_str(at, TOKENS[rng.below(TOKENS.len())]),
         }
     }
 
-    const LANGS: [Lang; 14] = [
+    const LANGS: [Lang; 15] = [
         Lang::Rust,
         Lang::Json,
         Lang::Python,
@@ -757,38 +576,56 @@ mod tests {
         Lang::Bash,
         Lang::Lua,
         Lang::TypeScript,
-        // With injections: highlighted in full, folds incremental.
+        // With injections.
         Lang::Html,
+        Lang::JavaScript,
         Lang::Php,
         Lang::Markdown,
     ];
 
+    /// Full highlights of the layers `syn` has.
+    fn full_highlight(syn: &Syntax) -> Vec<Span> {
+        let mut top = syn.top.clone();
+        let source = syn.text.as_bytes();
+        layers::highlight(
+            &mut top,
+            &mut QueryCursor::new(),
+            source,
+            0..source.len(),
+            None,
+        )
+        .unwrap()
+        .0
+    }
+
+    /// Counts per language from [`check_random_edits`].
+    #[derive(Debug, Default)]
+    struct Counts {
+        partial: usize,
+        diverged: usize,
+        checked: usize,
+    }
+
     /// Apply `steps` random edits per seed and language, analysing each
     /// version incrementally, and check after each:
     ///
-    /// - the spans equal a full highlight query over the same tree, so
-    ///   partial highlighting and splicing lose nothing (asserted for
-    ///   trees without syntax errors, where Tree-sitter's changed ranges
-    ///   are complete);
-    /// - when the tree equals a fresh parse, spans and folds equal a fresh
-    ///   [`Highlighter::highlight`] and [`Highlighter::folds`].
+    /// - the spans equal a full highlight of the same layers, so partial
+    ///   highlighting and splicing lose nothing (asserted for trees
+    ///   without syntax errors, where Tree-sitter's changed ranges are
+    ///   complete);
+    /// - when every layer equals a fresh analysis, spans and folds equal
+    ///   the fresh ones and the spans equal `tree_sitter_highlight`'s.
     ///
     /// Otherwise the chain sometimes goes on from the incremental result
     /// (more typing) and sometimes from a fresh analysis (the worker
     /// settling it). Every few steps the text goes back to its last
-    /// version without syntax errors, as when a typo is fixed. Returns
-    /// per language the number of partial updates and of updates whose
-    /// tree differed from a fresh parse.
-    fn check_random_edits(seeds: u64, steps: usize) -> Vec<(Lang, usize, usize)> {
+    /// version without syntax errors, as when a typo is fixed.
+    fn check_random_edits(seeds: u64, steps: usize) -> Vec<(Lang, Counts)> {
         let mut h = Highlighter::new();
         let mut fresh = Highlighter::new();
-        let mut parser = Parser::new();
-        let mut counts = Vec::new();
+        let mut out = Vec::new();
         for (n, lang) in LANGS.into_iter().enumerate() {
-            let (mut partial, mut diverged) = (0, 0);
-            let language = h.config(lang).unwrap().language.clone();
-            let query = h.config(lang).unwrap().query.capture_names().len();
-            assert!(query > 0);
+            let mut counts = Counts::default();
             for seed in 0..seeds {
                 let mut rng = Rng(0x9e37_79b9_7f4a_7c15 ^ ((n as u64 + 1) * 0x1000_0001 + seed));
                 let mut text = sample(lang);
@@ -801,49 +638,43 @@ mod tests {
                     mutate(&mut rng, lang, &mut text);
                     syn = h.analyze(lang, text.clone(), Some(&syn), None).unwrap();
                     let at = format!("{lang:?} seed {seed} step {step}");
-                    let errors = syn.tree.root_node().has_error();
-                    if lang.injections_query().is_empty() && !errors {
-                        let config = h.configs[&lang].as_ref().unwrap();
-                        let styles = style_map(config.query.capture_names());
-                        let (full, _) = query_spans(
-                            &mut QueryCursor::new(),
-                            &config.query,
-                            &styles,
-                            syn.tree.root_node(),
-                            text.as_bytes(),
-                            0..text.len(),
-                            None,
-                        )
-                        .unwrap();
+                    let errors = syn.top.has_error();
+                    if !errors {
+                        let full = full_highlight(&syn);
                         assert!(
                             syn.spans() == full.as_slice(),
-                            "{at}: spans differ from a full query of the tree\n{}",
+                            "{at}: spans differ from a full highlight of the layers\n{}",
                             first_difference(syn.spans(), &full, &text)
                         );
                     }
-                    let tree = parse(&mut parser, &language, text.as_bytes(), None, None).unwrap();
+                    let new = fresh.analyze(lang, text.clone(), None, None).unwrap();
                     if errors {
                         // Best effort until settled: Tree-sitter's changed
                         // ranges can miss changes inside error nodes.
                         if rng.below(2) == 0 {
-                            syn = h.analyze(lang, text.clone(), None, None).unwrap();
+                            syn = new;
                         }
-                    } else if tree.root_node().to_sexp() == syn.tree.root_node().to_sexp() {
-                        let spans = fresh.highlight(lang, text.as_bytes(), None).unwrap();
-                        let folds = fresh.folds(lang, text.as_bytes(), None).unwrap();
+                    } else if new.top.fingerprint() == syn.top.fingerprint() {
+                        let reference = fresh.reference(lang, text.as_bytes());
                         assert!(
-                            syn.spans() == spans.as_slice(),
-                            "{at}: spans differ from fresh\n{}",
-                            first_difference(syn.spans(), &spans, &text)
+                            new.spans() == reference.as_slice(),
+                            "{at}: fresh spans differ from tree_sitter_highlight\n{}",
+                            first_difference(new.spans(), &reference, &text)
                         );
-                        assert_eq!(syn.folds(), folds.as_slice(), "{at}: folds");
+                        assert!(
+                            syn.spans() == new.spans(),
+                            "{at}: spans differ from fresh\n{}",
+                            first_difference(syn.spans(), new.spans(), &text)
+                        );
+                        assert_eq!(syn.folds(), new.folds(), "{at}: folds");
+                        counts.checked += 1;
                         if syn.rehighlighted().len() < text.len() {
-                            partial += 1;
+                            counts.partial += 1;
                         }
                     } else {
-                        diverged += 1;
+                        counts.diverged += 1;
                         if rng.below(2) == 0 {
-                            syn = h.analyze(lang, text.clone(), None, None).unwrap();
+                            syn = new;
                         }
                     }
                     if !errors {
@@ -851,18 +682,16 @@ mod tests {
                     }
                 }
             }
-            counts.push((lang, partial, diverged));
+            out.push((lang, counts));
         }
-        counts
+        out
     }
 
     #[test]
     fn incremental_equals_fresh_after_random_edits() {
-        for (lang, partial, _) in check_random_edits(2, 60) {
-            // Not vacuous: many updates of these were partial.
-            if lang.injections_query().is_empty() {
-                assert!(partial >= 5, "{lang:?}: only {partial} partial updates");
-            }
+        for (lang, c) in check_random_edits(2, 60) {
+            // Not vacuous: many updates were checked and partial.
+            assert!(c.partial >= 5, "{lang:?}: {c:?}");
         }
     }
 
@@ -871,8 +700,11 @@ mod tests {
     #[test]
     #[ignore = "slow; run in release"]
     fn stress_incremental_equals_fresh() {
-        for (lang, partial, diverged) in check_random_edits(20, 300) {
-            eprintln!("{lang:?}: {partial} partial updates, {diverged} trees unlike a fresh parse");
+        for (lang, c) in check_random_edits(20, 300) {
+            eprintln!(
+                "{lang:?}: {} checked, {} partial, {} trees unlike a fresh parse",
+                c.checked, c.partial, c.diverged
+            );
         }
     }
 
@@ -905,10 +737,12 @@ mod tests {
         for lang in Lang::ALL {
             let text = sample(lang);
             let syn = h.analyze(lang, text.clone(), None, None).unwrap();
-            let spans = Highlighter::new()
-                .highlight(lang, text.as_bytes(), None)
-                .unwrap();
-            assert_eq!(syn.spans(), spans.as_slice(), "{lang:?}");
+            let spans = Highlighter::new().reference(lang, text.as_bytes());
+            assert!(
+                syn.spans() == spans.as_slice(),
+                "{lang:?}\n{}",
+                first_difference(syn.spans(), &spans, &text)
+            );
         }
     }
 
