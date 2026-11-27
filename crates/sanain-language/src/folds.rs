@@ -171,7 +171,8 @@ pub(crate) fn folds(
     source: &[u8],
     cancel: Option<&AtomicUsize>,
 ) -> Result<Vec<Range<usize>>, HighlightError> {
-    let tree = crate::incremental::parse(parser, language, source, None, cancel)?;
+    let tree = crate::incremental::parse(parser, language, source, &[], None, cancel)?
+        .ok_or_else(|| HighlightError::Failed("parsing failed".into()))?;
     Ok(collect(lang, tree.root_node(), source))
 }
 

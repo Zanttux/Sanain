@@ -117,6 +117,19 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   written through a temporary file.
 
 ### Changed
+- Typing in large HTML, Markdown, PHP and JavaScript files no longer
+  highlights the whole file again: each embedded language (scripts and
+  styles, Markdown's inline text and fenced code, the HTML around PHP)
+  is kept as its own syntax tree, parsed again only where an edit
+  reaches it, and only the changed lines are highlighted, with the same
+  colours as before. One keystroke in 512 KB went from 272 ms to 15 ms
+  (Markdown), 66 ms to 3 ms (HTML) and 112 ms to 6 ms (PHP). After a
+  typing pause the background check keeps the faster incremental state
+  when it finds nothing to correct.
+- Fenced code blocks, HTML blocks and inline HTML in Markdown are
+  highlighted as a whole; before, their punctuation and brackets were
+  left out of the embedded language (`()` and `{}` in a Rust fence were
+  uncoloured).
 - Automated disk-full drill (`SANAIN_FULL_DIR`) for saves, recovery
   snapshots, settings, session and macros, run in CI on a tiny
   filesystem on Linux, macOS and Windows.
