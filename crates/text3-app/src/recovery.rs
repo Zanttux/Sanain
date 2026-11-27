@@ -60,7 +60,7 @@ impl Recovery {
         let (jobs, rx) = channel::<Job>();
         let (err_tx, errors) = channel();
         thread::Builder::new()
-            .name("sanain-recovery".into())
+            .name("text3-recovery".into())
             .spawn(move || {
                 for job in rx {
                     let result = match &job {
@@ -83,7 +83,7 @@ impl Recovery {
                     }
                 }
             })
-            .map_err(|e| eprintln!("sanain: recovery disabled: {e}"))
+            .map_err(|e| eprintln!("text3: recovery disabled: {e}"))
             .ok();
         Self {
             id: id.unwrap_or_else(RecoveryStore::new_id),
@@ -242,7 +242,7 @@ mod tests {
     #[test]
     fn restore_without_file_gives_untitled_dirty_buffer() {
         let snap = Snapshot {
-            path: Some("/nonexistent/sanain/x.txt".into()),
+            path: Some("/nonexistent/text3/x.txt".into()),
             encoding: text3_io::TextEncoding::Utf8Bom,
             text: "keep me".into(),
         };

@@ -232,7 +232,7 @@ impl EditorView {
         let font = FontId::monospace(opts.font_size);
         let (row_h, char_w) = ui.fonts_mut(|f| (f.row_height(&font), f.glyph_width(&font, '0')));
         let palette = theme::palette(ui.ctx());
-        let id = ui.make_persistent_id("sanain-editor");
+        let id = ui.make_persistent_id("text3-editor");
         self.widget_id = Some(id);
         let mut changed = false;
         // Raw events include shortcuts consumed by the shell before the view.

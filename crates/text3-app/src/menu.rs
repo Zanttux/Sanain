@@ -1042,7 +1042,7 @@ mod native {
             let updates = make(MenuAction::CheckUpdates);
             let about = make(MenuAction::About);
             let app = Submenu::with_items(
-                "Sanain",
+                "Text³",
                 true,
                 &[
                     &about,

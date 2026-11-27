@@ -1,4 +1,4 @@
-//! Command line: `sanain [--diff LEFT RIGHT] [FILE…]`, `--version`, `--help`.
+//! Command line: `text3 [--diff LEFT RIGHT] [FILE…]`, `--version`, `--help`.
 //! Paths are taken literally (no shell interpolation); `--` ends options so
 //! a file whose name starts with `--` can still be opened.
 
@@ -18,7 +18,7 @@ pub enum Parsed {
     Run(Cli),
     Version,
     Help,
-    /// `--register`: add Sanain to the file manager's Open With.
+    /// `--register`: add Text³ to the file manager's Open With.
     Register,
     /// `--unregister`: undo `--register`.
     Unregister,

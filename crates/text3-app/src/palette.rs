@@ -91,7 +91,7 @@ impl Palette {
         }
         let mut chosen = None;
         let width = 520.0_f32.min(ctx.content_rect().width() - 32.0);
-        let area = egui::Area::new(egui::Id::unique("sanain-palette"))
+        let area = egui::Area::new(egui::Id::unique("text3-palette"))
             .order(egui::Order::Foreground)
             .anchor(egui::Align2::CENTER_TOP, egui::vec2(0.0, 56.0))
             .show(ctx, |ui| {
@@ -102,7 +102,7 @@ impl Palette {
                     .show(ui, |ui| {
                         ui.set_width(width);
                         let field = egui::TextEdit::singleline(&mut self.query)
-                            .id_salt("sanain-palette-query")
+                            .id_salt("text3-palette-query")
                             .hint_text(hint)
                             .desired_width(f32::INFINITY);
                         let r = ui.add(field).accessible_name(hint);
@@ -237,7 +237,7 @@ impl Palette {
         let (enter, escape) =
             ctx.input(|i| (i.key_pressed(Key::Enter), i.key_pressed(Key::Escape)));
         let width = 360.0_f32.min(ctx.content_rect().width() - 32.0);
-        let area = egui::Area::new(egui::Id::unique("sanain-goto"))
+        let area = egui::Area::new(egui::Id::unique("text3-goto"))
             .order(egui::Order::Foreground)
             .anchor(egui::Align2::CENTER_TOP, egui::vec2(0.0, 56.0))
             .show(ctx, |ui| {
@@ -250,7 +250,7 @@ impl Palette {
                         let r = ui
                             .add(
                                 egui::TextEdit::singleline(&mut self.query)
-                                    .id_salt("sanain-goto-query")
+                                    .id_salt("text3-goto-query")
                                     .hint_text(hint)
                                     .desired_width(f32::INFINITY),
                             )

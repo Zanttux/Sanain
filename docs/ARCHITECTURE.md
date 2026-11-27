@@ -8,7 +8,7 @@ Implemented: `text3-core`, `text3-io`, `text3-i18n`, `text3-tools`
 (comrak, BSD-2-Clause), `text3-language`
 (Tree-sitter grammars, MIT-licensed), `text3-app`
 (GUI-independent `Editor` state in the library; egui shell, editor view
-and theme in the `sanain` binary) (see
+and theme in the `text3` binary) (see
 docs/adr/0002-workspace-and-first-slice.md). The rest are planned and are
 added when a slice needs them.
 - text3-core: document IDs, rope, byte/character/grapheme mappings, transactions, undo, selections; no GUI/network.
@@ -18,8 +18,8 @@ added when a slice needs them.
 - text3-tools: pure transformations, diff, CSV/JSON/XML/YAML adapters.
 - text3-markdown: AST, preview model, source mapping, safe links.
 - text3-app: commands, state, settings, task orchestration.
-- sanain-ui: rendering, accessibility, platform adapters.
-- sanain-cli: open paths, diff, new instance; later tail.
+- text3-ui: rendering, accessibility, platform adapters.
+- text3-cli: open paths, diff, new instance; later tail.
 
 ## Invariants
 Document revision increases on edits. Every mutation is a transaction with inverse or undo snapshot. Background tasks receive immutable snapshots and revision IDs; stale results discarded. UI thread never performs unbounded disk I/O or parsing. Use bounded queues and cancellation. Explicit byte/char/grapheme coordinate types; no unchecked indexing. Source text remains authoritative for every Smart View.

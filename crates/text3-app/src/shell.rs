@@ -42,9 +42,9 @@ fn apply_editor_font(ctx: &egui::Context, face: Option<(Vec<u8>, u32)>) {
         data.index = index;
         fonts
             .font_data
-            .insert("sanain-editor".into(), std::sync::Arc::new(data));
+            .insert("text3-editor".into(), std::sync::Arc::new(data));
         if let Some(mono) = fonts.families.get_mut(&egui::FontFamily::Monospace) {
-            mono.insert(0, "sanain-editor".into());
+            mono.insert(0, "text3-editor".into());
         }
     }
     ctx.set_fonts(fonts);
@@ -134,18 +134,18 @@ fn encoding_choices(reopen: bool) -> Vec<TextEncoding> {
 
 /// Keyboard focus id of a tab's CSV grid.
 fn grid_id(id: TabId) -> egui::Id {
-    egui::Id::unique(("sanain-csv-grid", id))
+    egui::Id::unique(("text3-csv-grid", id))
 }
 
 /// The Markdown preview of tab `id` in pane slot `slot`, which takes
 /// keyboard focus when the pane shows only the preview.
 fn preview_focus_id(id: TabId, slot: usize) -> egui::Id {
-    egui::Id::unique(("sanain-md-preview", id, slot))
+    egui::Id::unique(("text3-md-preview", id, slot))
 }
 
 /// Keyboard focus id of a tab's JSON or XML tree.
 fn tree_id(id: TabId) -> egui::Id {
-    egui::Id::unique(("sanain-json-tree", id))
+    egui::Id::unique(("text3-json-tree", id))
 }
 
 /// Parsed data behind a structured view, for one document revision.
@@ -279,6 +279,8 @@ pub struct Shell {
     saved_macros: MacroStore,
     replace_preview: Option<ReplacePreview>,
     about_open: bool,
+    /// The Text³ lockup shown in About (decoded on first open).
+    about_logo: Option<egui::TextureHandle>,
     /// Markdown headings for Go to Heading, per tab and revision.
     headings: Option<HeadingCache>,
     /// The Markdown outline side panel is shown.
@@ -483,6 +485,7 @@ impl Shell {
             saved_macros,
             replace_preview: None,
             about_open: false,
+            about_logo: None,
             headings: None,
             outline_open: false,
             lang_override: HashMap::new(),
@@ -830,7 +833,7 @@ impl Shell {
             && let Some(f) = &self.session_file
             && let Err(e) = self.ws.session(self.split.as_ref()).save(f)
         {
-            eprintln!("sanain: could not save session: {e}");
+            eprintln!("text3: could not save session: {e}");
         }
         match self.ws.first_dirty() {
             Some(i) => {
@@ -1029,7 +1032,7 @@ impl Shell {
         let mut focus_search = false;
         let focus_tab = std::mem::take(&mut self.settings_focus);
         egui::Window::new(title)
-            .id(egui::Id::unique("sanain-settings"))
+            .id(egui::Id::unique("text3-settings"))
             .open(&mut open)
             .collapsible(false)
             .resizable(true)
@@ -1425,7 +1428,7 @@ impl Shell {
                                             }
                                             ui.add_space(6.0);
                                             ui.strong(match g {
-                                                "app" => "Sanain".to_owned(),
+                                                "app" => "Text³".to_owned(),
                                                 other => l(&format!("menu-{other}")),
                                             });
                                             egui::Grid::new(("shortcuts", g))
@@ -1786,7 +1789,7 @@ impl Shell {
             None => return,
         };
         egui::Window::new(title)
-            .id(egui::Id::unique("sanain-encoding"))
+            .id(egui::Id::unique("text3-encoding"))
             .open(&mut open)
             .collapsible(false)
             .default_width(520.0)
@@ -1908,7 +1911,7 @@ impl Shell {
         let (tx, rx) = std::sync::mpsc::channel();
         let ctx = ctx.clone();
         let spawned = std::thread::Builder::new()
-            .name("sanain-update".into())
+            .name("text3-update".into())
             .spawn(move || {
                 let _ = tx.send(text3_app::update::check(env!("CARGO_PKG_VERSION")));
                 ctx.request_repaint();
@@ -1980,13 +1983,13 @@ impl Shell {
             return;
         };
         let _ = std::thread::Builder::new()
-            .name("sanain-history".into())
+            .name("text3-history".into())
             .spawn(move || {
                 if let Ok(bytes) = std::fs::read(&path)
                     && let Err(e) =
                         store.record(&path, &bytes, text3_io::history::Retention::default())
                 {
-                    eprintln!("sanain: local history not recorded: {e}");
+                    eprintln!("text3: local history not recorded: {e}");
                 }
             });
     }
@@ -2029,7 +2032,7 @@ impl Shell {
         let mut open = true;
         let mut action: Option<(usize, bool)> = None;
         egui::Window::new(title)
-            .id(egui::Id::unique("sanain-history"))
+            .id(egui::Id::unique("text3-history"))
             .open(&mut open)
             .collapsible(false)
             .default_width(420.0)
@@ -2327,7 +2330,7 @@ impl Shell {
         let (tx, rx) = std::sync::mpsc::channel();
         let ctx = self.ctx.clone();
         let _ = std::thread::Builder::new()
-            .name("sanain-fonts".into())
+            .name("text3-fonts".into())
             .spawn(move || {
                 let _ = tx.send(job());
                 ctx.request_repaint();
@@ -2592,14 +2595,28 @@ impl Shell {
         if !self.about_open {
             return;
         }
-        const REPO: &str = "https://github.com/Zanttux/Sanain";
+        const REPO: &str = "https://github.com/Zanttux/text3";
         let p = theme::palette(ctx);
         let version = self.t(
             "about-version",
             &[("version", env!("CARGO_PKG_VERSION").into())],
         );
-        let (tagline, license, ai, notices, repo_l) = (
-            self.t("about-tagline", &[]),
+        let logo = self
+            .about_logo
+            .get_or_insert_with(|| {
+                let png = include_bytes!("../../../assets/brand/about-lockup.png");
+                let color = image::load_from_memory(png).map_or_else(
+                    |_| egui::ColorImage::new([1, 1], vec![egui::Color32::TRANSPARENT]),
+                    |i| {
+                        let rgba = i.into_rgba8();
+                        let size = [rgba.width() as usize, rgba.height() as usize];
+                        egui::ColorImage::from_rgba_unmultiplied(size, rgba.as_raw())
+                    },
+                );
+                ctx.load_texture("text3-about-logo", color, egui::TextureOptions::LINEAR)
+            })
+            .clone();
+        let (license, ai, notices, repo_l) = (
             self.t("about-license", &[]),
             self.t("about-ai", &[]),
             self.t("about-notices", &[]),
@@ -2608,7 +2625,7 @@ impl Shell {
         let mut open = true;
         let mut link = false;
         egui::Window::new(self.t("app-about", &[]).trim_end_matches('…').to_owned())
-            .id(egui::Id::unique("sanain-about"))
+            .id(egui::Id::unique("text3-about"))
             .open(&mut open)
             .collapsible(false)
             .resizable(false)
@@ -2616,14 +2633,22 @@ impl Shell {
             .show(ctx, |ui| {
                 ui.vertical_centered(|ui| {
                     ui.add_space(6.0);
-                    ui.label(
-                        egui::RichText::new("Sanain")
-                            .size(28.0)
-                            .strong()
-                            .color(p.text),
-                    );
-                    ui.label(egui::RichText::new(tagline).italics().color(p.muted));
-                    ui.add_space(6.0);
+                    // The lockup sits on a white plate, also in dark themes
+                    // (docs/BRAND.md: never recolour the artwork).
+                    egui::Frame::new()
+                        .fill(egui::Color32::WHITE)
+                        .corner_radius(8.0)
+                        .inner_margin(12.0)
+                        .show(ui, |ui| {
+                            let [w, h] = logo.size();
+                            let width = 280.0;
+                            let size = egui::vec2(width, width * h as f32 / w.max(1) as f32);
+                            let resp = ui.add(egui::Image::new((logo.id(), size)));
+                            resp.widget_info(|| {
+                                egui::WidgetInfo::labeled(egui::Role::Image, true, "Text³")
+                            });
+                        });
+                    ui.add_space(8.0);
                     ui.label(version);
                     ui.add_space(10.0);
                     ui.label(license);
@@ -2664,7 +2689,7 @@ impl Shell {
         let mut decision: Option<bool> = None;
         let mut open = true;
         egui::Window::new(title)
-            .id(egui::Id::unique("sanain-replace-preview"))
+            .id(egui::Id::unique("text3-replace-preview"))
             .open(&mut open)
             .collapsible(false)
             .default_width(640.0)
@@ -3465,7 +3490,7 @@ impl Shell {
         }
     }
 
-    /// Show two open files side by side (`sanain --diff LEFT RIGHT`). Does
+    /// Show two open files side by side (`text3 --diff LEFT RIGHT`). Does
     /// nothing if either is not open (its load error is already reported).
     pub fn compare_files(&mut self, left: &Path, right: &Path) {
         let same = |a: &Path, b: &Path| {
@@ -3525,7 +3550,7 @@ impl Shell {
             "compare-pick-title",
             &[("name", self.display_name().into())],
         ))
-        .id(egui::Id::unique("sanain-compare-pick"))
+        .id(egui::Id::unique("text3-compare-pick"))
         .open(&mut open)
         .collapsible(false)
         .resizable(false)
@@ -5155,7 +5180,7 @@ impl Shell {
                         // would drop keyboard focus.
                         let r = ui.interact(
                             rect,
-                            egui::Id::unique(("sanain-tab", tab.id)),
+                            egui::Id::unique(("text3-tab", tab.id)),
                             egui::Sense::click_and_drag(),
                         );
                         ui.ctx().accesskit_node_builder(r.id, |n| {
@@ -5454,7 +5479,7 @@ impl Shell {
         let name = self.display_name();
         let mut close = false;
         let mut after: Option<Action> = None;
-        egui::Modal::new(egui::Id::unique("sanain-dialog")).show(ctx, |ui| {
+        egui::Modal::new(egui::Id::unique("text3-dialog")).show(ctx, |ui| {
             ui.set_max_width(420.0);
             let (title, body) = match &dialog {
                 Dialog::Unsaved(_) => (

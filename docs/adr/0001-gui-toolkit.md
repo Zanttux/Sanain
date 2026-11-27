@@ -34,7 +34,7 @@ snapshot; avoid it.
 
 Not tested: IME composition, typing latency, Windows, Linux, VoiceOver
 navigation depth, NVDA/Narrator, high-DPI on other platforms. Neither
-built-in text widget is suitable for large documents; Sanain needs its own
+built-in text widget is suitable for large documents; Text³ needs its own
 editor widget over `text3-core` with either toolkit.
 
 ## Options

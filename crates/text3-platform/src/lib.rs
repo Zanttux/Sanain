@@ -3,7 +3,7 @@
 //! `SAFETY:` comment.
 //!
 //! - macOS: files opened from Finder (Open With, double click, drag onto
-//!   the Dock icon, `open -a Sanain file`) arrive as an `odoc` Apple
+//!   the Dock icon, `open -a Text³ file`) arrive as an `odoc` Apple
 //!   event, not as program arguments. [`prepare_open_documents`] handles
 //!   that event and [`take_opened_files`] hands the paths to the app.
 //! - Windows: [`attach_parent_console`] makes CLI output visible in the
@@ -43,7 +43,7 @@ pub fn attach_parent_console() -> bool {
     }
 }
 
-/// Files the system asked Sanain to open since the last call.
+/// Files the system asked Text³ to open since the last call.
 pub fn take_opened_files() -> Vec<PathBuf> {
     OPENED
         .lock()
@@ -126,7 +126,7 @@ mod macos {
         // SAFETY: NSObject has no subclassing requirements; the class keeps
         // no instance variables and does not implement Drop.
         #[unsafe(super(NSObject))]
-        #[name = "SanainOpenDocumentsHandler"]
+        #[name = "Text3OpenDocumentsHandler"]
         struct Handler;
 
         impl Handler {

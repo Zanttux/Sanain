@@ -1,4 +1,4 @@
-//! Colour themes applied to egui's visuals. The Sanain themes use the brand
+//! Colour themes applied to egui's visuals. The Text³ themes use the brand
 //! tokens (assets/brand/tokens.json) and follow the system light/dark
 //! preference; bundled and user themes (see [`themes`]) replace them.
 
@@ -37,8 +37,8 @@ const fn hex(v: u32) -> Color32 {
     Color32::from_rgb((v >> 16) as u8, (v >> 8) as u8, v as u8)
 }
 
-/// Sanain dark syntax colours (WCAG AA on the dark canvas, 2026-11-25).
-const SANAIN_DARK_SYNTAX: Syntax = Syntax {
+/// Text³ dark syntax colours (WCAG AA on the dark canvas, 2026-11-25).
+const TEXT3_DARK_SYNTAX: Syntax = Syntax {
     keyword: hex(0xE6A46A),
     string: hex(0x9DCC8F),
     escape: hex(0xE3D08A),
@@ -50,8 +50,8 @@ const SANAIN_DARK_SYNTAX: Syntax = Syntax {
     attribute: hex(0xB9C6CF),
 };
 
-/// Sanain light syntax colours (WCAG AA on the light canvas).
-const SANAIN_LIGHT_SYNTAX: Syntax = Syntax {
+/// Text³ light syntax colours (WCAG AA on the light canvas).
+const TEXT3_LIGHT_SYNTAX: Syntax = Syntax {
     keyword: hex(0x9A4A0B),
     string: hex(0x2F6F2A),
     escape: hex(0x7A5A00),
@@ -73,7 +73,7 @@ pub const LIGHT: Palette = Palette {
     border: Color32::from_rgb(0xD4, 0xDD, 0xD9),
     error: Color32::from_rgb(0xB4, 0x23, 0x18),
     warning: Color32::from_rgb(0x8A, 0x52, 0x00),
-    syntax: SANAIN_LIGHT_SYNTAX,
+    syntax: TEXT3_LIGHT_SYNTAX,
 };
 
 pub const DARK: Palette = Palette {
@@ -86,7 +86,7 @@ pub const DARK: Palette = Palette {
     border: Color32::from_rgb(0x3B, 0x46, 0x50),
     error: Color32::from_rgb(0xFF, 0x91, 0x8A),
     warning: Color32::from_rgb(0xF6, 0xC6, 0x6D),
-    syntax: SANAIN_DARK_SYNTAX,
+    syntax: TEXT3_DARK_SYNTAX,
 };
 
 /// High-contrast palette: pure black/white with a yellow accent.
@@ -100,12 +100,12 @@ pub const HIGH_CONTRAST: Palette = Palette {
     border: Color32::from_rgb(0xFF, 0xFF, 0xFF),
     error: Color32::from_rgb(0xFF, 0x8A, 0x8A),
     warning: Color32::from_rgb(0xFF, 0xD6, 0x0A),
-    syntax: SANAIN_DARK_SYNTAX,
+    syntax: TEXT3_DARK_SYNTAX,
 };
 
 static HIGH_CONTRAST_ON: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
-/// A bundled or user theme replacing the Sanain themes, if chosen.
+/// A bundled or user theme replacing the Text³ themes, if chosen.
 static OVERRIDE: std::sync::RwLock<Option<&'static Palette>> = std::sync::RwLock::new(None);
 
 pub fn palette(ctx: &egui::Context) -> &'static Palette {
@@ -136,7 +136,7 @@ pub fn set_high_contrast(ctx: &egui::Context, on: bool) {
     });
 }
 
-/// Use `p` (a bundled or user theme) instead of the Sanain themes, or go
+/// Use `p` (a bundled or user theme) instead of the Text³ themes, or go
 /// back to them with `None`.
 pub fn set_override(ctx: &egui::Context, p: Option<&'static Palette>) {
     if let Ok(mut o) = OVERRIDE.write() {

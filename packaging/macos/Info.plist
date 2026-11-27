@@ -2,11 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>CFBundleName</key><string>Sanain</string>
-  <key>CFBundleDisplayName</key><string>Sanain</string>
+  <key>CFBundleName</key><string>Text³</string>
+  <key>CFBundleDisplayName</key><string>Text³</string>
   <key>CFBundleIdentifier</key><string>io.github.zanttux.sanain</string>
-  <key>CFBundleExecutable</key><string>sanain</string>
-  <key>CFBundleIconFile</key><string>Sanain</string>
+  <!-- Kept from Sanain so upgrades keep Launch Services and privacy grants (docs/REBRAND.md). -->
+  <key>CFBundleExecutable</key><string>text3</string>
+  <key>CFBundleIconFile</key><string>text3</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>@VERSION@</string>
   <key>CFBundleVersion</key><string>@VERSION@</string>
@@ -16,6 +17,7 @@
   <array>
     <dict>
       <key>CFBundleTypeName</key><string>Text document</string>
+      <key>CFBundleTypeIconFile</key><string>text3-document</string>
       <key>CFBundleTypeRole</key><string>Editor</string>
       <key>LSHandlerRank</key><string>Alternate</string>
       <key>LSItemContentTypes</key>

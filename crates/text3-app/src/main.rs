@@ -1,6 +1,6 @@
-//! Sanain desktop entry point.
+//! Text³ desktop entry point.
 //!
-//! Release builds on Windows use the GUI subsystem, so starting Sanain does
+//! Release builds on Windows use the GUI subsystem, so starting Text³ does
 //! not open a console window. CLI commands that print and exit attach to
 //! the parent's console. Their output may appear after the shell prompt
 //! because the shell does not wait for GUI-subsystem programs; this is
@@ -45,7 +45,7 @@ fn main() -> eframe::Result {
         text3_app::cli::Parsed::Run(_) => {}
     }
     if parsed == text3_app::cli::Parsed::Version {
-        println!("Sanain {}", env!("CARGO_PKG_VERSION"));
+        println!("Text³ {}", env!("CARGO_PKG_VERSION"));
         return Ok(());
     }
     let cli = match &parsed {
@@ -82,7 +82,7 @@ fn main() -> eframe::Result {
         Ok(l) => l,
         Err(e) => {
             // Embedded resources are checked by tests; this is a build bug.
-            eprintln!("sanain: localization resources are invalid: {e:?}");
+            eprintln!("text3: localization resources are invalid: {e:?}");
             std::process::exit(2);
         }
     };
@@ -108,12 +108,12 @@ fn main() -> eframe::Result {
             let msg = l10n
                 .format("cli-unknown-option", Some(&args))
                 .replace(['\u{2068}', '\u{2069}'], "");
-            eprintln!("sanain: {msg}\n\n{}", l10n.get("cli-help"));
+            eprintln!("text3: {msg}\n\n{}", l10n.get("cli-help"));
             std::process::exit(2);
         }
         text3_app::cli::Parsed::DiffNeedsTwo => {
             eprintln!(
-                "sanain: {}\n\n{}",
+                "text3: {}\n\n{}",
                 l10n.get("cli-diff-needs-two"),
                 l10n.get("cli-help")
             );
@@ -139,7 +139,7 @@ fn main() -> eframe::Result {
     let store = recovery_dir.and_then(|dir| match RecoveryStore::open(&dir) {
         Ok(s) => Some(s),
         Err(e) => {
-            eprintln!("sanain: recovery disabled ({}): {e}", dir.display());
+            eprintln!("text3: recovery disabled ({}): {e}", dir.display());
             None
         }
     });
@@ -165,15 +165,15 @@ fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
         renderer: renderer(),
         viewport: eframe::egui::ViewportBuilder::default()
-            .with_title("Sanain")
-            .with_app_id("sanain")
+            .with_title("Text³")
+            .with_app_id("text3")
             .with_inner_size([960.0, 680.0])
             .with_min_inner_size([360.0, 240.0])
             .with_icon(app_icon()),
         ..Default::default()
     };
     eframe::run_native(
-        "Sanain",
+        "Text³",
         options,
         Box::new(move |cc| {
             theme::install(&cc.egui_ctx);
@@ -225,7 +225,7 @@ fn shell_registration(l10n: &Localizer, register: bool) -> i32 {
         Ok(p) => shellreg::plain_path(&p),
         Err(e) => {
             eprintln!(
-                "sanain: {}",
+                "text3: {}",
                 fmt("cli-register-failed", "reason", e.to_string())
             );
             return 1;
@@ -249,7 +249,7 @@ fn shell_registration(l10n: &Localizer, register: bool) -> i32 {
         }
         Err(e) => {
             eprintln!(
-                "sanain: {}",
+                "text3: {}",
                 fmt("cli-register-failed", "reason", e.to_string())
             );
             1
@@ -257,9 +257,9 @@ fn shell_registration(l10n: &Localizer, register: bool) -> i32 {
     }
 }
 
-/// Window and taskbar icon (packaging/icons, generated from the brand SVG).
+/// Window and taskbar icon (packaging/icons, rendered from assets/brand/text3-mascot.svg).
 fn app_icon() -> std::sync::Arc<eframe::egui::IconData> {
-    let png = include_bytes!("../../../packaging/icons/sanain-256.png");
+    let png = include_bytes!("../../../packaging/icons/text3-256.png");
     let icon = image::load_from_memory(png)
         .map(|i| i.into_rgba8())
         .map_or_else(

@@ -5,16 +5,21 @@
 //! waits for signed releases and an update manifest (docs/RELEASE.md).
 //!
 //! Network use is opt-in or user-initiated (PRIVACY.md). The request sends
-//! no identifying data beyond a generic `Sanain/<version>` user agent.
+//! no identifying data beyond a generic `Text3/<version>` user agent.
 
 use std::time::Duration;
 
 /// All releases, newest first. Not `/releases/latest`: GitHub leaves
 /// pre-releases out of it, and every release so far is a pre-release, so
 /// it answered 404 ("no releases") forever.
-pub const RELEASES_API: &str = "https://api.github.com/repos/Zanttux/Sanain/releases?per_page=30";
-/// Release pages we are willing to send the user to.
-const RELEASE_PAGE_PREFIX: &str = "https://github.com/Zanttux/Sanain/releases/";
+pub const RELEASES_API: &str = "https://api.github.com/repos/Zanttux/text3/releases?per_page=30";
+/// Release pages we are willing to send the user to: the repository's
+/// current name and its name before the Text³ rename (GitHub redirects
+/// the old URLs, and older API answers may still use them).
+const RELEASE_PAGE_PREFIXES: [&str; 2] = [
+    "https://github.com/Zanttux/text3/releases/",
+    "https://github.com/Zanttux/Sanain/releases/",
+];
 const MAX_RESPONSE: u64 = 1024 * 1024;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -94,7 +99,7 @@ pub fn parse_release(json: &str) -> Result<Release, UpdateError> {
 
 /// The newest published release in GitHub's release list: drafts and
 /// tags that are not versions (the rolling `nightly`) are skipped;
-/// pre-releases count, since every Sanain release is one for now.
+/// pre-releases count, since every Text³ release is one for now.
 /// `Ok(None)` when the list holds no such release.
 pub fn parse_releases(json: &str) -> Result<Option<Release>, UpdateError> {
     use text3_tools::json::{Node, tree};
@@ -143,7 +148,8 @@ fn release_from(root: &text3_tools::json::Node) -> Result<Release, UpdateError> 
     let tag = string("tag_name").ok_or(UpdateError::Invalid)?;
     let page = string("html_url").ok_or(UpdateError::Invalid)?;
     let version = Version::parse(&tag).ok_or(UpdateError::Invalid)?;
-    if !page.starts_with(RELEASE_PAGE_PREFIX) || page.contains(['"', '\\', ' ']) {
+    if !RELEASE_PAGE_PREFIXES.iter().any(|p| page.starts_with(p)) || page.contains(['"', '\\', ' '])
+    {
         return Err(UpdateError::Invalid);
     }
     Ok(Release { version, tag, page })
@@ -166,7 +172,7 @@ pub fn check(current: &str) -> Result<Status, UpdateError> {
         .into();
     let mut resp = agent
         .get(RELEASES_API)
-        .header("User-Agent", &format!("Sanain/{current}"))
+        .header("User-Agent", &format!("Text3/{current}"))
         .header("Accept", "application/vnd.github+json")
         .call()
         .map_err(|e| UpdateError::Network(e.to_string()))?;
@@ -207,7 +213,7 @@ mod tests {
 
     #[test]
     fn parses_github_release_json() {
-        let json = r#"{"url":"x","html_url":"https://github.com/Zanttux/Sanain/releases/tag/v0.1.0","tag_name":"v0.1.0","draft":false,"assets":[]}"#;
+        let json = r#"{"url":"x","html_url":"https://github.com/Zanttux/text3/releases/tag/v0.1.0","tag_name":"v0.1.0","draft":false,"assets":[]}"#;
         let r = parse_release(json).unwrap();
         assert_eq!(r.tag, "v0.1.0");
         assert!(matches!(status("0.0.1", r.clone()), Status::Available(_)));
@@ -217,7 +223,7 @@ mod tests {
     /// The shape GitHub returns today: only pre-releases plus `nightly`.
     #[test]
     fn picks_the_newest_versioned_release_from_the_list() {
-        let page = |t: &str| format!("https://github.com/Zanttux/Sanain/releases/tag/{t}");
+        let page = |t: &str| format!("https://github.com/Zanttux/text3/releases/tag/{t}");
         let item = |t: &str, pre: bool, draft: bool| {
             format!(
                 r#"{{"tag_name":"{t}","html_url":"{}","prerelease":{pre},"draft":{draft}}}"#,
@@ -246,6 +252,30 @@ mod tests {
         assert_eq!(parse_releases(hostile).unwrap(), None, "bad page ignored");
     }
 
+    /// Release pages under the current repository name are accepted.
+    #[test]
+    fn accepts_release_pages_of_the_text3_repository() {
+        let json = r#"{"tag_name":"v0.3.0","html_url":"https://github.com/Zanttux/text3/releases/tag/v0.3.0"}"#;
+        let r = parse_release(json).unwrap();
+        assert_eq!(
+            r.page,
+            "https://github.com/Zanttux/text3/releases/tag/v0.3.0"
+        );
+    }
+
+    /// Pages under the name before the rename (Zanttux/Text³) still work.
+    #[test]
+    fn accepts_release_pages_of_the_old_sanain_repository() {
+        let json = r#"{"tag_name":"v0.2.1","html_url":"https://github.com/Zanttux/Sanain/releases/tag/v0.2.1"}"#;
+        let r = parse_release(json).unwrap();
+        assert_eq!(
+            r.page,
+            "https://github.com/Zanttux/Sanain/releases/tag/v0.2.1"
+        );
+        let list = format!("[{json}]");
+        assert_eq!(parse_releases(&list).unwrap().unwrap().tag, "v0.2.1");
+    }
+
     #[test]
     fn rejects_unexpected_or_hostile_responses() {
         for json in [
@@ -255,6 +285,8 @@ mod tests {
             r#"{"tag_name":"v1.0.0","html_url":"https://evil.example/releases/x"}"#,
             r#"{"tag_name":"v1.0.0","html_url":"https://github.com/Zanttux/Sanain/releases/x\" onclick"}"#,
             r#"{"tag_name":"latest","html_url":"https://github.com/Zanttux/Sanain/releases/x"}"#,
+            r#"{"tag_name":"v1.0.0","html_url":"https://github.com/Zanttux/text3/releases/x\" onclick"}"#,
+            r#"{"tag_name":"v1.0.0","html_url":"https://github.com/Zanttux/text3-evil/releases/x"}"#,
         ] {
             assert_eq!(parse_release(json), Err(UpdateError::Invalid), "{json}");
         }

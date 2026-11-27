@@ -1,5 +1,5 @@
 # Machine translation by Claude (AI); review by a native speaker required before release.
-app-name = Sanain
+app-name = Text³
 menu-file = ファイル
 file-open = 開く…
 file-save = 保存
@@ -15,8 +15,8 @@ edit-redo = やり直す
 edit-select-all = すべてを選択
 untitled = 名称未設定
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = 行 { $line }、列 { $column }
 status-selections = { $count ->
@@ -50,8 +50,8 @@ menu-window = ウインドウ
 edit-cut = カット
 edit-copy = コピー
 edit-paste = ペースト
-app-quit = Sanain を終了
-app-hide = Sanain を非表示
+app-quit = Text³ を終了
+app-hide = Text³ を非表示
 app-hide-others = ほかを非表示
 app-show-all = すべてを表示
 window-minimize = しまう
@@ -106,7 +106,7 @@ settings-theme-dark = ダーク
 settings-restore-session = 前回のセッションのファイルを再度開く
 settings-language = 言語
 settings-language-system = システムに合わせる
-settings-language-note = 言語の変更は Sanain の再起動後に反映されます。
+settings-language-note = 言語の変更は Text³ の再起動後に反映されます。
 settings-save-failed = 設定を保存できませんでした: { $reason }
 view-command-palette = コマンドパレット…
 palette-placeholder = コマンドを入力
@@ -239,7 +239,7 @@ view-unfold = 展開
 view-unfold-all = すべて展開
 settings-shortcuts = キーボードショートカット
 settings-keymap-preset = プリセット
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = 変更
 settings-shortcut-reset = リセット
@@ -257,12 +257,12 @@ folder-search-summary = { $count ->
     }）
 app-check-updates = アップデートを確認…
 update-checking = アップデートを確認しています…
-update-up-to-date = Sanain { $version } は最新バージョンです。
-update-no-releases = Sanain のリリースはまだ公開されていません。
+update-up-to-date = Text³ { $version } は最新バージョンです。
+update-no-releases = Text³ のリリースはまだ公開されていません。
 update-failed = アップデートを確認できませんでした: { $reason }
 update-invalid = 予期しない応答
-update-available-title = Sanain { $version } が利用可能です
-update-available-body = ダウンロードページを開いて入手してください。Sanain が自動でダウンロードやインストールを行うことはありません。
+update-available-title = Text³ { $version } が利用可能です
+update-available-body = ダウンロードページを開いて入手してください。Text³ が自動でダウンロードやインストールを行うことはありません。
 update-open-page = ダウンロードページを開く
 update-later = 後で
 settings-check-updates = 1日に1回アップデートを確認
@@ -349,12 +349,11 @@ replace-preview-more = 変更される最初の 200 行のみを表示してい�
 replace-preview-stale = ドキュメントが変更されたため、何も置換されませんでした。もう一度「すべてを置換」を実行してください。
 encoding-detected = { $encoding } で開きました（ファイルの内容から検出）。
 encoding-suggested = ファイルの内容から推定: { $encoding }。開く前にプレビューを確認してください。
-app-about = Sanain について
+app-about = Text³ について
 menu-help = ヘルプ
-about-tagline = 言葉の力。
 about-version = バージョン { $version }
 about-license = Mozilla Public License 2.0 に基づく自由なオープンソースソフトウェアです。
-about-ai = AI が作り、人が導き、コミュニティが育てる。
+about-ai = AI（Anthropic の Claude）の支援を受け、メンテナーの指揮のもとで開発されています。
 about-notices = サードパーティ製コンポーネントとそのライセンスは、各リリースに含まれる THIRD_PARTY_NOTICES に記載されています。
 about-source = GitHub のソースコードと Issue
 tools-xml-validate = XML を検証
@@ -395,13 +394,13 @@ tools-compare-file = ファイルと比較…
 compare-file-failed = { $name } と比較できませんでした: { $reason }
 cli-help =
     使い方:
-      sanain [ファイル…]     ファイルを開く
-      sanain --diff 左 右    2 つのファイルを並べて比較
-      sanain --version       バージョンを表示
-      sanain --help          このヘルプを表示
+      text3 [ファイル…]      ファイルを開く
+      text3 --diff 左 右     2 つのファイルを並べて比較
+      text3 --version        バージョンを表示
+      text3 --help           このヘルプを表示
     ダッシュで始まるファイル名の前には -- を付けてください。
 cli-unknown-option = 不明なオプション { $option }。
-cli-diff-needs-two = --diff には 2 つのファイルが必要です: sanain --diff 左 右
+cli-diff-needs-two = --diff には 2 つのファイルが必要です: text3 --diff 左 右
 window-move-tab-left = タブを左に移動
 window-move-tab-right = タブを右に移動
 edit-skip-occurrence = 次の出現箇所へスキップ
@@ -433,12 +432,12 @@ image-outside = この画像は書類のフォルダの外にあります。
 image-allow = このフォルダの画像を表示
 cli-help-integration =
     ファイルマネージャーとの統合（現在のユーザーのみ）:
-      sanain --register           Sanain を「プログラムから開く」に追加（Linux、Windows）
-      sanain --unregister         再び削除
-cli-registered = Sanain を「プログラムから開く」に追加しました。{ $place }
-cli-unregistered = Sanain を「プログラムから開く」から削除しました。
+      text3 --register            Text³ を「プログラムから開く」に追加（Linux、Windows）
+      text3 --unregister          再び削除
+cli-registered = Text³ を「プログラムから開く」に追加しました。{ $place }
+cli-unregistered = Text³ を「プログラムから開く」から削除しました。
 cli-register-failed = ファイルマネージャーとの統合を変更できませんでした: { $reason }
-cli-register-macos = macOS では登録は不要です。Sanain.app を「アプリケーション」フォルダに入れると、Finder の「プログラムから開く」に表示されます。
+cli-register-macos = macOS では登録は不要です。Text³.app を「アプリケーション」フォルダに入れると、Finder の「プログラムから開く」に表示されます。
 settings-tab-general = 一般
 settings-tab-editor = エディタ
 settings-tab-appearance = 外観

@@ -1,4 +1,4 @@
-app-name = Sanain
+app-name = Text³
 menu-file = File
 file-open = Open…
 file-save = Save
@@ -15,8 +15,8 @@ edit-redo = Redo
 edit-select-all = Select All
 untitled = Untitled
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = Ln { $line }, Col { $column }
 status-selections = { $count ->
@@ -51,8 +51,8 @@ menu-window = Window
 edit-cut = Cut
 edit-copy = Copy
 edit-paste = Paste
-app-quit = Quit Sanain
-app-hide = Hide Sanain
+app-quit = Quit Text³
+app-hide = Hide Text³
 app-hide-others = Hide Others
 app-show-all = Show All
 window-minimize = Minimize
@@ -109,7 +109,7 @@ settings-theme-dark = Dark
 settings-restore-session = Reopen files from the last session
 settings-language = Language
 settings-language-system = Match system
-settings-language-note = Language changes apply after restarting Sanain.
+settings-language-note = Language changes apply after restarting Text³.
 settings-save-failed = Could not save settings: { $reason }
 view-command-palette = Command Palette…
 palette-placeholder = Type a command
@@ -244,7 +244,7 @@ view-unfold = Unfold
 view-unfold-all = Unfold All
 settings-shortcuts = Keyboard shortcuts
 settings-keymap-preset = Preset
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = Change
 settings-shortcut-reset = Reset
@@ -264,12 +264,12 @@ folder-search-summary = { $count ->
     }
 app-check-updates = Check for Updates…
 update-checking = Checking for updates…
-update-up-to-date = Sanain { $version } is the newest version.
-update-no-releases = No Sanain releases have been published yet.
+update-up-to-date = Text³ { $version } is the newest version.
+update-no-releases = No Text³ releases have been published yet.
 update-failed = Could not check for updates: { $reason }
 update-invalid = unexpected response
-update-available-title = Sanain { $version } is available
-update-available-body = Open the download page to get it. Sanain does not download or install anything by itself.
+update-available-title = Text³ { $version } is available
+update-available-body = Open the download page to get it. Text³ does not download or install anything by itself.
 update-open-page = Open Download Page
 update-later = Later
 settings-check-updates = Check for updates once a day
@@ -365,12 +365,11 @@ replace-preview-more = Only the first 200 changed lines are shown.
 replace-preview-stale = The document changed; nothing was replaced. Run Replace All again.
 encoding-detected = Opened as { $encoding } (detected from the file's contents).
 encoding-suggested = Suggested from the file's contents: { $encoding }. Check the preview before opening.
-app-about = About Sanain
+app-about = About Text³
 menu-help = Help
-about-tagline = The power of words.
 about-version = Version { $version }
 about-license = Free and open source under the Mozilla Public License 2.0.
-about-ai = AI-built. Human-led. Community-driven.
+about-ai = Developed with AI assistance (Claude by Anthropic) under the direction of its maintainer.
 about-notices = Third-party components and their licenses are listed in THIRD_PARTY_NOTICES, included with every release.
 about-source = Source code and issues on GitHub
 tools-xml-validate = Validate XML
@@ -413,13 +412,13 @@ tools-compare-file = Compare with File…
 compare-file-failed = Could not compare with { $name }: { $reason }
 cli-help =
     Usage:
-      sanain [FILE…]              open files
-      sanain --diff LEFT RIGHT    compare two files side by side
-      sanain --version            show the version
-      sanain --help               show this help
+      text3 [FILE…]               open files
+      text3 --diff LEFT RIGHT     compare two files side by side
+      text3 --version             show the version
+      text3 --help                show this help
     Use -- before file names that start with a dash.
 cli-unknown-option = Unknown option { $option }.
-cli-diff-needs-two = --diff needs two files: sanain --diff LEFT RIGHT
+cli-diff-needs-two = --diff needs two files: text3 --diff LEFT RIGHT
 window-move-tab-left = Move Tab Left
 window-move-tab-right = Move Tab Right
 edit-skip-occurrence = Skip to Next Occurrence
@@ -459,12 +458,12 @@ image-outside = This image is outside the document's folder.
 image-allow = Show images from this folder
 cli-help-integration =
     Integration with the file manager (current user only):
-      sanain --register           add Sanain to "Open With" (Linux, Windows)
-      sanain --unregister         remove it again
-cli-registered = Sanain was added to "Open With". { $place }
-cli-unregistered = Sanain was removed from "Open With".
+      text3 --register            add Text³ to "Open With" (Linux, Windows)
+      text3 --unregister          remove it again
+cli-registered = Text³ was added to "Open With". { $place }
+cli-unregistered = Text³ was removed from "Open With".
 cli-register-failed = The file manager integration could not be changed: { $reason }
-cli-register-macos = On macOS nothing needs to be registered: once Sanain.app is in the Applications folder, Finder offers it in Open With.
+cli-register-macos = On macOS nothing needs to be registered: once Text³.app is in the Applications folder, Finder offers it in Open With.
 settings-tab-general = General
 settings-tab-editor = Editor
 settings-tab-appearance = Appearance

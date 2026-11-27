@@ -68,7 +68,7 @@ impl ImageCache {
         let tx = self.tx.clone();
         let ctx = ctx.clone();
         let spawned = std::thread::Builder::new()
-            .name("sanain-image".into())
+            .name("text3-image".into())
             .spawn(move || {
                 let result = images::load(&key.0);
                 let _ = tx.send((key, result));

@@ -1,5 +1,5 @@
 # Machine translation by Claude (AI); review by a native speaker required before release.
-app-name = Sanain
+app-name = Text³
 menu-file = Soubor
 file-open = Otevřít…
 file-save = Uložit
@@ -18,8 +18,8 @@ edit-redo = Znovu
 edit-select-all = Vybrat vše
 untitled = Bez názvu
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = Ř. { $line }, sl. { $column }
 status-selections = { $count ->
@@ -56,8 +56,8 @@ menu-window = Okno
 edit-cut = Vyjmout
 edit-copy = Kopírovat
 edit-paste = Vložit
-app-quit = Ukončit Sanain
-app-hide = Skrýt Sanain
+app-quit = Ukončit Text³
+app-hide = Skrýt Text³
 app-hide-others = Skrýt ostatní
 app-show-all = Zobrazit vše
 window-minimize = Minimalizovat
@@ -118,7 +118,7 @@ settings-theme-dark = Tmavý
 settings-restore-session = Znovu otevřít soubory z minulé relace
 settings-language = Jazyk
 settings-language-system = Podle systému
-settings-language-note = Změna jazyka se projeví po restartu aplikace Sanain.
+settings-language-note = Změna jazyka se projeví po restartu aplikace Text³.
 settings-save-failed = Nastavení nelze uložit: { $reason }
 view-command-palette = Paleta příkazů…
 palette-placeholder = Zadejte příkaz
@@ -257,7 +257,7 @@ view-unfold = Rozbalit
 view-unfold-all = Rozbalit vše
 settings-shortcuts = Klávesové zkratky
 settings-keymap-preset = Předvolba
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = Změnit
 settings-shortcut-reset = Obnovit výchozí
@@ -281,12 +281,12 @@ folder-search-summary = { $count ->
     }
 app-check-updates = Zkontrolovat aktualizace…
 update-checking = Kontrolují se aktualizace…
-update-up-to-date = Sanain { $version } je nejnovější verze.
-update-no-releases = Zatím nebyla zveřejněna žádná vydání aplikace Sanain.
+update-up-to-date = Text³ { $version } je nejnovější verze.
+update-no-releases = Zatím nebyla zveřejněna žádná vydání aplikace Text³.
 update-failed = Aktualizace nelze zkontrolovat: { $reason }
 update-invalid = neočekávaná odpověď
-update-available-title = Je k dispozici Sanain { $version }
-update-available-body = Otevřete stránku ke stažení a získejte jej. Sanain sám nic nestahuje ani neinstaluje.
+update-available-title = Je k dispozici Text³ { $version }
+update-available-body = Otevřete stránku ke stažení a získejte jej. Text³ sám nic nestahuje ani neinstaluje.
 update-open-page = Otevřít stránku ke stažení
 update-later = Později
 settings-check-updates = Kontrolovat aktualizace jednou denně
@@ -400,12 +400,11 @@ replace-preview-more = Zobrazeno je pouze prvních 200 změněných řádků.
 replace-preview-stale = Dokument se změnil, nic nebylo nahrazeno. Spusťte znovu Nahradit vše.
 encoding-detected = Otevřeno v kódování { $encoding } (zjištěno z obsahu souboru).
 encoding-suggested = Navrženo podle obsahu souboru: { $encoding }. Před otevřením zkontrolujte náhled.
-app-about = O aplikaci Sanain
+app-about = O aplikaci Text³
 menu-help = Nápověda
-about-tagline = Síla slov.
 about-version = Verze { $version }
 about-license = Svobodný a otevřený software pod licencí Mozilla Public License 2.0.
-about-ai = Vytvořeno AI. Vedeno lidmi. Rozvíjeno komunitou.
+about-ai = Vyvíjeno s pomocí AI (Claude od Anthropic) pod vedením správce projektu.
 about-notices = Komponenty třetích stran a jejich licence jsou uvedeny v souboru THIRD_PARTY_NOTICES, který je součástí každého vydání.
 about-source = Zdrojový kód a hlášení chyb na GitHubu
 tools-xml-validate = Ověřit XML
@@ -452,13 +451,13 @@ tools-compare-file = Porovnat se souborem…
 compare-file-failed = Nelze porovnat se souborem { $name }: { $reason }
 cli-help =
     Použití:
-      sanain [SOUBOR…]            otevřít soubory
-      sanain --diff LEVÝ PRAVÝ    porovnat dva soubory vedle sebe
-      sanain --version            zobrazit verzi
-      sanain --help               zobrazit tuto nápovědu
+      text3 [SOUBOR…]             otevřít soubory
+      text3 --diff LEVÝ PRAVÝ     porovnat dva soubory vedle sebe
+      text3 --version             zobrazit verzi
+      text3 --help                zobrazit tuto nápovědu
     Před názvy souborů začínajícími pomlčkou použijte --.
 cli-unknown-option = Neznámá volba { $option }.
-cli-diff-needs-two = --diff vyžaduje dva soubory: sanain --diff LEVÝ PRAVÝ
+cli-diff-needs-two = --diff vyžaduje dva soubory: text3 --diff LEVÝ PRAVÝ
 window-move-tab-left = Přesunout kartu doleva
 window-move-tab-right = Přesunout kartu doprava
 edit-skip-occurrence = Přeskočit na další výskyt
@@ -505,12 +504,12 @@ image-outside = Tento obrázek je mimo složku dokumentu.
 image-allow = Zobrazit obrázky z této složky
 cli-help-integration =
     Integrace se správcem souborů (jen pro aktuálního uživatele):
-      sanain --register           přidat Sanain do nabídky „Otevřít v aplikaci“ (Linux, Windows)
-      sanain --unregister         znovu jej odebrat
-cli-registered = Sanain byl přidán do nabídky „Otevřít v aplikaci“. { $place }
-cli-unregistered = Sanain byl odebrán z nabídky „Otevřít v aplikaci“.
+      text3 --register            přidat Text³ do nabídky „Otevřít v aplikaci“ (Linux, Windows)
+      text3 --unregister          znovu jej odebrat
+cli-registered = Text³ byl přidán do nabídky „Otevřít v aplikaci“. { $place }
+cli-unregistered = Text³ byl odebrán z nabídky „Otevřít v aplikaci“.
 cli-register-failed = Integraci se správcem souborů nebylo možné změnit: { $reason }
-cli-register-macos = V macOS není potřeba nic registrovat: jakmile je Sanain.app ve složce Aplikace, Finder jej nabídne v nabídce „Otevřít v aplikaci“.
+cli-register-macos = V macOS není potřeba nic registrovat: jakmile je Text³.app ve složce Aplikace, Finder jej nabídne v nabídce „Otevřít v aplikaci“.
 settings-tab-general = Obecné
 settings-tab-editor = Editor
 settings-tab-appearance = Vzhled

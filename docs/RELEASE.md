@@ -31,9 +31,9 @@ advisory and source policy: `deny.toml`, checked by cargo-deny in CI.
 Packaging: `scripts/package.py` builds, for the current platform, an
 unsigned installer (Windows: per-user Inno Setup `-setup.exe`, no admin
 rights, optional Open With registration; macOS: `.dmg`; Linux: `.deb`)
-and a portable archive (`-portable`, with a `sanain-portable` marker that
+and a portable archive (`-portable`, with a `text3-portable` marker that
 keeps settings and data in a `data` folder next to the program) in
-`target/dist/` (macOS: `Sanain.app` in a zip;
+`target/dist/` (macOS: `Text³.app` in a zip;
 Windows: zip; Linux: tar.gz) with LICENSE, README, CHANGELOG, the
 third-party notices and a `.sha256` file. The `Package` workflow runs it
 on Linux, Windows and macOS for `v*` tags and on manual dispatch, and
@@ -46,13 +46,13 @@ and notarization, an SBOM, and a Linux desktop entry and icon.
 
 CI builds releases from tagged commits with the lockfile and produces
 checksums, SBOM, notices and release notes. The owner approves publishing.
-Updates: Sanain can check GitHub for a newer release (manual, or once a
+Updates: Text³ can check GitHub for a newer release (manual, or once a
 day if the user opts in) and links to the release page. It never
 downloads or installs anything itself. Automatic installation waits for
 signed releases, a signed update manifest, rollback and a threat model;
 those need signing keys and owner approval (docs/AUTONOMY.md).
 
-CLI: `sanain [FILE…]`, `sanain --diff LEFT RIGHT`, `--version`, `--help`,
+CLI: `text3 [FILE…]`, `text3 --diff LEFT RIGHT`, `--version`, `--help`,
 `--register`/`--unregister` (file manager Open With, per user)
 (`--` ends options). Proposed: `--new`; `--tail` later. No shell interpolation of paths. Importing Notepad++
 settings requires consent and never modifies the originals.

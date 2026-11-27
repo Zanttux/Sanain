@@ -1,12 +1,12 @@
 [Desktop Entry]
 Type=Application
-Name=Sanain
+Name=Text³
 GenericName=Text Editor
 Comment=Native text editor
-Exec=sanain %F
-Icon=io.github.zanttux.Sanain
+Exec=text3 %F
+Icon=io.github.zanttux.text3
 Terminal=false
 Categories=Utility;TextEditor;Development;
 MimeType=text/plain;text/markdown;text/x-markdown;text/csv;text/tab-separated-values;text/x-log;text/xml;application/xml;application/json;application/x-yaml;application/toml;text/x-csrc;text/x-chdr;text/x-c++src;text/x-csharp;text/x-go;text/x-java;text/x-python;text/x-ruby;text/rust;text/x-shellscript;application/x-shellscript;text/css;text/html;text/javascript;application/javascript;text/x-typescript;text/x-php;application/x-php;text/x-lua;application/x-powershell;
 StartupNotify=true
-StartupWMClass=sanain
+StartupWMClass=text3

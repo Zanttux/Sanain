@@ -16,7 +16,7 @@
 //!
 //! `id` is a Notepad++ menu command (`IDM_*` in `menuCmdID.h`), `ScintID` a
 //! Scintilla message (`SCI_*`), and `Key` a Windows virtual-key code;
-//! `Key="0"` means the shortcut was removed. Only commands Sanain has are
+//! `Key="0"` means the shortcut was removed. Only commands Text³ has are
 //! mapped; macros, run commands, plugin commands and unknown ids or keys are
 //! counted as skipped. The input is size-capped, entities are never
 //! expanded (attribute values are read raw) and parsing never panics.
@@ -27,7 +27,7 @@ use crate::keymap::{Chord, Mods};
 pub const MAX_BYTES: usize = 1024 * 1024;
 const MAX_DEPTH: usize = 32;
 
-/// Notepad++ menu command ids (`menuCmdID.h`) → Sanain command ids.
+/// Notepad++ menu command ids (`menuCmdID.h`) → Text³ command ids.
 pub const INTERNAL_COMMANDS: &[(u32, &str)] = &[
     (41001, "file.new"),            // IDM_FILE_NEW
     (41002, "file.open"),           // IDM_FILE_OPEN
@@ -62,7 +62,7 @@ pub const INTERNAL_COMMANDS: &[(u32, &str)] = &[
     (44031, "view.unfold"),         // IDM_VIEW_UNFOLD_CURRENT
 ];
 
-/// Scintilla messages (`Scintilla.h`) → Sanain command ids, for
+/// Scintilla messages (`Scintilla.h`) → Text³ command ids, for
 /// `<ScintKey>` entries that are not tied to a menu command.
 pub const SCINTILLA_COMMANDS: &[(u32, &str)] = &[
     (2011, "edit.redo"),        // SCI_REDO
@@ -76,7 +76,7 @@ pub const SCINTILLA_COMMANDS: &[(u32, &str)] = &[
     (2338, "edit.delete-line"), // SCI_LINEDELETE
 ];
 
-/// Windows virtual-key code → Sanain key name.
+/// Windows virtual-key code → Text³ key name.
 pub fn key_name(vk: u32) -> Option<String> {
     let named = match vk {
         0x08 => "Backspace",
@@ -118,7 +118,7 @@ pub fn key_name(vk: u32) -> Option<String> {
 /// What an import found.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Import {
-    /// (Sanain command id, chord or `None` for a removed shortcut), in file
+    /// (Text³ command id, chord or `None` for a removed shortcut), in file
     /// order; a command appears once (its last entry wins).
     pub entries: Vec<(&'static str, Option<Chord>)>,
     /// Entries that could not be used (unknown command or key, macros, run
@@ -183,7 +183,7 @@ fn lookup(table: &[(u32, &'static str)], id: u32) -> Option<&'static str> {
 }
 
 /// The chord for an entry: `Ok(None)` for a removed shortcut, `Err(())`
-/// for a key Sanain cannot bind.
+/// for a key Text³ cannot bind.
 fn chord(a: &Attrs) -> Result<Option<Chord>, ()> {
     let vk = a.key.ok_or(())?;
     if vk == 0 {

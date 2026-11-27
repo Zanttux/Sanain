@@ -26,7 +26,7 @@ pub enum ThemeChoice {
 pub const PORTABLE_MARKER: &str = "sanain-portable";
 
 /// Portable mode: with a `sanain-portable` file next to the executable (or
-/// next to Sanain.app on macOS), settings, recovery and history live in a
+/// next to Text³.app on macOS), settings, recovery and history live in a
 /// `data` folder beside it instead of the user profile.
 pub fn portable_root() -> Option<PathBuf> {
     let exe = std::env::current_exe().ok()?;
@@ -36,7 +36,7 @@ pub fn portable_root() -> Option<PathBuf> {
 /// [`portable_root`] for a given executable path.
 pub fn portable_root_for(exe: &std::path::Path) -> Option<PathBuf> {
     let dir = exe.parent()?;
-    // Sanain.app/Contents/MacOS/sanain → the folder holding Sanain.app.
+    // Text³.app/Contents/MacOS/sanain → the folder holding Text³.app.
     let bundle_parent = dir
         .parent()
         .filter(|c| c.ends_with("Contents"))
@@ -101,7 +101,7 @@ impl Default for Settings {
 
 impl Settings {
     /// Per-user configuration directory, e.g.
-    /// `~/Library/Application Support/Sanain` on macOS.
+    /// `~/Library/Application Support/Text³` on macOS.
     pub fn default_dir() -> Option<PathBuf> {
         let env = |k: &str| {
             std::env::var_os(k)

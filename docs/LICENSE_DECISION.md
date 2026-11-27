@@ -4,7 +4,7 @@ Status: decided. MPL-2.0, approved by the owner on 2026-11-25. The
 verbatim text from mozilla.org is in LICENSE.
 
 ## Reasons
-- File-level copyleft: improvements to Sanain's own files stay open, while
+- File-level copyleft: improvements to Text³'s own files stay open, while
   the code can be combined with code under other licenses.
 - Compatible with the dependency set: as of 2026-11-25, 405 runtime
   crates, none copyleft-only (egui/eframe, Tree-sitter and its grammars

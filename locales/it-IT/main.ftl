@@ -1,5 +1,5 @@
 # Machine translation by Claude (AI); review by a native speaker required before release.
-app-name = Sanain
+app-name = Text³
 menu-file = File
 file-open = Apri…
 file-save = Salva
@@ -16,8 +16,8 @@ edit-redo = Ripeti
 edit-select-all = Seleziona tutto
 untitled = Senza titolo
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = Riga { $line }, col. { $column }
 status-selections = { $count ->
@@ -52,8 +52,8 @@ menu-window = Finestra
 edit-cut = Taglia
 edit-copy = Copia
 edit-paste = Incolla
-app-quit = Esci da Sanain
-app-hide = Nascondi Sanain
+app-quit = Esci da Text³
+app-hide = Nascondi Text³
 app-hide-others = Nascondi altre
 app-show-all = Mostra tutte
 window-minimize = Contrai
@@ -110,7 +110,7 @@ settings-theme-dark = Scuro
 settings-restore-session = Riapri i file dell’ultima sessione
 settings-language = Lingua
 settings-language-system = Come il sistema
-settings-language-note = Le modifiche alla lingua hanno effetto dopo il riavvio di Sanain.
+settings-language-note = Le modifiche alla lingua hanno effetto dopo il riavvio di Text³.
 settings-save-failed = Impossibile salvare le impostazioni: { $reason }
 view-command-palette = Tavolozza comandi…
 palette-placeholder = Digita un comando
@@ -245,7 +245,7 @@ view-unfold = Espandi
 view-unfold-all = Espandi tutto
 settings-shortcuts = Scorciatoie da tastiera
 settings-keymap-preset = Preimpostazione
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = Cambia
 settings-shortcut-reset = Ripristina
@@ -265,12 +265,12 @@ folder-search-summary = { $count ->
     }
 app-check-updates = Verifica aggiornamenti…
 update-checking = Verifica degli aggiornamenti in corso…
-update-up-to-date = Sanain { $version } è la versione più recente.
-update-no-releases = Non è ancora stata pubblicata alcuna versione di Sanain.
+update-up-to-date = Text³ { $version } è la versione più recente.
+update-no-releases = Non è ancora stata pubblicata alcuna versione di Text³.
 update-failed = Impossibile verificare gli aggiornamenti: { $reason }
 update-invalid = risposta imprevista
-update-available-title = Sanain { $version } è disponibile
-update-available-body = Apri la pagina di download per ottenerlo. Sanain non scarica né installa nulla da solo.
+update-available-title = Text³ { $version } è disponibile
+update-available-body = Apri la pagina di download per ottenerlo. Text³ non scarica né installa nulla da solo.
 update-open-page = Apri pagina di download
 update-later = Più tardi
 settings-check-updates = Verifica aggiornamenti una volta al giorno
@@ -366,12 +366,11 @@ replace-preview-more = Vengono mostrate solo le prime 200 righe modificate.
 replace-preview-stale = Il documento è cambiato; non è stato sostituito nulla. Esegui di nuovo Sostituisci tutto.
 encoding-detected = Aperto come { $encoding } (rilevato dal contenuto del file).
 encoding-suggested = Suggerita in base al contenuto del file: { $encoding }. Controlla l’anteprima prima di aprire.
-app-about = Informazioni su Sanain
+app-about = Informazioni su Text³
 menu-help = Aiuto
-about-tagline = Il potere delle parole.
 about-version = Versione { $version }
 about-license = Libero e open source con licenza Mozilla Public License 2.0.
-about-ai = Creato dall’IA. Guidato da persone. Sostenuto dalla comunità.
+about-ai = Sviluppato con l’assistenza dell’IA (Claude di Anthropic) sotto la direzione del suo manutentore.
 about-notices = I componenti di terze parti e le relative licenze sono elencati in THIRD_PARTY_NOTICES, incluso in ogni versione.
 about-source = Codice sorgente e segnalazioni su GitHub
 tools-xml-validate = Convalida XML
@@ -414,13 +413,13 @@ tools-compare-file = Confronta con un file…
 compare-file-failed = Impossibile confrontare con { $name }: { $reason }
 cli-help =
     Uso:
-      sanain [FILE…]                   apri file
-      sanain --diff SINISTRA DESTRA    confronta due file affiancati
-      sanain --version                 mostra la versione
-      sanain --help                    mostra questa guida
+      text3 [FILE…]                    apri file
+      text3 --diff SINISTRA DESTRA     confronta due file affiancati
+      text3 --version                  mostra la versione
+      text3 --help                     mostra questa guida
     Usa -- prima dei nomi di file che iniziano con un trattino.
 cli-unknown-option = Opzione sconosciuta { $option }.
-cli-diff-needs-two = --diff richiede due file: sanain --diff SINISTRA DESTRA
+cli-diff-needs-two = --diff richiede due file: text3 --diff SINISTRA DESTRA
 window-move-tab-left = Sposta scheda a sinistra
 window-move-tab-right = Sposta scheda a destra
 edit-skip-occurrence = Salta all’occorrenza successiva
@@ -457,12 +456,12 @@ image-outside = Questa immagine si trova fuori dalla cartella del documento.
 image-allow = Mostra le immagini di questa cartella
 cli-help-integration =
     Integrazione con il file manager (solo per l’utente corrente):
-      sanain --register           aggiunge Sanain ad «Apri con» (Linux, Windows)
-      sanain --unregister         lo rimuove di nuovo
-cli-registered = Sanain è stato aggiunto ad «Apri con». { $place }
-cli-unregistered = Sanain è stato rimosso da «Apri con».
+      text3 --register            aggiunge Text³ ad «Apri con» (Linux, Windows)
+      text3 --unregister          lo rimuove di nuovo
+cli-registered = Text³ è stato aggiunto ad «Apri con». { $place }
+cli-unregistered = Text³ è stato rimosso da «Apri con».
 cli-register-failed = Impossibile modificare l’integrazione con il file manager: { $reason }
-cli-register-macos = Su macOS non serve registrare nulla: quando Sanain.app si trova nella cartella Applicazioni, il Finder lo propone in «Apri con».
+cli-register-macos = Su macOS non serve registrare nulla: quando Text³.app si trova nella cartella Applicazioni, il Finder lo propone in «Apri con».
 settings-tab-general = Generale
 settings-tab-editor = Editor
 settings-tab-appearance = Aspetto

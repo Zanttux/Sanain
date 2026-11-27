@@ -8,12 +8,12 @@ are cross-platform verification and release readiness.
 ## Summary for the owner
 - 0.1.0 published as an unsigned pre-release (installers and portable
   builds for Windows, macOS and Linux); nightly builds follow every
-  change; website at https://zanttux.github.io/Sanain/.
+  change; website at https://zanttux.github.io/text3/.
 - 102 pull requests merged; every one passed CI on Linux, Windows and
   macOS plus the dependency check. 247 automated tests pass. Reviews by
   fresh Claude agents and by Codex found and fixed several bugs (#74,
   #118).
-- Sanain is a usable everyday editor on macOS: tabs and split view (with
+- Text³ is a usable everyday editor on macOS: tabs and split view (with
   Markdown preview and data views in either pane), multiple cursors,
   rectangular selection, macros, word wrap, syntax-aware folding,
   find/replace with preview, Replace in Files, Markdown preview with an
@@ -36,7 +36,7 @@ are cross-platform verification and release readiness.
   triple-click the line; right-click menu with Cut/Copy/Paste/Select All.
 - Environment: macOS 27.2.1 arm64 (Apple M5), Rust 1.100.0 via rustup,
   git 2.54, gh 2.101 authenticated.
-- Repository: github.com/Zanttux/Sanain (public, MPL-2.0). Commits use the
+- Repository: github.com/Zanttux/text3 (public, MPL-2.0). Commits use the
   owner's GitHub noreply address.
 - Workspace at 0.0.1: `text3-core`, `text3-io`, `text3-i18n`.
   First vertical slice (open UTF-8 file → edit → undo → atomic save →
@@ -94,7 +94,7 @@ match egui's logical key; may need per-layout defaults or rebinding in
 Settings).
 
 Known M1 limits: native menus only on macOS (Windows/Linux use in-window
-menus); running the bare binary on macOS shows "sanain" in the menu bar,
+menus); running the bare binary on macOS shows "text3" in the menu bar,
 use `scripts/macos-bundle.sh` for the proper app name;
 word wrap only for documents up to 1 M characters (full rebuild per
 edit); visible lines are laid

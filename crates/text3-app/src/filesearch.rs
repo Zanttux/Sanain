@@ -72,7 +72,7 @@ impl Search {
         let (tx, events) = channel();
         let flag = cancel.clone();
         let spawned = std::thread::Builder::new()
-            .name("sanain-folder-search".into())
+            .name("text3-folder-search".into())
             .spawn(move || {
                 let stats = run(&root, &matcher, &flag, &tx, &wake);
                 let _ = tx.send(Event::Done(stats));

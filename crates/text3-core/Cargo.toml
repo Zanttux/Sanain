@@ -1,6 +1,6 @@
 [package]
 name = "text3-core"
-description = "UI-independent document model for Sanain: rope buffer, transactions, undo."
+description = "UI-independent document model for Text³: rope buffer, transactions, undo."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

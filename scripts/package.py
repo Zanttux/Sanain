@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Build unsigned release packages for the current platform: a portable
-archive (with the `sanain-portable` marker) and an installer (Windows:
+archive (with the `text3-portable` marker) and an installer (Windows:
 Inno Setup per-user setup.exe; macOS: .dmg; Linux: .deb).
 
-Writes target/dist/sanain-<version>-<os>-<arch>.(zip|tar.gz) and a
-.sha256 file next to it. The archive holds the program (Sanain.app on
+Writes target/dist/text3-<version>-<os>-<arch>.(zip|tar.gz) and a
+.sha256 file next to it. The archive holds the program (Text³.app on
 macOS), LICENSE, README.md, CHANGELOG.md and THIRD_PARTY_NOTICES.md.
 
 Nothing is signed or published: publishing a release needs the owner's
@@ -49,7 +49,7 @@ def target_name():
 
 
 def add_tree(zf, src, arc):
-    """Add a folder to a zip, keeping the executable bit (for Sanain.app)."""
+    """Add a folder to a zip, keeping the executable bit (for Text³.app)."""
     for dirpath, _, files in os.walk(src):
         for name in sorted(files):
             path = os.path.join(dirpath, name)
@@ -107,7 +107,7 @@ def windows_installer(ver, stage, dist, name):
         f"/DOutputDir={dist}",
         f"/DOutputName={out}",
         f"/DRepoRoot={ROOT}",
-        os.path.join(ROOT, "packaging", "windows", "sanain.iss"),
+        os.path.join(ROOT, "packaging", "windows", "text3.iss"),
     )
     return os.path.join(dist, out + ".exe")
 
@@ -116,7 +116,7 @@ def macos_dmg(stage_app, dist, name, notices):
     tmp = os.path.join(dist, name + "-dmg")
     shutil.rmtree(tmp, ignore_errors=True)
     os.makedirs(tmp)
-    shutil.copytree(stage_app, os.path.join(tmp, "Sanain.app"), symlinks=True)
+    shutil.copytree(stage_app, os.path.join(tmp, "Text³.app"), symlinks=True)
     os.symlink("/Applications", os.path.join(tmp, "Applications"))
     for doc in DOCS:
         shutil.copy2(os.path.join(ROOT, doc), os.path.join(tmp, doc))
@@ -124,7 +124,7 @@ def macos_dmg(stage_app, dist, name, notices):
     dmg = os.path.join(dist, name + ".dmg")
     if os.path.exists(dmg):
         os.remove(dmg)
-    run("hdiutil", "create", "-volname", "Sanain", "-srcfolder", tmp, "-ov", "-format", "UDZO", dmg)
+    run("hdiutil", "create", "-volname", "Text³", "-srcfolder", tmp, "-ov", "-format", "UDZO", dmg)
     shutil.rmtree(tmp)
     return dmg
 
@@ -137,26 +137,26 @@ def linux_deb(ver, arch, dist, notices):
         path = os.path.join(root, *parts)
         os.makedirs(os.path.dirname(path), exist_ok=True)
         return path
-    shutil.copy2(os.path.join(ROOT, "target", "release", "sanain"), p("usr", "bin", "sanain"))
-    os.chmod(p("usr", "bin", "sanain"), 0o755)
+    shutil.copy2(os.path.join(ROOT, "target", "release", "text3"), p("usr", "bin", "text3"))
+    os.chmod(p("usr", "bin", "text3"), 0o755)
     shutil.copy2(
-        os.path.join(ROOT, "packaging", "icons", "sanain-256.png"),
-        p("usr", "share", "icons", "hicolor", "256x256", "apps", "io.github.zanttux.Sanain.png"),
+        os.path.join(ROOT, "packaging", "icons", "text3-256.png"),
+        p("usr", "share", "icons", "hicolor", "256x256", "apps", "io.github.zanttux.text3.png"),
     )
     shutil.copy2(
-        os.path.join(ROOT, "packaging", "linux", "io.github.zanttux.Sanain.desktop"),
-        p("usr", "share", "applications", "io.github.zanttux.Sanain.desktop"),
+        os.path.join(ROOT, "packaging", "linux", "io.github.zanttux.text3.desktop"),
+        p("usr", "share", "applications", "io.github.zanttux.text3.desktop"),
     )
-    shutil.copy2(os.path.join(ROOT, "LICENSE"), p("usr", "share", "doc", "sanain", "copyright"))
-    shutil.copy2(notices, p("usr", "share", "doc", "sanain", "THIRD_PARTY_NOTICES.md"))
+    shutil.copy2(os.path.join(ROOT, "LICENSE"), p("usr", "share", "doc", "text3", "copyright"))
+    shutil.copy2(notices, p("usr", "share", "doc", "text3", "THIRD_PARTY_NOTICES.md"))
     depends = "libc6, libgcc-s1"
     if shutil.which("dpkg-shlibdeps"):
         # dpkg-shlibdeps wants a debian/control next to it.
         os.makedirs(os.path.join(root, "debian"), exist_ok=True)
         with open(os.path.join(root, "debian", "control"), "w") as f:
-            f.write("Source: sanain\n\nPackage: sanain\nArchitecture: any\n")
+            f.write("Source: text3\n\nPackage: text3\nArchitecture: any\n")
         r = subprocess.run(
-            ["dpkg-shlibdeps", "-O", "usr/bin/sanain"], cwd=root, capture_output=True, text=True
+            ["dpkg-shlibdeps", "-O", "usr/bin/text3"], cwd=root, capture_output=True, text=True
         )
         shutil.rmtree(os.path.join(root, "debian"))
         if r.returncode == 0 and "shlibs:Depends=" in r.stdout:
@@ -166,20 +166,20 @@ def linux_deb(ver, arch, dist, notices):
     ) // 1024
     with open(p("DEBIAN", "control"), "w") as f:
         f.write(
-            "Package: sanain\n"
+            "Package: text3\n"
             f"Version: {ver}\n"
             f"Architecture: {deb_arch}\n"
-            "Maintainer: Sanain project <https://github.com/Zanttux/Sanain>\n"
+            "Maintainer: Text³ project <https://github.com/Zanttux/text3>\n"
             f"Installed-Size: {size_kb}\n"
             f"Depends: {depends}\n"
             "Section: editors\n"
             "Priority: optional\n"
-            "Homepage: https://github.com/Zanttux/Sanain\n"
+            "Homepage: https://github.com/Zanttux/text3\n"
             "Description: Native text editor for text, code, Markdown and data\n"
-            " Sanain is a fast, offline text editor with tabs, Markdown preview,\n"
+            " Text³ is a fast, offline text editor with tabs, Markdown preview,\n"
             " data views, comparison and a log viewer for very large files.\n"
         )
-    deb = os.path.join(dist, f"sanain_{ver}_{deb_arch}.deb")
+    deb = os.path.join(dist, f"text3_{ver}_{deb_arch}.deb")
     run("dpkg-deb", "--root-owner-group", "--build", root, deb)
     shutil.rmtree(root)
     return deb
@@ -189,24 +189,24 @@ def main():
     build = "--no-build" not in sys.argv[1:]
     ver = version()
     system, arch = target_name()
-    name = f"sanain-{ver}-{system}-{arch}"
+    name = f"text3-{ver}-{system}-{arch}"
     dist = os.path.join(ROOT, "target", "dist")
     stage = os.path.join(dist, name)
     shutil.rmtree(stage, ignore_errors=True)
     os.makedirs(stage)
 
     if system == "macos":
-        # Builds the release binary and wraps it in Sanain.app.
+        # Builds the release binary and wraps it in Text³.app.
         run("sh", "scripts/macos-bundle.sh", "release")
         shutil.copytree(
-            os.path.join(ROOT, "target", "release", "Sanain.app"),
-            os.path.join(stage, "Sanain.app"),
+            os.path.join(ROOT, "target", "release", "Text³.app"),
+            os.path.join(stage, "Text³.app"),
             symlinks=True,
         )
     else:
         if build:
             run("cargo", "build", "--release", "--locked", "-p", "text3-app")
-        exe = "sanain.exe" if system == "windows" else "sanain"
+        exe = "text3.exe" if system == "windows" else "text3"
         shutil.copy2(os.path.join(ROOT, "target", "release", exe), os.path.join(stage, exe))
 
     for doc in DOCS:
@@ -219,16 +219,16 @@ def main():
     if system == "windows":
         installer = windows_installer(ver, stage, dist, name)
     elif system == "macos":
-        installer = macos_dmg(os.path.join(stage, "Sanain.app"), dist, name, notices)
+        installer = macos_dmg(os.path.join(stage, "Text³.app"), dist, name, notices)
     elif system == "linux" and shutil.which("dpkg-deb"):
         installer = linux_deb(ver, arch, dist, notices)
     if installer:
         checksum(installer)
 
     # Portable archive: the marker keeps settings and data next to the app.
-    with open(os.path.join(stage, "sanain-portable"), "w", encoding="utf-8") as f:
+    with open(os.path.join(stage, "text3-portable"), "w", encoding="utf-8") as f:
         f.write(
-            "This file makes Sanain portable: settings, crash recovery and local\n"
+            "This file makes Text³ portable: settings, crash recovery and local\n"
             "history are kept in the data folder next to it. Delete it to use\n"
             "your user profile instead.\n"
         )

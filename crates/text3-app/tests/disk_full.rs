@@ -4,7 +4,7 @@
 //! throwaway filesystem (a 1 MiB tmpfs on Linux CI, a small VHD on Windows,
 //! a small disk image on macOS; see docs/TESTING.md). Without it the test
 //! prints "skipped" and passes. The test fills the filesystem itself, leaves
-//! [`SLACK`] bytes free, and checks that every write Sanain makes fails
+//! [`SLACK`] bytes free, and checks that every write Text³ makes fails
 //! cleanly when it does not fit:
 //!
 //! - Save from the editor (atomic rename, and on Unix in place for
@@ -144,7 +144,7 @@ fn writes_fail_cleanly_on_a_full_disk() {
         eprintln!("skipped: set SANAIN_FULL_DIR to a directory on a small filesystem");
         return;
     };
-    let drill = Drill(PathBuf::from(root).join(format!("sanain-drill-{}", std::process::id())));
+    let drill = Drill(PathBuf::from(root).join(format!("text3-drill-{}", std::process::id())));
     let dir = drill.0.clone();
     let _ = fs::remove_dir_all(&dir);
     fs::create_dir_all(&dir).unwrap();

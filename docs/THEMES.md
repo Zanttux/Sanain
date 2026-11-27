@@ -1,11 +1,11 @@
 # Themes
 
-Settings › Appearance offers the Sanain themes (light, dark, high
+Settings › Appearance offers the Text³ themes (light, dark, high
 contrast, or following the system) and these bundled themes:
 
 | Theme | Based on | License of the original |
 |---|---|---|
-| Classic (Notepad++ style) | Sanain's own light scheme in the style of Notepad++'s default colours; no Notepad++ files are used | — |
+| Classic (Notepad++ style) | Text³'s own light scheme in the style of Notepad++'s default colours; no Notepad++ files are used | — |
 | Solarized Light / Dark | Solarized by Ethan Schoonover | MIT |
 | Dracula | Dracula Theme by Zeno Rocha and contributors | MIT |
 | Nord | Nord by Arctic Ice Studio / Sven Greb | MIT |
@@ -20,7 +20,7 @@ and line numbers at least 3:1; a test checks every bundled theme.
 
 ## Your own themes
 
-Put `.theme` files in the `themes` folder inside Sanain's settings folder
+Put `.theme` files in the `themes` folder inside Text³'s settings folder
 (Settings › Appearance shows the path). Each line is `key = value`; lines
 starting with `#` are comments.
 
@@ -46,7 +46,7 @@ tag = #569cd6
 attribute = #9cdcfe
 ```
 
-`name` is required; missing colours come from the Sanain dark theme (or
+`name` is required; missing colours come from the Text³ dark theme (or
 the light one with `dark = false`). Files over 64 KB, unknown keys and
 colours that are not `#RRGGBB` are reported in Settings and the file is
 skipped. Themes are read when Settings opens the Appearance page.

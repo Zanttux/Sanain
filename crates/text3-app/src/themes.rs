@@ -5,14 +5,14 @@
 //! terminal and editor schemes (all MIT licensed, credited in
 //! docs/THEMES.md); a few colours are adjusted so text reaches WCAG AA
 //! (4.5:1) and syntax colours at least 3:1 on the background, which the
-//! tests check. "Classic" is Sanain's own light scheme in the style of
+//! tests check. "Classic" is Text³'s own light scheme in the style of
 //! Notepad++'s default colours (no Notepad++ files are used).
 //!
 //! User theme format, one `key = value` per line (`#` starts a comment):
 //! `name`, `dark` (true/false), and colours as `#RRGGBB` for `canvas`,
 //! `surface`, `text`, `muted`, `accent`, `border`, `error`, `warning`,
 //! `keyword`, `string`, `escape`, `comment`, `number`, `function`, `type`,
-//! `tag`, `attribute`. Missing colours come from the Sanain light or dark
+//! `tag`, `attribute`. Missing colours come from the Text³ light or dark
 //! theme.
 
 use std::path::Path;

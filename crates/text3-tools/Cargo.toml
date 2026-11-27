@@ -1,6 +1,6 @@
 [package]
 name = "text3-tools"
-description = "Pure, deterministic text transformations for Sanain (JSON, lines, case, line endings)."
+description = "Pure, deterministic text transformations for Text³ (JSON, lines, case, line endings)."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

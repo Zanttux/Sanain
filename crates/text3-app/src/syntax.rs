@@ -89,10 +89,10 @@ impl SyntaxWorker {
         let cancel = Arc::new(AtomicUsize::new(0));
         let flag = cancel.clone();
         let spawned = thread::Builder::new()
-            .name("sanain-syntax".into())
+            .name("text3-syntax".into())
             .spawn(move || run(jobs, out, flag));
         if let Err(e) = spawned {
-            eprintln!("sanain: syntax highlighting disabled: {e}");
+            eprintln!("text3: syntax highlighting disabled: {e}");
         }
         Self { tx, rx, cancel }
     }
@@ -234,7 +234,7 @@ fn run(jobs: Receiver<Msg>, out: Sender<Highlighted>, cancel: Arc<AtomicUsize>) 
                 pending.entry(req.tab).or_insert(req);
             }
             Err(HighlightError::Failed(e)) => {
-                eprintln!("sanain: highlighting failed: {e}");
+                eprintln!("text3: highlighting failed: {e}");
                 kept.remove(&req.tab);
             }
         }
@@ -276,7 +276,7 @@ fn settle(
         // A request came in; it is served first and settling starts over.
         Err(HighlightError::Cancelled) => {}
         Err(HighlightError::Failed(e)) => {
-            eprintln!("sanain: highlighting failed: {e}");
+            eprintln!("text3: highlighting failed: {e}");
             kept.remove(&tab);
         }
     }

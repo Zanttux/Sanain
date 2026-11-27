@@ -84,7 +84,7 @@ fn spawn_index(
     let cancel = Arc::new(AtomicBool::new(false));
     let stop = cancel.clone();
     let _ = std::thread::Builder::new()
-        .name("sanain-log-index".into())
+        .name("text3-log-index".into())
         .spawn(move || {
             let run = || -> std::io::Result<()> {
                 let mut f = File::open(&path)?;
@@ -159,7 +159,7 @@ fn spawn_filter(
     let cancel = Arc::new(AtomicBool::new(false));
     let stop = cancel.clone();
     let _ = std::thread::Builder::new()
-        .name("sanain-log-filter".into())
+        .name("text3-log-filter".into())
         .spawn(move || {
             let run = || -> std::io::Result<()> {
                 let mut f = File::open(&path)?;

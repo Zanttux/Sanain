@@ -1,5 +1,5 @@
 # Machine translation by Claude (AI); review by a native speaker required before release.
-app-name = Sanain
+app-name = Text³
 menu-file = Plik
 file-open = Otwórz…
 file-save = Zapisz
@@ -18,8 +18,8 @@ edit-redo = Ponów
 edit-select-all = Zaznacz wszystko
 untitled = Bez tytułu
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = Wiersz { $line }, kol. { $column }
 status-selections = { $count ->
@@ -56,8 +56,8 @@ menu-window = Okno
 edit-cut = Wytnij
 edit-copy = Kopiuj
 edit-paste = Wklej
-app-quit = Zakończ Sanain
-app-hide = Ukryj Sanain
+app-quit = Zakończ Text³
+app-hide = Ukryj Text³
 app-hide-others = Ukryj pozostałe
 app-show-all = Pokaż wszystko
 window-minimize = Minimalizuj
@@ -118,7 +118,7 @@ settings-theme-dark = Ciemny
 settings-restore-session = Otwieraj ponownie pliki z poprzedniej sesji
 settings-language = Język
 settings-language-system = Zgodnie z systemem
-settings-language-note = Zmiana języka zostanie zastosowana po ponownym uruchomieniu Sanain.
+settings-language-note = Zmiana języka zostanie zastosowana po ponownym uruchomieniu Text³.
 settings-save-failed = Nie można zapisać ustawień: { $reason }
 view-command-palette = Paleta poleceń…
 palette-placeholder = Wpisz polecenie
@@ -257,7 +257,7 @@ view-unfold = Rozwiń
 view-unfold-all = Rozwiń wszystko
 settings-shortcuts = Skróty klawiaturowe
 settings-keymap-preset = Zestaw
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = Zmień
 settings-shortcut-reset = Resetuj
@@ -281,12 +281,12 @@ folder-search-summary = { $count ->
     }
 app-check-updates = Sprawdź aktualizacje…
 update-checking = Sprawdzanie aktualizacji…
-update-up-to-date = Sanain { $version } to najnowsza wersja.
-update-no-releases = Nie opublikowano jeszcze żadnych wydań Sanain.
+update-up-to-date = Text³ { $version } to najnowsza wersja.
+update-no-releases = Nie opublikowano jeszcze żadnych wydań Text³.
 update-failed = Nie można sprawdzić aktualizacji: { $reason }
 update-invalid = nieoczekiwana odpowiedź
-update-available-title = Dostępna jest wersja Sanain { $version }
-update-available-body = Otwórz stronę pobierania, aby ją pobrać. Sanain sam niczego nie pobiera ani nie instaluje.
+update-available-title = Dostępna jest wersja Text³ { $version }
+update-available-body = Otwórz stronę pobierania, aby ją pobrać. Text³ sam niczego nie pobiera ani nie instaluje.
 update-open-page = Otwórz stronę pobierania
 update-later = Później
 settings-check-updates = Sprawdzaj aktualizacje raz dziennie
@@ -400,12 +400,11 @@ replace-preview-more = Wyświetlane jest tylko pierwsze 200 zmienionych wierszy.
 replace-preview-stale = Dokument się zmienił; nic nie zostało zamienione. Uruchom ponownie Zamień wszystko.
 encoding-detected = Otwarto w kodowaniu { $encoding } (wykryto na podstawie zawartości pliku).
 encoding-suggested = Zasugerowano na podstawie zawartości pliku: { $encoding }. Przed otwarciem sprawdź podgląd.
-app-about = O programie Sanain
+app-about = O programie Text³
 menu-help = Pomoc
-about-tagline = Siła słów.
 about-version = Wersja { $version }
 about-license = Wolne i otwarte oprogramowanie na licencji Mozilla Public License 2.0.
-about-ai = Zbudowany przez AI. Prowadzony przez ludzi. Rozwijany przez społeczność.
+about-ai = Rozwijany z pomocą AI (Claude od Anthropic) pod kierunkiem opiekuna projektu.
 about-notices = Komponenty innych firm i ich licencje wymieniono w pliku THIRD_PARTY_NOTICES dołączonym do każdego wydania.
 about-source = Kod źródłowy i zgłoszenia w serwisie GitHub
 tools-xml-validate = Sprawdź poprawność XML
@@ -452,13 +451,13 @@ tools-compare-file = Porównaj z plikiem…
 compare-file-failed = Nie można porównać z { $name }: { $reason }
 cli-help =
     Użycie:
-      sanain [PLIK…]              otwórz pliki
-      sanain --diff LEWY PRAWY    porównaj dwa pliki obok siebie
-      sanain --version            pokaż wersję
-      sanain --help               pokaż tę pomoc
+      text3 [PLIK…]               otwórz pliki
+      text3 --diff LEWY PRAWY     porównaj dwa pliki obok siebie
+      text3 --version             pokaż wersję
+      text3 --help                pokaż tę pomoc
     Użyj -- przed nazwami plików zaczynającymi się od myślnika.
 cli-unknown-option = Nieznana opcja { $option }.
-cli-diff-needs-two = --diff wymaga dwóch plików: sanain --diff LEWY PRAWY
+cli-diff-needs-two = --diff wymaga dwóch plików: text3 --diff LEWY PRAWY
 window-move-tab-left = Przenieś kartę w lewo
 window-move-tab-right = Przenieś kartę w prawo
 edit-skip-occurrence = Przeskocz do następnego wystąpienia
@@ -505,12 +504,12 @@ image-outside = Ten obraz znajduje się poza folderem dokumentu.
 image-allow = Pokaż obrazy z tego folderu
 cli-help-integration =
     Integracja z menedżerem plików (tylko bieżący użytkownik):
-      sanain --register           dodaj Sanain do menu „Otwórz za pomocą” (Linux, Windows)
-      sanain --unregister         usuń go ponownie
-cli-registered = Dodano Sanain do menu „Otwórz za pomocą”. { $place }
-cli-unregistered = Usunięto Sanain z menu „Otwórz za pomocą”.
+      text3 --register            dodaj Text³ do menu „Otwórz za pomocą” (Linux, Windows)
+      text3 --unregister          usuń go ponownie
+cli-registered = Dodano Text³ do menu „Otwórz za pomocą”. { $place }
+cli-unregistered = Usunięto Text³ z menu „Otwórz za pomocą”.
 cli-register-failed = Nie można zmienić integracji z menedżerem plików: { $reason }
-cli-register-macos = W systemie macOS nie trzeba niczego rejestrować: gdy Sanain.app znajdzie się w folderze Aplikacje, Finder zaproponuje go w menu „Otwórz za pomocą”.
+cli-register-macos = W systemie macOS nie trzeba niczego rejestrować: gdy Text³.app znajdzie się w folderze Aplikacje, Finder zaproponuje go w menu „Otwórz za pomocą”.
 settings-tab-general = Ogólne
 settings-tab-editor = Edytor
 settings-tab-appearance = Wygląd

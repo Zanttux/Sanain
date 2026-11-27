@@ -1,6 +1,6 @@
 [package]
 name = "text3-markdown"
-description = "Markdown parsing into a safe, render-ready block model for Sanain."
+description = "Markdown parsing into a safe, render-ready block model for Text³."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

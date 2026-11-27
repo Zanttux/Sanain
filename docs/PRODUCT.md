@@ -1,6 +1,6 @@
 # Product requirements
 ## Mission
-Sanain is a product, not a separate research program. One editor for everyday text, code, configuration, Markdown and logs. File-first, not project-first. Plain text opens immediately; richer views are optional and reversible. No IDE, notebook database or collaboration platform in v1.
+Text³ is a product, not a separate research program. One editor for everyday text, code, configuration, Markdown and logs. File-first, not project-first. Plain text opens immediately; richer views are optional and reversible. No IDE, notebook database or collaboration platform in v1.
 
 ## Users
 Windows power users, developers switching platforms, sysadmins, technical writers and casual scratchpad users. Core jobs: open/edit/save, recover scratch notes, search many files, inspect structured text, read Markdown, compare files.

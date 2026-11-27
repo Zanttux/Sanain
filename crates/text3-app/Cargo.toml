@@ -1,6 +1,6 @@
 [package]
 name = "text3-app"
-description = "The Sanain desktop application."
+description = "The Text³ desktop application."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,7 +9,7 @@ repository.workspace = true
 publish.workspace = true
 
 [[bin]]
-name = "sanain"
+name = "text3"
 path = "src/main.rs"
 
 [dependencies]
@@ -41,7 +41,7 @@ eframe = { version = "0.37", default-features = false, features = ["glow"] }
 [target.'cfg(target_os = "macos")'.dependencies]
 muda = { version = "0.22", default-features = false }
 
-# Windows: embed the icon in sanain.exe (build.rs).
+# Windows: embed the icon in text3.exe (build.rs).
 [target.'cfg(windows)'.build-dependencies]
 embed-resource = "3"
 

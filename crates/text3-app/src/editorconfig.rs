@@ -1,7 +1,7 @@
 //! `.editorconfig` support (https://editorconfig.org) for indentation:
 //! `indent_style`, `indent_size` and `tab_width`. Other properties are
 //! read but not applied (end of line, charset and whitespace trimming would
-//! change file bytes; Sanain keeps files as they are).
+//! change file bytes; Text³ keeps files as they are).
 //!
 //! Files are searched from the document's folder upwards until one says
 //! `root = true`; nearer files win, later sections win within a file.

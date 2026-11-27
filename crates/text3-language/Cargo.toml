@@ -1,6 +1,6 @@
 [package]
 name = "text3-language"
-description = "Language detection and Tree-sitter syntax highlighting for Sanain."
+description = "Language detection and Tree-sitter syntax highlighting for Text³."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

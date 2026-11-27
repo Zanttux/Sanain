@@ -1,4 +1,4 @@
-//! Application state for Sanain, independent of the GUI toolkit.
+//! Application state for Text³, independent of the GUI toolkit.
 
 pub mod cli;
 pub mod editor;

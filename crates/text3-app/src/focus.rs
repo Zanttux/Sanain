@@ -126,7 +126,7 @@ pub fn on_edge(order: &[Region], region: Region, edge: Edge, tab: Option<bool>) 
 
 /// The id of a region's edge stop.
 pub fn edge_id(region: Region, edge: Edge) -> egui::Id {
-    egui::Id::unique(("sanain-focus-edge", region, edge))
+    egui::Id::unique(("text3-focus-edge", region, edge))
 }
 
 /// One pane as drawn: its split slot, the widget that takes focus in it

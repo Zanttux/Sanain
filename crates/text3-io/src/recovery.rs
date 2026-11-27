@@ -67,7 +67,7 @@ impl RecoveryStore {
     }
 
     /// The platform's per-user location, e.g.
-    /// `~/Library/Application Support/Sanain/Recovery` on macOS.
+    /// `~/Library/Application Support/Text³/Recovery` on macOS.
     pub fn default_dir() -> Option<PathBuf> {
         let env = |k: &str| {
             std::env::var_os(k)

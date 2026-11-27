@@ -1,6 +1,6 @@
 [package]
 name = "text3-platform"
-description = "Small, audited operating-system shims for Sanain (ADR 0003)."
+description = "Small, audited operating-system shims for Text³ (ADR 0003)."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

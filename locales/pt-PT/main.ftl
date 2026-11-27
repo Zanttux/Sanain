@@ -1,5 +1,5 @@
 # Machine translation by Claude (AI); review by a native speaker required before release.
-app-name = Sanain
+app-name = Text³
 menu-file = Ficheiro
 file-open = Abrir…
 file-save = Guardar
@@ -17,8 +17,8 @@ edit-redo = Refazer
 edit-select-all = Selecionar tudo
 untitled = Sem título
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = Ln { $line }, Col { $column }
 status-selections = { $count ->
@@ -54,8 +54,8 @@ menu-window = Janela
 edit-cut = Cortar
 edit-copy = Copiar
 edit-paste = Colar
-app-quit = Sair do Sanain
-app-hide = Ocultar Sanain
+app-quit = Sair do Text³
+app-hide = Ocultar Text³
 app-hide-others = Ocultar outros
 app-show-all = Mostrar tudo
 window-minimize = Minimizar
@@ -114,7 +114,7 @@ settings-theme-dark = Escuro
 settings-restore-session = Reabrir ficheiros da última sessão
 settings-language = Idioma
 settings-language-system = Igual ao sistema
-settings-language-note = As alterações de idioma aplicam-se após reiniciar o Sanain.
+settings-language-note = As alterações de idioma aplicam-se após reiniciar o Text³.
 settings-save-failed = Não foi possível guardar as definições: { $reason }
 view-command-palette = Paleta de comandos…
 palette-placeholder = Escreva um comando
@@ -251,7 +251,7 @@ view-unfold = Abrir secção
 view-unfold-all = Abrir todas as secções
 settings-shortcuts = Atalhos de teclado
 settings-keymap-preset = Predefinição
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = Alterar
 settings-shortcut-reset = Repor
@@ -273,12 +273,12 @@ folder-search-summary = { $count ->
     }
 app-check-updates = Procurar atualizações…
 update-checking = A procurar atualizações…
-update-up-to-date = Sanain { $version } é a versão mais recente.
-update-no-releases = Ainda não foi publicada nenhuma versão do Sanain.
+update-up-to-date = Text³ { $version } é a versão mais recente.
+update-no-releases = Ainda não foi publicada nenhuma versão do Text³.
 update-failed = Não foi possível procurar atualizações: { $reason }
 update-invalid = resposta inesperada
-update-available-title = Sanain { $version } está disponível
-update-available-body = Abra a página de transferência para o obter. O Sanain não transfere nem instala nada por si só.
+update-available-title = Text³ { $version } está disponível
+update-available-body = Abra a página de transferência para o obter. O Text³ não transfere nem instala nada por si só.
 update-open-page = Abrir página de transferência
 update-later = Mais tarde
 settings-check-updates = Procurar atualizações uma vez por dia
@@ -383,12 +383,11 @@ replace-preview-more = Só são mostradas as primeiras 200 linhas alteradas.
 replace-preview-stale = O documento foi alterado; nada foi substituído. Execute novamente Substituir tudo.
 encoding-detected = Aberto como { $encoding } (detetado a partir do conteúdo do ficheiro).
 encoding-suggested = Sugerida com base no conteúdo do ficheiro: { $encoding }. Verifique a pré-visualização antes de abrir.
-app-about = Acerca do Sanain
+app-about = Acerca do Text³
 menu-help = Ajuda
-about-tagline = O poder das palavras.
 about-version = Versão { $version }
 about-license = Livre e de código aberto ao abrigo da Mozilla Public License 2.0.
-about-ai = Criado por IA. Liderado por pessoas. Movido pela comunidade.
+about-ai = Desenvolvido com ajuda de IA (Claude, da Anthropic) sob a direção do responsável pelo projeto.
 about-notices = Os componentes de terceiros e as respetivas licenças estão listados em THIRD_PARTY_NOTICES, incluído em cada versão.
 about-source = Código-fonte e problemas no GitHub
 tools-xml-validate = Validar XML
@@ -433,13 +432,13 @@ tools-compare-file = Comparar com um ficheiro…
 compare-file-failed = Não foi possível comparar com { $name }: { $reason }
 cli-help =
     Utilização:
-      sanain [FICHEIRO…]                abrir ficheiros
-      sanain --diff ESQUERDA DIREITA    comparar dois ficheiros lado a lado
-      sanain --version                  mostrar a versão
-      sanain --help                     mostrar esta ajuda
+      text3 [FICHEIRO…]                 abrir ficheiros
+      text3 --diff ESQUERDA DIREITA     comparar dois ficheiros lado a lado
+      text3 --version                   mostrar a versão
+      text3 --help                      mostrar esta ajuda
     Utilize -- antes de nomes de ficheiro que comecem por hífen.
 cli-unknown-option = Opção desconhecida { $option }.
-cli-diff-needs-two = --diff precisa de dois ficheiros: sanain --diff ESQUERDA DIREITA
+cli-diff-needs-two = --diff precisa de dois ficheiros: text3 --diff ESQUERDA DIREITA
 window-move-tab-left = Mover separador para a esquerda
 window-move-tab-right = Mover separador para a direita
 edit-skip-occurrence = Saltar para a ocorrência seguinte
@@ -481,12 +480,12 @@ image-outside = Esta imagem está fora da pasta do documento.
 image-allow = Mostrar imagens desta pasta
 cli-help-integration =
     Integração com o gestor de ficheiros (apenas o utilizador atual):
-      sanain --register           adiciona o Sanain a "Abrir com" (Linux, Windows)
-      sanain --unregister         remove-o novamente
-cli-registered = O Sanain foi adicionado a "Abrir com". { $place }
-cli-unregistered = O Sanain foi removido de "Abrir com".
+      text3 --register            adiciona o Text³ a "Abrir com" (Linux, Windows)
+      text3 --unregister          remove-o novamente
+cli-registered = O Text³ foi adicionado a "Abrir com". { $place }
+cli-unregistered = O Text³ foi removido de "Abrir com".
 cli-register-failed = Não foi possível alterar a integração com o gestor de ficheiros: { $reason }
-cli-register-macos = No macOS não é necessário registar nada: assim que o Sanain.app estiver na pasta Aplicações, o Finder disponibiliza-o em "Abrir com".
+cli-register-macos = No macOS não é necessário registar nada: assim que o Text³.app estiver na pasta Aplicações, o Finder disponibiliza-o em "Abrir com".
 settings-tab-general = Geral
 settings-tab-editor = Editor
 settings-tab-appearance = Aspeto

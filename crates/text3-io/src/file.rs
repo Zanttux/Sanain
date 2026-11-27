@@ -222,7 +222,7 @@ fn write_in_place(
             } else {
                 format!("-{i}")
             };
-            target.with_file_name(format!(".{name}.sanain-backup{suffix}"))
+            target.with_file_name(format!(".{name}.text3-backup{suffix}"))
         })
         .find(|p| fs::symlink_metadata(p).is_err())
         .ok_or_else(|| io::Error::new(io::ErrorKind::AlreadyExists, "too many backups"))?;
@@ -309,7 +309,7 @@ impl TempFile {
         for _ in 0..16 {
             let n = COUNTER.fetch_add(1, Ordering::Relaxed);
             let path = dir.join(format!(
-                ".sanain-save-{}-{n}-{nanos:x}.tmp",
+                ".text3-save-{}-{n}-{nanos:x}.tmp",
                 std::process::id()
             ));
             match fs::OpenOptions::new()

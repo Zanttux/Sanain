@@ -1,5 +1,5 @@
 # Draft translation; native review required before release.
-app-name = Sanain
+app-name = Text³
 menu-file = Tiedosto
 file-open = Avaa…
 file-save = Tallenna
@@ -16,8 +16,8 @@ edit-redo = Tee uudelleen
 edit-select-all = Valitse kaikki
 untitled = Nimetön
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = Rivi { $line }, sarake { $column }
 status-selections = { $count ->
@@ -52,8 +52,8 @@ menu-window = Ikkuna
 edit-cut = Leikkaa
 edit-copy = Kopioi
 edit-paste = Liitä
-app-quit = Lopeta Sanain
-app-hide = Kätke Sanain
+app-quit = Lopeta Text³
+app-hide = Kätke Text³
 app-hide-others = Kätke muut
 app-show-all = Näytä kaikki
 window-minimize = Pienennä
@@ -110,7 +110,7 @@ settings-theme-dark = Tumma
 settings-restore-session = Avaa edellisen istunnon tiedostot
 settings-language = Kieli
 settings-language-system = Järjestelmän mukaan
-settings-language-note = Kielen vaihto tulee voimaan, kun Sanain käynnistetään uudelleen.
+settings-language-note = Kielen vaihto tulee voimaan, kun Text³ käynnistetään uudelleen.
 settings-save-failed = Asetuksia ei voitu tallentaa: { $reason }
 view-command-palette = Komentopaletti…
 palette-placeholder = Kirjoita komento
@@ -245,7 +245,7 @@ view-unfold = Avaa laskos
 view-unfold-all = Avaa kaikki laskokset
 settings-shortcuts = Pikanäppäimet
 settings-keymap-preset = Pohja
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = Vaihda
 settings-shortcut-reset = Palauta
@@ -265,12 +265,12 @@ folder-search-summary = { $count ->
     }
 app-check-updates = Tarkista päivitykset…
 update-checking = Tarkistetaan päivityksiä…
-update-up-to-date = Sanain { $version } on uusin versio.
-update-no-releases = Sanainista ei ole vielä julkaistu versioita.
+update-up-to-date = Text³ { $version } on uusin versio.
+update-no-releases = Text³:sta ei ole vielä julkaistu versioita.
 update-failed = Päivityksiä ei voitu tarkistaa: { $reason }
 update-invalid = odottamaton vastaus
-update-available-title = Sanain { $version } on saatavilla
-update-available-body = Avaa lataussivu hakeaksesi sen. Sanain ei lataa eikä asenna mitään itse.
+update-available-title = Text³ { $version } on saatavilla
+update-available-body = Avaa lataussivu hakeaksesi sen. Text³ ei lataa eikä asenna mitään itse.
 update-open-page = Avaa lataussivu
 update-later = Myöhemmin
 settings-check-updates = Tarkista päivitykset kerran päivässä
@@ -366,12 +366,11 @@ replace-preview-more = Vain 200 ensimmäistä muuttuvaa riviä näytetään.
 replace-preview-stale = Asiakirja muuttui, joten mitään ei korvattu. Valitse Korvaa kaikki uudelleen.
 encoding-detected = Avattiin merkistöllä { $encoding } (tunnistettu tiedoston sisällöstä).
 encoding-suggested = Tiedoston sisällön perusteella ehdotettu: { $encoding }. Tarkista esikatselu ennen avaamista.
-app-about = Tietoja Sanainista
+app-about = Tietoja Text³:sta
 menu-help = Ohje
-about-tagline = Sanojen voima.
 about-version = Versio { $version }
 about-license = Vapaa ja avoin lähdekoodi Mozilla Public License 2.0 -lisenssillä.
-about-ai = Tekoälyn rakentama. Ihmisen johtama. Yhteisön kehittämä.
+about-ai = Kehitetty tekoälyn avulla (Anthropicin Claude) ylläpitäjän johdolla.
 about-notices = Kolmansien osapuolten komponentit lisensseineen on lueteltu tiedostossa THIRD_PARTY_NOTICES, joka on mukana jokaisessa julkaisussa.
 about-source = Lähdekoodi ja palautteet GitHubissa
 tools-xml-validate = Tarkista XML
@@ -414,13 +413,13 @@ tools-compare-file = Vertaa tiedostoon…
 compare-file-failed = Vertailu tiedostoon { $name } ei onnistunut: { $reason }
 cli-help =
     Käyttö:
-      sanain [TIEDOSTO…]           avaa tiedostot
-      sanain --diff VASEN OIKEA    vertaa kahta tiedostoa rinnakkain
-      sanain --version             näytä versio
-      sanain --help                näytä tämä ohje
+      text3 [TIEDOSTO…]            avaa tiedostot
+      text3 --diff VASEN OIKEA     vertaa kahta tiedostoa rinnakkain
+      text3 --version              näytä versio
+      text3 --help                 näytä tämä ohje
     Kirjoita -- ennen tiedostonimiä, jotka alkavat viivalla.
 cli-unknown-option = Tuntematon valitsin { $option }.
-cli-diff-needs-two = --diff tarvitsee kaksi tiedostoa: sanain --diff VASEN OIKEA
+cli-diff-needs-two = --diff tarvitsee kaksi tiedostoa: text3 --diff VASEN OIKEA
 window-move-tab-left = Siirrä välilehti vasemmalle
 window-move-tab-right = Siirrä välilehti oikealle
 edit-skip-occurrence = Ohita ja valitse seuraava esiintymä
@@ -460,12 +459,12 @@ image-outside = Kuva on dokumentin kansion ulkopuolella.
 image-allow = Näytä tämän kansion kuvat
 cli-help-integration =
     Liittäminen tiedostonhallintaan (vain nykyiselle käyttäjälle):
-      sanain --register           lisää Sanain "Avaa sovelluksella" -valikkoon (Linux, Windows)
-      sanain --unregister         poista se sieltä
-cli-registered = Sanain lisättiin "Avaa sovelluksella" -valikkoon. { $place }
-cli-unregistered = Sanain poistettiin "Avaa sovelluksella" -valikosta.
+      text3 --register            lisää Text³ "Avaa sovelluksella" -valikkoon (Linux, Windows)
+      text3 --unregister          poista se sieltä
+cli-registered = Text³ lisättiin "Avaa sovelluksella" -valikkoon. { $place }
+cli-unregistered = Text³ poistettiin "Avaa sovelluksella" -valikosta.
 cli-register-failed = Tiedostonhallinnan liitosta ei voitu muuttaa: { $reason }
-cli-register-macos = macOS:ssä mitään ei tarvitse rekisteröidä: kun Sanain.app on Ohjelmat-kansiossa, Finder tarjoaa sitä Avaa sovelluksella -valikossa.
+cli-register-macos = macOS:ssä mitään ei tarvitse rekisteröidä: kun Text³.app on Ohjelmat-kansiossa, Finder tarjoaa sitä Avaa sovelluksella -valikossa.
 settings-tab-general = Yleiset
 settings-tab-editor = Editori
 settings-tab-appearance = Ulkoasu

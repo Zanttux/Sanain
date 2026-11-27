@@ -103,12 +103,12 @@ impl FindBar {
                         let cancel = Arc::new(AtomicBool::new(false));
                         let (rope, matcher, flag, ctx) =
                             (rope.clone(), matcher.clone(), cancel.clone(), ctx.clone());
-                        let spawned = std::thread::Builder::new()
-                            .name("sanain-find".into())
-                            .spawn(move || {
+                        let spawned = std::thread::Builder::new().name("text3-find".into()).spawn(
+                            move || {
                                 let _ = tx.send(matcher.find_all_cancellable(&rope, &flag));
                                 ctx.request_repaint();
-                            });
+                            },
+                        );
                         if spawned.is_ok() {
                             self.pending = Some((cancel, rx));
                         }
@@ -141,7 +141,7 @@ impl FindBar {
         };
         ui.horizontal(|ui| {
             let field = egui::TextEdit::singleline(&mut self.query.pattern)
-                .id_salt("sanain-find-query")
+                .id_salt("text3-find-query")
                 .hint_text(t("find-placeholder", None, None))
                 .desired_width(260.0);
             let r = ui.add(field);
@@ -230,7 +230,7 @@ impl FindBar {
         if self.replace_open {
             ui.horizontal(|ui| {
                 let field = egui::TextEdit::singleline(&mut self.replacement)
-                    .id_salt("sanain-find-replace")
+                    .id_salt("text3-find-replace")
                     .hint_text(t("replace-placeholder", None, None))
                     .desired_width(260.0);
                 let r = ui.add(field);

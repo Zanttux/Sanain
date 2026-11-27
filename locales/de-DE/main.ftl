@@ -1,5 +1,5 @@
 # Machine translation by Claude (AI); review by a native speaker required before release.
-app-name = Sanain
+app-name = Text³
 menu-file = Datei
 file-open = Öffnen…
 file-save = Sichern
@@ -16,8 +16,8 @@ edit-redo = Wiederholen
 edit-select-all = Alles auswählen
 untitled = Unbenannt
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = Z. { $line }, Sp. { $column }
 status-selections = { $count ->
@@ -52,8 +52,8 @@ menu-window = Fenster
 edit-cut = Ausschneiden
 edit-copy = Kopieren
 edit-paste = Einsetzen
-app-quit = Sanain beenden
-app-hide = Sanain ausblenden
+app-quit = Text³ beenden
+app-hide = Text³ ausblenden
 app-hide-others = Andere ausblenden
 app-show-all = Alle einblenden
 window-minimize = Im Dock ablegen
@@ -110,7 +110,7 @@ settings-theme-dark = Dunkel
 settings-restore-session = Dateien der letzten Sitzung erneut öffnen
 settings-language = Sprache
 settings-language-system = Wie System
-settings-language-note = Sprachänderungen werden nach einem Neustart von Sanain wirksam.
+settings-language-note = Sprachänderungen werden nach einem Neustart von Text³ wirksam.
 settings-save-failed = Einstellungen konnten nicht gesichert werden: { $reason }
 view-command-palette = Befehlspalette…
 palette-placeholder = Befehl eingeben
@@ -245,7 +245,7 @@ view-unfold = Ausklappen
 view-unfold-all = Alle ausklappen
 settings-shortcuts = Tastenkürzel
 settings-keymap-preset = Vorlage
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = Ändern
 settings-shortcut-reset = Zurücksetzen
@@ -265,12 +265,12 @@ folder-search-summary = { $count ->
     }
 app-check-updates = Nach Updates suchen…
 update-checking = Suche nach Updates…
-update-up-to-date = Sanain { $version } ist die neueste Version.
-update-no-releases = Es wurden noch keine Sanain-Versionen veröffentlicht.
+update-up-to-date = Text³ { $version } ist die neueste Version.
+update-no-releases = Es wurden noch keine Text³-Versionen veröffentlicht.
 update-failed = Suche nach Updates fehlgeschlagen: { $reason }
 update-invalid = unerwartete Antwort
-update-available-title = Sanain { $version } ist verfügbar
-update-available-body = Öffnen Sie die Download-Seite, um es zu erhalten. Sanain lädt und installiert nichts selbstständig.
+update-available-title = Text³ { $version } ist verfügbar
+update-available-body = Öffnen Sie die Download-Seite, um es zu erhalten. Text³ lädt und installiert nichts selbstständig.
 update-open-page = Download-Seite öffnen
 update-later = Später
 settings-check-updates = Einmal täglich nach Updates suchen
@@ -366,12 +366,11 @@ replace-preview-more = Nur die ersten 200 geänderten Zeilen werden angezeigt.
 replace-preview-stale = Das Dokument wurde geändert; nichts wurde ersetzt. Führen Sie „Alle ersetzen“ erneut aus.
 encoding-detected = Als { $encoding } geöffnet (aus dem Dateiinhalt erkannt).
 encoding-suggested = Aus dem Dateiinhalt vorgeschlagen: { $encoding }. Prüfen Sie vor dem Öffnen die Vorschau.
-app-about = Über Sanain
+app-about = Über Text³
 menu-help = Hilfe
-about-tagline = Die Kraft der Worte.
 about-version = Version { $version }
 about-license = Freie und quelloffene Software unter der Mozilla Public License 2.0.
-about-ai = Von KI gebaut. Von Menschen geführt. Von der Community getragen.
+about-ai = Mit KI-Unterstützung (Claude von Anthropic) unter der Leitung des Maintainers entwickelt.
 about-notices = Komponenten von Drittanbietern und ihre Lizenzen sind in THIRD_PARTY_NOTICES aufgeführt, das jeder Version beiliegt.
 about-source = Quellcode und Fehlermeldungen auf GitHub
 tools-xml-validate = XML prüfen
@@ -414,13 +413,13 @@ tools-compare-file = Mit Datei vergleichen…
 compare-file-failed = Vergleich mit { $name } nicht möglich: { $reason }
 cli-help =
     Verwendung:
-      sanain [DATEI…]               Dateien öffnen
-      sanain --diff LINKS RECHTS    zwei Dateien nebeneinander vergleichen
-      sanain --version              Version anzeigen
-      sanain --help                 diese Hilfe anzeigen
+      text3 [DATEI…]                Dateien öffnen
+      text3 --diff LINKS RECHTS     zwei Dateien nebeneinander vergleichen
+      text3 --version               Version anzeigen
+      text3 --help                  diese Hilfe anzeigen
     Verwenden Sie -- vor Dateinamen, die mit einem Bindestrich beginnen.
 cli-unknown-option = Unbekannte Option { $option }.
-cli-diff-needs-two = --diff benötigt zwei Dateien: sanain --diff LINKS RECHTS
+cli-diff-needs-two = --diff benötigt zwei Dateien: text3 --diff LINKS RECHTS
 window-move-tab-left = Tab nach links verschieben
 window-move-tab-right = Tab nach rechts verschieben
 edit-skip-occurrence = Zum nächsten Vorkommen springen
@@ -457,12 +456,12 @@ image-outside = Dieses Bild liegt außerhalb des Ordners des Dokuments.
 image-allow = Bilder aus diesem Ordner anzeigen
 cli-help-integration =
     Integration in den Dateimanager (nur für den aktuellen Benutzer):
-      sanain --register           Sanain zu „Öffnen mit“ hinzufügen (Linux, Windows)
-      sanain --unregister         wieder entfernen
-cli-registered = Sanain wurde zu „Öffnen mit“ hinzugefügt. { $place }
-cli-unregistered = Sanain wurde aus „Öffnen mit“ entfernt.
+      text3 --register            Text³ zu „Öffnen mit“ hinzufügen (Linux, Windows)
+      text3 --unregister          wieder entfernen
+cli-registered = Text³ wurde zu „Öffnen mit“ hinzugefügt. { $place }
+cli-unregistered = Text³ wurde aus „Öffnen mit“ entfernt.
 cli-register-failed = Die Integration in den Dateimanager konnte nicht geändert werden: { $reason }
-cli-register-macos = Unter macOS muss nichts registriert werden: Sobald sich Sanain.app im Ordner „Programme“ befindet, bietet der Finder es unter „Öffnen mit“ an.
+cli-register-macos = Unter macOS muss nichts registriert werden: Sobald sich Text³.app im Ordner „Programme“ befindet, bietet der Finder es unter „Öffnen mit“ an.
 settings-tab-general = Allgemein
 settings-tab-editor = Editor
 settings-tab-appearance = Erscheinungsbild

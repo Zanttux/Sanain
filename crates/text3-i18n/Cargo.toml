@@ -1,6 +1,6 @@
 [package]
 name = "text3-i18n"
-description = "Fluent-based localization service for Sanain UI strings."
+description = "Fluent-based localization service for Text³ UI strings."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

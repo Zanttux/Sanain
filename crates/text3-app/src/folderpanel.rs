@@ -112,7 +112,7 @@ impl FolderPanel {
         ui.horizontal(|ui| {
             let r = ui.add(
                 egui::TextEdit::singleline(&mut self.query.pattern)
-                    .id_salt("sanain-folder-query")
+                    .id_salt("text3-folder-query")
                     .hint_text(t("folder-search-placeholder", None, None))
                     .desired_width(260.0),
             );
@@ -204,7 +204,7 @@ impl FolderPanel {
         ui.horizontal(|ui| {
             ui.add(
                 egui::TextEdit::singleline(&mut self.replace)
-                    .id_salt("sanain-folder-replace")
+                    .id_salt("text3-folder-replace")
                     .hint_text(t("folder-replace-placeholder", None, None))
                     .desired_width(260.0),
             );

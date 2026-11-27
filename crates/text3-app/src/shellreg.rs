@@ -1,11 +1,11 @@
-//! Register Sanain with the desktop's file manager for the current user
-//! (`sanain --register` / `--unregister`). No administrator rights; undone
-//! by `--unregister`; never makes Sanain the default application.
+//! Register Text³ with the desktop's file manager for the current user
+//! (`text3 --register` / `--unregister`). No administrator rights; undone
+//! by `--unregister`; never makes Text³ the default application.
 //!
 //! - Linux and other freedesktop systems: a `.desktop` entry in
 //!   `$XDG_DATA_HOME/applications` listing the text MIME types, so file
-//!   managers offer "Open With Sanain".
-//! - Windows: per-user registry keys (HKCU) for "Edit with Sanain" in the
+//!   managers offer "Open With Text³".
+//! - Windows: per-user registry keys (HKCU) for "Edit with Text³" in the
 //!   Explorer context menu of every file and an "Open with" entry, written
 //!   with `reg.exe`.
 //! - macOS: nothing to register; Info.plist declares the document types and
@@ -14,11 +14,11 @@
 use std::path::{Path, PathBuf};
 
 /// File name of the desktop entry (reverse-DNS, as freedesktop recommends).
-pub const DESKTOP_FILE: &str = "io.github.zanttux.Sanain.desktop";
+pub const DESKTOP_FILE: &str = "io.github.zanttux.text3.desktop";
 
 /// Icon name in the hicolor theme (installed by [`register_freedesktop`]).
-pub const ICON_NAME: &str = "io.github.zanttux.Sanain";
-const ICON_PNG: &[u8] = include_bytes!("../../../packaging/icons/sanain-256.png");
+pub const ICON_NAME: &str = "io.github.zanttux.text3";
+const ICON_PNG: &[u8] = include_bytes!("../../../packaging/icons/text3-256.png");
 
 /// MIME types offered in "Open With": text and common code/data formats.
 pub const MIME_TYPES: &[&str] = &[
@@ -64,10 +64,10 @@ pub fn desktop_entry(exe: &Path) -> String {
     }
     quoted.push('"');
     format!(
-        "[Desktop Entry]\nType=Application\nName=Sanain\nGenericName=Text Editor\n\
+        "[Desktop Entry]\nType=Application\nName=Text³\nGenericName=Text Editor\n\
          Comment=Native text editor\nExec={quoted} %F\nIcon={ICON_NAME}\n\
          Terminal=false\nCategories=Utility;TextEditor;Development;\n\
-         MimeType={};\nStartupNotify=true\nStartupWMClass=sanain\n",
+         MimeType={};\nStartupNotify=true\nStartupWMClass=text3\n",
         MIME_TYPES.join(";")
     )
 }
@@ -152,16 +152,16 @@ pub fn plain_path(p: &Path) -> PathBuf {
 pub fn windows_reg_commands(exe: &Path, register: bool) -> Vec<Vec<String>> {
     let exe = exe.to_string_lossy().into_owned();
     let name = Path::new(&exe).file_name().map_or_else(
-        || "sanain.exe".to_owned(),
+        || "text3.exe".to_owned(),
         |n| n.to_string_lossy().into_owned(),
     );
-    let menu = r"HKCU\Software\Classes\*\shell\Sanain".to_owned();
+    let menu = r"HKCU\Software\Classes\*\shell\Text3".to_owned();
     let app = format!(r"HKCU\Software\Classes\Applications\{name}");
     let command = format!("\"{exe}\" \"%1\"");
     let s = |v: &[&str]| v.iter().map(|x| (*x).to_owned()).collect::<Vec<_>>();
     if register {
         vec![
-            s(&["add", &menu, "/ve", "/d", "Edit with Sanain", "/f"]),
+            s(&["add", &menu, "/ve", "/d", "Edit with Text³", "/f"]),
             s(&["add", &menu, "/v", "Icon", "/d", &exe, "/f"]),
             s(&[
                 "add",
@@ -171,7 +171,7 @@ pub fn windows_reg_commands(exe: &Path, register: bool) -> Vec<Vec<String>> {
                 &command,
                 "/f",
             ]),
-            s(&["add", &app, "/v", "FriendlyAppName", "/d", "Sanain", "/f"]),
+            s(&["add", &app, "/v", "FriendlyAppName", "/d", "Text³", "/f"]),
             s(&[
                 "add",
                 &format!(r"{app}\shell\open\command"),
@@ -211,25 +211,25 @@ mod tests {
 
     #[test]
     fn desktop_entry_quotes_and_lists_types() {
-        let e = desktop_entry(Path::new("/opt/my apps/$x/sanain"));
-        assert!(e.contains("Exec=\"/opt/my apps/\\$x/sanain\" %F\n"));
+        let e = desktop_entry(Path::new("/opt/my apps/$x/text3"));
+        assert!(e.contains("Exec=\"/opt/my apps/\\$x/text3\" %F\n"));
         assert!(e.contains("MimeType=text/plain;text/markdown;"));
-        assert!(e.starts_with("[Desktop Entry]\nType=Application\nName=Sanain\n"));
+        assert!(e.starts_with("[Desktop Entry]\nType=Application\nName=Text³\n"));
     }
 
     #[test]
     fn freedesktop_register_round_trip() {
         let d = tempfile::tempdir().unwrap();
         let apps = d.path().join("applications");
-        let p = register_freedesktop(Path::new("/usr/bin/sanain"), Some(apps.clone())).unwrap();
+        let p = register_freedesktop(Path::new("/usr/bin/text3"), Some(apps.clone())).unwrap();
         assert!(
             std::fs::read_to_string(&p)
                 .unwrap()
-                .contains("Exec=\"/usr/bin/sanain\" %F")
+                .contains("Exec=\"/usr/bin/text3\" %F")
         );
         let icon = d
             .path()
-            .join("icons/hicolor/256x256/apps/io.github.zanttux.Sanain.png");
+            .join("icons/hicolor/256x256/apps/io.github.zanttux.text3.png");
         assert!(icon.is_file(), "icon installed");
         assert!(unregister_freedesktop(Some(apps.clone())).unwrap());
         assert!(!p.exists());
@@ -244,32 +244,32 @@ mod tests {
     fn verbatim_prefix_removed() {
         assert_eq!(
             plain_path(Path::new(
-                r"\\?\C:\Users\Me\AppData\Local\Programs\Sanain\sanain.exe"
+                r"\\?\C:\Users\Me\AppData\Local\Programs\Text3\text3.exe"
             )),
-            PathBuf::from(r"C:\Users\Me\AppData\Local\Programs\Sanain\sanain.exe")
+            PathBuf::from(r"C:\Users\Me\AppData\Local\Programs\Text3\text3.exe")
         );
         assert_eq!(
-            plain_path(Path::new(r"\\?\UNC\server\share\sanain.exe")),
-            PathBuf::from(r"\\server\share\sanain.exe")
+            plain_path(Path::new(r"\\?\UNC\server\share\text3.exe")),
+            PathBuf::from(r"\\server\share\text3.exe")
         );
         assert_eq!(
-            plain_path(Path::new("/usr/bin/sanain")),
-            PathBuf::from("/usr/bin/sanain")
+            plain_path(Path::new("/usr/bin/text3")),
+            PathBuf::from("/usr/bin/text3")
         );
     }
 
     #[test]
     fn windows_commands() {
-        let cmds = windows_reg_commands(Path::new(r"C:\Apps\Sanain\sanain.exe"), true);
+        let cmds = windows_reg_commands(Path::new(r"C:\Apps\Text3\text3.exe"), true);
         assert!(
             cmds.iter()
-                .any(|c| c.contains(&r#""C:\Apps\Sanain\sanain.exe" "%1""#.to_owned()))
+                .any(|c| c.contains(&r#""C:\Apps\Text3\text3.exe" "%1""#.to_owned()))
         );
         assert!(
             cmds.iter().all(|c| c[1].starts_with(r"HKCU\")),
             "per user only"
         );
-        let undo = windows_reg_commands(Path::new(r"C:\Apps\Sanain\sanain.exe"), false);
+        let undo = windows_reg_commands(Path::new(r"C:\Apps\Text3\text3.exe"), false);
         assert_eq!(undo.len(), 2);
     }
 
@@ -299,20 +299,20 @@ mod tests {
         if std::env::var_os("CI").is_none() {
             return;
         }
-        let exe = Path::new(r"C:\Temp\sanain-test\sanain.exe");
+        let exe = Path::new(r"C:\Temp\text3-test\text3.exe");
         windows_apply(exe, true).unwrap();
         let out = std::process::Command::new("reg")
             .args([
                 "query",
-                r"HKCU\Software\Classes\*\shell\Sanain\command",
+                r"HKCU\Software\Classes\*\shell\Text3\command",
                 "/ve",
             ])
             .output()
             .unwrap();
-        assert!(String::from_utf8_lossy(&out.stdout).contains(r"C:\Temp\sanain-test\sanain.exe"));
+        assert!(String::from_utf8_lossy(&out.stdout).contains(r"C:\Temp\text3-test\text3.exe"));
         windows_apply(exe, false).unwrap();
         let gone = std::process::Command::new("reg")
-            .args(["query", r"HKCU\Software\Classes\*\shell\Sanain"])
+            .args(["query", r"HKCU\Software\Classes\*\shell\Text3"])
             .status()
             .unwrap();
         assert!(!gone.success());

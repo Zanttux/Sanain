@@ -1,5 +1,5 @@
 # Machine translation by Claude (AI); review by a native speaker required before release.
-app-name = Sanain
+app-name = Text³
 menu-file = Bestand
 file-open = Open…
 file-save = Bewaar
@@ -16,8 +16,8 @@ edit-redo = Opnieuw
 edit-select-all = Selecteer alles
 untitled = Naamloos
 window-title = { $dirty ->
-    [yes] ● { $name } — Sanain
-   *[no] { $name } — Sanain
+    [yes] ● { $name } — Text³
+   *[no] { $name } — Text³
     }
 status-position = Rg { $line }, Kol { $column }
 status-selections = { $count ->
@@ -52,8 +52,8 @@ menu-window = Venster
 edit-cut = Knip
 edit-copy = Kopieer
 edit-paste = Plak
-app-quit = Stop Sanain
-app-hide = Verberg Sanain
+app-quit = Stop Text³
+app-hide = Verberg Text³
 app-hide-others = Verberg andere
 app-show-all = Toon alles
 window-minimize = Minimaliseer
@@ -110,7 +110,7 @@ settings-theme-dark = Donker
 settings-restore-session = Bestanden van de vorige sessie opnieuw openen
 settings-language = Taal
 settings-language-system = Volg systeem
-settings-language-note = Taalwijzigingen worden toegepast nadat Sanain opnieuw is gestart.
+settings-language-note = Taalwijzigingen worden toegepast nadat Text³ opnieuw is gestart.
 settings-save-failed = Kan instellingen niet bewaren: { $reason }
 view-command-palette = Opdrachtpalet…
 palette-placeholder = Typ een opdracht
@@ -245,7 +245,7 @@ view-unfold = Vouw uit
 view-unfold-all = Vouw alles uit
 settings-shortcuts = Toetscombinaties
 settings-keymap-preset = Voorinstelling
-settings-keymap-default = Sanain
+settings-keymap-default = Text³
 settings-keymap-notepadpp = Notepad++
 settings-shortcut-change = Wijzig
 settings-shortcut-reset = Herstel standaard
@@ -265,12 +265,12 @@ folder-search-summary = { $count ->
     }
 app-check-updates = Zoeken naar updates…
 update-checking = Zoeken naar updates…
-update-up-to-date = Sanain { $version } is de nieuwste versie.
-update-no-releases = Er zijn nog geen versies van Sanain gepubliceerd.
+update-up-to-date = Text³ { $version } is de nieuwste versie.
+update-no-releases = Er zijn nog geen versies van Text³ gepubliceerd.
 update-failed = Kan niet zoeken naar updates: { $reason }
 update-invalid = onverwacht antwoord
-update-available-title = Sanain { $version } is beschikbaar
-update-available-body = Open de downloadpagina om het te downloaden. Sanain downloadt of installeert zelf niets.
+update-available-title = Text³ { $version } is beschikbaar
+update-available-body = Open de downloadpagina om het te downloaden. Text³ downloadt of installeert zelf niets.
 update-open-page = Downloadpagina openen
 update-later = Later
 settings-check-updates = Eén keer per dag zoeken naar updates
@@ -366,12 +366,11 @@ replace-preview-more = Alleen de eerste 200 gewijzigde regels worden getoond.
 replace-preview-stale = Het document is gewijzigd; er is niets vervangen. Voer Vervang alles opnieuw uit.
 encoding-detected = Geopend als { $encoding } (gedetecteerd uit de inhoud van het bestand).
 encoding-suggested = Voorgesteld op basis van de inhoud van het bestand: { $encoding }. Controleer het voorbeeld voordat u opent.
-app-about = Over Sanain
+app-about = Over Text³
 menu-help = Help
-about-tagline = De kracht van woorden.
 about-version = Versie { $version }
 about-license = Vrij en open source onder de Mozilla Public License 2.0.
-about-ai = Gebouwd door AI. Geleid door mensen. Gedragen door de community.
+about-ai = Ontwikkeld met hulp van AI (Claude van Anthropic) onder leiding van de beheerder.
 about-notices = Componenten van derden en hun licenties staan vermeld in THIRD_PARTY_NOTICES, dat bij elke release wordt meegeleverd.
 about-source = Broncode en meldingen op GitHub
 tools-xml-validate = Valideer XML
@@ -414,13 +413,13 @@ tools-compare-file = Vergelijk met bestand…
 compare-file-failed = Kan niet vergelijken met { $name }: { $reason }
 cli-help =
     Gebruik:
-      sanain [BESTAND…]             bestanden openen
-      sanain --diff LINKS RECHTS    twee bestanden naast elkaar vergelijken
-      sanain --version              de versie tonen
-      sanain --help                 deze hulp tonen
+      text3 [BESTAND…]              bestanden openen
+      text3 --diff LINKS RECHTS     twee bestanden naast elkaar vergelijken
+      text3 --version               de versie tonen
+      text3 --help                  deze hulp tonen
     Gebruik -- vóór bestandsnamen die met een streepje beginnen.
 cli-unknown-option = Onbekende optie { $option }.
-cli-diff-needs-two = --diff heeft twee bestanden nodig: sanain --diff LINKS RECHTS
+cli-diff-needs-two = --diff heeft twee bestanden nodig: text3 --diff LINKS RECHTS
 window-move-tab-left = Tabblad naar links verplaatsen
 window-move-tab-right = Tabblad naar rechts verplaatsen
 edit-skip-occurrence = Spring naar volgende overeenkomst
@@ -457,12 +456,12 @@ image-outside = Deze afbeelding staat buiten de map van het document.
 image-allow = Afbeeldingen uit deze map tonen
 cli-help-integration =
     Integratie met het bestandsbeheer (alleen huidige gebruiker):
-      sanain --register           Sanain toevoegen aan ‘Openen met’ (Linux, Windows)
-      sanain --unregister         weer verwijderen
-cli-registered = Sanain is toegevoegd aan ‘Openen met’. { $place }
-cli-unregistered = Sanain is verwijderd uit ‘Openen met’.
+      text3 --register            Text³ toevoegen aan ‘Openen met’ (Linux, Windows)
+      text3 --unregister          weer verwijderen
+cli-registered = Text³ is toegevoegd aan ‘Openen met’. { $place }
+cli-unregistered = Text³ is verwijderd uit ‘Openen met’.
 cli-register-failed = De integratie met het bestandsbeheer kon niet worden gewijzigd: { $reason }
-cli-register-macos = Op macOS hoeft niets te worden geregistreerd: zodra Sanain.app in de map Apps staat, biedt de Finder het aan onder ‘Openen met’.
+cli-register-macos = Op macOS hoeft niets te worden geregistreerd: zodra Text³.app in de map Apps staat, biedt de Finder het aan onder ‘Openen met’.
 settings-tab-general = Algemeen
 settings-tab-editor = Editor
 settings-tab-appearance = Weergave
