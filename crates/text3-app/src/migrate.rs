@@ -181,7 +181,7 @@ pub fn run(pairs: &[(PathBuf, PathBuf)]) -> usize {
     let mut copied = 0;
     for (old, new) in pairs {
         match copy_legacy_dir(old, new) {
-            Ok(Outcome::Copied(r)) => {
+            Ok(Outcome::Copied(r)) if r.copied + r.kept + r.skipped > 0 => {
                 eprintln!(
                     "text3: copied {} files from {} to {} ({} already present, {} skipped); \
                      the old folder was left unchanged",

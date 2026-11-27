@@ -65,8 +65,14 @@ fn main() -> eframe::Result {
     }
 
     // First start after the rename: copy the Sanain folders (once, never
-    // overwriting, old folders untouched; text3_app::migrate).
-    let migrated = text3_app::migrate::run(&text3_app::migrate::default_pairs());
+    // overwriting, old folders untouched; text3_app::migrate). Only when
+    // the editor starts: --help, --register and usage errors leave the
+    // user's folders alone.
+    let migrated = if cli.is_some() {
+        text3_app::migrate::run(&text3_app::migrate::default_pairs())
+    } else {
+        0
+    };
 
     let settings_dir = Settings::default_dir();
     let settings = settings_dir
