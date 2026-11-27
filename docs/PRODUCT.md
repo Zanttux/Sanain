@@ -35,7 +35,7 @@ Checked 2026-11-27. Text³ status verified against STATUS.md, `locales/en-US/mai
 ### Notepad++
 | # | Liked feature (evidence) | Text³ |
 |---|---|---|
-| 1 | Lightweight, fast, free and open source [S4][S5] | Partial — free/FOSS; startup and memory not measured (empty window ~139 MB RSS, BENCHMARKS) |
+| 1 | Lightweight, fast, free and open source [S4][S5] | Partial — free/FOSS; macOS warm start 135 ms median, idle RSS 108 MiB (budget 100), Windows/Linux unmeasured (BENCHMARKS) |
 | 2 | Syntax highlighting and folding for ~90 languages [S4] | Partial — 22 languages, folding |
 | 3 | Regex find/replace, Find in Files, Mark All [S4] | Has (no line bookmarks) |
 | 4 | Tabs [S5] | Has |
@@ -49,7 +49,7 @@ Checked 2026-11-27. Text³ status verified against STATUS.md, `locales/en-US/mai
 ### Sublime Text
 | # | Liked feature (evidence) | Text³ |
 |---|---|---|
-| 1 | Instant startup, low resource use [S10][S11] | Partial — unmeasured |
+| 1 | Instant startup, low resource use [S10][S11] | Partial — macOS measured (warm p95 150 ms; idle RSS 108 MiB misses the 100 MiB budget); Windows unmeasured |
 | 2 | Large files with highlighting and folding [S10][S11] | Partial — 147 MB file edits (571 MB RSS); log viewer for any size |
 | 3 | Multiple selections, Ctrl+D rename [S12][S11] | Has |
 | 4 | Goto Anything (Ctrl+P: fuzzy file, @symbol, :line) [S12] | Yes — Cmd/Ctrl+P: open tabs, recent files and the project folder; `:line`, `file:line`, `@symbol`, `#text`; no preview on highlight |
@@ -63,7 +63,7 @@ Checked 2026-11-27. Text³ status verified against STATUS.md, `locales/en-US/mai
 ### Windows Notepad
 | # | Liked feature (evidence) | Text³ |
 |---|---|---|
-| 1 | Always there, opens instantly, plain text only [S14][S15] | Partial — plain text default; not preinstalled; startup unmeasured |
+| 1 | Always there, opens instantly, plain text only [S14][S15] | Partial — plain text default; not preinstalled; Windows startup unmeasured |
 | 2 | Tabs [S16] | Has |
 | 3 | Session restore incl. unsaved text, autosave [S16][S17] | Partial (as Notepad++ #5) |
 | 4 | Dark theme following the system [S17] | Has |
@@ -75,6 +75,6 @@ Checked 2026-11-27. Text³ status verified against STATUS.md, `locales/en-US/mai
 | 10 | AI rewrite/summarise (divisive; backlash for bloat) [S14][S15] | Missing by design (optional local/BYOK only, E16) |
 
 ### Gaps
-Shared by all three: no-prompt hot exit with untitled tabs kept (E06 already requires it). Then: fuzzy Goto Anything; status-bar character/word count; spell check (prose users); folder sidebar; Column Editor; minimap and bookmarks (Notepad++/Sublime staples, below the top 10); extensions stay P2. Unmeasured startup/memory blocks any "lightweight" claim (TESTING budgets). Sanain already beats all three out of the box on built-in compare, data trees, Markdown/Mermaid and byte-exact saving.
+Shared by all three: no-prompt hot exit with untitled tabs kept (E06 already requires it). Then: fuzzy Goto Anything; status-bar character/word count; spell check (prose users); folder sidebar; Column Editor; minimap and bookmarks (Notepad++/Sublime staples, below the top 10); extensions stay P2. Startup/memory are measured on macOS only and idle RSS still misses its budget, so no "lightweight" claim yet (TESTING budgets, BENCHMARKS). Sanain already beats all three out of the box on built-in compare, data trees, Markdown/Mermaid and byte-exact saving.
 
 Sources (accessed 2026-11-27): [S1] https://survey.stackoverflow.co/2025/technology/ (2025-07) · [S2] https://visualstudiomagazine.com/articles/2026/10/06/stack-overflow-2026-survey-vs-code-leads-visual-studio-takes-third.aspx (2026-10-06, not read directly: 403) · [S3] https://www.windowslatest.com/2025/07/01/microsoft-confirms-windows-11-did-not-lose-400-million-monthly-active-pcs (2025-07-01) · [S4] https://www.g2.com/products/notepad/reviews (2,467 reviews, via search summary) · [S5] https://opensource.com/article/16/12/notepad-text-editor (2016) · [S6] https://community.notepad-plus-plus.org/post/32142 · [S7] https://www.softpedia.com/downloadTag/Notepad%2B%2B+plugin (2026-05) · [S8] https://github.com/notepad-plus-plus/nppPluginList · [S9] https://www.capterra.com/p/185965/Notepad/reviews/ (via search summary) · [S10] https://forum.sublimetext.com/t/anyone-else-still-sticking-with-sublime-in-2026/78491 (2026-05) · [S11] https://dev.to/mindninjax/why-do-you-still-use-sublime-1o7l · [S12] https://www.sublimetext.com/ (multiple selections, tab multi-select), https://www.lynda.com/Sublime-Text-tutorials/Using-Goto-Anything-command/513594/566119-4.html (Goto Anything "favorite feature"), https://forum.sublimetext.com/t/hot-exit-as-default/1534 (hot exit) · [S13] https://packagecontrol.io/browse/popular (2026-11-27) · [S14] https://www.theregister.com/2025/05/23/microsoft_ai_notepad (2025-05-23) · [S15] https://www.windowscentral.com/software-apps/microsoft-adds-tables-and-more-ai-to-notepad-what-happened-to-the-app-we-loved (2025-11) · [S16] https://www.thurrott.com/books/windows-11-field-guide/334641/notepad-25h2 (2026-04-07) · [S17] https://www.ghacks.net/?p=201520 · [S18] https://www.bleepingcomputer.com/news/microsoft/windows-11-notepad-gets-a-built-in-character-counter-finally/ (2023-12)

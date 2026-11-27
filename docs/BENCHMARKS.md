@@ -1,7 +1,91 @@
 # Benchmarks
-No rigorous measurements yet (no repeated runs, no p95).
 
-Informal observations (single runs, not baselines):
+## Start-up and memory (2026-11-27)
+Method: `scripts/measure-startup.py --baseline <old build>` (TESTING.md),
+release profile (thin LTO), Rust 1.100.0, macOS 27.2.1, Apple M5 MacBook
+Pro, 24 GB, internal SSD. Branch perf/startup-measure on dc101bf.
+Scratch profile (TEXT3_CONFIG_DIR/TEXT3_RECOVERY_DIR, never the real
+one), TEXT3_LOCALE=en-US, 960×680 pt window on a 2× display. 20 timed
+runs per case (5 for 100 MB) plus 3 idle runs; baseline and candidate
+launches alternate. The machine was busy with unrelated work (load
+average 15–24), so absolute times run 10–30 % above an idle machine;
+on a quieter run the same build showed warm median 148 ms. Datasets:
+4 KB generated Rust, 1 MiB and 100 MiB generated ASCII log lines (fixed
+generator in the script). Times: from spawning the process to the first
+frame on screen (with a file: the first frame showing its text). Peak
+RSS from `/usr/bin/time -l` up to that frame; idle RSS from `ps` 5 s
+later, and the largest RSS sampled every 50 ms in between.
+
+Baseline = dc101bf plus the probe only; candidate = this branch.
+Median / p95:
+
+| Case | Baseline | Candidate | Budget |
+|---|---|---|---|
+| Empty window, warm | 145.8 / 154.7 ms | 134.9 / 150.2 ms | warm ≤ 250 ms: met |
+| Empty window, cold-ish | 1021 / 1087 ms | 986 / 1053 ms | cold p95 ≤ 500 ms: missed (see below) |
+| Empty window, cold-ish, in-process only | 141 / 169 ms | 134 / 157 ms | — |
+| Editor font set (Menlo), warm | 165.0 / 210.0 ms | 133.6 / 140.2 ms | met |
+| 4 KB Rust file, warm | 178.6 / 208.1 ms | 165.3 / 183.7 ms | met |
+| 1 MB text file, warm | 210.5 / 372.6 ms | 202.9 / 253.8 ms | — |
+| 100 MB text file, warm | 586.6 / 607.1 ms | 561.7 / 604.2 ms | ≤ 2 s: met |
+| Empty window, idle RSS | 109.1 MiB | 108.0 MiB | ≤ 100 MiB: missed by 8 MiB |
+| Editor font set, idle RSS (largest seen) | 533.1 MiB (533.5) | 110.2 MiB (111.0) | missed by 10 MiB |
+| 1 MB file, idle RSS | 111.8 MiB | 110.4 MiB | — |
+| 100 MB file, peak / idle RSS | 413 / 322 MiB | 411 / 222–322 MiB | — |
+| Empty window, peak footprint | 60.4 MiB | 59.5 MiB | — |
+
+Where the time goes (candidate, warm, from `main`): settings 0.05 ms;
+localization, recovery folder and command-line files 3–4 ms (1 MB file
+7 ms, 100 MB 222 ms to read and decode); eframe creating the window,
+NSApplication and the wgpu/Metal device 85–100 ms; app state < 0.1 ms;
+first layout 6 ms; paint and present 30 ms. About 9 ms pass before
+`main` (exec, dyld). A Time Profiler trace of the main thread
+(`xctrace`) agrees: AppKit window creation, wgpu set-up and Core
+Animation commit dominate; Text³'s own code is a few ms.
+
+Fixed on this branch:
+- The editor font setting (Settings › Editor › Font) read every system
+  font file in full to find the family: about 600 MB on macOS (Apple
+  Color Emoji alone is 192 MB). With a font set, RSS went to about
+  530 MB on every start and stayed there for several seconds; this is
+  where the earlier "empty window ~139 MB" (and worse) came from. fontdb
+  now memory-maps each file just long enough to read its names
+  (`memmap` feature; memmap2 was already in the tree via egui's system
+  font fallback): 533 → 110 MiB, and start-up with a font set no longer
+  competes with the scan (p95 210 → 140 ms).
+- The first frame waited 20–35 ms for egui's system font list: the "+"
+  button's tooltip text was formatted every frame, and formatting a
+  shortcut checks the font has ⌥, which the built-in fonts lack. The
+  tooltip is now formatted only when shown (the accessible description
+  is formatted without the glyph check). Window → first frame 76 → 48 ms
+  median in a 30-pair alternating run.
+- The macOS menu bar is built at the start of the second frame instead
+  of before the first (muda takes about 12 ms; ~5 ms off the first
+  frame, the rest overlapped with waiting for the display).
+- Inside Text³.app the Dock icon is left to the bundle instead of being
+  replaced by the decoded 256 px PNG (saves the decode and a 2 MB image;
+  not visible in these numbers, which run the bare binary).
+
+Budgets missed, and why:
+- Cold-ish p95 (1053 ms): 860 ms of it is before `main`. macOS checks a
+  never-run executable on its first launch (the 46 MB binary; 300–500 ms
+  on a quiet machine, 860 ms under this load). That happens once per
+  installed or updated binary; stripping symbols (46 → 43 MB) did not
+  change it. In-process time is 134 / 157 ms. A true cold start (file
+  cache dropped, after reboot) needs root (`purge`) and was not measured.
+- Idle RSS 108 MiB: Text³'s own heap at idle is about 3 MB (font atlas
+  1 MB; `malloc_history`). The rest is platform: two 10 MB Metal
+  drawables for a 2× window (IOSurface 20 MB), AppKit, Core Animation,
+  LaunchServices and Metal, plus shared system library pages that RSS
+  counts. The private footprint (Activity Monitor's "Memory") is 59 MiB.
+  Getting RSS under 100 MiB would mean dropping a swapchain buffer or the
+  GPU renderer; not done.
+
+Not measured locally: Windows and Linux (no machines in this session);
+typing latency; 10 GB log mode.
+
+## Earlier informal observations
+Single runs, not baselines:
 - 2026-11-27, incremental highlighting with injections (branch
   perf/incremental-injections on fb6fe9f), release profile, Rust
   1.100.0, macOS 27.2, Apple M5, warm, same method as below (30 edits

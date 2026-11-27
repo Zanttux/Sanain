@@ -32,6 +32,8 @@ use text3_i18n::Localizer;
 use text3_io::recovery::RecoveryStore;
 
 fn main() -> eframe::Result {
+    // TEXT3_MEASURE_STARTUP: start-up timings (text3_app::startprobe).
+    text3_app::startprobe::start();
     let parsed = text3_app::cli::parse(std::env::args_os().skip(1));
     match &parsed {
         text3_app::cli::Parsed::Version
@@ -79,6 +81,7 @@ fn main() -> eframe::Result {
         .as_deref()
         .map(Settings::load)
         .unwrap_or_default();
+    text3_app::startprobe::mark("settings");
 
     // Language: TEXT3_LOCALE (or SANAIN_LOCALE), then the user's choice,
     // then the system.
@@ -172,6 +175,9 @@ fn main() -> eframe::Result {
         .map(|l| l.into_iter().filter_map(Result::ok).collect())
         .unwrap_or_default();
     let (mut workspace, load_errors, restored) = Workspace::startup(store, snapshots, &paths);
+    if !paths.is_empty() || !large.is_empty() {
+        text3_app::startprobe::expect_text();
+    }
     // The session puts the restored tabs back in order. Its files reopen
     // only with session restore on; tabs kept by hot exit come back anyway
     // (their text is in the recovery folder), so the session still orders
@@ -187,6 +193,7 @@ fn main() -> eframe::Result {
     // Before the event loop starts, so a file opened from Finder at launch
     // is not missed; the app wakes up itself once it is running.
     text3_platform::prepare_open_documents();
+    text3_app::startprobe::mark("files");
 
     let options = eframe::NativeOptions {
         renderer: renderer(),
@@ -202,6 +209,8 @@ fn main() -> eframe::Result {
         "Text³",
         options,
         Box::new(move |cc| {
+            // eframe has created the window and the renderer.
+            text3_app::startprobe::mark("window");
             theme::install(&cc.egui_ctx);
             let mut shell = shell::Shell::new(
                 workspace,
@@ -233,6 +242,7 @@ fn main() -> eframe::Result {
             }
             shell.install_menu(&cc.egui_ctx);
             shell.auto_update_check(&cc.egui_ctx);
+            text3_app::startprobe::mark("app");
             Ok(Box::new(shell))
         }),
     )
@@ -290,7 +300,16 @@ fn shell_registration(l10n: &Localizer, register: bool) -> i32 {
 }
 
 /// Window and taskbar icon (packaging/icons, rendered from assets/brand/text3-mascot.svg).
+/// Inside Text³.app the Dock already shows the bundle's icon (sharper
+/// than this 256 px one); the empty icon tells eframe to leave it alone,
+/// which also saves decoding the PNG and a 2 MB Dock image.
 fn app_icon() -> std::sync::Arc<eframe::egui::IconData> {
+    if cfg!(target_os = "macos")
+        && std::env::current_exe()
+            .is_ok_and(|exe| text3_app::settings::app_bundle_of(&exe).is_some())
+    {
+        return std::sync::Arc::new(eframe::egui::IconData::default());
+    }
     let png = include_bytes!("../../../packaging/icons/text3-256.png");
     let icon = image::load_from_memory(png)
         .map(|i| i.into_rgba8())

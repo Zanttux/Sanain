@@ -71,6 +71,24 @@ are cross-platform verification and release readiness.
   focus stop (`focus::status_bar_stops`). Covered by unit tests and
   headless egui tests (labels, AccessKit label, popover, setting); GUI
   hand-check not possible in that session (screen capture blocked).
+- Start-up and memory measured (2026-11-27, macOS, Apple M5, release;
+  scripts/measure-startup.py, BENCHMARKS.md): `TEXT3_MEASURE_STARTUP=<file>`
+  makes the app write its start-up marks (settings, files, window, app,
+  first layout, first frame presented, first frame with the opened
+  file's text), `TEXT3_MEASURE_EXIT=1` exits after that frame; no effect
+  when unset. The script uses a scratch profile, 20 runs per case and
+  alternates launches with a `--baseline` build. Warm empty window
+  134.9 / 150.2 ms (median / p95, budget 250 met), 100 MB file 0.56 s
+  (budget 2 s met). Fixed: the editor-font scan read every system font
+  file in full (RSS ~530 MB at start with a font set, now 110 MiB; fontdb
+  `memmap` feature, no new crate), the first frame waited 20–35 ms for
+  the system font list because of the "+" tooltip's ⌥ glyph check
+  (tooltip now formatted only when shown), the macOS menu bar is built
+  after the first frame, the Dock icon is left to Text³.app. Still
+  missed: idle RSS 108 MiB (budget 100; Text³'s heap ~3 MB, the rest is
+  AppKit/Metal/swapchain; private footprint 59 MiB) and cold-ish p95
+  1.05 s (macOS first-launch check of a new binary; true cold start not
+  measurable without root). Windows and Linux not measured.
 - New-tab button (#151): "+" after the last tab runs File › New Tab;
   pinned at the strip's right end when tabs overflow, new/active tab
   scrolled into view; tooltip "New Tab (shortcut)" from the existing

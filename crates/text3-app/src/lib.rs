@@ -20,6 +20,7 @@ pub mod replacefiles;
 pub mod session;
 pub mod settings;
 pub mod shellreg;
+pub mod startprobe;
 pub mod syntax;
 pub mod update;
 pub mod workspace;
