@@ -9,6 +9,16 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   opened" (#166). The bundle is now sealed with an ad-hoc signature, so
   macOS treats it as an unsigned app that can be allowed once in System
   Settings › Privacy & Security › Open Anyway.
+- Windows installer: the wizard artwork is no longer drawn upside down
+  (#167); the BMPs are now written bottom-up as Inno Setup expects. The
+  Welcome and Finished pages show a full-height panel with the mascot
+  above the wordmark, the inner pages the mascot's head, as in the NSIS
+  installers of Notepad++.
+- macOS disk image: the window now has the same artwork panel on the
+  left, and on white the app, an arrow and the Applications folder at a
+  size that fits the window. The license, README, changelog and
+  third-party notices are inside the app (Contents/Resources) instead of
+  scattered below the window.
 
 ### Changed
 - Sanain is now **Text³** ("Text Cubed"; owner decision D27). The window

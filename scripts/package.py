@@ -115,9 +115,10 @@ def windows_installer(ver, stage, dist, name):
 APP = "Text³.app"
 VOLUME = "Text³"
 
-# Finder layout of the DMG window: 660x420 with the lockup at the top
-# (packaging/macos/dmg-background.tiff), the app and the Applications link
-# below it, the documents out of sight below the window.
+# Finder layout of the DMG window: 660x400 of content with the artwork
+# panel on the left (packaging/macos/dmg-background.tiff) and the app and
+# the Applications link on white, an arrow between them. Nothing else is
+# in the window: the license and notices are inside the app bundle.
 DMG_LAYOUT = """
 tell application "Finder"
   tell disk "{volume}"
@@ -125,15 +126,20 @@ tell application "Finder"
     set current view of container window to icon view
     set toolbar visible of container window to false
     set statusbar visible of container window to false
-    set the bounds of container window to {{200, 120, 860, 562}}
+    try
+      set pathbar visible of container window to false
+    end try
+    set the bounds of container window to {{200, 120, 860, {bottom}}}
     set opts to the icon view options of container window
     set arrangement of opts to not arranged
-    set icon size of opts to 96
+    set icon size of opts to 112
     set text size of opts to 13
+    set shows item info of opts to false
     set background picture of opts to file ".background:background.tiff"
-    set position of item "{app}" of container window to {{180, 300}}
-    set position of item "Applications" of container window to {{480, 300}}
-    {docs}
+    set position of item "{app}" of container window to {{330, 190}}
+    set position of item "Applications" of container window to {{550, 190}}
+    -- Finder may widen the window while the view changes: set it again.
+    set the bounds of container window to {{200, 120, 860, {bottom}}}
     update without registering applications
     delay 1
     close
@@ -142,7 +148,7 @@ end tell
 """
 
 
-def dmg_layout(rw, docs):
+def dmg_layout(rw):
     """Apply the window layout to the read-write image `rw`. Needs Finder
     (a logged-in session); on failure the DMG keeps Finder's default
     layout, which still works."""
@@ -152,11 +158,9 @@ def dmg_layout(rw, docs):
     ).stdout
     device = mount.split()[0]
     try:
-        hidden = "\n    ".join(
-            f'set position of item "{d}" of container window to {{{100 + 150 * i}, 600}}'
-            for i, d in enumerate(docs)
-        )
-        script = DMG_LAYOUT.format(volume=VOLUME, app=APP, docs=hidden)
+        # 400 pt of content plus the 32 pt title bar (bounds include it).
+        bottom = 120 + 432
+        script = DMG_LAYOUT.format(volume=VOLUME, app=APP, bottom=bottom)
         subprocess.run(["osascript", "-e", script], check=True, timeout=60)
         return True
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as e:
@@ -171,12 +175,17 @@ def macos_dmg(stage_app, dist, name, notices):
     tmp = os.path.join(dist, name + "-dmg")
     shutil.rmtree(tmp, ignore_errors=True)
     os.makedirs(tmp)
-    shutil.copytree(stage_app, os.path.join(tmp, APP), symlinks=True)
+    app = os.path.join(tmp, APP)
+    shutil.copytree(stage_app, app, symlinks=True)
     os.symlink("/Applications", os.path.join(tmp, "Applications"))
-    docs = DOCS + ["THIRD_PARTY_NOTICES.md"]
+    # The documents go inside the bundle, so the window shows only the app
+    # and Applications; the bundle is sealed again afterwards (#166).
+    res = os.path.join(app, "Contents", "Resources")
     for doc in DOCS:
-        shutil.copy2(os.path.join(ROOT, doc), os.path.join(tmp, doc))
-    shutil.copy2(notices, os.path.join(tmp, "THIRD_PARTY_NOTICES.md"))
+        shutil.copy2(os.path.join(ROOT, doc), os.path.join(res, doc))
+    shutil.copy2(notices, os.path.join(res, "THIRD_PARTY_NOTICES.md"))
+    run("codesign", "--force", "--sign", "-", "--timestamp=none", app)
+    run("codesign", "--verify", "--strict", app)
     os.makedirs(os.path.join(tmp, ".background"))
     shutil.copy2(
         os.path.join(ROOT, "packaging", "macos", "dmg-background.tiff"),
@@ -189,7 +198,7 @@ def macos_dmg(stage_app, dist, name, notices):
             os.remove(f)
     run("hdiutil", "create", "-volname", VOLUME, "-srcfolder", tmp, "-ov", "-format", "UDRW", rw)
     if os.environ.get("TEXT3_DMG_LAYOUT", "1") != "0":
-        dmg_layout(rw, docs)
+        dmg_layout(rw)
     run("hdiutil", "convert", rw, "-format", "UDZO", "-o", dmg)
     os.remove(rw)
     shutil.rmtree(tmp)
