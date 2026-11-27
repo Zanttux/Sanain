@@ -42,15 +42,12 @@ h2 { font-size: clamp(23px, 3vw, 29px); line-height: 1.2; margin: 0 0 16px; }
 h3 { font-size: 17px; margin: 0 0 6px; }
 p { margin: 0 0 14px; max-width: 66ch; }
 
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+/* Two columns on wide screens, one on narrow ones (no rows of three). */
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .grid > div { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; }
 .grid p { color: var(--muted); font-size: 15.5px; margin: 0; }
 
-/* "Your files stay intact": the byte strip. */
-.bytes { font: 14px/1.9 var(--mono); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px 18px; overflow-x: auto; white-space: pre; color: var(--muted); }
-.bytes .same { color: var(--link); }
-
-.shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+.shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .shots figure { margin: 0; }
 .shots img { width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--border); display: block; }
 .shots figcaption { color: var(--muted); font-size: 14px; margin-top: 6px; }
@@ -66,5 +63,6 @@ footer { padding: 32px 0 56px; color: var(--muted); font-size: 14px; border-top:
 footer a { color: var(--link); }
 @media (max-width: 640px) {
   nav.top a { margin: 0 16px 0 0; }
+  .grid, .shots { grid-template-columns: 1fr; }
   table.dl th:nth-child(3), table.dl td:nth-child(3) { display: none; }
 }
