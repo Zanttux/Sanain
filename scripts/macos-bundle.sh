@@ -12,6 +12,13 @@ mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "target/$profile/text3" "$app/Contents/MacOS/text3"
 cp packaging/icons/text3.icns packaging/icons/text3-document.icns "$app/Contents/Resources/"
 sed "s/@VERSION@/$version/g" packaging/macos/Info.plist > "$app/Contents/Info.plist"
+# Seal the whole bundle with an ad-hoc signature. The linker signs only the
+# executable; a downloaded (quarantined) bundle whose signature does not
+# cover Info.plist and Resources is reported as "damaged" by Gatekeeper
+# and cannot be opened at all (#166). With a sealed ad-hoc signature macOS
+# instead offers Privacy & Security › Open Anyway for the unsigned app.
+codesign --force --sign - --timestamp=none "$app"
+codesign --verify --strict "$app"
 echo "$app"
 if [ "${2:-}" = --open ]; then
   shift 2

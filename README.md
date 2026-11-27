@@ -11,8 +11,8 @@ Rust for Windows, macOS and Linux. Website: https://zanttux.github.io/text3/
 > **Status: pre-alpha (0.2.1).** Unsigned development builds for macOS,
 > Windows and Linux are published automatically as the
 > [nightly pre-release](https://github.com/Zanttux/text3/releases/tag/nightly)
-> (macOS: right-click › Open the first time; Windows may show a
-> SmartScreen warning). Tested by hand on macOS; Windows and Linux are
+> (macOS: the first time, open it, then System Settings › Privacy &
+> Security › Open Anyway; Windows may show a SmartScreen warning). Tested by hand on macOS; Windows and Linux are
 > built and tested in CI but not yet tried interactively.
 
 ## What works today

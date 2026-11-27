@@ -4,6 +4,12 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+- macOS: the downloaded Text³.app no longer reports "damaged and can't be
+  opened" (#166). The bundle is now sealed with an ad-hoc signature, so
+  macOS treats it as an unsigned app that can be allowed once in System
+  Settings › Privacy & Security › Open Anyway.
+
 ### Changed
 - Sanain is now **Text³** ("Text Cubed"; owner decision D27). The window
   title, About, menus (including the macOS app menu), installer, Linux

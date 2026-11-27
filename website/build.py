@@ -52,7 +52,7 @@ T = {
             ("macOS 11+ (Apple Silicon)", "text3-…-macos-aarch64.dmg", "text3-…-macos-aarch64-portable.zip"),
             ("Linux (x86-64)", "text3_…_amd64.deb", "text3-…-linux-x86_64-portable.tar.gz"),
         ],
-        "dl_warn": "These builds are not signed yet. macOS asks for confirmation the first time (right-click Text³, then Open); Windows SmartScreen may warn. Each file has a SHA-256 checksum next to it. Text³ is tested by hand on macOS; Windows and Linux are built and tested automatically.",
+        "dl_warn": "These builds are not signed yet. macOS blocks the first start: open Text³ once, then choose System Settings › Privacy & Security › Open Anyway; Windows SmartScreen may warn. Each file has a SHA-256 checksum next to it. Text³ is tested by hand on macOS; Windows and Linux are built and tested automatically.",
         "priv_h": "Privacy",
         "priv_p": "Text³ works offline by default and collects no telemetry. There are no accounts or ads. File contents never leave your computer. The only network use is an update check you can turn on, which asks GitHub whether a newer version exists.",
         "made_h": "About the project",
