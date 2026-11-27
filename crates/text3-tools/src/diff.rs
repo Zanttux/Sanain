@@ -154,6 +154,9 @@ pub fn take_right<'r>(hunk: &Hunk, right: &'r str) -> (Range<usize>, &'r str) {
 
 /// Lines longer than this are not compared character by character.
 const INTRALINE_MAX: usize = 2_000;
+/// Line pairs at most this long (chars, both sides) are compared without a
+/// deadline.
+const SHORT_LINE: usize = 400;
 
 /// Changed character ranges within a pair of changed lines, for
 /// highlighting: (ranges in `left`, ranges in `right`), in chars. Empty
@@ -164,12 +167,13 @@ pub fn intraline(left: &str, right: &str) -> (Vec<Range<usize>>, Vec<Range<usize
     if a.len() > INTRALINE_MAX || b.len() > INTRALINE_MAX {
         return (Vec::new(), Vec::new());
     }
-    let ops = capture_diff_slices_deadline(
-        Algorithm::Myers,
-        &a,
-        &b,
-        Some(Instant::now() + Duration::from_millis(20)),
-    );
+    // Short lines are cheap (Myers is O(n·d), bounded here by a few
+    // thousand steps), so they get no deadline: a 20 ms deadline on a busy
+    // machine made the result depend on timing (flaky CI). Long lines keep
+    // the deadline so the UI never waits.
+    let deadline =
+        (a.len() + b.len() > SHORT_LINE).then(|| Instant::now() + Duration::from_millis(20));
+    let ops = capture_diff_slices_deadline(Algorithm::Myers, &a, &b, deadline);
     let same: usize = ops
         .iter()
         .map(|op| match op {

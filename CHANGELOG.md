@@ -89,6 +89,7 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   New strings in all 26 languages.
 
 ### Fixed
+- Character-level highlighting in Compare no longer depends on machine load for short lines (a 20 ms time limit sometimes produced no highlight).
 - Check for Updates works again: it asked GitHub for the "latest release", which leaves out pre-releases, and every Sanain release is one, so it always said there were no releases. It now reads the release list and takes the newest versioned release (skipping drafts and `nightly`).
 - With the in-window menu (Windows, Linux), Shift+F6, Shift+F3
   (Notepad++ preset) and Ctrl+Shift+Tab ran the command of the same key
