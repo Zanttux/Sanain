@@ -16,6 +16,14 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   github.com/Zanttux/text3. Older entries below keep the name Sanain.
 
 ### Added
+- A "+" button right after the last tab opens a new untitled tab, the
+  same command as File › New Tab (#151). Its tooltip shows the shortcut
+  (for example "New Tab (⌘N)"); when the tabs overflow, it stays at the
+  right end of the strip and the new tab scrolls into view. It is a
+  named button for screen readers and the last keyboard stop of the tab
+  strip, after the last tab's close button. Double-clicking the empty
+  part of the strip after the tabs also opens a new tab. The strip now
+  scrolls the active tab into view whenever it changes.
 - Keyboard focus moves between the parts of the window in a fixed order:
   tab strip, find bar, outline, each pane in turn, folder search, status
   bar, and round again. F6 goes to the next part and Shift+F6 to the

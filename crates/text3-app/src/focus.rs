@@ -85,6 +85,20 @@ pub fn stop_step(len: usize, at: usize, forward: bool) -> Option<usize> {
     }
 }
 
+/// The tab strip's keyboard stops, left to right: each tab, then its
+/// close button (pinned tabs have none), then the new-tab button.
+pub fn tab_strip_stops(
+    tabs: impl IntoIterator<Item = (egui::Id, Option<egui::Id>)>,
+    new_tab: Option<egui::Id>,
+) -> Vec<egui::Id> {
+    let mut out: Vec<egui::Id> = tabs
+        .into_iter()
+        .flat_map(|(tab, close)| std::iter::once(tab).chain(close))
+        .collect();
+    out.extend(new_tab);
+    out
+}
+
 /// The invisible focus stops before (`Head`) and after (`Tail`) a region
 /// whose own widgets the shell does not list.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -142,7 +156,7 @@ pub struct PaneStop {
 #[derive(Debug, Clone, Default)]
 pub struct Drawn {
     pub layout: Layout,
-    /// Tab strip stops, left to right (each tab, then its close button).
+    /// Tab strip stops, left to right (see [`tab_strip_stops`]).
     pub tabs: Vec<egui::Id>,
     /// The active tab's stop.
     pub active_tab: Option<egui::Id>,
@@ -388,6 +402,24 @@ mod tests {
         assert_eq!(stop_step(4, 0, false), None);
         assert_eq!(stop_step(1, 0, true), None);
         assert_eq!(stop_step(0, 0, false), None);
+    }
+
+    #[test]
+    fn new_tab_button_is_the_last_tab_strip_stop() {
+        let id = |n: u32| egui::Id::unique(("t", n));
+        // Two tabs, the second pinned (no close button), then "+".
+        let stops = tab_strip_stops([(id(1), Some(id(2))), (id(3), None)], Some(id(9)));
+        assert_eq!(stops, [id(1), id(2), id(3), id(9)]);
+        // Tab from the last close button reaches "+"; Tab from "+" leaves
+        // the strip; Shift+Tab from "+" returns to the last tab.
+        assert_eq!(stop_step(stops.len(), 2, true), Some(3));
+        assert_eq!(stop_step(stops.len(), 3, true), None);
+        assert_eq!(stop_step(stops.len(), 3, false), Some(2));
+        assert_eq!(
+            tab_strip_stops([(id(1), Some(id(2)))], None),
+            [id(1), id(2)]
+        );
+        assert_eq!(tab_strip_stops([], Some(id(9))), [id(9)]);
     }
 
     #[test]

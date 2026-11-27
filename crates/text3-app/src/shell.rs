@@ -354,6 +354,9 @@ pub struct Shell {
     themes: (Vec<crate::themes::ThemeEntry>, Vec<(String, String)>),
     /// Set once the session was recorded for the current quit attempt.
     quit_recorded: bool,
+    /// The tab the strip last scrolled into view (a new or switched-to
+    /// tab past the edge of an overflowing strip is brought into view).
+    tab_in_view: Option<TabId>,
     /// Keyboard focus between regions (F6, Tab at region edges).
     focus: crate::focus::FocusCycle,
     #[cfg(target_os = "macos")]
@@ -537,6 +540,7 @@ impl Shell {
             applied_theme: None,
             themes: (Vec::new(), Vec::new()),
             quit_recorded: false,
+            tab_in_view: None,
             focus: Default::default(),
             #[cfg(target_os = "macos")]
             native_menu: None,
@@ -5098,180 +5102,262 @@ impl Shell {
             self.t("file-close-tab", &[]),
         );
         let (strip_l, close_tab_l) = (self.t("a11y-tab-strip", &[]), self.t("tab-close", &[]));
-        // Keyboard stops, left to right: each tab, then its close button.
-        let mut stops: Vec<egui::Id> = Vec::new();
+        let new_tab_l = self.t(MenuAction::New.label_id(), &[]);
+        let new_tab_tip = match MenuAction::New.shortcut(&self.settings.keymap) {
+            Some(s) => format!("{new_tab_l} ({})", ctx.format_shortcut(&s)),
+            None => new_tab_l.clone(),
+        };
+        // Keyboard stops: each tab with its close button, then "+".
+        let mut tab_stops: Vec<(egui::Id, Option<egui::Id>)> = Vec::new();
         let mut active_stop = None;
-        egui::ScrollArea::horizontal()
-            .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
-            .show(ui, |ui| {
-                ui.horizontal(|ui| {
-                    ui.ctx().accesskit_node_builder(ui.unique_id(), |n| {
-                        n.set_role(egui::accesskit::Role::TabList);
-                        n.set_label(strip_l.as_str());
-                    });
-                    ui.spacing_mut().item_spacing.x = 0.0;
-                    let active = self.ws.active_index();
-                    for (i, tab) in self.ws.tabs().iter().enumerate() {
-                        let is_active = i == active;
-                        let dirty = tab.editor.document().is_dirty();
-                        let name = self.name_of(&tab.editor);
-                        let ax_name = if dirty {
-                            self.t("a11y-tab-unsaved", &[("name", name.as_str().into())])
-                        } else {
-                            name.clone()
-                        };
-                        let frame = egui::Frame::NONE
-                            .fill(if is_active { p.canvas } else { p.surface })
-                            .inner_margin(egui::Margin {
-                                left: 12,
-                                right: 6,
-                                top: 5,
-                                bottom: 5,
-                            });
-                        // Where the close button is: the tab-wide click/drag
-                        // area below is registered later and wins egui's hit
-                        // test, so clicks on × are matched by position.
-                        let mut close_rect: Option<egui::Rect> = None;
-                        let mut close_id = None;
-                        let r = frame.show(ui, |ui| {
-                            ui.horizontal(|ui| {
-                                ui.spacing_mut().item_spacing.x = 6.0;
-                                let color = if is_active { p.text } else { p.muted };
-                                // Clicks go to the whole tab (below).
-                                ui.add(
-                                    egui::Label::new(egui::RichText::new(&name).color(color))
-                                        .selectable(false),
-                                );
-                                if tab.pinned && !dirty {
-                                    // Pinned tabs show a pin, not a close
-                                    // button (closing stays in the menus).
-                                    let (r, painter) = ui.allocate_painter(
-                                        egui::vec2(16.0, 16.0),
-                                        egui::Sense::hover(),
-                                    );
-                                    let c = r.rect.center();
-                                    let stroke = egui::Stroke::new(1.5, p.muted);
-                                    painter.circle_filled(c - egui::vec2(0.0, 3.0), 3.0, p.muted);
-                                    painter.line_segment([c, c + egui::vec2(0.0, 6.0)], stroke);
-                                    return;
-                                }
-                                // Unsaved marker doubles as the close button,
-                                // as in most native editors.
-                                let glyph = if dirty { "●" } else { "×" };
-                                let btn = ui
-                                    .add(
-                                        egui::Button::new(
-                                            egui::RichText::new(glyph).color(p.muted),
-                                        )
-                                        .frame(false)
-                                        .min_size(egui::vec2(16.0, 16.0)),
-                                    )
-                                    .on_hover_text(close_tab_l.as_str());
-                                ui.ctx().accesskit_node_builder(btn.id, |n| {
-                                    n.set_label(close_tab_l.as_str());
-                                });
-                                close_rect = Some(btn.rect);
-                                close_id = Some(btn.id);
-                                if btn.clicked() {
-                                    close = Some(tab.id);
-                                }
-                            });
+        let mut new_tab = false;
+        let mut in_view = self.tab_in_view;
+        // The "+" button follows the last tab; when the tabs overflow, the
+        // scrolling part stops short of it so it stays at the strip's end.
+        const NEW_TAB_W: f32 = 28.0;
+        let outer = ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 0.0;
+            let scroll = egui::ScrollArea::horizontal()
+                .max_width((ui.available_width() - NEW_TAB_W).max(0.0))
+                .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
+                .show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        ui.ctx().accesskit_node_builder(ui.unique_id(), |n| {
+                            n.set_role(egui::accesskit::Role::TabList);
+                            n.set_label(strip_l.as_str());
                         });
-                        let rect = r.response.rect;
-                        let painter = ui.painter();
-                        painter.vline(
-                            rect.right(),
-                            rect.y_range(),
-                            egui::Stroke::new(1.0, p.border),
-                        );
-                        if is_active {
-                            let top =
-                                egui::Rect::from_min_size(rect.min, egui::vec2(rect.width(), 2.0));
-                            painter.rect_filled(top, 0.0, p.accent);
-                        } else {
-                            painter.hline(
-                                rect.x_range(),
-                                rect.bottom() - 0.5,
+                        ui.spacing_mut().item_spacing.x = 0.0;
+                        let active = self.ws.active_index();
+                        for (i, tab) in self.ws.tabs().iter().enumerate() {
+                            let is_active = i == active;
+                            let dirty = tab.editor.document().is_dirty();
+                            let name = self.name_of(&tab.editor);
+                            let ax_name = if dirty {
+                                self.t("a11y-tab-unsaved", &[("name", name.as_str().into())])
+                            } else {
+                                name.clone()
+                            };
+                            let frame = egui::Frame::NONE
+                                .fill(if is_active { p.canvas } else { p.surface })
+                                .inner_margin(egui::Margin {
+                                    left: 12,
+                                    right: 6,
+                                    top: 5,
+                                    bottom: 5,
+                                });
+                            // Where the close button is: the tab-wide click/drag
+                            // area below is registered later and wins egui's hit
+                            // test, so clicks on × are matched by position.
+                            let mut close_rect: Option<egui::Rect> = None;
+                            let mut close_id = None;
+                            let r = frame.show(ui, |ui| {
+                                ui.horizontal(|ui| {
+                                    ui.spacing_mut().item_spacing.x = 6.0;
+                                    let color = if is_active { p.text } else { p.muted };
+                                    // Clicks go to the whole tab (below).
+                                    ui.add(
+                                        egui::Label::new(egui::RichText::new(&name).color(color))
+                                            .selectable(false),
+                                    );
+                                    if tab.pinned && !dirty {
+                                        // Pinned tabs show a pin, not a close
+                                        // button (closing stays in the menus).
+                                        let (r, painter) = ui.allocate_painter(
+                                            egui::vec2(16.0, 16.0),
+                                            egui::Sense::hover(),
+                                        );
+                                        let c = r.rect.center();
+                                        let stroke = egui::Stroke::new(1.5, p.muted);
+                                        painter.circle_filled(
+                                            c - egui::vec2(0.0, 3.0),
+                                            3.0,
+                                            p.muted,
+                                        );
+                                        painter.line_segment([c, c + egui::vec2(0.0, 6.0)], stroke);
+                                        return;
+                                    }
+                                    // Unsaved marker doubles as the close button,
+                                    // as in most native editors.
+                                    let glyph = if dirty { "●" } else { "×" };
+                                    let btn = ui
+                                        .add(
+                                            egui::Button::new(
+                                                egui::RichText::new(glyph).color(p.muted),
+                                            )
+                                            .frame(false)
+                                            .min_size(egui::vec2(16.0, 16.0)),
+                                        )
+                                        .on_hover_text(close_tab_l.as_str());
+                                    ui.ctx().accesskit_node_builder(btn.id, |n| {
+                                        n.set_label(close_tab_l.as_str());
+                                    });
+                                    close_rect = Some(btn.rect);
+                                    close_id = Some(btn.id);
+                                    if btn.clicked() {
+                                        close = Some(tab.id);
+                                    }
+                                });
+                            });
+                            let rect = r.response.rect;
+                            let painter = ui.painter();
+                            painter.vline(
+                                rect.right(),
+                                rect.y_range(),
                                 egui::Stroke::new(1.0, p.border),
                             );
-                        }
-                        rects.push(rect);
-                        // A widget of its own over the tab: the frame's id is
-                        // re-registered without focus every frame, which
-                        // would drop keyboard focus.
-                        let r = ui.interact(
-                            rect,
-                            egui::Id::unique(("text3-tab", tab.id)),
-                            egui::Sense::click_and_drag(),
-                        );
-                        ui.ctx().accesskit_node_builder(r.id, |n| {
-                            n.set_role(egui::accesskit::Role::Tab);
-                            n.set_label(ax_name.as_str());
-                            n.set_selected(is_active);
-                            n.add_action(egui::accesskit::Action::Click);
-                        });
-                        stops.push(r.id);
-                        if is_active {
-                            active_stop = Some(r.id);
-                        }
-                        stops.extend(close_id);
-                        if r.clicked() {
-                            let on_close = close_rect.is_some_and(|c| {
-                                r.interact_pointer_pos().is_some_and(|p| c.contains(p))
+                            if is_active {
+                                let top = egui::Rect::from_min_size(
+                                    rect.min,
+                                    egui::vec2(rect.width(), 2.0),
+                                );
+                                painter.rect_filled(top, 0.0, p.accent);
+                            } else {
+                                painter.hline(
+                                    rect.x_range(),
+                                    rect.bottom() - 0.5,
+                                    egui::Stroke::new(1.0, p.border),
+                                );
+                            }
+                            rects.push(rect);
+                            if is_active && in_view != Some(tab.id) {
+                                ui.scroll_to_rect(rect, None);
+                                in_view = Some(tab.id);
+                            }
+                            // A widget of its own over the tab: the frame's id is
+                            // re-registered without focus every frame, which
+                            // would drop keyboard focus.
+                            let r = ui.interact(
+                                rect,
+                                egui::Id::unique(("text3-tab", tab.id)),
+                                egui::Sense::click_and_drag(),
+                            );
+                            ui.ctx().accesskit_node_builder(r.id, |n| {
+                                n.set_role(egui::accesskit::Role::Tab);
+                                n.set_label(ax_name.as_str());
+                                n.set_selected(is_active);
+                                n.add_action(egui::accesskit::Action::Click);
                             });
-                            if on_close {
-                                close = Some(tab.id);
-                            } else {
-                                activate = Some(i);
+                            tab_stops.push((r.id, close_id));
+                            if is_active {
+                                active_stop = Some(r.id);
                             }
-                        }
-                        if r.middle_clicked() {
-                            close = Some(tab.id);
-                        }
-                        if r.dragged() {
-                            dragging = Some(i);
-                        }
-                        if r.drag_stopped() {
-                            dropped = Some(i);
-                        }
-                        r.context_menu(|ui| {
-                            let (label, on) = if tab.pinned {
-                                (&unpin_l, false)
-                            } else {
-                                (&pin_l, true)
-                            };
-                            if ui.button(label).clicked() {
-                                pin = Some((i, on));
-                                ui.close();
-                            }
-                            if ui.button(&close_l).clicked() {
-                                close = Some(tab.id);
-                                ui.close();
-                            }
-                            if ui.button(&close_others_l).clicked() {
-                                tab_cmd = Some((tab.id, MenuAction::CloseOthers));
-                                ui.close();
-                            }
-                            if ui.button(&close_all_l).clicked() {
-                                tab_cmd = Some((tab.id, MenuAction::CloseAll));
-                                ui.close();
-                            }
-                            if tab.editor.file().is_some() {
-                                ui.separator();
-                                if ui.button(&copy_path_l).clicked() {
-                                    tab_cmd = Some((tab.id, MenuAction::CopyPath));
-                                    ui.close();
-                                }
-                                if ui.button(&reveal_l).clicked() {
-                                    tab_cmd = Some((tab.id, MenuAction::Reveal));
-                                    ui.close();
+                            if r.clicked() {
+                                let on_close = close_rect.is_some_and(|c| {
+                                    r.interact_pointer_pos().is_some_and(|p| c.contains(p))
+                                });
+                                if on_close {
+                                    close = Some(tab.id);
+                                } else {
+                                    activate = Some(i);
                                 }
                             }
-                        });
-                    }
+                            if r.middle_clicked() {
+                                close = Some(tab.id);
+                            }
+                            if r.dragged() {
+                                dragging = Some(i);
+                            }
+                            if r.drag_stopped() {
+                                dropped = Some(i);
+                            }
+                            r.context_menu(|ui| {
+                                let (label, on) = if tab.pinned {
+                                    (&unpin_l, false)
+                                } else {
+                                    (&pin_l, true)
+                                };
+                                if ui.button(label).clicked() {
+                                    pin = Some((i, on));
+                                    ui.close();
+                                }
+                                if ui.button(&close_l).clicked() {
+                                    close = Some(tab.id);
+                                    ui.close();
+                                }
+                                if ui.button(&close_others_l).clicked() {
+                                    tab_cmd = Some((tab.id, MenuAction::CloseOthers));
+                                    ui.close();
+                                }
+                                if ui.button(&close_all_l).clicked() {
+                                    tab_cmd = Some((tab.id, MenuAction::CloseAll));
+                                    ui.close();
+                                }
+                                if tab.editor.file().is_some() {
+                                    ui.separator();
+                                    if ui.button(&copy_path_l).clicked() {
+                                        tab_cmd = Some((tab.id, MenuAction::CopyPath));
+                                        ui.close();
+                                    }
+                                    if ui.button(&reveal_l).clicked() {
+                                        tab_cmd = Some((tab.id, MenuAction::Reveal));
+                                        ui.close();
+                                    }
+                                }
+                            });
+                        }
+                    });
                 });
+            let h = scroll.content_size.y.max(ui.spacing().interact_size.y);
+            let (rect, r) = ui.allocate_exact_size(egui::vec2(NEW_TAB_W, h), egui::Sense::click());
+            let r = r.on_hover_text(new_tab_tip.as_str());
+            ui.ctx().accesskit_node_builder(r.id, |n| {
+                n.set_role(egui::accesskit::Role::Button);
+                n.set_label(new_tab_l.as_str());
             });
-        self.focus.now.tabs = stops;
+            if ui.is_rect_visible(rect) {
+                let painter = ui.painter();
+                if r.is_pointer_button_down_on() {
+                    painter.rect_filled(rect, 0.0, p.border);
+                } else if r.hovered() {
+                    painter.rect_filled(rect, 0.0, p.canvas);
+                }
+                painter.hline(
+                    rect.x_range(),
+                    rect.bottom() - 0.5,
+                    egui::Stroke::new(1.0, p.border),
+                );
+                let color = if r.hovered() || r.has_focus() {
+                    p.text
+                } else {
+                    p.muted
+                };
+                let stroke = egui::Stroke::new(1.5, color);
+                let c = rect.center();
+                let arm = 5.0;
+                painter.line_segment([c - egui::vec2(arm, 0.0), c + egui::vec2(arm, 0.0)], stroke);
+                painter.line_segment([c - egui::vec2(0.0, arm), c + egui::vec2(0.0, arm)], stroke);
+                if r.has_focus() {
+                    let ring = ui.visuals().selection.stroke;
+                    painter.rect_stroke(
+                        rect.shrink(2.0),
+                        2.0,
+                        egui::Stroke::new(ring.width.max(1.5), ring.color),
+                        egui::StrokeKind::Inside,
+                    );
+                }
+            }
+            if r.clicked() {
+                new_tab = true;
+            }
+            r.id
+        });
+        let new_tab_id = outer.inner;
+        // Double-clicking the empty strip after the tabs opens a new tab.
+        let rest = egui::Rect::from_min_max(
+            egui::pos2(outer.response.rect.right(), outer.response.rect.top()),
+            egui::pos2(ui.max_rect().right(), outer.response.rect.bottom()),
+        );
+        if rest.width() > 0.0 {
+            // Pointer only: not a keyboard stop of its own.
+            let id = egui::Id::unique("text3-tab-strip-rest");
+            let r = ui.interact(rest, id, egui::Sense::CLICK);
+            ui.ctx().accesskit_node_builder(id, |n| n.set_hidden());
+            if r.double_clicked() {
+                new_tab = true;
+            }
+        }
+        self.tab_in_view = in_view;
+        self.focus.now.tabs = crate::focus::tab_strip_stops(tab_stops, Some(new_tab_id));
         self.focus.now.active_tab = active_stop;
         // Drag to reorder: the drop position is the gap nearest the pointer.
         let target = |x: f32| rects.iter().take_while(|r| r.center().x < x).count();
@@ -5292,6 +5378,9 @@ impl Shell {
             let gap = target(pos.x);
             let to = if gap > from { gap - 1 } else { gap };
             self.ws.move_tab(from, to);
+        }
+        if new_tab {
+            self.dispatch(MenuAction::New, ctx);
         }
         if let Some((i, on)) = pin {
             self.ws.set_pinned(i, on);
@@ -6192,5 +6281,150 @@ mod tests {
             let id = super::json_reason_id(m);
             assert!(en.contains(&format!("{id} = ")), "{id} missing");
         }
+    }
+}
+
+#[cfg(test)]
+mod tab_strip_tests {
+    use super::*;
+
+    struct Harness {
+        shell: Shell,
+        ctx: egui::Context,
+        time: f64,
+        width: f32,
+    }
+
+    impl Harness {
+        fn new(width: f32) -> Self {
+            let shell = Shell::new(
+                Workspace::new(None),
+                Localizer::new(&["en-US"]).unwrap(),
+                Vec::new(),
+                0,
+                None,
+                Settings::default(),
+                None,
+            );
+            let mut h = Self {
+                shell,
+                ctx: egui::Context::default(),
+                time: 0.0,
+                width,
+            };
+            h.frame(Vec::new());
+            h
+        }
+
+        fn frame(&mut self, events: Vec<egui::Event>) {
+            self.time += 0.05;
+            let input = egui::RawInput {
+                screen_rect: Some(egui::Rect::from_min_size(
+                    egui::Pos2::ZERO,
+                    egui::vec2(self.width, 300.0),
+                )),
+                time: Some(self.time),
+                events,
+                ..Default::default()
+            };
+            let shell = &mut self.shell;
+            let mut out = self.ctx.run_ui(input, |ui| {
+                let ctx = ui.ctx().clone();
+                egui::Panel::top("tabs").show(ui, |ui| shell.tab_bar(ui, &ctx));
+                shell.focus.end_frame(&ctx);
+            });
+            out.textures_delta.clear();
+        }
+
+        fn button(&self, pos: egui::Pos2, pressed: bool) -> egui::Event {
+            egui::Event::PointerButton {
+                pos,
+                button: egui::PointerButton::Primary,
+                pressed,
+                modifiers: egui::Modifiers::NONE,
+            }
+        }
+
+        fn click(&mut self, pos: egui::Pos2) {
+            self.frame(vec![egui::Event::PointerMoved(pos)]);
+            self.frame(vec![self.button(pos, true)]);
+            self.frame(vec![self.button(pos, false)]);
+            // Layout settles (and scrolling applies) a pass later; widget
+            // rectangles read back are a pass behind.
+            self.frame(Vec::new());
+            self.frame(Vec::new());
+            self.frame(Vec::new());
+        }
+
+        /// The new-tab button: the strip's last keyboard stop.
+        fn plus(&self) -> egui::Rect {
+            let id = *self.shell.focus.last.tabs.last().unwrap();
+            self.ctx.read_response(id).unwrap().rect
+        }
+    }
+
+    #[test]
+    fn plus_button_opens_a_new_tab_after_the_last_one() {
+        let mut h = Harness::new(800.0);
+        assert_eq!(h.shell.ws.len(), 1);
+        // Tab, close button, then "+" right after the tab.
+        assert_eq!(h.shell.focus.last.tabs.len(), 3);
+        let tab = h
+            .ctx
+            .read_response(h.shell.focus.last.tabs[0])
+            .unwrap()
+            .rect;
+        let plus = h.plus();
+        assert!((plus.left() - tab.right()).abs() < 1.0, "{tab:?} {plus:?}");
+        h.click(plus.center());
+        assert_eq!(h.shell.ws.len(), 2);
+        assert_eq!(h.shell.ws.active_index(), 1);
+        assert_eq!(h.shell.focus.last.tabs.len(), 5);
+        let plus = h.plus();
+        assert!(plus.left() > tab.right() + 10.0, "after the second tab");
+        h.click(plus.center());
+        assert_eq!(h.shell.ws.len(), 3);
+    }
+
+    #[test]
+    fn plus_button_stays_in_view_when_tabs_overflow() {
+        let mut h = Harness::new(400.0);
+        for _ in 0..30 {
+            h.shell.ws.new_tab();
+        }
+        h.frame(Vec::new());
+        h.frame(Vec::new());
+        h.frame(Vec::new());
+        let plus = h.plus();
+        assert!(plus.right() <= 400.0 + 0.5, "{plus:?}");
+        assert!(plus.left() >= 0.0);
+        h.click(plus.center());
+        assert_eq!(h.shell.ws.len(), 32);
+        // Scrolling is animated.
+        for _ in 0..20 {
+            h.frame(Vec::new());
+        }
+        // The new (active) tab is scrolled into view, left of "+".
+        let active = h.shell.focus.last.active_tab.unwrap();
+        let tab = h.ctx.read_response(active).unwrap().rect;
+        let plus = h.plus();
+        assert!(tab.right() <= plus.left() + 0.5, "{tab:?} {plus:?}");
+        assert!(tab.left() >= 0.0, "{tab:?}");
+    }
+
+    #[test]
+    fn double_click_on_the_empty_strip_opens_a_new_tab() {
+        let mut h = Harness::new(800.0);
+        let plus = h.plus();
+        let empty = egui::pos2(700.0, plus.center().y);
+        h.click(empty);
+        assert_eq!(h.shell.ws.len(), 1, "a single click does nothing");
+        h.frame(vec![egui::Event::PointerMoved(empty)]);
+        for _ in 0..2 {
+            h.frame(vec![h.button(empty, true)]);
+            h.frame(vec![h.button(empty, false)]);
+        }
+        h.frame(Vec::new());
+        assert_eq!(h.shell.ws.len(), 2);
     }
 }
