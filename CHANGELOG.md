@@ -16,6 +16,25 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   github.com/Zanttux/text3. Older entries below keep the name Sanain.
 
 ### Added
+- Hot exit: quitting (window close, Cmd+Q / Alt+F4, File › Quit, and
+  system logout or shutdown where it reaches the app) no longer asks about
+  each unsaved tab. Every unsaved tab's text is written to the recovery
+  folder and waited for, the session records untitled tabs too (with
+  their selection, pins and split layout), and at the next start
+  untitled tabs come back untitled and unsaved, edited files come back
+  with the edits on top and marked unsaved. If a file changed on disk in
+  the meantime, the tab shows your text and the external-change dialog
+  opens; nothing is overwritten without your choice. A file that is gone
+  keeps its tab (name struck through, "Not found on disk"); saving
+  creates it again. Encoding and line endings are kept. Settings ›
+  General › "Remember unsaved changes on exit" (on by default) turns it
+  off; closing a single tab still asks. A tab that cannot be kept (over
+  the snapshot size limit, read-only or full recovery folder) is asked
+  about as before, with the reason in the status bar. Recovery snapshots
+  now record the disk state the edits were based on, so crash recovery
+  also detects files changed since the crash. Several instances can share
+  the recovery folder: a starting instance no longer restores (and later
+  overwrites) the unsaved tabs of one that is still running.
 - A "+" button right after the last tab opens a new untitled tab, the
   same command as File › New Tab (#151). Its tooltip shows the shortcut
   (for example "New Tab (⌘N)"); when the tabs overflow, it stays at the

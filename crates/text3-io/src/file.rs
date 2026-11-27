@@ -1,5 +1,4 @@
 use std::fs;
-use std::hash::{DefaultHasher, Hash, Hasher};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
@@ -8,8 +7,10 @@ use crate::encoding::{DecodeError, EncodeError, TextEncoding, decode, decode_as,
 
 /// What the editor knew about a file's on-disk state.
 ///
-/// The content hash is an in-process check only (std's SipHash with fixed
-/// keys); it is not persisted and must not be treated as cryptographic.
+/// The content hash is FNV-1a (64-bit): stable across runs and versions, so
+/// crash-recovery snapshots can record the state their edits were based on
+/// and tell later whether the file changed. It detects accidental changes;
+/// it is not cryptographic.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Fingerprint {
     len: u64,
@@ -19,14 +20,50 @@ pub struct Fingerprint {
 
 impl Fingerprint {
     fn of(bytes: &[u8], meta: &fs::Metadata) -> Self {
-        let mut h = DefaultHasher::new();
-        bytes.hash(&mut h);
         Self {
             len: bytes.len() as u64,
             modified: meta.modified().ok(),
-            hash: h.finish(),
+            hash: fnv1a(bytes),
         }
     }
+
+    /// Rebuild a fingerprint recorded earlier (see [`Self::len`] etc.).
+    pub fn from_parts(len: u64, modified: Option<SystemTime>, hash: u64) -> Self {
+        Self {
+            len,
+            modified,
+            hash,
+        }
+    }
+
+    pub fn len(&self) -> u64 {
+        self.len
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
+    }
+
+    pub fn modified(&self) -> Option<SystemTime> {
+        self.modified
+    }
+
+    pub fn content_hash(&self) -> u64 {
+        self.hash
+    }
+
+    /// Same length and content hash: the file holds the same bytes, even
+    /// if it was touched (modification time changed).
+    pub fn same_content(&self, other: &Self) -> bool {
+        self.len == other.len && self.hash == other.hash
+    }
+}
+
+/// 64-bit FNV-1a.
+pub(crate) fn fnv1a(bytes: &[u8]) -> u64 {
+    bytes.iter().fold(0xcbf2_9ce4_8422_2325, |h, b| {
+        (h ^ u64::from(*b)).wrapping_mul(0x0100_0000_01b3)
+    })
 }
 
 #[derive(Debug)]

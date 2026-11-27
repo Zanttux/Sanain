@@ -83,6 +83,10 @@ pub struct Settings {
     pub theme: ThemeChoice,
     /// Reopen the previous session's files when started without arguments.
     pub restore_session: bool,
+    /// Hot exit: quitting keeps unsaved and untitled tabs (in the recovery
+    /// folder) instead of asking about each; they come back at the next
+    /// start even when `restore_session` is off.
+    pub hot_exit: bool,
     /// UI language as a BCP 47 tag; `None` follows the system.
     pub locale: Option<String>,
     pub keymap: crate::keymap::Keymap,
@@ -109,6 +113,7 @@ impl Default for Settings {
             insert_spaces: false,
             theme: ThemeChoice::System,
             restore_session: true,
+            hot_exit: true,
             locale: None,
             keymap: crate::keymap::Keymap::default(),
             check_updates: false,
@@ -160,8 +165,12 @@ impl Settings {
             out.push_str(&format!("locale={l}\n"));
         }
         out.push_str(&format!(
-            "check_updates={}\nlast_update_check={}\nlocal_history={}\nword_wrap={}\n",
-            self.check_updates, self.last_update_check, self.local_history, self.word_wrap
+            "check_updates={}\nlast_update_check={}\nlocal_history={}\nword_wrap={}\nhot_exit={}\n",
+            self.check_updates,
+            self.last_update_check,
+            self.local_history,
+            self.word_wrap,
+            self.hot_exit
         ));
         if let Some(f) = &self.editor_font {
             out.push_str(&format!("editor_font={f}\n"));
@@ -214,6 +223,7 @@ impl Settings {
                 "last_update_check" => s.last_update_check = v.parse().unwrap_or(0),
                 "local_history" => s.local_history = v.parse().unwrap_or(true),
                 "word_wrap" => s.word_wrap = v.parse().unwrap_or(true),
+                "hot_exit" => s.hot_exit = v.parse().unwrap_or(true),
                 "editor_font" if !v.is_empty() && v.len() <= 200 => {
                     s.editor_font = Some(v.to_owned())
                 }
@@ -303,6 +313,7 @@ mod tests {
             insert_spaces: true,
             theme: ThemeChoice::Light,
             restore_session: false,
+            hot_exit: false,
             locale: Some("fi-FI".into()),
             keymap: {
                 let mut k = crate::keymap::Keymap::default();

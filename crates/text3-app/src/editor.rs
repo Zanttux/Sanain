@@ -90,6 +90,27 @@ pub struct FileBinding {
     fingerprint: Fingerprint,
 }
 
+impl FileBinding {
+    /// The file's state on disk when it was loaded or last saved.
+    pub fn fingerprint(&self) -> &Fingerprint {
+        &self.fingerprint
+    }
+}
+
+/// How a buffer restored from a recovery snapshot relates to its file.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Restored {
+    /// Untitled, or the file is as it was when the edits were made (or the
+    /// snapshot is too old to say): the edits apply on top of it.
+    Applied,
+    /// The file changed on disk after the edits were made. The tab shows
+    /// the recovered text; saving asks before replacing the file.
+    ChangedOnDisk,
+    /// The file is gone. The tab keeps its path and the recovered text;
+    /// saving creates the file again (never replacing one that appeared).
+    Missing,
+}
+
 /// Result of a save attempt the UI must react to.
 #[derive(Debug)]
 pub enum SaveOutcome {
@@ -125,6 +146,8 @@ pub struct Editor {
     /// Syntax fold ranges for a revision (see [`Self::set_syntax_folds`]);
     /// indentation folding applies when absent or stale.
     syntax_folds: Option<(text3_core::Revision, Vec<std::ops::Range<usize>>)>,
+    /// The bound file was not on disk when this buffer was restored.
+    missing: bool,
 }
 
 impl Default for Editor {
@@ -148,19 +171,61 @@ impl Editor {
             fold_tab: 4,
             fold_cache: None,
             syntax_folds: None,
+            missing: false,
         }
     }
 
-    /// Rebuild a buffer from a recovery snapshot. If its file still loads,
-    /// the recovered text is applied as one undoable edit on top of the disk
-    /// version, so conflict detection and Undo both work. Otherwise the text
-    /// becomes an untitled buffer.
+    /// Rebuild a buffer from a recovery snapshot; see [`Self::restore_checked`].
     pub fn restore(snapshot: &text3_io::recovery::Snapshot) -> Self {
-        let mut ed = snapshot
-            .path
-            .as_deref()
-            .and_then(|p| Self::open(p).ok())
-            .unwrap_or_default();
+        Self::restore_checked(snapshot).0
+    }
+
+    /// Rebuild a buffer from a recovery snapshot. If its file still loads
+    /// (in the snapshot's encoding where possible), the recovered text is
+    /// applied as one undoable edit on top of the disk version, so Undo
+    /// shows what is on disk. If the file changed since the edits were made
+    /// (the snapshot records the disk state they were based on), the buffer
+    /// keeps that old state as its expectation, so Save reports a conflict
+    /// instead of replacing the other program's changes. A missing or
+    /// unreadable file keeps its path; nothing on disk is touched here.
+    pub fn restore_checked(snapshot: &text3_io::recovery::Snapshot) -> (Self, Restored) {
+        let mut state = Restored::Applied;
+        let mut ed = match snapshot.path.as_deref() {
+            None => Self::new(),
+            Some(p) => match Self::open_as(p, snapshot.encoding).or_else(|_| Self::open(p)) {
+                Ok(mut ed) => {
+                    if let (Some(base), Some(f)) = (&snapshot.base, ed.file.as_mut())
+                        && !base.same_content(&f.fingerprint)
+                    {
+                        f.fingerprint = base.clone();
+                        state = Restored::ChangedOnDisk;
+                    }
+                    ed
+                }
+                Err(e) => {
+                    let gone = matches!(&e, LoadError::Io { source, .. }
+                        if source.kind() == std::io::ErrorKind::NotFound);
+                    state = if gone {
+                        Restored::Missing
+                    } else {
+                        Restored::ChangedOnDisk
+                    };
+                    let mut ed = Self::new();
+                    ed.missing = gone;
+                    ed.file = Some(FileBinding {
+                        path: p.to_owned(),
+                        encoding: snapshot.encoding,
+                        // Matches no file, so a save never replaces one
+                        // without asking.
+                        fingerprint: snapshot
+                            .base
+                            .clone()
+                            .unwrap_or_else(|| Fingerprint::from_parts(u64::MAX, None, 0)),
+                    });
+                    ed
+                }
+            },
+        };
         ed.untitled_encoding = snapshot.encoding;
         if ed.document().text() != snapshot.text {
             ed.execute(Command::SelectAll);
@@ -171,7 +236,20 @@ impl Editor {
             at: 0,
             extend: false,
         });
-        ed
+        (ed, state)
+    }
+
+    /// The file was not found on disk when this buffer was restored (and
+    /// has not been saved since).
+    pub fn is_missing(&self) -> bool {
+        self.missing
+    }
+
+    /// Set the primary selection (char indices, clamped to the text).
+    pub fn set_selection(&mut self, anchor: usize, head: usize) {
+        let len = self.doc.len_chars();
+        self.goal = None;
+        self.sels = Selections::single(Selection::new(anchor.min(len), head.min(len)));
     }
 
     pub fn open(path: &Path) -> Result<Self, LoadError> {
@@ -193,6 +271,7 @@ impl Editor {
             fold_tab: 4,
             fold_cache: None,
             syntax_folds: None,
+            missing: false,
             doc: Document::from_saved_text(&loaded.text),
             sels: Selections::single(Selection::cursor(0)),
             untitled_encoding: loaded.encoding,
@@ -871,6 +950,11 @@ impl Editor {
             return SaveOutcome::NeedsPath;
         };
         let (path, enc, fp) = (file.path.clone(), file.encoding, file.fingerprint.clone());
+        if self.missing {
+            // Deleted while the edits waited: create it again, but report a
+            // conflict if a file has appeared there since.
+            return self.write(&path, enc, SaveMode::CreateNew);
+        }
         self.write(&path, enc, SaveMode::Expect(&fp))
     }
 
@@ -905,6 +989,7 @@ impl Editor {
         match text3_io::save(path, &self.doc.text(), encoding, mode) {
             Ok(fingerprint) => {
                 self.doc.mark_saved();
+                self.missing = false;
                 self.file = Some(FileBinding {
                     path: path.to_owned(),
                     encoding,
