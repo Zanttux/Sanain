@@ -149,6 +149,19 @@ impl Localizer {
             .map_or_else(|| FALLBACK.to_owned(), ToString::to_string)
     }
 
+    /// `n` with the locale's digit grouping, e.g. "3,456" or "3 456". The
+    /// separator is what message `number-thousand` puts between "1" and
+    /// "000"; no grouping when it is missing or malformed.
+    pub fn number(&self, n: u64) -> String {
+        let sample = self.get("number-thousand");
+        let sep = sample
+            .strip_prefix('1')
+            .and_then(|s| s.strip_suffix("000"))
+            .filter(|s| !s.chars().any(|c| c.is_ascii_digit()))
+            .unwrap_or("");
+        group_digits(n, sep)
+    }
+
     pub fn get(&self, id: &str) -> String {
         self.format(id, None)
     }
@@ -166,6 +179,19 @@ impl Localizer {
         }
         id.to_owned()
     }
+}
+
+/// Digits of `n` in groups of three separated by `sep` ("" for none).
+pub fn group_digits(n: u64, sep: &str) -> String {
+    let digits = n.to_string();
+    let mut out = String::with_capacity(digits.len() + digits.len() / 3 * sep.len());
+    for (i, d) in digits.chars().enumerate() {
+        if i > 0 && (digits.len() - i).is_multiple_of(3) {
+            out.push_str(sep);
+        }
+        out.push(d);
+    }
+    out
 }
 
 /// Pick the first requested tag we ship, trying exact match then base
@@ -228,6 +254,21 @@ mod tests {
             assert_eq!(plain(fi.format("status-tabs", Some(&args))), fi_text);
             assert_eq!(plain(en.format("status-tabs", Some(&args))), en_text);
         }
+    }
+
+    #[test]
+    fn numbers_are_grouped_per_locale() {
+        assert_eq!(group_digits(0, ","), "0");
+        assert_eq!(group_digits(999, ","), "999");
+        assert_eq!(group_digits(1000, ","), "1,000");
+        assert_eq!(group_digits(1_234_567, "."), "1.234.567");
+        assert_eq!(group_digits(123_456, ""), "123456");
+        let en = Localizer::new(&["en-US"]).unwrap();
+        assert_eq!(en.number(3456), "3,456");
+        let fi = Localizer::new(&["fi-FI"]).unwrap();
+        assert_eq!(fi.number(3456), "3\u{a0}456");
+        let de = Localizer::new(&["de-DE"]).unwrap();
+        assert_eq!(de.number(1_000_000), "1.000.000");
     }
 
     #[test]

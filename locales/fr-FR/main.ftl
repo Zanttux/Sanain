@@ -568,3 +568,22 @@ a11y-settings-sections = Sections des paramètres
 a11y-tab-strip = Fichiers ouverts
 a11y-tab-unsaved = { $name }, modifications non enregistrées
 migration-copied = Les réglages et données de Sanain ont été copiés dans Text³. Les dossiers de Sanain n’ont pas été modifiés.
+
+# Character and word count (status bar)
+# How one thousand is written with digit grouping: the characters between
+# 1 and 000 separate groups of three digits.
+number-thousand = 1{ "\u00A0" }000
+count-status = Caractères: { $chars } · Mots: { $words }
+count-status-selection = Caractères: { $chars } sur { $total-chars } · Mots: { $words } sur { $total-words }
+count-choose = Nombre de caractères, de mots, de lignes et d’octets
+count-a11y-pending = Caractères et mots : pas encore comptés. Ouvrez pour les compter.
+count-heading-selection = Sélection
+count-heading-document = Document
+count-characters = Caractères
+count-characters-no-spaces = Caractères (sans espaces)
+count-words = Mots
+count-lines = Lignes
+count-bytes = Octets ({ $encoding })
+count-unencodable = Certains caractères ne peuvent pas être enregistrés en { $encoding }.
+count-counting = Comptage…
+settings-show-counts = Afficher le nombre de caractères et de mots dans la barre d’état

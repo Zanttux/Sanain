@@ -231,6 +231,91 @@ pub fn encode(text: &str, encoding: TextEncoding) -> Result<Vec<u8>, EncodeError
     })
 }
 
+/// The size of text in an encoding, fed piece by piece (rope chunks)
+/// without building the encoded bytes.
+pub struct EncodedLen {
+    encoding: TextEncoding,
+    encoder: Option<encoding_rs::Encoder>,
+    len: u64,
+    unmappable: bool,
+}
+
+impl std::fmt::Debug for EncodedLen {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("EncodedLen")
+            .field("encoding", &self.encoding)
+            .field("len", &self.len)
+            .finish()
+    }
+}
+
+impl EncodedLen {
+    /// `bom`: count the byte order mark too (a whole file, not a part).
+    pub fn new(encoding: TextEncoding, bom: bool) -> Self {
+        let bom_len = match encoding {
+            TextEncoding::Utf8Bom => BOM_UTF8.len(),
+            TextEncoding::Utf16LeBom | TextEncoding::Utf16BeBom => 2,
+            _ => 0,
+        };
+        Self {
+            encoding,
+            encoder: match encoding {
+                TextEncoding::Legacy(e) => Some(e.new_encoder()),
+                _ => None,
+            },
+            len: if bom { bom_len as u64 } else { 0 },
+            unmappable: false,
+        }
+    }
+
+    pub fn feed(&mut self, text: &str) {
+        match self.encoding {
+            TextEncoding::Utf8 | TextEncoding::Utf8Bom => self.len += text.len() as u64,
+            TextEncoding::Utf16LeBom
+            | TextEncoding::Utf16BeBom
+            | TextEncoding::Utf16Le
+            | TextEncoding::Utf16Be => {
+                self.len += 2 * text.chars().map(|c| c.len_utf16() as u64).sum::<u64>();
+            }
+            TextEncoding::Legacy(_) => self.feed_legacy(text, false),
+        }
+    }
+
+    fn feed_legacy(&mut self, text: &str, last: bool) {
+        let Some(encoder) = self.encoder.as_mut() else {
+            return;
+        };
+        if self.unmappable {
+            return;
+        }
+        let mut buf = [0u8; 4096];
+        let mut rest = text;
+        loop {
+            let (result, read, written) =
+                encoder.encode_from_utf8_without_replacement(rest, &mut buf, last);
+            self.len += written as u64;
+            rest = &rest[read..];
+            match result {
+                encoding_rs::EncoderResult::InputEmpty => return,
+                encoding_rs::EncoderResult::OutputFull => {}
+                encoding_rs::EncoderResult::Unmappable(_) => {
+                    self.unmappable = true;
+                    return;
+                }
+            }
+        }
+    }
+
+    /// The size in bytes, or `None` when a character cannot be encoded
+    /// (the text cannot be saved in this encoding as it is).
+    pub fn finish(mut self) -> Option<u64> {
+        if matches!(self.encoding, TextEncoding::Legacy(_)) {
+            self.feed_legacy("", true);
+        }
+        (!self.unmappable).then_some(self.len)
+    }
+}
+
 fn utf8(bytes: &[u8], base: usize) -> Result<String, DecodeError> {
     String::from_utf8(bytes.to_vec()).map_err(|e| DecodeError::InvalidUtf8 {
         offset: base + e.utf8_error().valid_up_to(),
@@ -310,6 +395,36 @@ pub fn is_confident(enc: TextEncoding) -> bool {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn encoded_len_matches_encode() {
+        use super::*;
+        let text = "Grüße, 世界! \u{1F600}\r\n";
+        for enc in [
+            TextEncoding::Utf8,
+            TextEncoding::Utf8Bom,
+            TextEncoding::Utf16LeBom,
+            TextEncoding::Utf16Be,
+        ] {
+            let mut n = EncodedLen::new(enc, true);
+            // Fed in pieces, as rope chunks are.
+            for piece in ["Grüße, ", "世界! \u{1F600}", "\r\n"] {
+                n.feed(piece);
+            }
+            assert_eq!(n.finish(), Some(encode(text, enc).unwrap().len() as u64));
+        }
+        let mut part = EncodedLen::new(TextEncoding::Utf8Bom, false);
+        part.feed("abc");
+        assert_eq!(part.finish(), Some(3));
+        let sjis = TextEncoding::Legacy(encoding_rs::SHIFT_JIS);
+        let mut n = EncodedLen::new(sjis, true);
+        n.feed(&"日本語abc".repeat(2000));
+        let expected = encode(&"日本語abc".repeat(2000), sjis).unwrap().len() as u64;
+        assert_eq!(n.finish(), Some(expected));
+        let mut bad = EncodedLen::new(TextEncoding::Legacy(encoding_rs::WINDOWS_1252), true);
+        bad.feed("a世");
+        assert_eq!(bad.finish(), None);
+    }
 
     #[test]
     fn ascii_utf16_without_bom_is_not_read_as_utf8() {

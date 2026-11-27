@@ -16,6 +16,21 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   github.com/Zanttux/text3. Older entries below keep the name Sanain.
 
 ### Added
+- Character and word count in the status bar, like Windows Notepad and
+  Notepad++: "Characters: 3,456 · Words: 600" for the document, or
+  "Characters: 12 of 3,456 · Words: 3 of 600" for the selection (all
+  selections summed with multiple cursors). Click it (or press Enter on
+  it) for a summary of characters with and without spaces, words, lines
+  and bytes in the file's encoding, for the selection and the document.
+  Characters are grapheme clusters, the unit the caret moves by (an
+  accented letter or an emoji family is one; line breaks are not counted);
+  words follow Unicode word boundaries, with each CJK ideograph and
+  hiragana character counted as a word. Counting runs in the background
+  and never slows typing; files over 8 MB show "—" until the summary is
+  opened. Numbers use the language's digit grouping. Settings › Editor ›
+  "Show the character and word count in the status bar" (on by default)
+  hides it; the log viewer does not show it. The item is a keyboard stop
+  in the status bar with a full spoken label.
 - Hot exit: quitting (window close, Cmd+Q / Alt+F4, File › Quit, and
   system logout or shutdown where it reaches the app) no longer asks about
   each unsaved tab. Every unsaved tab's text is written to the recovery

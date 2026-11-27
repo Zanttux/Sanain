@@ -1,6 +1,7 @@
 //! Application state for Text³, independent of the GUI toolkit.
 
 pub mod cli;
+pub mod counts;
 pub mod editor;
 pub mod editorconfig;
 pub mod filesearch;

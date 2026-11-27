@@ -568,3 +568,22 @@ a11y-settings-sections = Secțiuni de setări
 a11y-tab-strip = Fișiere deschise
 a11y-tab-unsaved = { $name }, modificări nesalvate
 migration-copied = Setările și datele din Sanain au fost copiate în Text³. Folderele Sanain au rămas neschimbate.
+
+# Character and word count (status bar)
+# How one thousand is written with digit grouping: the characters between
+# 1 and 000 separate groups of three digits.
+number-thousand = 1{ "." }000
+count-status = Caractere: { $chars } · Cuvinte: { $words }
+count-status-selection = Caractere: { $chars } din { $total-chars } · Cuvinte: { $words } din { $total-words }
+count-choose = Numărul de caractere, cuvinte, rânduri și octeți
+count-a11y-pending = Caractere și cuvinte: încă nenumărate. Deschideți pentru a le număra.
+count-heading-selection = Selecție
+count-heading-document = Document
+count-characters = Caractere
+count-characters-no-spaces = Caractere (fără spații)
+count-words = Cuvinte
+count-lines = Rânduri
+count-bytes = Octeți ({ $encoding })
+count-unencodable = Unele caractere nu pot fi salvate ca { $encoding }.
+count-counting = Se numără…
+settings-show-counts = Afișează numărul de caractere și cuvinte în bara de stare

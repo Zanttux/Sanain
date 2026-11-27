@@ -544,3 +544,22 @@ a11y-settings-sections = Ayar bölümleri
 a11y-tab-strip = Açık dosyalar
 a11y-tab-unsaved = { $name }, kaydedilmemiş değişiklikler
 migration-copied = Sanain ayarları ve verileri Text³ uygulamasına kopyalandı. Sanain klasörleri değiştirilmedi.
+
+# Character and word count (status bar)
+# How one thousand is written with digit grouping: the characters between
+# 1 and 000 separate groups of three digits.
+number-thousand = 1{ "." }000
+count-status = Karakter: { $chars } · Sözcük: { $words }
+count-status-selection = Karakter: { $chars } / { $total-chars } · Sözcük: { $words } / { $total-words }
+count-choose = Karakter, sözcük, satır ve bayt sayıları
+count-a11y-pending = Karakterler ve sözcükler: henüz sayılmadı. Saymak için açın.
+count-heading-selection = Seçim
+count-heading-document = Belge
+count-characters = Karakter
+count-characters-no-spaces = Karakter (boşluksuz)
+count-words = Sözcük
+count-lines = Satır
+count-bytes = Bayt ({ $encoding })
+count-unencodable = Bazı karakterler { $encoding } olarak kaydedilemez.
+count-counting = Sayılıyor…
+settings-show-counts = Durum çubuğunda karakter ve sözcük sayısını göster
