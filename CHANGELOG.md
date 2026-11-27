@@ -4,6 +4,32 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+- Mermaid state and class diagrams in the Markdown preview, drawn
+  natively with the same layered layout as flowcharts (no JavaScript,
+  web view or network). `stateDiagram`/`stateDiagram-v2`: states with
+  descriptions and `state "Long name" as id`, labelled transitions,
+  start and end (`[*]`, per composite), composite states nested up to
+  three deep as titled frames, `<<choice>>` (diamond), `<<fork>>` and
+  `<<join>>` (bars), notes `left of`/`right of` (also multi-line
+  `end note`; drawn as note boxes joined by a dotted line, one layer
+  before or after the state), concurrent regions split by `--` (dashed
+  frames inside the composite) and `direction`. `classDiagram`: classes
+  with attribute and method compartments (`class A { ... }`,
+  `A : +member`, `class A["Label"]`), visibility markers as written,
+  `$` static (underlined) and `*` abstract (italic) members, method
+  return types, generics `List~T~` shown as `List<T>`, annotations such
+  as `<<interface>>`, inheritance, composition, aggregation,
+  association, dependency, realization and plain links (solid or
+  dashed, ends on either side), cardinalities, labels, `namespace`
+  frames, notes and `direction`. Styling lines (`classDef`, `style`,
+  `cssClass`, `class`) are ignored and `click`, `link` and `callback`
+  never run. Other syntax (lollipop interfaces, history states, ...)
+  shows the source with the usual note; the flowchart size limits
+  apply. Flowcharts also gain two layout fixes: a node that only feeds
+  a later node now sits just before it instead of at the top, and a
+  self-link's label is drawn beside its loop instead of over it.
+
 ## [0.2.1] — 2026-11-27
 
 Patch release with data-safety fixes found by the disk-full drill and a
