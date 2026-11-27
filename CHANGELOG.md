@@ -89,6 +89,7 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   New strings in all 26 languages.
 
 ### Fixed
+- Character-level highlighting in Compare no longer depends on machine load for short lines (a 20 ms time limit sometimes produced no highlight).
 - Check for Updates works again: it asked GitHub for the "latest release", which leaves out pre-releases, and every Sanain release is one, so it always said there were no releases. It now reads the release list and takes the newest versioned release (skipping drafts and `nightly`).
 - With the in-window menu (Windows, Linux), Shift+F6, Shift+F3
   (Notepad++ preset) and Ctrl+Shift+Tab ran the command of the same key
@@ -105,6 +106,22 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   command palette (it was lost, so typing went nowhere until a click).
 - Turning on the structured view, or moving to a pane that shows one,
   puts keyboard focus in the grid or tree.
+
+### Security
+- Checked against Notepad++'s published security advisories (#157; the
+  comparison is in docs/RISKS.md). Two gaps fixed:
+  - On Windows, `text3 --register`/`--unregister` (also run by the
+    installer) started `reg.exe`, and Show in Explorer started
+    `explorer.exe`, by bare name, so a program of that name in the folder
+    of `text3.exe` (for example a portable copy in Downloads) ran
+    instead. Both now run from the Windows system folder by full path;
+    on macOS Show in Finder runs `/usr/bin/open`.
+  - A Markdown link or image pointing at a network path (`\\host\share\…`,
+    `//host/…`) made Windows connect to that host, sending the user's
+    sign-in credentials, as soon as the preview showed the image or the
+    link was clicked. Such links and images are now refused like
+    `file:` links. A `file://host/…` URL from Finder is no longer read
+    as a relative path.
 
 ## [0.2.1] — 2026-11-27
 

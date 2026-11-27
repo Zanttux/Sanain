@@ -57,6 +57,11 @@ pub fn resolve(url: &str, doc_dir: Option<&Path>) -> ImageSource {
     if lower.contains(':') && !(lower.len() > 2 && lower.as_bytes()[1] == b':') {
         return ImageSource::Blocked; // data:, file:, javascript:, …
     }
+    if text3_markdown::is_network_path(u) {
+        // `\\host\share\x.png`: even resolving it would send the user's
+        // Windows credentials to that host, before anything is shown.
+        return ImageSource::Blocked;
+    }
     let Some(dir) = doc_dir else {
         return ImageSource::Blocked;
     };
@@ -163,5 +168,12 @@ mod tests {
             ImageSource::Outside(outside.path().join("x.png").canonicalize().unwrap())
         );
         assert_eq!(resolve("a.png", None), ImageSource::Blocked);
+        for unc in [
+            r"\\attacker\share\x.png",
+            r"\\?\UNC\attacker\share\x.png",
+            r"/\attacker\share\x.png",
+        ] {
+            assert_eq!(resolve(unc, d), ImageSource::Blocked, "{unc}");
+        }
     }
 }

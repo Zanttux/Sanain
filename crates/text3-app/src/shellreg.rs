@@ -219,11 +219,21 @@ pub fn windows_reg_commands(exe: &Path, register: bool) -> Vec<Vec<String>> {
     }
 }
 
+/// `reg.exe` in System32 by its full path. A bare `reg` would be looked up
+/// in the folder of the running `text3.exe` first, where a downloaded
+/// `reg.exe` could be waiting (Notepad++ CVE-2025-49144 class). There is
+/// deliberately no fallback to the bare name.
+fn reg_exe() -> std::io::Result<PathBuf> {
+    text3_platform::system_program("reg.exe", text3_platform::SystemDir::System)
+        .ok_or_else(|| std::io::Error::other("the Windows system folder was not found"))
+}
+
 /// Run the Windows registration commands. Removing keys that do not exist
 /// is not an error (deletions are best effort, additions must succeed).
 pub fn windows_apply(exe: &Path, register: bool) -> std::io::Result<()> {
+    let reg = reg_exe()?;
     for args in windows_reg_commands(exe, register) {
-        let status = std::process::Command::new("reg")
+        let status = std::process::Command::new(&reg)
             .args(&args)
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null())
@@ -369,7 +379,7 @@ mod tests {
         }
         let exe = Path::new(r"C:\Temp\text3-test\text3.exe");
         windows_apply(exe, true).unwrap();
-        let out = std::process::Command::new("reg")
+        let out = std::process::Command::new(reg_exe().unwrap())
             .args([
                 "query",
                 r"HKCU\Software\Classes\*\shell\Text3\command",
@@ -379,7 +389,7 @@ mod tests {
             .unwrap();
         assert!(String::from_utf8_lossy(&out.stdout).contains(r"C:\Temp\text3-test\text3.exe"));
         windows_apply(exe, false).unwrap();
-        let gone = std::process::Command::new("reg")
+        let gone = std::process::Command::new(reg_exe().unwrap())
             .args(["query", r"HKCU\Software\Classes\*\shell\Text3"])
             .status()
             .unwrap();

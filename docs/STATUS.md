@@ -31,6 +31,12 @@ are cross-platform verification and release readiness.
   (#79).
 
 ## Done
+- Notepad++ security comparison (#157): its 47 public advisories and
+  security commits grouped by class in docs/RISKS.md. Fixed: `reg.exe` and
+  `explorer.exe` started by bare name on Windows (program-folder hijack),
+  and network-path (UNC) links/images in the Markdown preview (NTLM leak).
+  Open: tree-sitter C grammars unfuzzed, unsigned releases, unpinned Inno
+  Setup on CI.
 - Mouse selection (#112-#114): drags start at the press point; double-click
   selects the word, whitespace or punctuation run under the pointer,
   triple-click the line; right-click menu with Cut/Copy/Paste/Select All.

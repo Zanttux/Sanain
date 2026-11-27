@@ -93,14 +93,30 @@ pub enum LinkKind {
     Anchor,
     /// Relative path to a local file.
     Relative,
-    /// javascript:, data:, file:, vbscript: or anything unknown: never opened.
+    /// javascript:, data:, file:, vbscript:, network paths (`\\host\share`)
+    /// or anything unknown: never opened.
     Blocked,
+}
+
+/// Whether `path` names another computer or a device rather than a file
+/// here: it starts with two slashes or backslashes in any mix
+/// (`\\host\share`, `//host/share`, `\\?\UNC\…`, `\\.\pipe\…`).
+/// On Windows merely looking at such a path (does the file exist?) makes
+/// an SMB connection that hands the user's NTLM credentials to that host,
+/// so a document must never point the editor at one (Notepad++
+/// GHSA-rv8g-c295-pwcg, GHSA-7w2m-5769-p4q3).
+pub fn is_network_path(path: &str) -> bool {
+    let mut it = path.trim_start().chars();
+    matches!((it.next(), it.next()), (Some('/' | '\\'), Some('/' | '\\')))
 }
 
 pub fn classify_link(url: &str) -> LinkKind {
     let u = url.trim();
     if u.starts_with('#') {
         return LinkKind::Anchor;
+    }
+    if is_network_path(u) {
+        return LinkKind::Blocked;
     }
     let lower = u.to_ascii_lowercase();
     match lower.split_once(':') {
@@ -388,9 +404,16 @@ mod tests {
             "data:text/html,x",
             "file:///etc/passwd",
             "vbscript:x",
+            r"\\attacker\share\x.md",
+            "//attacker/share/x.md",
+            r"\\?\UNC\attacker\share\x.md",
+            r"\\.\pipe\x",
+            r" /\attacker\x",
         ] {
             assert_eq!(classify_link(bad), LinkKind::Blocked, "{bad}");
         }
+        assert_eq!(classify_link(r"\docs\x.md"), LinkKind::Relative);
+        assert_eq!(classify_link("/docs/x.md"), LinkKind::Relative);
     }
 
     #[test]
