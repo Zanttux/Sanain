@@ -305,6 +305,12 @@ pub struct Shell {
     log: Option<crate::logview::LogView>,
     /// For work started outside a frame (e.g. opening a file).
     ctx: egui::Context,
+    /// While a split pane is drawn: its editor's accessible name, which
+    /// says which pane it is.
+    pane_ax: Option<String>,
+    /// A command ran from the palette: give the document keyboard focus
+    /// back if nothing else took it.
+    refocus: bool,
     /// A running update check and whether the user asked for it.
     update: Option<(
         std::sync::mpsc::Receiver<Result<UpdateStatus, UpdateError>>,
@@ -482,6 +488,8 @@ impl Shell {
             pane_views: HashMap::new(),
             log: None,
             ctx: egui::Context::default(),
+            pane_ax: None,
+            refocus: false,
             update: None,
             recording: None,
             shortcut_moved: Vec::new(),
@@ -613,6 +621,16 @@ impl Shell {
 
     fn focus_active(&mut self) {
         let id = self.ws.active().id;
+        if self.pane_mode(id) == PaneContent::Structured {
+            // The grid or tree takes the keys, as the editor would.
+            let ed = &self.ws.active().editor;
+            let target = match Self::data_kind(ed) {
+                Some(DataKind::Csv | DataKind::Tsv) => grid_id(id),
+                _ => tree_id(id),
+            };
+            self.ctx.memory_mut(|m| m.request_focus(target));
+            return;
+        }
         self.active_view(id).request_focus();
     }
 
@@ -1252,22 +1270,25 @@ impl Shell {
                                     }
                                     if let Some((text, error)) = import_note.as_ref() {
                                         let p = theme::palette(ui.ctx());
-                                        ui.colored_label(
+                                        let r = ui.colored_label(
                                             if *error { p.warning } else { p.text },
                                             text,
                                         );
+                                        crate::structured::announce(ui, r.id);
                                     }
                                 });
-                                let search = ui.add(
-                                    egui::TextEdit::singleline(filter)
-                                        .hint_text(l("settings-shortcut-search"))
-                                        .desired_width(f32::INFINITY),
-                                );
+                                let search = ui
+                                    .add(
+                                        egui::TextEdit::singleline(filter)
+                                            .hint_text(l("settings-shortcut-search"))
+                                            .desired_width(f32::INFINITY),
+                                    )
+                                    .accessible_name(l("settings-shortcut-search"));
                                 if focus_search {
                                     search.request_focus();
                                 }
                                 if !moved.is_empty() {
-                                    ui.colored_label(
+                                    let r = ui.colored_label(
                                         theme::palette(ui.ctx()).warning,
                                         format!(
                                             "{} {}",
@@ -1275,6 +1296,7 @@ impl Shell {
                                             moved.join(", ")
                                         ),
                                     );
+                                    crate::structured::announce(ui, r.id);
                                 }
                                 let needle = filter.to_lowercase();
                                 egui::ScrollArea::vertical()
@@ -1323,18 +1345,50 @@ impl Shell {
                                                 .spacing([16.0, 4.0])
                                                 .show(ui, |ui| {
                                                     for (a, label, keys) in rows {
-                                                        ui.label(label);
-                                                        let text = if *recording == Some(a) {
+                                                        ui.label(&label);
+                                                        let waiting = *recording == Some(a);
+                                                        let text = if waiting {
                                                             l("settings-shortcut-press")
                                                         } else {
-                                                            keys
+                                                            keys.clone()
                                                         };
                                                         ui.monospace(text);
+                                                        // The buttons name their command for
+                                                        // screen readers; while waiting for a
+                                                        // chord, Change says so.
+                                                        let lt = |id: &str| {
+                                                            tr(
+                                                                l10n,
+                                                                id,
+                                                                &[(
+                                                                    "command",
+                                                                    label.clone().into(),
+                                                                )],
+                                                            )
+                                                        };
+                                                        let change_name = if waiting {
+                                                            l("settings-shortcut-press")
+                                                        } else if keys.is_empty() {
+                                                            lt("a11y-shortcut-change")
+                                                        } else {
+                                                            tr(
+                                                                l10n,
+                                                                "a11y-shortcut-change-current",
+                                                                &[
+                                                                    (
+                                                                        "command",
+                                                                        label.clone().into(),
+                                                                    ),
+                                                                    ("keys", keys.clone().into()),
+                                                                ],
+                                                            )
+                                                        };
                                                         ui.horizontal(|ui| {
                                                             if ui
                                                                 .small_button(l(
                                                                     "settings-shortcut-change",
                                                                 ))
+                                                                .accessible_name(change_name)
                                                                 .clicked()
                                                             {
                                                                 *recording = Some(a);
@@ -1345,6 +1399,9 @@ impl Shell {
                                                                 && ui
                                                                     .small_button(l(
                                                                         "settings-shortcut-reset",
+                                                                    ))
+                                                                    .accessible_name(lt(
+                                                                        "a11y-shortcut-reset",
                                                                     ))
                                                                     .clicked()
                                                             {
@@ -2781,6 +2838,7 @@ impl Shell {
         let mut tree_actions = Vec::new();
         let mut xml_actions = Vec::new();
         let mut yaml_actions = Vec::new();
+        let ax_tr = |id: &str, args: &[(&str, FluentValue<'_>)]| tr(l10n, id, args);
         match data {
             Structured::Csv(table, read_only) => {
                 egui::Frame::NONE
@@ -2830,6 +2888,7 @@ impl Shell {
                     editable,
                     state,
                     &labels,
+                    &ax_tr,
                 );
             }
             Structured::Json(Ok(doc), read_only) => {
@@ -2861,6 +2920,7 @@ impl Shell {
                     state,
                     &labels,
                     &more,
+                    &ax_tr,
                 );
             }
             Structured::Xml(Ok(doc), read_only) => {
@@ -2895,6 +2955,7 @@ impl Shell {
                     state,
                     &labels,
                     &more,
+                    &ax_tr,
                 );
             }
             Structured::Yaml(Ok(doc), read_only) => {
@@ -2928,6 +2989,7 @@ impl Shell {
                     state,
                     &labels,
                     &more,
+                    &ax_tr,
                 );
             }
             Structured::Json(Err(e), _) => {
@@ -3699,8 +3761,9 @@ impl Shell {
         let area = ui.available_rect_before_wrap();
         let gap = ui.spacing().item_spacing.x.max(4.0);
         let focus_slot = split.focused().slot;
+        let count = split.len();
         let mut touched = None;
-        for (pane, f) in split.panes().zip(split.fractions()) {
+        for (n, (pane, f)) in split.panes().zip(split.fractions()).enumerate() {
             let (id, slot) = (pane.tab, pane.slot);
             if self.ws.position(id).is_none() {
                 continue;
@@ -3719,12 +3782,46 @@ impl Shell {
                     .layout(egui::Layout::top_down_justified(egui::Align::LEFT)),
             );
             child.set_clip_rect(rect.intersect(ui.clip_rect()));
+            // For screen readers: a group per pane, named by its place and
+            // tab, holding what the pane shows.
+            let tab_name = self
+                .ws
+                .position(id)
+                .map(|i| self.name_of(&self.ws.tabs()[i].editor))
+                .unwrap_or_default();
+            let args = [
+                ("pane", ((n + 1) as i64).into()),
+                ("count", (count as i64).into()),
+                ("name", tab_name.into()),
+            ];
+            let pane_name = self.t(
+                if slot == focus_slot {
+                    "a11y-pane-active"
+                } else {
+                    "a11y-pane"
+                },
+                &args,
+            );
+            child
+                .ctx()
+                .accesskit_node_builder(child.unique_id(), |node| {
+                    node.set_role(egui::accesskit::Role::Group);
+                    node.set_label(pane_name);
+                    node.set_bounds(egui::accesskit::Rect {
+                        x0: rect.min.x.into(),
+                        y0: rect.min.y.into(),
+                        x1: rect.max.x.into(),
+                        y1: rect.max.y.into(),
+                    });
+                });
+            self.pane_ax = Some(self.t("a11y-pane-editor", &args));
             // A click anywhere in the pane (preview, tree) focuses it.
             let pressed =
                 child.input(|i| i.pointer.any_pressed()) && child.rect_contains_pointer(rect);
             let used = child
                 .push_id((id, slot), |ui| self.pane_area(ui, id, slot))
                 .inner;
+            self.pane_ax = None;
             // Drawn after the content so a filled preview cannot hide it.
             if slot == focus_slot {
                 ui.painter().hline(
@@ -3816,7 +3913,10 @@ impl Shell {
 
     /// The text editor of a pane. Returns whether it was interacted with.
     fn editor_area(&mut self, ui: &mut egui::Ui, id: TabId, pane: usize) -> bool {
-        let name = self.t("editor-accessible-name", &[]);
+        let name = self
+            .pane_ax
+            .clone()
+            .unwrap_or_else(|| self.t("editor-accessible-name", &[]));
         let menu = self.context_labels();
         let interactive = self.dialog.is_none();
         let (indent, tab_width) = self.tab_indent(id);
@@ -3922,10 +4022,12 @@ impl Shell {
             }
         };
         self.images.borrow_mut().poll(&ctx);
+        let format = |id: &str, args: &[(&str, FluentValue<'_>)]| tr(l10n, id, args);
         let style = preview::Style {
             p,
             size: self.settings.font_size + 1.0,
             untranslated: &untranslated,
+            format: &format,
             image: &image,
         };
         egui::Frame::NONE
@@ -4865,7 +4967,9 @@ impl Shell {
                 ui.colored_label(p.text, self.t("macro-recording", &[]));
             }
             if let Some((msg, is_error)) = &self.status {
-                ui.colored_label(if *is_error { p.error } else { p.muted }, msg);
+                let r = ui.colored_label(if *is_error { p.error } else { p.muted }, msg);
+                // Spoken when it appears or changes (saved, refused, ...).
+                crate::structured::announce(ui, r.id);
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.colored_label(p.muted, editor.encoding().name());
@@ -5353,6 +5457,18 @@ impl eframe::App for Shell {
         self.replace_preview_window(&ctx);
         self.about_window(&ctx);
         self.encoding_window(&ctx);
+        // After a command run from the palette: keyboard focus goes back
+        // to the document unless the command moved it somewhere (a dialog,
+        // another prompt, a window's field).
+        if std::mem::take(&mut self.refocus)
+            && !self.palette.open
+            && self.dialog.is_none()
+            && ctx
+                .memory(|m| m.focused())
+                .is_none_or(|f| Some(f) == self.palette.field)
+        {
+            self.focus_active();
+        }
         if self.palette.open
             && self.dialog.is_none()
             && self.palette.mode != crate::palette::Mode::Commands
@@ -5375,6 +5491,8 @@ impl eframe::App for Shell {
             let hint = self.t("palette-placeholder", &[]);
             if let Some(a) = self.palette.show(&ctx, &entries, &hint) {
                 self.dispatch(a, &ctx);
+                self.refocus = true;
+                ctx.request_repaint();
             } else if !self.palette.open {
                 self.focus_active();
             }

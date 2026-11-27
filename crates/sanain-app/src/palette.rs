@@ -43,6 +43,8 @@ pub struct Palette {
     focus: bool,
     /// Start the list at the top when the palette opens.
     scroll_reset: bool,
+    /// The input field's widget id, last shown.
+    pub field: Option<egui::Id>,
 }
 
 const MAX_ROWS: usize = 12;
@@ -103,7 +105,8 @@ impl Palette {
                             .id_salt("sanain-palette-query")
                             .hint_text(hint)
                             .desired_width(f32::INFINITY);
-                        let r = ui.add(field);
+                        let r = ui.add(field).accessible_name(hint);
+                        self.field = Some(r.id);
                         if std::mem::take(&mut self.focus) {
                             r.request_focus();
                         }
@@ -122,6 +125,13 @@ impl Palette {
                         if std::mem::take(&mut self.scroll_reset) {
                             list = list.vertical_scroll_offset(0.0);
                         }
+                        // For screen readers: a list box whose options
+                        // carry the selection; the selected one is spoken
+                        // as it changes while typing goes on in the field.
+                        ui.ctx().accesskit_node_builder(ui.unique_id(), |n| {
+                            n.set_role(egui::accesskit::Role::ListBox);
+                            n.set_label(hint);
+                        });
                         list.max_height(row_h * MAX_ROWS as f32)
                             .min_scrolled_height(row_h * ranked.len().min(MAX_ROWS) as f32)
                             .auto_shrink([false, true])
@@ -134,11 +144,14 @@ impl Palette {
                                     } else {
                                         egui::Color32::TRANSPARENT
                                     };
-                                    let resp = egui::Frame::NONE
+                                    let framed = egui::Frame::NONE
                                         .fill(fill)
                                         .corner_radius(4.0)
                                         .inner_margin(egui::Margin::symmetric(8, 4))
                                         .show(ui, |ui| {
+                                            ui.ctx().accesskit_node_builder(ui.unique_id(), |n| {
+                                                n.set_role(egui::accesskit::Role::ListBoxOption);
+                                            });
                                             ui.set_width(ui.available_width());
                                             ui.horizontal(|ui| {
                                                 let color =
@@ -158,9 +171,32 @@ impl Palette {
                                                     },
                                                 );
                                             });
-                                        })
-                                        .response
-                                        .interact(egui::Sense::click());
+                                            ui.unique_id()
+                                        });
+                                    let resp = framed.response.interact(egui::Sense::click());
+                                    // The option node below speaks for the row.
+                                    ui.ctx().accesskit_node_builder(resp.id, |n| n.set_hidden());
+                                    let rect = resp.rect;
+                                    ui.ctx().accesskit_node_builder(framed.inner, |n| {
+                                        n.set_label(if e.shortcut.is_empty() {
+                                            e.label.clone()
+                                        } else {
+                                            format!("{}  {}", e.label, e.shortcut)
+                                        });
+                                        n.set_selected(active);
+                                        if active {
+                                            n.set_live(egui::accesskit::Live::Polite);
+                                        }
+                                        if !e.enabled {
+                                            n.set_disabled();
+                                        }
+                                        n.set_bounds(egui::accesskit::Rect {
+                                            x0: rect.min.x.into(),
+                                            y0: rect.min.y.into(),
+                                            x1: rect.max.x.into(),
+                                            y1: rect.max.y.into(),
+                                        });
+                                    });
                                     if active && (up || down) {
                                         resp.scroll_to_me(None);
                                     }
@@ -211,12 +247,17 @@ impl Palette {
                     .inner_margin(egui::Margin::same(8))
                     .show(ui, |ui| {
                         ui.set_width(width);
-                        let r = ui.add(
-                            egui::TextEdit::singleline(&mut self.query)
-                                .id_salt("sanain-goto-query")
-                                .hint_text(hint)
-                                .desired_width(f32::INFINITY),
-                        );
+                        let r = ui
+                            .add(
+                                egui::TextEdit::singleline(&mut self.query)
+                                    .id_salt("sanain-goto-query")
+                                    .hint_text(hint)
+                                    .desired_width(f32::INFINITY),
+                            )
+                            .accessible_name(hint);
+                        self.field = Some(r.id);
+                        ui.ctx()
+                            .accesskit_node_builder(r.id, |n| n.set_description(note));
                         if std::mem::take(&mut self.focus) {
                             r.request_focus();
                         }

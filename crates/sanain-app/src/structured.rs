@@ -5,6 +5,7 @@
 
 use eframe::egui::{self, RichText};
 use egui_extras::{Column, TableBuilder};
+use sanain_i18n::FluentValue;
 use sanain_tools::csv::Table;
 use sanain_tools::json;
 use sanain_tools::xml;
@@ -27,6 +28,8 @@ pub struct GridState {
     pub editing: Option<CellEdit>,
     /// Bring the selected cell into view on the next frame.
     scroll: bool,
+    /// The table's column resize handles on the last frame.
+    resize_handles: Vec<egui::Id>,
 }
 
 #[derive(Debug)]
@@ -85,6 +88,108 @@ pub enum GridAction {
     DeleteRow(usize),
 }
 
+/// Localizes accessibility text: a message id and its arguments.
+pub type Tr<'a> = &'a dyn Fn(&str, &[(&str, FluentValue<'_>)]) -> String;
+
+fn num(n: usize) -> FluentValue<'static> {
+    FluentValue::from(n as i64)
+}
+
+/// Accessible name of a grid cell: its position counted as shown (body
+/// rows from 1 under the header) and the column's header text.
+fn cell_label(tr: Tr<'_>, row: usize, col: usize, header: Option<&str>) -> String {
+    match header.map(str::trim).filter(|h| !h.is_empty()) {
+        Some(name) => tr(
+            "a11y-grid-cell",
+            &[
+                ("row", num(row)),
+                ("column", num(col)),
+                ("name", name.to_owned().into()),
+            ],
+        ),
+        None => tr(
+            "a11y-grid-cell-plain",
+            &[("row", num(row)), ("column", num(col))],
+        ),
+    }
+}
+
+/// Whether Tab (`back`: Shift+Tab) at cell `at` leaves the grid instead of
+/// moving to the next (previous) cell: past the last cell or before the
+/// first.
+fn tab_leaves(at: (usize, usize), rows: usize, cols: usize, back: bool) -> bool {
+    if back {
+        at == (0, 0)
+    } else {
+        at == (rows.saturating_sub(1), cols.saturating_sub(1))
+    }
+}
+
+/// Whether the context menu key was pressed: Shift+F10 or the Menu key.
+fn menu_key_pressed(ui: &egui::Ui) -> bool {
+    ui.input_mut(|i| {
+        i.consume_key(egui::Modifiers::SHIFT, egui::Key::F10)
+            || i.consume_key(egui::Modifiers::NONE, egui::Key::Menu)
+    })
+}
+
+/// A context menu on `resp` that the keyboard can also open (`by_key`):
+/// then it opens next to the item instead of at the pointer and `add` gets
+/// `true` to focus its first entry. When the menu closes and nothing else
+/// took keyboard focus, focus returns to `return_to`.
+fn item_menu(
+    resp: &egui::Response,
+    by_key: bool,
+    return_to: egui::Id,
+    add: impl FnOnce(&mut egui::Ui, &mut bool),
+) {
+    let ctx = &resp.ctx;
+    let popup_id = egui::Popup::default_response_id(resp);
+    let key_id = popup_id.with("opened-by-key");
+    if by_key {
+        egui::Popup::open_id(ctx, popup_id);
+        ctx.data_mut(|d| d.insert_temp(key_id, true));
+    }
+    let was_open = egui::Popup::is_id_open(ctx, popup_id);
+    let mut popup = egui::Popup::context_menu(resp);
+    if was_open && egui::Popup::position_of_id(ctx, popup_id).is_none() {
+        popup = popup.anchor(resp.rect);
+    }
+    popup.show(|ui| {
+        let mut focus_first = ctx
+            .data_mut(|d| d.remove_temp::<bool>(key_id))
+            .unwrap_or(false);
+        add(ui, &mut focus_first);
+    });
+    if was_open && !egui::Popup::is_id_open(ctx, popup_id) && ctx.memory(|m| m.focused()).is_none()
+    {
+        ctx.memory_mut(|m| m.request_focus(return_to));
+    }
+}
+
+/// A menu entry; the first one takes keyboard focus when the menu was
+/// opened from the keyboard.
+fn menu_entry(ui: &mut egui::Ui, text: &str, focus_first: &mut bool) -> bool {
+    let r = ui.button(text);
+    if std::mem::take(focus_first) {
+        r.request_focus();
+    }
+    r.clicked()
+}
+
+/// Keep a widget's own accessibility node out of the tree when an
+/// enclosing node already says the same (a cell's text, a row's labels).
+fn hide_from_accessibility(ui: &egui::Ui, id: egui::Id) {
+    ui.ctx().accesskit_node_builder(id, |n| n.set_hidden());
+}
+
+/// Announce a message (an error under a field, an import result) when it
+/// appears or changes.
+pub fn announce(ui: &egui::Ui, id: egui::Id) {
+    ui.ctx()
+        .accesskit_node_builder(id, |n| n.set_live(egui::accesskit::Live::Polite));
+}
+
 /// Localized labels of the grid's context menu.
 pub struct GridLabels {
     pub edit_cell: String,
@@ -95,7 +200,10 @@ pub struct GridLabels {
 /// The grid. With `editable`, a double-click or Enter on the selected cell
 /// edits it inline: Enter commits, Escape cancels, Tab commits and edits
 /// the next cell; arrow keys move the selection while `id` (the grid's
-/// focus) has keyboard focus. Returns what to change in the text.
+/// focus) has keyboard focus, and Tab past the last cell (Shift+Tab before
+/// the first) leaves the grid. Shift+F10 or the Menu key opens the
+/// selected cell's menu. For screen readers the grid is a table whose
+/// active cell follows the selection. Returns what to change in the text.
 #[allow(clippy::too_many_arguments)]
 pub fn csv(
     ui: &mut egui::Ui,
@@ -107,6 +215,7 @@ pub fn csv(
     editable: bool,
     state: &mut GridState,
     labels: &GridLabels,
+    tr: Tr<'_>,
 ) -> Vec<GridAction> {
     let mut actions = Vec::new();
     let cols = t.rows.iter().map(Vec::len).max().unwrap_or(0);
@@ -123,12 +232,28 @@ pub fn csv(
     // The grid's own focus target: a widget that takes keyboard focus but
     // no clicks, under the cells.
     let focus = ui.interact(ui.max_rect(), id, egui::Sense::focusable_noninteractive());
-    if focus.has_focus() && state.editing.is_none() {
+    ui.ctx().accesskit_node_builder(id, |n| {
+        n.set_role(egui::Role::Grid);
+        n.set_label(tr("a11y-csv-grid", &[]));
+        n.set_row_count(rows);
+        n.set_column_count(cols);
+    });
+    if focus.has_focus() && state.selected.is_none() {
+        state.selected = Some((0, 0));
+        state.scroll = true;
+    }
+    let mut menu_key = false;
+    let grid_focused = focus.has_focus() && state.editing.is_none();
+    if grid_focused {
+        // Tab moves between cells, except past the last cell (Shift+Tab:
+        // before the first), where it leaves the grid as anywhere else.
+        let at = state.selected.unwrap_or((0, 0));
+        let leaves = tab_leaves(at, rows, cols, ui.input(|i| i.modifiers.shift));
         ui.memory_mut(|m| {
             m.set_focus_lock_filter(
                 id,
                 egui::EventFilter {
-                    tab: true,
+                    tab: !leaves,
                     horizontal_arrows: true,
                     vertical_arrows: true,
                     escape: false,
@@ -149,11 +274,13 @@ pub fn csv(
         if pressed(Key::ArrowRight) {
             state.step(rows, cols, 0, 1, false);
         }
-        if ui.input_mut(|i| i.consume_key(egui::Modifiers::SHIFT, Key::Tab)) {
-            state.step(rows, cols, 0, -1, true);
-        }
-        if pressed(Key::Tab) {
-            state.step(rows, cols, 0, 1, true);
+        if !leaves {
+            if ui.input_mut(|i| i.consume_key(egui::Modifiers::SHIFT, Key::Tab)) {
+                state.step(rows, cols, 0, -1, true);
+            }
+            if pressed(Key::Tab) {
+                state.step(rows, cols, 0, 1, true);
+            }
         }
         if editable && let Some((r, c)) = state.selected {
             if pressed(Key::Enter) || pressed(Key::F2) {
@@ -164,6 +291,8 @@ pub fn csv(
                     col: c,
                     value: String::new(),
                 });
+            } else if menu_key_pressed(ui) {
+                menu_key = true;
             }
         }
     }
@@ -174,33 +303,57 @@ pub fn csv(
         .then_some(state.selected)
         .flatten()
         .and_then(|(r, _)| r.checked_sub(first_body));
-    let row_ops = |ui: &mut egui::Ui, actions: &mut Vec<GridAction>, r: usize| {
-        if ui.button(&labels.insert_row_below).clicked() {
-            actions.push(GridAction::InsertRowAfter(r));
-        }
-        if ui.button(&labels.delete_row).clicked() {
-            actions.push(GridAction::DeleteRow(r));
-        }
+    let header_name = |c: usize| {
+        header
+            .then(|| t.rows.first().and_then(|row| row.get(c)))
+            .flatten()
+            .map(String::as_str)
     };
+    let row_ops =
+        |ui: &mut egui::Ui, actions: &mut Vec<GridAction>, r: usize, focus_first: &mut bool| {
+            if menu_entry(ui, &labels.insert_row_below, focus_first) {
+                actions.push(GridAction::InsertRowAfter(r));
+                ui.memory_mut(|m| m.request_focus(id));
+            }
+            if menu_entry(ui, &labels.delete_row, focus_first) {
+                actions.push(GridAction::DeleteRow(r));
+                ui.memory_mut(|m| m.request_focus(id));
+            }
+        };
     // One cell; `c` is `None` for the row number.
     let mut cell =
         |ui: &mut egui::Ui, state: &mut GridState, r: usize, c: Option<usize>, strong: bool| {
             let Some(c) = c else {
-                ui.label(
-                    RichText::new((r + 1 - first_body).to_string())
-                        .color(p.muted)
-                        .monospace(),
-                );
-                let resp = ui.interact(ui.max_rect(), id.with(("row", r)), egui::Sense::click());
+                let shown = r + 1 - first_body;
+                let number = ui.label(RichText::new(shown.to_string()).color(p.muted).monospace());
+                hide_from_accessibility(ui, number.id);
+                // Clicks only: the keys go to the grid's focus, not to
+                // every cell in the Tab order.
+                let resp = ui.interact(ui.max_rect(), id.with(("row", r)), egui::Sense::CLICK);
+                resp.widget_info(|| {
+                    egui::WidgetInfo::labeled(
+                        egui::Role::RowHeader,
+                        true,
+                        tr("a11y-grid-row-header", &[("row", num(shown))]),
+                    )
+                });
                 if resp.clicked() || resp.secondary_clicked() {
                     let c = state.selected.map_or(0, |(_, c)| c);
                     state.selected = Some((r, c));
                     ui.memory_mut(|m| m.request_focus(id));
                 }
                 if editable {
-                    resp.context_menu(|ui| row_ops(ui, &mut actions, r));
+                    item_menu(&resp, false, id, |ui, first| {
+                        row_ops(ui, &mut actions, r, first);
+                    });
                 }
                 return;
+            };
+            let is_header = strong && r == 0 && header;
+            let name = if is_header {
+                tr("a11y-grid-column-header", &[("column", num(c + 1))])
+            } else {
+                cell_label(tr, r + 1 - first_body, c + 1, header_name(c))
             };
             let editing_here = state
                 .editing
@@ -214,12 +367,14 @@ pub fn csv(
                     egui::text_edit::TextEditState::default().store(ui.ctx(), editor_id);
                 }
                 // Tab stays in the field (no focus traversal); handled below.
-                let resp = ui.add(
-                    egui::TextEdit::singleline(&mut ed.text)
-                        .id(editor_id)
-                        .lock_focus(true)
-                        .desired_width(f32::INFINITY),
-                );
+                let resp = ui
+                    .add(
+                        egui::TextEdit::singleline(&mut ed.text)
+                            .id(editor_id)
+                            .lock_focus(true)
+                            .desired_width(f32::INFINITY),
+                    )
+                    .accessible_name(tr("a11y-edit-field", &[("item", name.into())]));
                 if ed.focus {
                     resp.request_focus();
                     ed.focus = false;
@@ -272,6 +427,15 @@ pub fn csv(
             if selected {
                 ui.painter()
                     .rect_filled(rect.expand(1.0), 2.0, p.accent.gamma_multiply(0.25));
+                if grid_focused {
+                    // The keyboard focus ring.
+                    ui.painter().rect_stroke(
+                        rect.expand(1.0),
+                        2.0,
+                        egui::Stroke::new(2.0, p.accent),
+                        egui::StrokeKind::Inside,
+                    );
+                }
             }
             let v = t
                 .rows
@@ -288,13 +452,28 @@ pub fn csv(
             if strong {
                 text = text.strong();
             }
-            ui.add(egui::Label::new(text).truncate());
-            let resp = ui.interact(rect, id.with((r, c)), egui::Sense::click());
+            let shown_label = ui.add(egui::Label::new(text).truncate());
+            hide_from_accessibility(ui, shown_label.id);
+            let resp = ui.interact(rect, id.with((r, c)), egui::Sense::CLICK);
             let resp = if v.is_empty() {
                 resp
             } else {
                 resp.on_hover_text(v)
             };
+            let role = if is_header {
+                egui::Role::ColumnHeader
+            } else {
+                egui::Role::Cell
+            };
+            resp.widget_info(|| egui::WidgetInfo::labeled(role, true, &name));
+            ui.ctx().accesskit_node_builder(resp.id, |n| {
+                n.set_value(v);
+                n.set_row_index(r);
+                n.set_column_index(c);
+                n.set_selected(selected);
+                // The tooltip repeats the value; the value says it already.
+                n.clear_description();
+            });
             if selected && state.scroll {
                 resp.scroll_to_me(None);
             }
@@ -306,52 +485,93 @@ pub fn csv(
                 state.start_edit(t, r, c);
             }
             if editable {
-                resp.context_menu(|ui| {
-                    if ui.button(&labels.edit_cell).clicked() {
+                item_menu(&resp, selected && menu_key, id, |ui, first| {
+                    if menu_entry(ui, &labels.edit_cell, first) {
                         state.start_edit(t, r, c);
                     }
                     ui.separator();
-                    row_ops(ui, &mut actions, r);
+                    row_ops(ui, &mut actions, r, first);
                 });
             }
         };
-    egui::ScrollArea::horizontal().show(ui, |ui| {
-        let mut builder = TableBuilder::new(ui)
-            .id_salt(id)
-            .striped(true)
-            .resizable(true)
-            .column(Column::exact(size * 3.5));
-        if let Some(r) = scroll_row {
-            builder = builder.scroll_to_row(r, None);
-        }
-        for _ in 0..cols {
-            builder = builder.column(Column::initial(140.0).at_least(40.0).clip(true));
-        }
-        builder
-            .header(row_h, |mut h| {
-                h.col(|ui| {
-                    ui.label("");
-                });
-                for c in 0..cols {
+    // The cells belong to the grid's node.
+    // Tab onto a column resize handle (egui_extras makes them focusable)
+    // goes on to the next widget; they do nothing from the keyboard.
+    if ui
+        .memory(|m| m.focused())
+        .is_some_and(|f| state.resize_handles.contains(&f))
+    {
+        let back = ui.input(|i| i.modifiers.shift);
+        ui.memory_mut(|m| {
+            m.move_focus(if back {
+                egui::FocusDirection::Previous
+            } else {
+                egui::FocusDirection::Next
+            });
+        });
+        ui.ctx().request_repaint();
+    }
+    let mut resize_handles = Vec::new();
+    ui.scope_builder(egui::UiBuilder::new().accessibility_parent(id), |ui| {
+        egui::ScrollArea::horizontal().show(ui, |ui| {
+            // The table's column resize handles, as egui_extras names them.
+            let state_id = ui.scope_id().with(egui::IdSalt::new(id));
+            resize_handles = (0..=cols)
+                .map(|i| state_id.with("resize_column").with(i))
+                .collect();
+            let mut builder = TableBuilder::new(ui)
+                .id_salt(id)
+                .striped(true)
+                .resizable(true)
+                .column(Column::exact(size * 3.5));
+            if let Some(r) = scroll_row {
+                builder = builder.scroll_to_row(r, None);
+            }
+            for _ in 0..cols {
+                builder = builder.column(Column::initial(140.0).at_least(40.0).clip(true));
+            }
+            builder
+                .header(row_h, |mut h| {
                     h.col(|ui| {
-                        if header {
-                            cell(ui, state, 0, Some(c), true);
-                        } else {
-                            ui.label(RichText::new((c + 1).to_string()).strong().color(p.text));
+                        let corner = ui.label("");
+                        hide_from_accessibility(ui, corner.id);
+                    });
+                    for c in 0..cols {
+                        h.col(|ui| {
+                            if header {
+                                cell(ui, state, 0, Some(c), true);
+                            } else {
+                                ui.label(RichText::new((c + 1).to_string()).strong().color(p.text));
+                            }
+                        });
+                    }
+                })
+                .body(|b| {
+                    b.rows(row_h, rows - first_body, |mut row| {
+                        let r = row.index() + first_body;
+                        row.col(|ui| cell(ui, state, r, None, false));
+                        for c in 0..cols {
+                            row.col(|ui| cell(ui, state, r, Some(c), false));
                         }
                     });
-                }
-            })
-            .body(|b| {
-                b.rows(row_h, rows - first_body, |mut row| {
-                    let r = row.index() + first_body;
-                    row.col(|ui| cell(ui, state, r, None, false));
-                    for c in 0..cols {
-                        row.col(|ui| cell(ui, state, r, Some(c), false));
-                    }
                 });
-            });
+        });
     });
+    // The resize handles are for the pointer: keep them out of the
+    // accessibility tree (Tab passes over them, above).
+    for &h in &resize_handles {
+        hide_from_accessibility(ui, h);
+    }
+    state.resize_handles = resize_handles;
+    // Screen readers follow the selected cell while the grid has focus.
+    if let Some((r, c)) = state.selected {
+        let cell_id = id.with((r, c));
+        if ui.ctx().has_accesskit_node(cell_id) {
+            ui.ctx().accesskit_node_builder(id, |n| {
+                n.set_active_descendant(cell_id.accesskit_id());
+            });
+        }
+    }
     state.scroll = false;
     actions
 }
@@ -421,6 +641,8 @@ pub struct TreeState {
     pub pending: Option<(Vec<usize>, Field)>,
     /// Rows shown on the last frame, top to bottom, for the arrow keys.
     visible: Vec<Vec<usize>>,
+    /// Bring the selected row into view on the next frame.
+    scroll: bool,
 }
 
 #[derive(Debug)]
@@ -549,6 +771,16 @@ impl TreeState {
             self.selected_field = None;
         }
         self.selected = Some(rows[next].clone());
+        self.scroll = true;
+    }
+
+    /// Select a shown row (the parent, on Left).
+    fn select(&mut self, path: &[usize]) {
+        if self.visible.iter().any(|r| r == path) {
+            self.selected = Some(path.to_vec());
+            self.selected_field = None;
+            self.scroll = true;
+        }
     }
 }
 
@@ -626,15 +858,148 @@ impl YamlLabels {
 enum KeyAct {
     Edit(Vec<usize>),
     Delete(Vec<usize>),
+    /// Open its context menu.
+    Menu,
+}
+
+/// Accessibility of one frame of a tree: the rows are tree items named by
+/// what they show, and the tree's active item follows the selection.
+struct TreeAx<'a> {
+    tr: Tr<'a>,
+    /// The tree itself has keyboard focus (not the inline field).
+    focused: bool,
+    /// Open the selected row's context menu.
+    menu_key: bool,
+    /// Bring the selected row into view.
+    scroll: bool,
+    /// Level (from 1) and open state of the row being drawn.
+    level: usize,
+    expanded: Option<bool>,
+    /// Node of the selected row.
+    selected_node: Option<egui::Id>,
+    /// Accessible name of the last row drawn.
+    last_name: String,
+}
+
+impl<'a> TreeAx<'a> {
+    fn new(tr: Tr<'a>, ui: &egui::Ui, id: egui::Id, state: &mut TreeState, menu: bool) -> Self {
+        let focused = ui.memory(|m| m.has_focus(id));
+        Self {
+            tr,
+            focused: focused && state.editing.is_none(),
+            menu_key: menu,
+            scroll: std::mem::take(&mut state.scroll),
+            level: 1,
+            expanded: None,
+            selected_node: None,
+            last_name: String::new(),
+        }
+    }
+
+    /// The expand/collapse button egui draws before a container's row
+    /// (its id is the open state's): named by the row, with its state.
+    fn toggle(&self, ctx: &egui::Context, open_id: egui::Id) {
+        let expanded = self.expanded;
+        let name = self.last_name.clone();
+        ctx.accesskit_node_builder(open_id, |n| {
+            n.set_role(egui::Role::DisclosureTriangle);
+            n.set_label(name);
+            if let Some(open) = expanded {
+                n.set_expanded(open);
+            }
+        });
+    }
+
+    /// Before a row's widgets: its node, so they become its children.
+    fn begin_row(ui: &egui::Ui) {
+        ui.ctx()
+            .accesskit_node_builder(ui.unique_id(), |n| n.set_role(egui::Role::TreeItem));
+    }
+
+    /// Whether this row's menu should open from the keyboard (once).
+    fn take_menu(&mut self, selected: bool) -> bool {
+        selected && std::mem::take(&mut self.menu_key)
+    }
+
+    /// After a row's widgets: name, value, level and state; the focus ring
+    /// and scrolling for the selected row.
+    fn finish_row(&mut self, ui: &egui::Ui, p: &Palette, selected: bool, name: &str, value: &str) {
+        let node = ui.unique_id();
+        let rect = ui.min_rect();
+        let level = num(self.level);
+        let description = match self.expanded {
+            Some(true) => (self.tr)("a11y-tree-item-expanded", &[("level", level)]),
+            Some(false) => (self.tr)("a11y-tree-item-collapsed", &[("level", level)]),
+            None => (self.tr)("a11y-tree-item", &[("level", level)]),
+        };
+        let (level, expanded) = (self.level, self.expanded);
+        self.last_name = if name.is_empty() { value } else { name }.to_owned();
+        ui.ctx().accesskit_node_builder(node, |n| {
+            n.set_bounds(egui::accesskit::Rect {
+                x0: rect.min.x.into(),
+                y0: rect.min.y.into(),
+                x1: rect.max.x.into(),
+                y1: rect.max.y.into(),
+            });
+            if name.is_empty() {
+                n.set_label(value);
+            } else {
+                n.set_label(name);
+                n.set_value(value);
+            }
+            n.set_level(level);
+            if let Some(open) = expanded {
+                n.set_expanded(open);
+            }
+            n.set_selected(selected);
+            n.set_description(description);
+        });
+        if selected {
+            self.selected_node = Some(node);
+            if self.focused {
+                ui.painter().rect_stroke(
+                    rect.expand(1.0),
+                    2.0,
+                    egui::Stroke::new(1.5, p.accent),
+                    egui::StrokeKind::Inside,
+                );
+            }
+            if self.scroll {
+                ui.scroll_to_rect(rect, None);
+            }
+        }
+    }
+}
+
+/// The scrolling body of a tree, its rows under the tree's node `id`; then
+/// the tree's active item is the selected row.
+fn tree_body(ui: &mut egui::Ui, id: egui::Id, add: impl FnOnce(&mut egui::Ui) -> Option<egui::Id>) {
+    let selected = ui
+        .scope_builder(egui::UiBuilder::new().accessibility_parent(id), |ui| {
+            egui::ScrollArea::both()
+                .auto_shrink(false)
+                .show(ui, add)
+                .inner
+        })
+        .inner;
+    if let Some(node) = selected
+        && ui.ctx().has_accesskit_node(node)
+    {
+        ui.ctx()
+            .accesskit_node_builder(id, |n| n.set_active_descendant(node.accesskit_id()));
+    }
 }
 
 /// Shared start of a tree frame: drop the field when it cannot apply,
 /// expand the parents of a pending node, then the keys while `id` has
-/// focus: Up and Down move the selection, Enter or F2 edits and Delete
-/// deletes (when `editable`).
+/// focus: Up and Down move the selection, Right expands (or goes to the
+/// first child), Left collapses (or goes to the parent), Enter or F2 edits,
+/// Delete deletes and Shift+F10 or the Menu key opens the menu (when
+/// `editable`). `name` is the tree's accessible name.
 fn tree_frame(
     ui: &mut egui::Ui,
     id: egui::Id,
+    name: String,
     editable: bool,
     state: &mut TreeState,
     exists: &dyn Fn(&[usize]) -> bool,
@@ -663,6 +1028,13 @@ fn tree_frame(
     }
     let mut act = None;
     let focus = ui.interact(ui.max_rect(), id, egui::Sense::focusable_noninteractive());
+    ui.ctx().accesskit_node_builder(id, |n| {
+        n.set_role(egui::Role::Tree);
+        n.set_label(name);
+    });
+    if focus.has_focus() && state.selected.is_none() {
+        state.step(0);
+    }
     if focus.has_focus() && state.editing.is_none() {
         ui.memory_mut(|m| {
             m.set_focus_lock_filter(
@@ -683,11 +1055,29 @@ fn tree_frame(
         if pressed(Key::ArrowDown) {
             state.step(1);
         }
+        let (right, left) = (pressed(Key::ArrowRight), pressed(Key::ArrowLeft));
+        if (right || left)
+            && let Some(sel) = state.selected.clone()
+        {
+            let open_id = id.with(("node", sel.as_slice()));
+            let header = egui::collapsing_header::CollapsingState::load(ui.ctx(), open_id);
+            match header {
+                Some(mut h) if right != h.is_open() => {
+                    h.set_open(right);
+                    h.store(ui.ctx());
+                }
+                Some(_) if right => state.step(1),
+                _ if left && !sel.is_empty() => state.select(&sel[..sel.len() - 1]),
+                _ => {}
+            }
+        }
         if editable && let Some(sel) = state.selected.clone() {
             if pressed(Key::Enter) || pressed(Key::F2) {
                 act = Some(KeyAct::Edit(sel));
             } else if pressed(Key::Delete) && !sel.is_empty() {
                 act = Some(KeyAct::Delete(sel));
+            } else if menu_key_pressed(ui) {
+                act = Some(KeyAct::Menu);
             }
         }
     }
@@ -720,6 +1110,7 @@ fn edit_field(
     id: egui::Id,
     p: &Palette,
     state: &mut TreeState,
+    name: String,
     message: &dyn Fn(FieldError) -> String,
     check: &dyn Fn(Field, &str) -> Result<bool, FieldError>,
 ) -> Option<(Vec<usize>, Field, String)> {
@@ -730,18 +1121,21 @@ fn edit_field(
         ed.fresh = false;
     }
     let width = (ed.text.chars().count() as f32 + 4.0) * 9.0;
-    let resp = ui.add(
-        egui::TextEdit::singleline(&mut ed.text)
-            .id(editor_id)
-            .font(egui::TextStyle::Monospace)
-            .desired_width(width.clamp(120.0, 600.0)),
-    );
+    let resp = ui
+        .add(
+            egui::TextEdit::singleline(&mut ed.text)
+                .id(editor_id)
+                .font(egui::TextStyle::Monospace)
+                .desired_width(width.clamp(120.0, 600.0)),
+        )
+        .accessible_name(name);
     if ed.focus {
         resp.request_focus();
         ed.focus = false;
     }
     if let Some(e) = ed.error {
-        ui.colored_label(p.error, message(e));
+        let r = ui.colored_label(p.error, message(e));
+        announce(ui, r.id);
     }
     if !resp.lost_focus() {
         return None;
@@ -786,7 +1180,9 @@ fn label(
     if selected {
         t = t.background_color(p.accent.gamma_multiply(0.25));
     }
-    ui.add(egui::Label::new(t).sense(egui::Sense::click()))
+    // Clicks only: the tree's focus takes the keys, so its labels stay out
+    // of the Tab order.
+    ui.add(egui::Label::new(t).sense(egui::Sense::CLICK))
 }
 
 /// The editable JSON tree. With `editable`, double-clicking a key or a
@@ -804,20 +1200,25 @@ pub fn json(
     state: &mut TreeState,
     labels: &TreeLabels,
     more: &dyn Fn(usize) -> String,
+    tr: Tr<'_>,
 ) -> Vec<TreeAction> {
     let mut actions = Vec::new();
     let exists = |path: &[usize]| doc.find(path).is_some();
     let open = |s: &mut TreeState, path: &[usize], f| {
         s.start_edit(doc, path, f);
     };
-    let act = tree_frame(ui, id, editable, state, &exists, &open);
+    let name = tr("a11y-json-tree", &[]);
+    let act = tree_frame(ui, id, name, editable, state, &exists, &open);
+    let mut menu = false;
     match act {
         Some(KeyAct::Edit(sel)) => state.start_default_edit(doc, &sel),
         Some(KeyAct::Delete(sel)) => actions.push(TreeAction::Delete(sel)),
+        Some(KeyAct::Menu) => menu = true,
         None => {}
     }
     let mut visible = Vec::new();
-    egui::ScrollArea::both().auto_shrink(false).show(ui, |ui| {
+    let ax = TreeAx::new(tr, ui, id, state, menu);
+    tree_body(ui, id, |ui| {
         let mut cx = TreeCx {
             doc,
             p,
@@ -828,8 +1229,10 @@ pub fn json(
             more,
             actions: &mut actions,
             visible: &mut visible,
+            ax,
         };
         cx.node(ui, 0, &mut Vec::new(), 0, None);
+        cx.ax.selected_node
     });
     state.visible = visible;
     actions
@@ -845,6 +1248,7 @@ struct TreeCx<'a> {
     more: &'a dyn Fn(usize) -> String,
     actions: &'a mut Vec<TreeAction>,
     visible: &'a mut Vec<Vec<usize>>,
+    ax: TreeAx<'a>,
 }
 
 impl TreeCx<'_> {
@@ -858,6 +1262,8 @@ impl TreeCx<'_> {
     ) {
         let it = &self.doc.items[i];
         self.visible.push(path.clone());
+        self.ax.level = depth + 1;
+        self.ax.expanded = None;
         let container = matches!(it.kind, json::Kind::Object | json::Kind::Array);
         if !container {
             ui.horizontal(|ui| self.row(ui, i, path, index));
@@ -873,7 +1279,10 @@ impl TreeCx<'_> {
             open_id,
             depth < 2,
         );
+        self.ax.expanded = Some(state.is_open());
+        let ctx = ui.ctx().clone();
         let header = state.show_header(ui, |ui| self.row(ui, i, path, index));
+        self.ax.toggle(&ctx, open_id);
         header.body(|ui| {
             let children = &self.doc.items[i].children;
             let is_array = self.doc.items[i].kind == json::Kind::Array;
@@ -895,6 +1304,18 @@ impl TreeCx<'_> {
         let (doc, p) = (self.doc, self.p);
         let it = &doc.items[i];
         let selected = self.state.selected.as_deref() == Some(path);
+        TreeAx::begin_row(ui);
+        let tr = self.ax.tr;
+        let name = doc
+            .key(i)
+            .or_else(|| index.map(|n| n.to_string()))
+            .unwrap_or_default();
+        let count = num(it.children.len());
+        let value = match it.kind {
+            json::Kind::Object => tr("a11y-tree-object", &[("count", count)]),
+            json::Kind::Array => tr("a11y-tree-list", &[("count", count)]),
+            _ => doc.value_text(i).unwrap_or_default().to_owned(),
+        };
         let editing = |f: Field| {
             self.state
                 .editing
@@ -905,7 +1326,7 @@ impl TreeCx<'_> {
         let editing_value = editing(Field::Value);
         // The key part.
         if editing_key {
-            self.field(ui, i);
+            self.field(ui, i, &name);
             ui.label(RichText::new(":").monospace().color(p.muted));
         } else if let Some(k) = doc.key_text(i) {
             let r = label(ui, format!("{k}:"), p.muted, selected, p);
@@ -921,7 +1342,7 @@ impl TreeCx<'_> {
             _ => None,
         };
         if editing_value {
-            self.field(ui, i);
+            self.field(ui, i, &name);
         } else {
             let text = summary.unwrap_or_else(|| doc.value_text(i).unwrap_or_default().to_owned());
             let color = if it.children.is_empty()
@@ -934,6 +1355,7 @@ impl TreeCx<'_> {
             let r = label(ui, text, color, selected, p);
             self.interact(ui, &r, i, path, Field::Value);
         }
+        self.ax.finish_row(ui, p, selected, &name, &value);
     }
 
     /// Selection, double-click editing and the context menu of a label.
@@ -954,31 +1376,39 @@ impl TreeCx<'_> {
         }
         let it = &self.doc.items[i];
         let scalar = matches!(it.kind, json::Kind::String | json::Kind::Literal);
-        r.context_menu(|ui| {
-            if scalar && ui.button(&self.labels.edit_value).clicked() {
+        let selected = self.state.selected.as_deref() == Some(path);
+        let by_key = self.ax.take_menu(selected);
+        let id = self.id;
+        item_menu(r, by_key, id, |ui, first| {
+            let back = |ui: &egui::Ui| ui.memory_mut(|m| m.request_focus(id));
+            if scalar && menu_entry(ui, &self.labels.edit_value, first) {
                 self.state.start_edit(self.doc, path, Field::Value);
             }
-            if it.key_span.is_some() && ui.button(&self.labels.rename_key).clicked() {
+            if it.key_span.is_some() && menu_entry(ui, &self.labels.rename_key, first) {
                 self.state.start_edit(self.doc, path, Field::Key);
             }
-            if it.parent.is_some() && ui.button(&self.labels.add_after).clicked() {
+            if it.parent.is_some() && menu_entry(ui, &self.labels.add_after, first) {
                 self.actions.push(TreeAction::AddAfter(path.to_vec()));
+                back(ui);
             }
-            if !scalar && ui.button(&self.labels.add_inside).clicked() {
+            if !scalar && menu_entry(ui, &self.labels.add_inside, first) {
                 self.actions.push(TreeAction::AddInside(path.to_vec()));
+                back(ui);
             }
             if it.parent.is_some() {
                 ui.separator();
-                if ui.button(&self.labels.delete).clicked() {
+                if menu_entry(ui, &self.labels.delete, first) {
                     self.actions.push(TreeAction::Delete(path.to_vec()));
+                    back(ui);
                 }
             }
         });
     }
 
-    /// The inline field of the node being edited.
-    fn field(&mut self, ui: &mut egui::Ui, i: usize) {
+    /// The inline field of the node being edited; `name` names its row.
+    fn field(&mut self, ui: &mut egui::Ui, i: usize, name: &str) {
         let (doc, labels) = (self.doc, self.labels);
+        let name = (self.ax.tr)("a11y-edit-field", &[("item", name.to_owned().into())]);
         let message = |e: FieldError| match e {
             FieldError::DuplicateKey => labels.duplicate_key.clone(),
             _ => labels.invalid_value.clone(),
@@ -991,7 +1421,7 @@ impl TreeCx<'_> {
             r.map(|c| c.is_some()).map_err(FieldError::from)
         };
         if let Some((path, field, text)) =
-            edit_field(ui, self.id, self.p, self.state, &message, &check)
+            edit_field(ui, self.id, self.p, self.state, name, &message, &check)
         {
             self.actions.push(match field {
                 Field::Value => TreeAction::SetValue { path, text },
@@ -1028,22 +1458,27 @@ pub fn xml(
     state: &mut TreeState,
     labels: &XmlLabels,
     more: &dyn Fn(usize) -> String,
+    tr: Tr<'_>,
 ) -> Vec<TreeAction> {
     let mut actions = Vec::new();
     let exists = |path: &[usize]| doc.find(path).is_some();
     let open = |s: &mut TreeState, path: &[usize], f| {
         s.start_xml_edit(doc, path, f);
     };
-    let act = tree_frame(ui, id, editable, state, &exists, &open);
+    let name = tr("a11y-xml-tree", &[]);
+    let act = tree_frame(ui, id, name, editable, state, &exists, &open);
+    let mut menu = false;
     match act {
         Some(KeyAct::Edit(sel)) => state.start_default_xml_edit(doc, &sel),
         Some(KeyAct::Delete(sel)) if doc.find(&sel).is_some_and(|i| xml_deletable(doc, i)) => {
             actions.push(TreeAction::Delete(sel));
         }
+        Some(KeyAct::Menu) => menu = true,
         _ => {}
     }
     let mut visible = Vec::new();
-    egui::ScrollArea::both().auto_shrink(false).show(ui, |ui| {
+    let ax = TreeAx::new(tr, ui, id, state, menu);
+    tree_body(ui, id, |ui| {
         let mut cx = XmlCx {
             doc,
             p,
@@ -1054,6 +1489,7 @@ pub fn xml(
             more,
             actions: &mut actions,
             visible: &mut visible,
+            ax,
         };
         let mut path = Vec::new();
         for (k, &c) in doc.items[0].children.iter().enumerate() {
@@ -1061,6 +1497,7 @@ pub fn xml(
             cx.node(ui, c, &mut path, 0);
             path.pop();
         }
+        cx.ax.selected_node
     });
     state.visible = visible;
     actions
@@ -1076,11 +1513,14 @@ struct XmlCx<'a> {
     more: &'a dyn Fn(usize) -> String,
     actions: &'a mut Vec<TreeAction>,
     visible: &'a mut Vec<Vec<usize>>,
+    ax: TreeAx<'a>,
 }
 
 impl XmlCx<'_> {
     fn node(&mut self, ui: &mut egui::Ui, i: usize, path: &mut Vec<usize>, depth: usize) {
         self.visible.push(path.clone());
+        self.ax.level = depth + 1;
+        self.ax.expanded = None;
         if self.doc.items[i].children.is_empty() || depth >= MAX_TREE_DEPTH {
             ui.horizontal(|ui| self.row(ui, i, path));
             return;
@@ -1091,7 +1531,10 @@ impl XmlCx<'_> {
             open_id,
             depth < 2,
         );
+        self.ax.expanded = Some(state.is_open());
+        let ctx = ui.ctx().clone();
         let header = state.show_header(ui, |ui| self.row(ui, i, path));
+        self.ax.toggle(&ctx, open_id);
         header.body(|ui| {
             let children = &self.doc.items[i].children;
             for (k, &c) in children.iter().take(MAX_CHILDREN).enumerate() {
@@ -1120,10 +1563,47 @@ impl XmlCx<'_> {
         };
         let (editing_key, editing_value) = (editing(Field::Key), editing(Field::Value));
         let name = doc.name(i).unwrap_or_default();
+        TreeAx::begin_row(ui);
+        let tr = self.ax.tr;
+        let has_value = it.kind != xml::Kind::Element || it.text_only;
+        let ax_name = match it.kind {
+            xml::Kind::Element => tr("a11y-tree-element", &[("name", name.to_owned().into())]),
+            xml::Kind::Attribute => tr("a11y-tree-attribute", &[("name", name.to_owned().into())]),
+            _ => tr("a11y-tree-text", &[]),
+        };
+        let ax_value = if has_value {
+            doc.value(i).unwrap_or_default()
+        } else {
+            String::new()
+        };
+        self.row_parts(
+            ui,
+            i,
+            path,
+            selected,
+            (editing_key, editing_value),
+            &ax_name,
+        );
+        self.ax.finish_row(ui, p, selected, &ax_name, &ax_value);
+    }
+
+    /// The widgets of a row; `ax_name` names it for the inline field.
+    fn row_parts(
+        &mut self,
+        ui: &mut egui::Ui,
+        i: usize,
+        path: &[usize],
+        selected: bool,
+        (editing_key, editing_value): (bool, bool),
+        ax_name: &str,
+    ) {
+        let (doc, p) = (self.doc, self.p);
+        let it = &doc.items[i];
+        let name = doc.name(i).unwrap_or_default();
         match it.kind {
             xml::Kind::Element => {
                 if editing_key {
-                    self.field(ui, i);
+                    self.field(ui, i, ax_name);
                 } else {
                     let r = label(ui, format!("<{name}>"), p.accent, selected, p);
                     self.interact(ui, &r, i, path, Field::Key);
@@ -1131,7 +1611,7 @@ impl XmlCx<'_> {
             }
             xml::Kind::Attribute => {
                 if editing_key {
-                    self.field(ui, i);
+                    self.field(ui, i, ax_name);
                 } else {
                     let r = label(ui, format!("@{name}"), p.muted, selected, p);
                     self.interact(ui, &r, i, path, Field::Key);
@@ -1148,7 +1628,7 @@ impl XmlCx<'_> {
             return;
         }
         if editing_value {
-            self.field(ui, i);
+            self.field(ui, i, ax_name);
             return;
         }
         let value = doc.value(i).unwrap_or_default();
@@ -1179,40 +1659,49 @@ impl XmlCx<'_> {
         let (doc, labels) = (self.doc, self.labels);
         let it = &doc.items[i];
         let element = it.kind == xml::Kind::Element;
-        r.context_menu(|ui| {
+        let selected = self.state.selected.as_deref() == Some(path);
+        let by_key = self.ax.take_menu(selected);
+        let id = self.id;
+        item_menu(r, by_key, id, |ui, first| {
+            let back = |ui: &egui::Ui| ui.memory_mut(|m| m.request_focus(id));
             let edit = match it.kind {
                 xml::Kind::Attribute => Some(&labels.edit_value),
                 xml::Kind::Text => Some(&labels.edit_text),
                 _ => it.text_only.then_some(&labels.edit_text),
             };
             if let Some(edit) = edit
-                && ui.button(edit).clicked()
+                && menu_entry(ui, edit, first)
             {
                 self.state.start_xml_edit(doc, path, Field::Value);
             }
-            if it.kind != xml::Kind::Text && ui.button(&labels.rename).clicked() {
+            if it.kind != xml::Kind::Text && menu_entry(ui, &labels.rename, first) {
                 self.state.start_xml_edit(doc, path, Field::Key);
             }
-            if it.kind != xml::Kind::Text && ui.button(&labels.add_attribute).clicked() {
+            if it.kind != xml::Kind::Text && menu_entry(ui, &labels.add_attribute, first) {
                 self.actions.push(TreeAction::AddAttribute(path.to_vec()));
+                back(ui);
             }
-            if element && ui.button(&labels.add_child).clicked() {
+            if element && menu_entry(ui, &labels.add_child, first) {
                 self.actions.push(TreeAction::AddInside(path.to_vec()));
+                back(ui);
             }
-            if element && xml_deletable(doc, i) && ui.button(&labels.add_after).clicked() {
+            if element && xml_deletable(doc, i) && menu_entry(ui, &labels.add_after, first) {
                 self.actions.push(TreeAction::AddAfter(path.to_vec()));
+                back(ui);
             }
             if xml_deletable(doc, i) {
                 ui.separator();
-                if ui.button(&labels.delete).clicked() {
+                if menu_entry(ui, &labels.delete, first) {
                     self.actions.push(TreeAction::Delete(path.to_vec()));
+                    back(ui);
                 }
             }
         });
     }
 
-    fn field(&mut self, ui: &mut egui::Ui, i: usize) {
+    fn field(&mut self, ui: &mut egui::Ui, i: usize, name: &str) {
         let (doc, labels) = (self.doc, self.labels);
+        let name = (self.ax.tr)("a11y-edit-field", &[("item", name.to_owned().into())]);
         let message = |e: FieldError| match e {
             FieldError::InvalidName => labels.invalid_name.clone(),
             FieldError::DuplicateAttribute => labels.duplicate_attribute.clone(),
@@ -1226,7 +1715,7 @@ impl XmlCx<'_> {
             r.map(|c| c.is_some()).map_err(FieldError::from)
         };
         if let Some((path, field, text)) =
-            edit_field(ui, self.id, self.p, self.state, &message, &check)
+            edit_field(ui, self.id, self.p, self.state, name, &message, &check)
         {
             self.actions.push(match field {
                 Field::Value => TreeAction::SetValue { path, text },
@@ -1251,22 +1740,27 @@ pub fn yaml(
     state: &mut TreeState,
     labels: &YamlLabels,
     more: &dyn Fn(usize) -> String,
+    tr: Tr<'_>,
 ) -> Vec<TreeAction> {
     let mut actions = Vec::new();
     let exists = |path: &[usize]| doc.find(path).is_some();
     let open = |s: &mut TreeState, path: &[usize], f| {
         s.start_yaml_edit(doc, path, f);
     };
-    let act = tree_frame(ui, id, editable, state, &exists, &open);
+    let name = tr("a11y-yaml-tree", &[]);
+    let act = tree_frame(ui, id, name, editable, state, &exists, &open);
+    let mut menu = false;
     match act {
         Some(KeyAct::Edit(sel)) => state.start_default_yaml_edit(doc, &sel),
         Some(KeyAct::Delete(sel)) if doc.find(&sel).is_some_and(|i| doc.can_delete(i)) => {
             actions.push(TreeAction::Delete(sel));
         }
+        Some(KeyAct::Menu) => menu = true,
         _ => {}
     }
     let mut visible = Vec::new();
-    egui::ScrollArea::both().auto_shrink(false).show(ui, |ui| {
+    let ax = TreeAx::new(tr, ui, id, state, menu);
+    tree_body(ui, id, |ui| {
         let mut cx = YamlCx {
             doc,
             p,
@@ -1277,6 +1771,7 @@ pub fn yaml(
             more,
             actions: &mut actions,
             visible: &mut visible,
+            ax,
         };
         let docs = &doc.items[0].children;
         let many = docs.len() > 1;
@@ -1293,6 +1788,7 @@ pub fn yaml(
             cx.node(ui, c, &mut path, 0);
             path.pop();
         }
+        cx.ax.selected_node
     });
     state.visible = visible;
     actions
@@ -1308,6 +1804,7 @@ struct YamlCx<'a> {
     more: &'a dyn Fn(usize) -> String,
     actions: &'a mut Vec<TreeAction>,
     visible: &'a mut Vec<Vec<usize>>,
+    ax: TreeAx<'a>,
 }
 
 /// Text shown for a scalar, alias or flow collection: as written, on one
@@ -1329,6 +1826,8 @@ impl YamlCx<'_> {
     fn node(&mut self, ui: &mut egui::Ui, i: usize, path: &mut Vec<usize>, depth: usize) {
         let it = &self.doc.items[i];
         self.visible.push(path.clone());
+        self.ax.level = depth + 1;
+        self.ax.expanded = None;
         // Flow collections are shown as written, on their row.
         let open = matches!(it.kind, yaml::Kind::Mapping | yaml::Kind::Sequence) && !it.flow;
         if !open || depth >= MAX_TREE_DEPTH {
@@ -1341,7 +1840,10 @@ impl YamlCx<'_> {
             open_id,
             depth < 2,
         );
+        self.ax.expanded = Some(state.is_open());
+        let ctx = ui.ctx().clone();
         let header = state.show_header(ui, |ui| self.row(ui, i, path));
+        self.ax.toggle(&ctx, open_id);
         header.body(|ui| {
             let children = &self.doc.items[i].children;
             for (k, &c) in children.iter().take(MAX_CHILDREN).enumerate() {
@@ -1362,6 +1864,35 @@ impl YamlCx<'_> {
         let (doc, p) = (self.doc, self.p);
         let it = &doc.items[i];
         let selected = self.state.selected.as_deref() == Some(path);
+        let in_seq = it
+            .parent
+            .is_some_and(|q| doc.items[q].kind == yaml::Kind::Sequence);
+        TreeAx::begin_row(ui);
+        let ax_name = if let Some(k) = doc.key_text(i) {
+            one_line(k)
+        } else if it.key_lock.is_some() {
+            "?".to_owned()
+        } else if in_seq {
+            path.last().copied().unwrap_or(0).to_string()
+        } else {
+            String::new()
+        };
+        let value = self.row_parts(ui, i, path, selected, in_seq, &ax_name);
+        self.ax.finish_row(ui, p, selected, &ax_name, &value);
+    }
+
+    /// The widgets of a row; returns its value or summary as spoken.
+    fn row_parts(
+        &mut self,
+        ui: &mut egui::Ui,
+        i: usize,
+        path: &[usize],
+        selected: bool,
+        in_seq: bool,
+        ax_name: &str,
+    ) -> String {
+        let (doc, p) = (self.doc, self.p);
+        let it = &doc.items[i];
         let editing = |f: Field| {
             self.state
                 .editing
@@ -1369,11 +1900,17 @@ impl YamlCx<'_> {
                 .is_some_and(|e| e.field == f && e.path == path)
         };
         let (editing_key, editing_value) = (editing(Field::Key), editing(Field::Value));
-        let in_seq = it
-            .parent
-            .is_some_and(|q| doc.items[q].kind == yaml::Kind::Sequence);
+        let tr = self.ax.tr;
+        let count = num(it.children.len());
+        let spoken = match it.kind {
+            yaml::Kind::Mapping if !it.flow => tr("a11y-tree-object", &[("count", count)]),
+            yaml::Kind::Sequence if !it.flow => tr("a11y-tree-list", &[("count", count)]),
+            _ => doc
+                .value(i)
+                .unwrap_or_else(|| one_line(doc.value_text(i).unwrap_or_default())),
+        };
         if editing_key {
-            self.field(ui, i);
+            self.field(ui, i, ax_name);
             ui.label(RichText::new(":").monospace().color(p.muted));
         } else if let Some(k) = doc.key_text(i) {
             let r = label(ui, format!("{}:", one_line(k)), p.muted, selected, p);
@@ -1387,8 +1924,8 @@ impl YamlCx<'_> {
             self.interact(ui, &r, i, path, Field::Value);
         }
         if editing_value {
-            self.field(ui, i);
-            return;
+            self.field(ui, i, ax_name);
+            return spoken;
         }
         let (text, color) = match it.kind {
             yaml::Kind::Mapping | yaml::Kind::Sequence if !it.flow => {
@@ -1413,6 +1950,7 @@ impl YamlCx<'_> {
         };
         let r = label(ui, text, color, selected, p);
         self.interact(ui, &r, i, path, Field::Value);
+        spoken
     }
 
     fn interact(
@@ -1437,29 +1975,63 @@ impl YamlCx<'_> {
         }
         let it = &doc.items[i];
         let reason = |l: Option<yaml::Lock>| l.map(|l| labels.lock(l)).unwrap_or_default();
-        // An entry with a disabled reason, when the operation applies.
-        let entry = |ui: &mut egui::Ui, text: &str, on: bool, why: Option<yaml::Lock>| {
-            let b = ui.add_enabled(on, egui::Button::new(text));
-            let b = if on {
-                b
-            } else {
-                b.on_disabled_hover_text(reason(why))
+        // An entry with a disabled reason, when the operation applies;
+        // the first enabled one takes focus when the keyboard opened the menu.
+        let entry =
+            |ui: &mut egui::Ui, text: &str, on: bool, why: Option<yaml::Lock>, first: &mut bool| {
+                let b = ui.add_enabled(on, egui::Button::new(text));
+                let b = if on {
+                    if std::mem::take(first) {
+                        b.request_focus();
+                    }
+                    b
+                } else {
+                    b.on_disabled_hover_text(reason(why))
+                };
+                b.clicked()
             };
-            b.clicked()
-        };
         let scalar = matches!(it.kind, yaml::Kind::Scalar | yaml::Kind::Alias);
         let has_key = it.spans.key.is_some() || it.key_lock.is_some();
         let container = matches!(it.kind, yaml::Kind::Mapping | yaml::Kind::Sequence);
         let member = it.parent.is_some_and(|q| q != 0);
-        r.context_menu(|ui| {
-            if scalar && entry(ui, &labels.edit_value, doc.can_set_value(i), it.value_lock) {
+        let selected = self.state.selected.as_deref() == Some(path);
+        let by_key = self.ax.take_menu(selected);
+        let id = self.id;
+        item_menu(&r, by_key, id, |ui, first| {
+            let back = |ui: &egui::Ui| ui.memory_mut(|m| m.request_focus(id));
+            if scalar
+                && entry(
+                    ui,
+                    &labels.edit_value,
+                    doc.can_set_value(i),
+                    it.value_lock,
+                    first,
+                )
+            {
                 self.state.start_yaml_edit(doc, path, Field::Value);
             }
-            if has_key && entry(ui, &labels.rename_key, doc.can_rename(i), it.key_lock) {
+            if has_key
+                && entry(
+                    ui,
+                    &labels.rename_key,
+                    doc.can_rename(i),
+                    it.key_lock,
+                    first,
+                )
+            {
                 self.state.start_yaml_edit(doc, path, Field::Key);
             }
-            if member && entry(ui, &labels.add_after, doc.can_add_after(i), it.add_lock) {
+            if member
+                && entry(
+                    ui,
+                    &labels.add_after,
+                    doc.can_add_after(i),
+                    it.add_lock,
+                    first,
+                )
+            {
                 self.actions.push(TreeAction::AddAfter(path.to_vec()));
+                back(ui);
             }
             if container
                 && entry(
@@ -1467,14 +2039,17 @@ impl YamlCx<'_> {
                     &labels.add_inside,
                     doc.can_add_inside(i),
                     doc.add_inside_lock(i),
+                    first,
                 )
             {
                 self.actions.push(TreeAction::AddInside(path.to_vec()));
+                back(ui);
             }
             if member {
                 ui.separator();
-                if entry(ui, &labels.delete, doc.can_delete(i), it.delete_lock) {
+                if entry(ui, &labels.delete, doc.can_delete(i), it.delete_lock, first) {
                     self.actions.push(TreeAction::Delete(path.to_vec()));
+                    back(ui);
                 }
             }
             if let Some(l) = doc.lock(i) {
@@ -1484,8 +2059,9 @@ impl YamlCx<'_> {
         });
     }
 
-    fn field(&mut self, ui: &mut egui::Ui, i: usize) {
+    fn field(&mut self, ui: &mut egui::Ui, i: usize, name: &str) {
         let (doc, labels) = (self.doc, self.labels);
+        let name = (self.ax.tr)("a11y-edit-field", &[("item", name.to_owned().into())]);
         let message = |e: FieldError| match e {
             FieldError::DuplicateKey => labels.duplicate_key.clone(),
             FieldError::KeyTooLong => labels.key_too_long.clone(),
@@ -1499,7 +2075,7 @@ impl YamlCx<'_> {
             r.map_err(FieldError::from)
         };
         if let Some((path, field, text)) =
-            edit_field(ui, self.id, self.p, self.state, &message, &check)
+            edit_field(ui, self.id, self.p, self.state, name, &message, &check)
         {
             self.actions.push(match field {
                 Field::Value => TreeAction::SetValue { path, text },
@@ -1512,6 +2088,118 @@ impl YamlCx<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn localizer(tag: &str) -> sanain_i18n::Localizer {
+        sanain_i18n::Localizer::new(&[tag]).expect("locale")
+    }
+
+    fn format(l: &sanain_i18n::Localizer, id: &str, args: &[(&str, FluentValue<'_>)]) -> String {
+        let mut fa = sanain_i18n::FluentArgs::new();
+        for (k, v) in args {
+            fa.set(*k, v.clone());
+        }
+        l.format(id, Some(&fa))
+            .replace(['\u{2068}', '\u{2069}'], "")
+    }
+
+    #[test]
+    fn cell_labels_name_position_and_header() {
+        let en = localizer("en-US");
+        let tr = |id: &str, args: &[(&str, FluentValue<'_>)]| format(&en, id, args);
+        assert_eq!(cell_label(&tr, 3, 2, Some("age")), "Row 3, column 2: age");
+        assert_eq!(cell_label(&tr, 1, 1, Some("  ")), "Row 1, column 1");
+        assert_eq!(cell_label(&tr, 1, 4, None), "Row 1, column 4");
+        let fi = localizer("fi-FI");
+        let tr = |id: &str, args: &[(&str, FluentValue<'_>)]| format(&fi, id, args);
+        assert_eq!(cell_label(&tr, 3, 2, Some("ikä")), "Rivi 3, sarake 2: ikä");
+    }
+
+    #[test]
+    fn tab_leaves_the_grid_only_at_its_ends() {
+        assert!(!tab_leaves((0, 0), 3, 2, false));
+        assert!(tab_leaves((2, 1), 3, 2, false));
+        assert!(!tab_leaves((2, 1), 3, 2, true));
+        assert!(tab_leaves((0, 0), 3, 2, true));
+        assert!(!tab_leaves((1, 0), 3, 2, true));
+    }
+
+    #[test]
+    fn left_selects_the_parent_only_when_shown() {
+        let mut t = TreeState {
+            visible: vec![vec![], vec![0], vec![0, 1]],
+            ..TreeState::default()
+        };
+        t.select(&[0]);
+        assert_eq!(t.selected.as_deref(), Some(&[0][..]));
+        t.select(&[5]);
+        assert_eq!(t.selected.as_deref(), Some(&[0][..]), "not shown: kept");
+        t.step(1);
+        assert_eq!(t.selected.as_deref(), Some(&[0, 1][..]));
+        assert!(t.scroll, "keyboard moves bring the row into view");
+    }
+
+    #[test]
+    fn accessibility_strings_exist_in_every_locale() {
+        for (tag, _) in sanain_i18n::RESOURCES {
+            let l = localizer(tag);
+            for id in A11Y_IDS {
+                let text = format(
+                    &l,
+                    id,
+                    &[
+                        ("row", 2.into()),
+                        ("column", 3.into()),
+                        ("name", "x".into()),
+                        ("item", "x".into()),
+                        ("level", 1.into()),
+                        ("count", 4.into()),
+                        ("pane", 1.into()),
+                        ("command", "x".into()),
+                        ("keys", "x".into()),
+                        ("nodes", 1.into()),
+                        ("links", 1.into()),
+                        ("participants", 1.into()),
+                        ("messages", 1.into()),
+                        ("states", 1.into()),
+                        ("transitions", 1.into()),
+                        ("classes", 1.into()),
+                        ("relations", 1.into()),
+                    ],
+                );
+                assert!(!text.is_empty() && text != *id, "{id} in {tag}");
+            }
+        }
+    }
+
+    const A11Y_IDS: [&str; 27] = [
+        "a11y-csv-grid",
+        "a11y-grid-cell",
+        "a11y-grid-cell-plain",
+        "a11y-grid-column-header",
+        "a11y-grid-row-header",
+        "a11y-edit-field",
+        "a11y-json-tree",
+        "a11y-xml-tree",
+        "a11y-yaml-tree",
+        "a11y-tree-item",
+        "a11y-tree-item-expanded",
+        "a11y-tree-item-collapsed",
+        "a11y-tree-object",
+        "a11y-tree-list",
+        "a11y-tree-element",
+        "a11y-tree-attribute",
+        "a11y-tree-text",
+        "a11y-pane",
+        "a11y-pane-active",
+        "a11y-pane-editor",
+        "a11y-mermaid-flowchart",
+        "a11y-mermaid-sequence",
+        "a11y-mermaid-state",
+        "a11y-mermaid-class",
+        "a11y-shortcut-change",
+        "a11y-shortcut-change-current",
+        "a11y-shortcut-reset",
+    ];
 
     #[test]
     fn arrows_clamp_and_tab_wraps() {
