@@ -10,6 +10,7 @@
 
 mod diffview;
 mod find;
+mod focus;
 mod folderpanel;
 mod imagecache;
 mod logview;
