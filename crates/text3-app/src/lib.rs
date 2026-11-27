@@ -7,6 +7,7 @@ pub mod editorconfig;
 pub mod filesearch;
 pub mod fonts;
 pub mod fuzzy;
+pub mod goto;
 pub mod images;
 pub mod keymap;
 pub mod macros;

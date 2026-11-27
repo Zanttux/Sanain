@@ -52,7 +52,7 @@ Checked 2026-11-27. Text³ status verified against STATUS.md, `locales/en-US/mai
 | 1 | Instant startup, low resource use [S10][S11] | Partial — unmeasured |
 | 2 | Large files with highlighting and folding [S10][S11] | Partial — 147 MB file edits (571 MB RSS); log viewer for any size |
 | 3 | Multiple selections, Ctrl+D rename [S12][S11] | Has |
-| 4 | Goto Anything (Ctrl+P: fuzzy file, @symbol, :line) [S12] | Partial — Go to Line, Go to Heading, Open Recent; no fuzzy file or symbol jump |
+| 4 | Goto Anything (Ctrl+P: fuzzy file, @symbol, :line) [S12] | Yes — Cmd/Ctrl+P: open tabs, recent files and the project folder; `:line`, `file:line`, `@symbol`, `#text`; no preview on highlight |
 | 5 | Command palette [S12] | Has |
 | 6 | Packages (Package Control 25.6 M installs; Emmet 6.2 M, LSP) [S13][S10] | Missing |
 | 7 | Hot exit: quit without prompts, unsaved buffers come back [S12] | Partial (as Notepad++ #5) |

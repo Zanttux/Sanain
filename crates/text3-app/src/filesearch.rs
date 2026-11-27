@@ -5,6 +5,7 @@
 //! [`MAX_FILE_BYTES`] or that look binary or are not UTF-8 are skipped, and
 //! results stop at [`MAX_HITS`]. Nothing is modified.
 
+use std::ops::ControlFlow;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -16,7 +17,8 @@ pub const MAX_FILE_BYTES: u64 = 10 * 1024 * 1024;
 pub const MAX_HITS: usize = 10_000;
 const MAX_FILES: usize = 100_000;
 const MAX_LINE_CHARS: usize = 300;
-const SKIP_DIRS: &[&str] = &[
+/// Build and dependency folders that are never searched or listed.
+pub const SKIP_DIRS: &[&str] = &[
     "node_modules",
     "target",
     "build",
@@ -92,15 +94,28 @@ impl Search {
     }
 }
 
-/// Synchronous search (used by the thread and by tests).
-pub fn run(
+/// Why [`walk`] stopped early.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WalkEnd {
+    /// Every file was visited.
+    Complete,
+    /// `max_files` files were visited (more may exist).
+    Limit,
+    /// Cancelled, or the visitor asked to stop.
+    Stopped,
+}
+
+/// Visit the regular files under `root`, depth-first in name order.
+/// Hidden entries (names starting with `.`, so `.git` too) and the
+/// [`SKIP_DIRS`] build folders are skipped; symbolic links are neither
+/// followed nor listed, so link loops cannot happen. Stops after
+/// `max_files` files, when `cancel` is set or when `visit` breaks.
+pub fn walk(
     root: &Path,
-    matcher: &Matcher,
+    max_files: usize,
     cancel: &AtomicBool,
-    out: &Sender<Event>,
-    wake: &dyn Fn(),
-) -> Stats {
-    let mut stats = Stats::default();
+    mut visit: impl FnMut(PathBuf, &std::fs::Metadata) -> ControlFlow<()>,
+) -> WalkEnd {
     let mut stack = vec![root.to_path_buf()];
     let mut seen_files = 0;
     while let Some(dir) = stack.pop() {
@@ -111,9 +126,11 @@ pub fn run(
         entries.sort_by_key(|e| e.file_name());
         let mut subdirs = Vec::new();
         for entry in entries {
-            if cancel.load(Ordering::Relaxed) || stats.hits >= MAX_HITS || seen_files >= MAX_FILES {
-                stats.truncated = true;
-                return stats;
+            if cancel.load(Ordering::Relaxed) {
+                return WalkEnd::Stopped;
+            }
+            if seen_files >= max_files {
+                return WalkEnd::Limit;
             }
             let name = entry.file_name();
             let name = name.to_string_lossy();
@@ -134,40 +151,64 @@ pub fn run(
                 continue;
             }
             seen_files += 1;
-            if meta.len() > MAX_FILE_BYTES {
-                stats.files_skipped += 1;
-                continue;
-            }
-            let path = entry.path();
-            let Ok(bytes) = std::fs::read(&path) else {
-                stats.files_skipped += 1;
-                continue;
-            };
-            if bytes[..bytes.len().min(8192)].contains(&0) {
-                stats.files_skipped += 1;
-                continue;
-            }
-            let Ok(text) = std::str::from_utf8(&bytes) else {
-                stats.files_skipped += 1;
-                continue;
-            };
-            stats.files_searched += 1;
-            let hits = file_hits(&path, text, matcher, MAX_HITS - stats.hits);
-            if !hits.is_empty() {
-                stats.hits += hits.len();
-                if out.send(Event::Hits(hits)).is_err() {
-                    return stats;
-                }
-                wake();
+            if visit(entry.path(), &meta).is_break() {
+                return WalkEnd::Stopped;
             }
         }
         // Depth-first, in name order.
         stack.extend(subdirs.into_iter().rev());
     }
+    WalkEnd::Complete
+}
+
+/// Synchronous search (used by the thread and by tests).
+pub fn run(
+    root: &Path,
+    matcher: &Matcher,
+    cancel: &AtomicBool,
+    out: &Sender<Event>,
+    wake: &dyn Fn(),
+) -> Stats {
+    let mut stats = Stats::default();
+    let end = walk(root, MAX_FILES, cancel, |path, meta| {
+        if stats.hits >= MAX_HITS {
+            stats.truncated = true;
+            return ControlFlow::Break(());
+        }
+        if meta.len() > MAX_FILE_BYTES {
+            stats.files_skipped += 1;
+            return ControlFlow::Continue(());
+        }
+        let Ok(bytes) = std::fs::read(&path) else {
+            stats.files_skipped += 1;
+            return ControlFlow::Continue(());
+        };
+        if bytes[..bytes.len().min(8192)].contains(&0) {
+            stats.files_skipped += 1;
+            return ControlFlow::Continue(());
+        }
+        let Ok(text) = std::str::from_utf8(&bytes) else {
+            stats.files_skipped += 1;
+            return ControlFlow::Continue(());
+        };
+        stats.files_searched += 1;
+        let hits = file_hits(&path, text, matcher, MAX_HITS - stats.hits);
+        if !hits.is_empty() {
+            stats.hits += hits.len();
+            if out.send(Event::Hits(hits)).is_err() {
+                return ControlFlow::Break(());
+            }
+            wake();
+        }
+        ControlFlow::Continue(())
+    });
+    if end != WalkEnd::Complete {
+        stats.truncated = true;
+    }
     stats
 }
 
-fn file_hits(path: &Path, text: &str, matcher: &Matcher, limit: usize) -> Vec<Hit> {
+pub(crate) fn file_hits(path: &Path, text: &str, matcher: &Matcher, limit: usize) -> Vec<Hit> {
     let mut hits = Vec::new();
     let (mut line, mut line_start) = (0usize, 0usize);
     let (mut scanned, mut chars) = (0usize, 0usize);
