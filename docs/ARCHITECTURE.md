@@ -3,21 +3,21 @@
 Rust stable, Cargo workspace. GUI: egui/eframe recommended, GPUI alternative (docs/adr/0001-gui-toolkit.md). Ropey or equivalent rope buffer; Tree-sitter incremental parsing; Comrak Markdown AST; encoding_rs plus explicit UTF-16 handling; regex and optional bounded advanced engine; similar diff; notify watcher; serde/TOML settings; SQLite or atomic journal for recovery. Avoid redundant text shaping stack if GUI supplies it. No dependency is approved merely by listing it.
 
 ## Workspace
-Implemented: `sanain-core`, `sanain-io`, `sanain-i18n`, `sanain-tools`
-(pure transformations, no dependencies beyond thiserror), `sanain-markdown`
-(comrak, BSD-2-Clause), `sanain-language`
-(Tree-sitter grammars, MIT-licensed), `sanain-app`
+Implemented: `text3-core`, `text3-io`, `text3-i18n`, `text3-tools`
+(pure transformations, no dependencies beyond thiserror), `text3-markdown`
+(comrak, BSD-2-Clause), `text3-language`
+(Tree-sitter grammars, MIT-licensed), `text3-app`
 (GUI-independent `Editor` state in the library; egui shell, editor view
 and theme in the `sanain` binary) (see
 docs/adr/0002-workspace-and-first-slice.md). The rest are planned and are
 added when a slice needs them.
-- sanain-core: document IDs, rope, byte/character/grapheme mappings, transactions, undo, selections; no GUI/network.
-- sanain-io: encoding, newline preservation, file identity, atomic save, watcher, recovery.
-- sanain-i18n: Fluent resources, locale negotiation, fallback.
-- sanain-language: syntax grammars, incremental parsing, cancellation.
-- sanain-tools: pure transformations, diff, CSV/JSON/XML/YAML adapters.
-- sanain-markdown: AST, preview model, source mapping, safe links.
-- sanain-app: commands, state, settings, task orchestration.
+- text3-core: document IDs, rope, byte/character/grapheme mappings, transactions, undo, selections; no GUI/network.
+- text3-io: encoding, newline preservation, file identity, atomic save, watcher, recovery.
+- text3-i18n: Fluent resources, locale negotiation, fallback.
+- text3-language: syntax grammars, incremental parsing, cancellation.
+- text3-tools: pure transformations, diff, CSV/JSON/XML/YAML adapters.
+- text3-markdown: AST, preview model, source mapping, safe links.
+- text3-app: commands, state, settings, task orchestration.
 - sanain-ui: rendering, accessibility, platform adapters.
 - sanain-cli: open paths, diff, new instance; later tail.
 

@@ -104,7 +104,7 @@ three and publishes them as the `nightly` pre-release on every change.
 Requires Rust via [rustup](https://rustup.rs); the toolchain version is
 pinned in `rust-toolchain.toml`.
 
-    cargo run --release -p sanain-app -- path/to/file.txt
+    cargo run --release -p text3-app -- path/to/file.txt
 
 On macOS, build and open the app bundle (correct app name and menu bar):
 

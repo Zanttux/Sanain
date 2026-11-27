@@ -1,0 +1,23 @@
+[package]
+name = "text3-io"
+description = "Byte-exact file loading and atomic saving for Sanain."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+chardetng = "1"
+encoding_rs = "0.8.44"
+thiserror.workspace = true
+
+[dev-dependencies]
+encoding_rs = "0.8.44"
+tempfile.workspace = true
+text3-core = { path = "../text3-core" }
+proptest.workspace = true
+
+[lints]
+workspace = true

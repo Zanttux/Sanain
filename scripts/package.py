@@ -205,7 +205,7 @@ def main():
         )
     else:
         if build:
-            run("cargo", "build", "--release", "--locked", "-p", "sanain-app")
+            run("cargo", "build", "--release", "--locked", "-p", "text3-app")
         exe = "sanain.exe" if system == "windows" else "sanain"
         shutil.copy2(os.path.join(ROOT, "target", "release", exe), os.path.join(stage, exe))
 

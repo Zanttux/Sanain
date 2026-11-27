@@ -17,7 +17,7 @@ Reaching these needs Objective-C or Win32 calls that the binding crates
 mark `unsafe`.
 
 ## Decision
-`crates/sanain-platform` holds such shims, and only them.
+`crates/text3-platform` holds such shims, and only them.
 
 - The crate sets `unsafe_code = "deny"` (the rest of the workspace keeps
   `forbid`); each block opts in with `#[allow(unsafe_code)]` and a
@@ -44,7 +44,7 @@ mark `unsafe`.
 
 ## Consequences
 - The existing macOS unsafe sites and one Windows unsafe block stay in
-  `sanain-platform/src/lib.rs`, individually documented and reviewable.
+  `text3-platform/src/lib.rs`, individually documented and reviewable.
 - Windows attachment sets standard handles for processes without a console;
   Rust printing uses `GetStdHandle`, so no stream rebinding is needed.
   Output may appear after the shell prompt because shells do not wait for

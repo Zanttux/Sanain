@@ -3377,124 +3377,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sanain-app"
-version = "0.2.1"
-dependencies = [
- "arboard",
- "eframe",
- "egui_extras",
- "embed-resource",
- "encoding_rs",
- "fontdb",
- "image",
- "muda",
- "quick-xml 0.42.0",
- "rfd",
- "ropey",
- "sanain-core",
- "sanain-i18n",
- "sanain-io",
- "sanain-language",
- "sanain-markdown",
- "sanain-platform",
- "sanain-tools",
- "sys-locale",
- "tempfile",
- "ureq",
-]
-
-[[package]]
-name = "sanain-core"
-version = "0.2.1"
-dependencies = [
- "proptest",
- "regex",
- "ropey",
- "thiserror 2.0.21",
- "unicode-segmentation",
- "unicode-width",
-]
-
-[[package]]
-name = "sanain-i18n"
-version = "0.2.1"
-dependencies = [
- "fluent-bundle",
- "fluent-syntax",
- "unic-langid",
-]
-
-[[package]]
-name = "sanain-io"
-version = "0.2.1"
-dependencies = [
- "chardetng",
- "encoding_rs",
- "proptest",
- "sanain-core",
- "tempfile",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "sanain-language"
-version = "0.2.1"
-dependencies = [
- "thiserror 2.0.21",
- "tree-sitter",
- "tree-sitter-bash",
- "tree-sitter-c",
- "tree-sitter-c-sharp",
- "tree-sitter-cpp",
- "tree-sitter-css",
- "tree-sitter-go",
- "tree-sitter-highlight",
- "tree-sitter-html",
- "tree-sitter-java",
- "tree-sitter-javascript",
- "tree-sitter-json",
- "tree-sitter-language",
- "tree-sitter-lua",
- "tree-sitter-md",
- "tree-sitter-php",
- "tree-sitter-powershell",
- "tree-sitter-python",
- "tree-sitter-ruby",
- "tree-sitter-rust",
- "tree-sitter-toml-ng",
- "tree-sitter-typescript",
- "tree-sitter-xml",
- "tree-sitter-yaml",
-]
-
-[[package]]
-name = "sanain-markdown"
-version = "0.2.1"
-dependencies = [
- "comrak",
-]
-
-[[package]]
-name = "sanain-platform"
-version = "0.2.1"
-dependencies = [
- "objc2 0.6.5",
- "objc2-foundation 0.3.2",
- "windows-sys 0.59.0",
-]
-
-[[package]]
-name = "sanain-tools"
-version = "0.2.1"
-dependencies = [
- "proptest",
- "quick-xml 0.42.0",
- "saphyr-parser",
- "similar",
- "thiserror 2.0.21",
-]
-
-[[package]]
 name = "saphyr-parser"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3856,6 +3738,124 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06794f8f6c5c898b3275aebefa6b8a1cb24cd2c6c79397ab15774837a0bc5755"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "text3-app"
+version = "0.2.1"
+dependencies = [
+ "arboard",
+ "eframe",
+ "egui_extras",
+ "embed-resource",
+ "encoding_rs",
+ "fontdb",
+ "image",
+ "muda",
+ "quick-xml 0.42.0",
+ "rfd",
+ "ropey",
+ "sys-locale",
+ "tempfile",
+ "text3-core",
+ "text3-i18n",
+ "text3-io",
+ "text3-language",
+ "text3-markdown",
+ "text3-platform",
+ "text3-tools",
+ "ureq",
+]
+
+[[package]]
+name = "text3-core"
+version = "0.2.1"
+dependencies = [
+ "proptest",
+ "regex",
+ "ropey",
+ "thiserror 2.0.21",
+ "unicode-segmentation",
+ "unicode-width",
+]
+
+[[package]]
+name = "text3-i18n"
+version = "0.2.1"
+dependencies = [
+ "fluent-bundle",
+ "fluent-syntax",
+ "unic-langid",
+]
+
+[[package]]
+name = "text3-io"
+version = "0.2.1"
+dependencies = [
+ "chardetng",
+ "encoding_rs",
+ "proptest",
+ "tempfile",
+ "text3-core",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "text3-language"
+version = "0.2.1"
+dependencies = [
+ "thiserror 2.0.21",
+ "tree-sitter",
+ "tree-sitter-bash",
+ "tree-sitter-c",
+ "tree-sitter-c-sharp",
+ "tree-sitter-cpp",
+ "tree-sitter-css",
+ "tree-sitter-go",
+ "tree-sitter-highlight",
+ "tree-sitter-html",
+ "tree-sitter-java",
+ "tree-sitter-javascript",
+ "tree-sitter-json",
+ "tree-sitter-language",
+ "tree-sitter-lua",
+ "tree-sitter-md",
+ "tree-sitter-php",
+ "tree-sitter-powershell",
+ "tree-sitter-python",
+ "tree-sitter-ruby",
+ "tree-sitter-rust",
+ "tree-sitter-toml-ng",
+ "tree-sitter-typescript",
+ "tree-sitter-xml",
+ "tree-sitter-yaml",
+]
+
+[[package]]
+name = "text3-markdown"
+version = "0.2.1"
+dependencies = [
+ "comrak",
+]
+
+[[package]]
+name = "text3-platform"
+version = "0.2.1"
+dependencies = [
+ "objc2 0.6.5",
+ "objc2-foundation 0.3.2",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "text3-tools"
+version = "0.2.1"
+dependencies = [
+ "proptest",
+ "quick-xml 0.42.0",
+ "saphyr-parser",
+ "similar",
+ "thiserror 2.0.21",
 ]
 
 [[package]]

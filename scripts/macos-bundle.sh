@@ -4,7 +4,7 @@
 set -eu
 cd "$(dirname "$0")/.."
 profile=${1:-release}
-if [ "$profile" = release ]; then cargo build --release --locked -p sanain-app; else cargo build --locked -p sanain-app; fi
+if [ "$profile" = release ]; then cargo build --release --locked -p text3-app; else cargo build --locked -p text3-app; fi
 version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
 app="target/$profile/Sanain.app"
 rm -rf "$app"
