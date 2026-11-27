@@ -9,7 +9,10 @@
 
 use std::time::Duration;
 
-pub const RELEASES_API: &str = "https://api.github.com/repos/Zanttux/Sanain/releases/latest";
+/// All releases, newest first. Not `/releases/latest`: GitHub leaves
+/// pre-releases out of it, and every release so far is a pre-release, so
+/// it answered 404 ("no releases") forever.
+pub const RELEASES_API: &str = "https://api.github.com/repos/Zanttux/Sanain/releases?per_page=30";
 /// Release pages we are willing to send the user to.
 const RELEASE_PAGE_PREFIX: &str = "https://github.com/Zanttux/Sanain/releases/";
 const MAX_RESPONSE: u64 = 1024 * 1024;
@@ -83,11 +86,50 @@ pub enum UpdateError {
     Invalid,
 }
 
-/// Extract the release from GitHub's "latest release" JSON.
+/// Extract the release from one GitHub release object.
 pub fn parse_release(json: &str) -> Result<Release, UpdateError> {
+    let root = sanain_tools::json::tree(json).map_err(|_| UpdateError::Invalid)?;
+    release_from(&root)
+}
+
+/// The newest published release in GitHub's release list: drafts and
+/// tags that are not versions (the rolling `nightly`) are skipped;
+/// pre-releases count, since every Sanain release is one for now.
+/// `Ok(None)` when the list holds no such release.
+pub fn parse_releases(json: &str) -> Result<Option<Release>, UpdateError> {
     use sanain_tools::json::{Node, tree};
     let root = tree(json).map_err(|_| UpdateError::Invalid)?;
-    let Node::Object(members) = &root else {
+    let Node::Array(items) = &root else {
+        return Err(UpdateError::Invalid);
+    };
+    let mut best: Option<Release> = None;
+    for item in items {
+        if is_draft(item) {
+            continue;
+        }
+        let Ok(r) = release_from(item) else {
+            continue;
+        };
+        if best
+            .as_ref()
+            .is_none_or(|b| r.version.is_newer_than(&b.version))
+        {
+            best = Some(r);
+        }
+    }
+    Ok(best)
+}
+
+fn is_draft(node: &sanain_tools::json::Node) -> bool {
+    use sanain_tools::json::Node;
+    matches!(node, Node::Object(m) if m.iter().any(|(k, v)| {
+        k == "\"draft\"" && matches!(v, Node::Scalar(s) if s == "true")
+    }))
+}
+
+fn release_from(root: &sanain_tools::json::Node) -> Result<Release, UpdateError> {
+    use sanain_tools::json::Node;
+    let Node::Object(members) = root else {
         return Err(UpdateError::Invalid);
     };
     let string = |key: &str| {
@@ -130,7 +172,6 @@ pub fn check(current: &str) -> Result<Status, UpdateError> {
         .map_err(|e| UpdateError::Network(e.to_string()))?;
     match resp.status().as_u16() {
         200 => {}
-        404 => return Ok(Status::NoReleases),
         code => return Err(UpdateError::Network(format!("HTTP {code}"))),
     }
     let body = resp
@@ -139,7 +180,10 @@ pub fn check(current: &str) -> Result<Status, UpdateError> {
         .limit(MAX_RESPONSE)
         .read_to_string()
         .map_err(|e| UpdateError::Network(e.to_string()))?;
-    Ok(status(current, parse_release(&body)?))
+    Ok(match parse_releases(&body)? {
+        Some(release) => status(current, release),
+        None => Status::NoReleases,
+    })
 }
 
 #[cfg(test)]
@@ -168,6 +212,38 @@ mod tests {
         assert_eq!(r.tag, "v0.1.0");
         assert!(matches!(status("0.0.1", r.clone()), Status::Available(_)));
         assert_eq!(status("0.1.0", r), Status::UpToDate);
+    }
+
+    /// The shape GitHub returns today: only pre-releases plus `nightly`.
+    #[test]
+    fn picks_the_newest_versioned_release_from_the_list() {
+        let page = |t: &str| format!("https://github.com/Zanttux/Sanain/releases/tag/{t}");
+        let item = |t: &str, pre: bool, draft: bool| {
+            format!(
+                r#"{{"tag_name":"{t}","html_url":"{}","prerelease":{pre},"draft":{draft}}}"#,
+                page(t)
+            )
+        };
+        let json = format!(
+            "[{},{},{},{},{}]",
+            item("nightly", true, false),
+            item("v0.2.1", true, false),
+            item("v0.3.0", true, true),
+            item("v0.2.0", true, false),
+            item("v0.1.0", true, false),
+        );
+        let r = parse_releases(&json).unwrap().unwrap();
+        assert_eq!(r.tag, "v0.2.1", "drafts and nightly skipped");
+        assert!(matches!(status("0.2.0", r.clone()), Status::Available(_)));
+        assert_eq!(status("0.2.1", r), Status::UpToDate);
+        assert_eq!(parse_releases("[]").unwrap(), None);
+        let only_nightly = format!("[{}]", item("nightly", true, false));
+        assert_eq!(parse_releases(&only_nightly).unwrap(), None);
+        for bad in ["not json", "{}", r#"{"tag_name":"v1.0.0"}"#] {
+            assert_eq!(parse_releases(bad), Err(UpdateError::Invalid), "{bad}");
+        }
+        let hostile = r#"[{"tag_name":"v9.0.0","html_url":"https://evil.example/releases/x"}]"#;
+        assert_eq!(parse_releases(hostile).unwrap(), None, "bad page ignored");
     }
 
     #[test]
