@@ -12,7 +12,13 @@
 //! `saved` (Unix seconds) and, for a file-backed buffer, the disk state its
 //! edits were made on: `base_len`, `base_hash` (FNV-1a, hex) and optional
 //! `base_mtime` (nanoseconds since the Unix epoch). Readers ignore keys they
-//! do not know, so older versions still read newer snapshots.
+//! do not know, so older versions still read newer snapshots. `owner` names
+//! the running instance that writes the snapshot (see [`OwnerLock`]).
+//!
+//! Several instances share one folder. Each holds an [`OwnerLock`]: a
+//! `<instance>.owner` file it refreshes every few seconds and removes when
+//! it ends. Another instance's snapshots whose owner file is fresh belong
+//! to a running editor and must not be restored or removed.
 
 use std::fs;
 use std::io;
@@ -46,11 +52,45 @@ pub struct Snapshot {
     pub base: Option<Fingerprint>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Entry {
     pub id: String,
     pub saved: SystemTime,
+    /// The instance that wrote it; `None` for older snapshots.
+    pub owner: Option<String>,
     pub snapshot: Snapshot,
+}
+
+const OWNER_EXTENSION: &str = "owner";
+/// How often a running instance refreshes its owner file.
+pub const HEARTBEAT: std::time::Duration = std::time::Duration::from_secs(5);
+/// An owner file older than this belongs to an instance that is gone.
+pub const STALE: std::time::Duration = std::time::Duration::from_secs(30);
+
+/// Marks this process as alive to other instances sharing the folder.
+/// Dropping it stops the heartbeat and removes the owner file.
+#[derive(Debug)]
+pub struct OwnerLock {
+    id: String,
+    file: PathBuf,
+    stop: Option<std::sync::mpsc::Sender<()>>,
+    thread: Option<std::thread::JoinHandle<()>>,
+}
+
+impl OwnerLock {
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+}
+
+impl Drop for OwnerLock {
+    fn drop(&mut self) {
+        drop(self.stop.take());
+        if let Some(t) = self.thread.take() {
+            let _ = t.join();
+        }
+        let _ = fs::remove_file(&self.file);
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -64,6 +104,8 @@ pub enum RecoveryError {
 #[derive(Debug, Clone)]
 pub struct RecoveryStore {
     dir: PathBuf,
+    /// Recorded in every snapshot this store writes.
+    owner: Option<String>,
 }
 
 impl RecoveryStore {
@@ -76,7 +118,69 @@ impl RecoveryStore {
             use std::os::unix::fs::PermissionsExt;
             fs::set_permissions(&dir, fs::Permissions::from_mode(0o700))?;
         }
-        Ok(Self { dir })
+        Ok(Self { dir, owner: None })
+    }
+
+    /// Claim a new instance id: write its owner file and keep it fresh on
+    /// a background thread. Returns the lock and a store that records the
+    /// id in the snapshots it writes.
+    pub fn claim_owner(&self) -> io::Result<(OwnerLock, RecoveryStore)> {
+        self.claim_owner_every(HEARTBEAT)
+    }
+
+    fn claim_owner_every(
+        &self,
+        every: std::time::Duration,
+    ) -> io::Result<(OwnerLock, RecoveryStore)> {
+        let id = Self::new_id();
+        let file = self.dir.join(format!("{id}.{OWNER_EXTENSION}"));
+        let beat = |f: &Path| fs::write(f, std::process::id().to_string());
+        beat(&file)?;
+        let (stop, rx) = std::sync::mpsc::channel::<()>();
+        let f = file.clone();
+        let thread = std::thread::Builder::new()
+            .name("text3-owner".into())
+            .spawn(move || {
+                while let Err(std::sync::mpsc::RecvTimeoutError::Timeout) = rx.recv_timeout(every) {
+                    let _ = beat(&f);
+                }
+            })?;
+        let store = Self {
+            dir: self.dir.clone(),
+            owner: Some(id.clone()),
+        };
+        let lock = OwnerLock {
+            id,
+            file,
+            stop: Some(stop),
+            thread: Some(thread),
+        };
+        Ok((lock, store))
+    }
+
+    /// Instances whose owner file was refreshed within [`STALE`] (a time in
+    /// the future, from clock changes, counts as fresh).
+    pub fn live_owners(&self) -> std::collections::HashSet<String> {
+        let now = SystemTime::now();
+        let Ok(items) = fs::read_dir(&self.dir) else {
+            return Default::default();
+        };
+        items
+            .filter_map(Result::ok)
+            .map(|i| i.path())
+            .filter(|p| p.extension().and_then(|e| e.to_str()) == Some(OWNER_EXTENSION))
+            .filter(|p| {
+                fs::metadata(p)
+                    .and_then(|m| m.modified())
+                    .is_ok_and(|t| now.duration_since(t).map_or(true, |age| age < STALE))
+            })
+            .filter_map(|p| p.file_stem().and_then(|s| s.to_str()).map(str::to_owned))
+            .collect()
+    }
+
+    /// The instance id this store records, if any.
+    pub fn owner(&self) -> Option<&str> {
+        self.owner.as_deref()
     }
 
     /// The platform's per-user location, e.g.
@@ -148,7 +252,7 @@ impl RecoveryStore {
                 "the text is too large for a recovery snapshot",
             ));
         }
-        let bytes = encode(snapshot, SystemTime::now());
+        let bytes = encode_owned(snapshot, SystemTime::now(), self.owner.as_deref());
         #[cfg(unix)]
         let perms = {
             use std::os::unix::fs::PermissionsExt;
@@ -167,6 +271,25 @@ impl RecoveryStore {
         }
     }
 
+    /// Remove snapshot `id` only if it is still exactly `expected` (same
+    /// time, owner and content): a newer write by anyone is kept. Returns
+    /// whether it was removed (a missing file counts as removed).
+    pub fn remove_if_unchanged(&self, expected: &Entry) -> io::Result<bool> {
+        let file = self.file_for(&expected.id);
+        match read_file(&file) {
+            Ok((saved, owner, snapshot))
+                if saved == expected.saved
+                    && owner == expected.owner
+                    && snapshot == expected.snapshot =>
+            {
+                self.remove(&expected.id).map(|()| true)
+            }
+            Ok(_) | Err(RecoveryError::Corrupt { .. }) => Ok(false),
+            Err(RecoveryError::Io(e)) if e.kind() == io::ErrorKind::NotFound => Ok(true),
+            Err(RecoveryError::Io(e)) => Err(e),
+        }
+    }
+
     /// All snapshots, newest first. Damaged files are returned as errors
     /// and left on disk for inspection.
     pub fn list(&self) -> io::Result<Vec<Result<Entry, RecoveryError>>> {
@@ -179,9 +302,10 @@ impl RecoveryStore {
             let Some(id) = path.file_stem().and_then(|s| s.to_str()).map(str::to_owned) else {
                 continue;
             };
-            out.push(read_file(&path).map(|(saved, snapshot)| Entry {
+            out.push(read_file(&path).map(|(saved, owner, snapshot)| Entry {
                 id,
                 saved,
+                owner,
                 snapshot,
             }));
         }
@@ -190,7 +314,9 @@ impl RecoveryStore {
     }
 }
 
-fn read_file(path: &Path) -> Result<(SystemTime, Snapshot), RecoveryError> {
+type Decoded = (SystemTime, Option<String>, Snapshot);
+
+fn read_file(path: &Path) -> Result<Decoded, RecoveryError> {
     let corrupt = |reason| RecoveryError::Corrupt {
         file: path.to_owned(),
         reason,
@@ -199,7 +325,7 @@ fn read_file(path: &Path) -> Result<(SystemTime, Snapshot), RecoveryError> {
         return Err(corrupt("too large"));
     }
     let bytes = fs::read(path)?;
-    decode(&bytes).map_err(corrupt)
+    decode_owned(&bytes).map_err(corrupt)
 }
 
 fn encoding_name(e: TextEncoding) -> &'static str {
@@ -214,9 +340,17 @@ fn encoding_name(e: TextEncoding) -> &'static str {
     }
 }
 
+#[cfg(test)]
 fn encode(s: &Snapshot, saved: SystemTime) -> Vec<u8> {
+    encode_owned(s, saved, None)
+}
+
+fn encode_owned(s: &Snapshot, saved: SystemTime, owner: Option<&str>) -> Vec<u8> {
     let secs = saved.duration_since(UNIX_EPOCH).map_or(0, |d| d.as_secs());
     let mut header = format!("encoding={}\nsaved={secs}\n", encoding_name(s.encoding));
+    if let Some(o) = owner.filter(|o| !o.contains('\n')) {
+        header.push_str(&format!("owner={o}\n"));
+    }
     // Paths that are not valid UTF-8 are not recorded; the text is still
     // recovered as an untitled buffer.
     if let Some(p) = s.path.as_ref().and_then(|p| p.to_str())
@@ -250,7 +384,12 @@ fn encode(s: &Snapshot, saved: SystemTime) -> Vec<u8> {
     out
 }
 
+#[cfg(test)]
 fn decode(bytes: &[u8]) -> Result<(SystemTime, Snapshot), &'static str> {
+    decode_owned(bytes).map(|(t, _, s)| (t, s))
+}
+
+fn decode_owned(bytes: &[u8]) -> Result<Decoded, &'static str> {
     let (body, sum) = bytes.split_last_chunk::<8>().ok_or("truncated")?;
     if fnv1a(body) != u64::from_le_bytes(*sum) {
         return Err("checksum mismatch");
@@ -274,6 +413,7 @@ fn decode(bytes: &[u8]) -> Result<(SystemTime, Snapshot), &'static str> {
 
     let (mut encoding, mut path, mut saved) = (None, None, UNIX_EPOCH);
     let (mut base_len, mut base_hash, mut base_mtime) = (None, None, None);
+    let mut owner = None;
     for line in header.lines() {
         match line.split_once('=') {
             Some(("encoding", v)) => {
@@ -297,6 +437,7 @@ fn decode(bytes: &[u8]) -> Result<(SystemTime, Snapshot), &'static str> {
             }
             // A bad base is dropped rather than failing the snapshot: the
             // text matters more than the conflict check.
+            Some(("owner", v)) if !v.is_empty() => owner = Some(v.to_owned()),
             Some(("base_len", v)) => base_len = v.parse::<u64>().ok(),
             Some(("base_hash", v)) => base_hash = u64::from_str_radix(v, 16).ok(),
             Some(("base_mtime", v)) => {
@@ -318,6 +459,7 @@ fn decode(bytes: &[u8]) -> Result<(SystemTime, Snapshot), &'static str> {
     };
     Ok((
         saved,
+        owner,
         Snapshot {
             path,
             encoding,
@@ -435,6 +577,72 @@ mod tests {
         let list = store.list().unwrap();
         assert_eq!(list.len(), 1);
         assert_eq!(list[0].as_ref().unwrap().snapshot, sample());
+    }
+
+    #[test]
+    fn owner_is_recorded_and_live_while_the_lock_is_held() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = RecoveryStore::open(dir.path()).unwrap();
+        let (lock, mine) = store
+            .claim_owner_every(std::time::Duration::from_millis(20))
+            .unwrap();
+        mine.write("a", &sample()).unwrap();
+        store.write("b", &sample()).unwrap();
+        let mut list: Vec<_> = store
+            .list()
+            .unwrap()
+            .into_iter()
+            .map(|r| r.unwrap())
+            .collect();
+        list.sort_by(|x, y| x.id.cmp(&y.id));
+        assert_eq!(list[0].owner.as_deref(), Some(lock.id()));
+        assert_eq!(list[1].owner, None);
+        assert!(store.live_owners().contains(lock.id()));
+        let id = lock.id().to_owned();
+        drop(lock);
+        assert!(!store.live_owners().contains(&id), "released on drop");
+        assert_eq!(
+            store.list().unwrap().len(),
+            2,
+            "owner files are not snapshots"
+        );
+    }
+
+    #[test]
+    fn stale_owner_files_do_not_count() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = RecoveryStore::open(dir.path()).unwrap();
+        let f = dir.path().join("dead.owner");
+        fs::write(&f, "1").unwrap();
+        let old = SystemTime::now() - STALE - std::time::Duration::from_secs(5);
+        fs::File::options()
+            .write(true)
+            .open(&f)
+            .unwrap()
+            .set_modified(old)
+            .unwrap();
+        fs::write(dir.path().join("live.owner"), "2").unwrap();
+        let live = store.live_owners();
+        assert!(live.contains("live"));
+        assert!(!live.contains("dead"));
+    }
+
+    #[test]
+    fn remove_if_unchanged_keeps_a_newer_write() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = RecoveryStore::open(dir.path()).unwrap();
+        store.write("x", &sample()).unwrap();
+        let seen = store.list().unwrap().remove(0).unwrap();
+        let newer = Snapshot {
+            text: "newer".into(),
+            ..sample()
+        };
+        store.write("x", &newer).unwrap();
+        assert!(!store.remove_if_unchanged(&seen).unwrap());
+        assert_eq!(store.list().unwrap()[0].as_ref().unwrap().snapshot, newer);
+        let seen = store.list().unwrap().remove(0).unwrap();
+        assert!(store.remove_if_unchanged(&seen).unwrap());
+        assert!(store.list().unwrap().is_empty());
     }
 
     #[cfg(unix)]

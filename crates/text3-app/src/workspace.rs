@@ -5,8 +5,9 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
+use text3_core::Revision;
 use text3_io::LoadError;
-use text3_io::recovery::{Entry, RecoveryStore};
+use text3_io::recovery::{Entry, MAX_TEXT, RecoveryStore};
 
 use crate::Editor;
 use crate::editor::Restored;
@@ -24,6 +25,9 @@ pub struct Tab {
     /// Pinned tabs stay together at the front of the tab bar.
     pub pinned: bool,
     recovery: Option<Recovery>,
+    /// The snapshot this tab was restored from, now copied under its own
+    /// id; a session written before the restart still names it.
+    adopted: Option<String>,
 }
 
 impl Tab {
@@ -31,13 +35,19 @@ impl Tab {
     pub fn recovery_id(&self) -> Option<&str> {
         self.recovery.as_ref().map(Recovery::id)
     }
+
+    /// Whether `id` names this tab's snapshot, now or before the restart.
+    fn has_snapshot(&self, id: &str) -> bool {
+        self.recovery_id() == Some(id) || self.adopted.as_deref() == Some(id)
+    }
 }
 
 /// What [`Workspace::hot_exit`] did with the tabs that have unsaved changes.
 #[derive(Debug, Default)]
 pub struct HotExit {
-    /// Written to the recovery store: they come back at the next start.
-    pub kept: Vec<TabId>,
+    /// Written to the recovery store, at that revision: they come back at
+    /// the next start (unless edited after).
+    pub kept: Vec<(TabId, Revision)>,
     /// Not written; the user must be asked about these.
     pub failed: Vec<(TabId, KeepError)>,
 }
@@ -55,6 +65,8 @@ pub struct Workspace {
 }
 
 const CLOSED_HISTORY: usize = 20;
+/// How long startup waits to copy a restored snapshot under its new id.
+const ADOPT_WAIT: Duration = Duration::from_secs(10);
 
 impl Workspace {
     /// An empty workspace with one untitled tab.
@@ -74,6 +86,11 @@ impl Workspace {
     /// Restore every snapshot as a tab, then open `paths` (skipping files
     /// already restored). Returns load errors for paths that failed and the
     /// number of restored tabs. The initial untitled tab is replaced.
+    ///
+    /// Snapshots of another running instance (its owner file is fresh) are
+    /// left alone. Each restored snapshot is copied under the tab's own new
+    /// id, and the old file is removed only if nobody changed it since it
+    /// was read, so two editors never write the same snapshot.
     pub fn startup(
         store: Option<RecoveryStore>,
         snapshots: Vec<Entry>,
@@ -81,17 +98,38 @@ impl Workspace {
     ) -> (Self, Vec<(PathBuf, LoadError)>, usize) {
         let mut ws = Self::new(store);
         let mut restored = 0;
+        let live = ws
+            .store
+            .as_ref()
+            .map(RecoveryStore::live_owners)
+            .unwrap_or_default();
+        let me = ws.store.as_ref().and_then(|s| s.owner().map(str::to_owned));
         for entry in snapshots {
+            if let Some(o) = &entry.owner
+                && live.contains(o)
+                && me.as_ref() != Some(o)
+            {
+                continue;
+            }
             let (ed, state) = Editor::restore_checked(&entry.snapshot);
             if ed.document().is_dirty() {
-                let i = ws.add(ed, Some(entry.id));
+                let i = ws.add(ed, None);
+                let t = &mut ws.tabs[i];
+                t.adopted = Some(entry.id.clone());
+                let copied = t
+                    .recovery
+                    .as_mut()
+                    .is_some_and(|r| r.write_now(&t.editor, MAX_TEXT, ADOPT_WAIT).is_ok());
+                if copied && let Some(s) = &ws.store {
+                    let _ = s.remove_if_unchanged(&entry);
+                }
                 if state != Restored::Applied {
                     ws.restore_notes.push((ws.tabs[i].id, state));
                 }
                 restored += 1;
             } else if let Some(s) = &ws.store {
                 // Identical to disk: the checkpoint is stale.
-                let _ = s.remove(&entry.id);
+                let _ = s.remove_if_unchanged(&entry);
             }
         }
         let mut errors = Vec::new();
@@ -122,6 +160,7 @@ impl Workspace {
             editor,
             pinned: false,
             recovery,
+            adopted: None,
         });
         self.tabs.len() - 1
     }
@@ -348,7 +387,7 @@ impl Workspace {
                 None => Err(KeepError::Failed("recovery is off".into())),
             };
             match result {
-                Ok(()) => out.kept.push(tab.id),
+                Ok(()) => out.kept.push((tab.id, tab.editor.document().revision())),
                 Err(e) => out.failed.push((tab.id, e)),
             }
         }
@@ -362,16 +401,31 @@ impl Workspace {
         self.session_with(split, &[])
     }
 
-    /// [`Self::session`], plus the tabs in `kept` (written by hot exit)
-    /// with their recovery ids, untitled ones included.
-    pub fn session_with(&self, split: Option<&Panes<TabId>>, kept: &[TabId]) -> Session {
+    /// The first tab with unsaved changes that hot exit did not keep at its
+    /// current revision (`kept` from [`Self::hot_exit`]): it must be asked
+    /// about, or kept again.
+    pub fn first_unkept(&self, kept: &[(TabId, Revision)]) -> Option<usize> {
+        self.tabs.iter().position(|t| {
+            t.editor.document().is_dirty()
+                && !kept.contains(&(t.id, t.editor.document().revision()))
+        })
+    }
+
+    /// [`Self::session`], plus the tabs in `kept` (written by hot exit) with
+    /// their recovery ids, untitled ones included; a tab edited since it
+    /// was kept is not recorded as kept.
+    pub fn session_with(
+        &self,
+        split: Option<&Panes<TabId>>,
+        kept: &[(TabId, Revision)],
+    ) -> Session {
         let mut tabs = Vec::new();
         let mut pinned = Vec::new();
         let mut index = HashMap::new();
         let mut active = 0;
         for (i, t) in self.tabs.iter().enumerate() {
             let recovery = kept
-                .contains(&t.id)
+                .contains(&(t.id, t.editor.document().revision()))
                 .then(|| t.recovery_id().map(str::to_owned))
                 .flatten();
             let path = t.editor.file().map(|f| f.path.clone());
@@ -420,7 +474,7 @@ impl Workspace {
             let kept = entry
                 .recovery
                 .as_deref()
-                .and_then(|rid| self.tabs.iter().position(|t| t.recovery_id() == Some(rid)));
+                .and_then(|rid| self.tabs.iter().position(|t| t.has_snapshot(rid)));
             let idx = match (kept, &entry.path) {
                 (Some(idx), _) => Some(idx),
                 (None, Some(p)) if files => self.open(p).ok(),
@@ -964,5 +1018,117 @@ mod tests {
         );
         assert_eq!(fs::read(&changed).unwrap(), b"theirs\n", "not overwritten");
         assert!(!gone.exists(), "not recreated");
+    }
+
+    /// Review repro: a quit attempt that hot-exits and is then abandoned
+    /// (cancelled Save As, conflict) must not let a later quit treat the
+    /// tab as kept: edits made after the first attempt were lost.
+    #[test]
+    fn edits_after_an_abandoned_quit_are_kept_by_the_next_one() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = RecoveryStore::open(dir.path().join("r")).unwrap();
+        let mut ws = Workspace::new(Some(store.clone()));
+        ws.active_mut().editor.execute(Command::Insert("v1".into()));
+        let first = ws.hot_exit(usize::MAX, WAIT).kept;
+        assert_eq!(ws.first_unkept(&first), None);
+        // The quit was abandoned; the user keeps typing.
+        ws.active_mut()
+            .editor
+            .execute(Command::Insert(" v2".into()));
+        ws.tick(Instant::now());
+        ws.flush();
+        assert_eq!(
+            ws.first_unkept(&first),
+            Some(0),
+            "stale: must not be skipped"
+        );
+        let s = ws.session_with(None, &first);
+        assert!(s.tabs.is_empty(), "not recorded as kept at an old revision");
+        // The next attempt writes the new text.
+        let second = ws.hot_exit(usize::MAX, WAIT).kept;
+        assert_eq!(ws.first_unkept(&second), None);
+        drop(ws);
+        let texts: Vec<_> = snapshots(&store)
+            .into_iter()
+            .map(|e| e.snapshot.text)
+            .collect();
+        assert_eq!(texts, ["v1 v2"]);
+    }
+
+    /// Review repro: a second instance adopted the first one's live
+    /// checkpoint under the same id, and its later hot exit overwrote the
+    /// first instance's newer text ("old" instead of "old newer").
+    #[test]
+    fn a_running_instance_keeps_its_snapshots() {
+        let dir = tempfile::tempdir().unwrap();
+        let base = RecoveryStore::open(dir.path().join("r")).unwrap();
+        let (lock_a, store_a) = base.claim_owner().unwrap();
+        let mut a = Workspace::new(Some(store_a));
+        a.active_mut().editor.execute(Command::Insert("old".into()));
+        a.hot_exit(usize::MAX, WAIT); // a checkpoint on disk; A keeps running
+
+        let (_lock_b, store_b) = base.claim_owner().unwrap();
+        let (mut b, _, restored) = Workspace::startup(Some(store_b.clone()), snapshots(&base), &[]);
+        assert_eq!(restored, 0, "A's snapshot is not B's to restore");
+        b.hot_exit(usize::MAX, WAIT);
+
+        a.active_mut()
+            .editor
+            .execute(Command::Insert(" newer".into()));
+        a.hot_exit(usize::MAX, WAIT);
+        drop(b);
+        let texts: Vec<_> = snapshots(&base)
+            .into_iter()
+            .map(|e| e.snapshot.text)
+            .collect();
+        assert_eq!(texts, ["old newer"]);
+
+        // Once A is gone, its snapshot is restored by the next start.
+        drop((a, lock_a));
+        let (_lock_c, store_c) = base.claim_owner().unwrap();
+        let (c, _, restored) = Workspace::startup(Some(store_c), snapshots(&base), &[]);
+        assert_eq!(restored, 1);
+        assert_eq!(c.active().editor.document().text(), "old newer");
+    }
+
+    /// A restored snapshot moves to the tab's own id; the old one goes only
+    /// if it is unchanged, so a write made meanwhile is never lost.
+    #[test]
+    fn adopted_snapshots_get_a_new_id_and_a_changed_original_stays() {
+        use text3_io::TextEncoding;
+        use text3_io::recovery::Snapshot;
+        let dir = tempfile::tempdir().unwrap();
+        let store = RecoveryStore::open(dir.path().join("r")).unwrap();
+        let snap = |t: &str| Snapshot {
+            path: None,
+            encoding: TextEncoding::Utf8,
+            text: t.into(),
+            base: None,
+        };
+        store.write("old-1", &snap("one")).unwrap();
+        store.write("old-2", &snap("two")).unwrap();
+        let seen = snapshots(&store);
+        // Someone writes old-2 again after it was listed.
+        store.write("old-2", &snap("two, later")).unwrap();
+        let (ws, _, restored) = Workspace::startup(Some(store.clone()), seen, &[]);
+        assert_eq!(restored, 2);
+        assert!(
+            ws.tabs()
+                .iter()
+                .all(|t| t.recovery_id().is_some_and(|id| !id.starts_with("old")))
+        );
+        let mut on_disk: Vec<_> = snapshots(&store)
+            .into_iter()
+            .map(|e| (e.id.starts_with("old"), e.snapshot.text))
+            .collect();
+        on_disk.sort();
+        assert_eq!(
+            on_disk,
+            [
+                (false, "one".into()),
+                (false, "two".into()),
+                (true, "two, later".into()),
+            ]
+        );
     }
 }

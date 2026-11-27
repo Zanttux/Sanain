@@ -360,8 +360,11 @@ pub struct Shell {
     /// Set once the session was recorded for the current quit attempt.
     quit_recorded: bool,
     /// Tabs whose unsaved text hot exit kept for the next start during the
-    /// current quit attempt: they are not asked about.
-    hot_exited: Vec<TabId>,
+    /// current quit attempt, at that revision: they are not asked about
+    /// unless edited since.
+    hot_exited: Vec<(TabId, Revision)>,
+    /// Marks this instance as running to others sharing the recovery folder.
+    owner: Option<text3_io::recovery::OwnerLock>,
     /// The tab the strip last scrolled into view (a new or switched-to
     /// tab past the edge of an overflowing strip is brought into view).
     tab_in_view: Option<TabId>,
@@ -549,6 +552,7 @@ impl Shell {
             themes: (Vec::new(), Vec::new()),
             quit_recorded: false,
             hot_exited: Vec::new(),
+            owner: None,
             tab_in_view: None,
             focus: Default::default(),
             #[cfg(target_os = "macos")]
@@ -864,19 +868,17 @@ impl Shell {
     /// without asking; any that cannot be kept (and all of them with hot
     /// exit off) are asked about in turn.
     fn request_quit(&mut self, ctx: &egui::Context) {
-        // Record open files before the quit flow starts closing tabs.
+        // Keep unsaved tabs on every step of the flow (a tab already on
+        // disk at its revision is not written again). The session is
+        // recorded once per attempt, before the flow starts closing tabs;
+        // an attempt that ends without quitting is reset in `ui`.
+        if self.settings.hot_exit {
+            self.keep_unsaved();
+        }
         if !std::mem::replace(&mut self.quit_recorded, true) {
-            self.hot_exited.clear();
-            if self.settings.hot_exit {
-                self.keep_unsaved();
-            }
             self.save_session();
         }
-        let ask = self
-            .ws
-            .tabs()
-            .iter()
-            .position(|t| t.editor.document().is_dirty() && !self.hot_exited.contains(&t.id));
+        let ask = self.ws.first_unkept(&self.hot_exited);
         match ask {
             Some(i) => {
                 self.ws.activate(i);
@@ -942,13 +944,15 @@ impl Shell {
     /// unsaved tab is written to the recovery folder, so it comes back at
     /// the next start; with hot exit on, the session records them too.
     fn exiting(&mut self) {
+        // Also after a finished quit flow, as a backstop: tabs already on
+        // disk at their revision are not written again.
+        let result = self
+            .ws
+            .hot_exit(text3_io::recovery::MAX_TEXT, HOT_EXIT_WAIT);
+        for (id, e) in &result.failed {
+            eprintln!("text3: unsaved tab {id} could not be kept: {e:?}");
+        }
         if !self.allow_close {
-            let result = self
-                .ws
-                .hot_exit(text3_io::recovery::MAX_TEXT, HOT_EXIT_WAIT);
-            for (id, e) in &result.failed {
-                eprintln!("text3: unsaved tab {id} could not be kept: {e:?}");
-            }
             self.hot_exited = if self.settings.hot_exit {
                 result.kept
             } else {
@@ -957,6 +961,13 @@ impl Shell {
             self.save_session();
         }
         self.ws.flush();
+        // Other instances may restore what is left once this one is gone.
+        drop(self.owner.take());
+    }
+
+    /// Hold the recovery folder's owner lock until the app exits.
+    pub fn set_owner_lock(&mut self, lock: Option<text3_io::recovery::OwnerLock>) {
+        self.owner = lock;
     }
 
     /// Tell the user about restored tabs whose file changed on disk or is
@@ -5949,6 +5960,13 @@ impl eframe::App for Shell {
             }
         }
 
+        // A quit attempt that neither closed the window nor left a dialog
+        // open (a cancelled Save As, a save that hit a conflict, …) is
+        // over: the next attempt starts afresh.
+        if self.quit_recorded && !self.allow_close && self.dialog.is_none() {
+            self.quit_recorded = false;
+            self.hot_exited.clear();
+        }
         if ctx.input(|i| i.viewport().close_requested()) && !self.allow_close {
             ctx.send_viewport_cmd(ViewportCommand::CancelClose);
             if self.dialog.is_none() {

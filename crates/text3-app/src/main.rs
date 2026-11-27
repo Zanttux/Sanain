@@ -154,6 +154,18 @@ fn main() -> eframe::Result {
             None
         }
     });
+    // Mark this instance as running, so another one sharing the folder
+    // leaves its snapshots alone.
+    let (owner_lock, store) = match store {
+        Some(s) => match s.claim_owner() {
+            Ok((lock, owned)) => (Some(lock), Some(owned)),
+            Err(e) => {
+                eprintln!("text3: could not mark the recovery folder as in use: {e}");
+                (None, Some(s))
+            }
+        },
+        None => (None, None),
+    };
     let snapshots = store
         .as_ref()
         .and_then(|s| s.list().ok())
@@ -201,6 +213,7 @@ fn main() -> eframe::Result {
                 settings_dir,
             );
             shell.set_history(history);
+            shell.set_owner_lock(owner_lock);
             shell.set_split(split);
             shell.reveal_restored_carets();
             shell.show_restore_notes();

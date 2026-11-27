@@ -75,6 +75,8 @@ pub struct Recovery {
     id: String,
     /// Revision of the last snapshot sent to the writer.
     written: Option<Revision>,
+    /// Revision [`Self::write_now`] last confirmed on disk.
+    confirmed: Option<Revision>,
     due: Option<Instant>,
     jobs: Sender<Job>,
     errors: Receiver<String>,
@@ -123,6 +125,7 @@ impl Recovery {
         Self {
             id: id.unwrap_or_else(RecoveryStore::new_id),
             written: None,
+            confirmed: None,
             due: None,
             jobs,
             errors,
@@ -135,6 +138,7 @@ impl Recovery {
         let doc = editor.document();
         if !doc.is_dirty() {
             self.due = None;
+            self.confirmed = None;
             if self.written.take().is_some() {
                 let _ = self.jobs.send(Job::Remove(self.id.clone()));
             }
@@ -160,6 +164,7 @@ impl Recovery {
         let _ = self.jobs.send(Job::Remove(self.id.clone()));
         self.id = RecoveryStore::new_id();
         self.written = None;
+        self.confirmed = None;
         self.due = None;
     }
 
@@ -183,6 +188,9 @@ impl Recovery {
         limit: Duration,
     ) -> Result<(), KeepError> {
         let doc = editor.document();
+        if self.confirmed == Some(doc.revision()) {
+            return Ok(()); // already on disk, nothing queued after it
+        }
         // UTF-8 length without building the string.
         if doc.rope().len_bytes() > max_len {
             return Err(KeepError::TooLarge);
@@ -195,6 +203,7 @@ impl Recovery {
         match rx.recv_timeout(limit) {
             Ok(Ok(())) => {
                 self.written = Some(doc.revision());
+                self.confirmed = self.written;
                 self.due = None;
                 Ok(())
             }

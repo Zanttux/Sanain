@@ -32,7 +32,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   the snapshot size limit, read-only or full recovery folder) is asked
   about as before, with the reason in the status bar. Recovery snapshots
   now record the disk state the edits were based on, so crash recovery
-  also detects files changed since the crash.
+  also detects files changed since the crash. Several instances can share
+  the recovery folder: a starting instance no longer restores (and later
+  overwrites) the unsaved tabs of one that is still running.
 - A "+" button right after the last tab opens a new untitled tab, the
   same command as File › New Tab (#151). Its tooltip shows the shortcut
   (for example "New Tab (⌘N)"); when the tabs overflow, it stays at the
