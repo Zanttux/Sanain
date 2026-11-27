@@ -78,6 +78,7 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   New strings in all 26 languages.
 
 ### Fixed
+- Check for Updates works again: it asked GitHub for the "latest release", which leaves out pre-releases, and every Sanain release is one, so it always said there were no releases. It now reads the release list and takes the newest versioned release (skipping drafts and `nightly`).
 - With the in-window menu (Windows, Linux), Shift+F6, Shift+F3
   (Notepad++ preset) and Ctrl+Shift+Tab ran the command of the same key
   without Shift; Tab and function-key shortcuts now match their
