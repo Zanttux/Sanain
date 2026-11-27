@@ -164,18 +164,16 @@ fn writes_fail_cleanly_on_a_full_disk() {
         path: Some(atomic.clone()),
         encoding: TextEncoding::Utf8,
         text: "checkpoint before the disk filled".into(),
+        base: None,
     };
     store.write(&id, &old_snapshot).unwrap();
 
     let config = dir.join("config");
     Settings::default().save(&config).unwrap();
     let session_file = config.join("session");
-    Session {
-        paths: vec![atomic.clone(), linked.clone()],
-        ..Session::default()
-    }
-    .save(&session_file)
-    .unwrap();
+    Session::of_paths([atomic.clone(), linked.clone()])
+        .save(&session_file)
+        .unwrap();
     let mut macros = MacroStore::default();
     macros
         .insert("small", &[Command::Insert("hi".into())])
@@ -219,12 +217,8 @@ fn writes_fail_cleanly_on_a_full_disk() {
         ..Settings::default()
     };
     expect_io_disk_full("settings", big_settings.save(&config));
-    let big_session = Session {
-        paths: (0..BIG / 256)
-            .map(|i| dir.join(format!("{i}-{}", "p".repeat(250))))
-            .collect(),
-        ..Session::default()
-    };
+    let big_session =
+        Session::of_paths((0..BIG / 256).map(|i| dir.join(format!("{i}-{}", "p".repeat(250)))));
     expect_io_disk_full("session", big_session.save(&session_file));
     let mut big_macros = MacroStore::default();
     big_macros

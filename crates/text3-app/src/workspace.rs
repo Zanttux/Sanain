@@ -9,8 +9,10 @@ use text3_io::LoadError;
 use text3_io::recovery::{Entry, RecoveryStore};
 
 use crate::Editor;
+use crate::editor::Restored;
 use crate::panes::Panes;
-use crate::recovery::Recovery;
+use crate::recovery::{KeepError, Recovery};
+use crate::session::{Session, SessionTab};
 
 /// Stable identity of a tab for the lifetime of the process.
 pub type TabId = u64;
@@ -24,6 +26,22 @@ pub struct Tab {
     recovery: Option<Recovery>,
 }
 
+impl Tab {
+    /// The id of this tab's recovery snapshot (`None` without a store).
+    pub fn recovery_id(&self) -> Option<&str> {
+        self.recovery.as_ref().map(Recovery::id)
+    }
+}
+
+/// What [`Workspace::hot_exit`] did with the tabs that have unsaved changes.
+#[derive(Debug, Default)]
+pub struct HotExit {
+    /// Written to the recovery store: they come back at the next start.
+    pub kept: Vec<TabId>,
+    /// Not written; the user must be asked about these.
+    pub failed: Vec<(TabId, KeepError)>,
+}
+
 #[derive(Debug)]
 pub struct Workspace {
     tabs: Vec<Tab>,
@@ -32,6 +50,8 @@ pub struct Workspace {
     closed: Vec<PathBuf>,
     store: Option<RecoveryStore>,
     next_id: TabId,
+    /// Restored tabs whose file changed or vanished (see [`Restored`]).
+    restore_notes: Vec<(TabId, Restored)>,
 }
 
 const CLOSED_HISTORY: usize = 20;
@@ -45,6 +65,7 @@ impl Workspace {
             closed: Vec::new(),
             store,
             next_id: 1,
+            restore_notes: Vec::new(),
         };
         ws.push(Editor::new(), None);
         ws
@@ -61,9 +82,12 @@ impl Workspace {
         let mut ws = Self::new(store);
         let mut restored = 0;
         for entry in snapshots {
-            let ed = Editor::restore(&entry.snapshot);
+            let (ed, state) = Editor::restore_checked(&entry.snapshot);
             if ed.document().is_dirty() {
-                ws.add(ed, Some(entry.id));
+                let i = ws.add(ed, Some(entry.id));
+                if state != Restored::Applied {
+                    ws.restore_notes.push((ws.tabs[i].id, state));
+                }
                 restored += 1;
             } else if let Some(s) = &ws.store {
                 // Identical to disk: the checkpoint is stale.
@@ -77,6 +101,16 @@ impl Workspace {
             }
         }
         (ws, errors, restored)
+    }
+
+    /// Restored tabs whose file changed on disk or is missing, once.
+    pub fn take_restore_notes(&mut self) -> Vec<(TabId, Restored)> {
+        std::mem::take(&mut self.restore_notes)
+    }
+
+    /// Whether unsaved text can be kept in a recovery store at all.
+    pub fn has_store(&self) -> bool {
+        self.store.is_some()
     }
 
     fn push(&mut self, editor: Editor, recovery_id: Option<String>) -> usize {
@@ -299,57 +333,117 @@ impl Workspace {
         (soonest, error)
     }
 
+    /// Write every tab with unsaved changes to the recovery store now and
+    /// wait for each write (hot exit), giving up on a tab after `limit`.
+    /// Texts over `max_len` bytes are not written. Nothing is closed or
+    /// removed: kept tabs stay as they are until the process exits.
+    pub fn hot_exit(&mut self, max_len: usize, limit: Duration) -> HotExit {
+        let mut out = HotExit::default();
+        for tab in &mut self.tabs {
+            if !tab.editor.document().is_dirty() {
+                continue;
+            }
+            let result = match &mut tab.recovery {
+                Some(r) => r.write_now(&tab.editor, max_len, limit),
+                None => Err(KeepError::Failed("recovery is off".into())),
+            };
+            match result {
+                Ok(()) => out.kept.push(tab.id),
+                Err(e) => out.failed.push((tab.id, e)),
+            }
+        }
+        out
+    }
+
     /// Files open in this window, in tab order, and the split layout (if
-    /// any), for session restore. Panes showing an untitled tab are left
-    /// out of the layout.
-    pub fn session(&self, split: Option<&Panes<TabId>>) -> crate::session::Session {
-        let mut paths = Vec::new();
+    /// any), for session restore. Untitled tabs are left out, as are panes
+    /// showing them.
+    pub fn session(&self, split: Option<&Panes<TabId>>) -> Session {
+        self.session_with(split, &[])
+    }
+
+    /// [`Self::session`], plus the tabs in `kept` (written by hot exit)
+    /// with their recovery ids, untitled ones included.
+    pub fn session_with(&self, split: Option<&Panes<TabId>>, kept: &[TabId]) -> Session {
+        let mut tabs = Vec::new();
         let mut pinned = Vec::new();
         let mut index = HashMap::new();
         let mut active = 0;
         for (i, t) in self.tabs.iter().enumerate() {
-            if let Some(f) = t.editor.file() {
-                if i == self.active {
-                    active = paths.len();
-                }
-                if t.pinned {
-                    pinned.push(paths.len());
-                }
-                index.insert(t.id, paths.len());
-                paths.push(f.path.clone());
+            let recovery = kept
+                .contains(&t.id)
+                .then(|| t.recovery_id().map(str::to_owned))
+                .flatten();
+            let path = t.editor.file().map(|f| f.path.clone());
+            if path.is_none() && recovery.is_none() {
+                continue;
             }
+            if i == self.active {
+                active = tabs.len();
+            }
+            if t.pinned {
+                pinned.push(tabs.len());
+            }
+            index.insert(t.id, tabs.len());
+            let sel = t.editor.selections().primary();
+            tabs.push(SessionTab {
+                path,
+                recovery,
+                caret: Some((sel.anchor, sel.head)).filter(|c| *c != (0, 0)),
+            });
         }
         let layout = split
             .filter(|s| s.is_split())
             .map(|s| s.layout().filter_map(|id| index.get(&id).copied()))
             .filter(|l| l.len() >= 2);
-        crate::session::Session {
-            paths,
+        Session {
+            tabs,
             active,
             pinned,
             layout,
         }
     }
 
-    /// Reopen a saved session: missing files are skipped silently, files
-    /// already open (e.g. restored from recovery) are not duplicated.
-    /// Returns the split layout, without panes whose file did not open;
-    /// its focused pane's tab becomes the active one.
-    pub fn restore_session(&mut self, s: &crate::session::Session) -> Option<Panes<TabId>> {
+    /// Reopen a saved session. Tabs kept by hot exit are matched to the
+    /// tabs restored from their recovery snapshots; with `files`, other
+    /// files are opened too (missing ones are skipped silently, open ones
+    /// not duplicated). Session tabs are put first, in their saved order,
+    /// with their saved selection; other restored tabs follow. Returns the
+    /// split layout, without panes whose tab did not come back; its
+    /// focused pane's tab becomes the active one.
+    pub fn restore_session(&mut self, s: &Session, files: bool) -> Option<Panes<TabId>> {
         let mut active = None;
         let mut pin = Vec::new();
-        let mut ids = vec![None; s.paths.len()];
-        for (i, p) in s.paths.iter().enumerate() {
-            if let Ok(idx) = self.open(p) {
-                ids[i] = Some(self.tabs[idx].id);
-                if i == s.active {
-                    active = Some(self.tabs[idx].id);
-                }
-                if s.pinned.contains(&i) {
-                    pin.push(self.tabs[idx].id);
-                }
+        let mut order = Vec::new();
+        let mut ids = vec![None; s.tabs.len()];
+        for (i, entry) in s.tabs.iter().enumerate() {
+            let kept = entry
+                .recovery
+                .as_deref()
+                .and_then(|rid| self.tabs.iter().position(|t| t.recovery_id() == Some(rid)));
+            let idx = match (kept, &entry.path) {
+                (Some(idx), _) => Some(idx),
+                (None, Some(p)) if files => self.open(p).ok(),
+                _ => None,
+            };
+            let Some(idx) = idx else { continue };
+            let id = self.tabs[idx].id;
+            if order.contains(&id) {
+                continue;
+            }
+            if let Some((a, h)) = entry.caret {
+                self.tabs[idx].editor.set_selection(a, h);
+            }
+            order.push(id);
+            ids[i] = Some(id);
+            if i == s.active {
+                active = Some(id);
+            }
+            if s.pinned.contains(&i) {
+                pin.push(id);
             }
         }
+        self.reorder(&order);
         for id in pin {
             if let Some(i) = self.position(id) {
                 self.set_pinned(i, true);
@@ -367,6 +461,20 @@ impl Workspace {
             self.active = a;
         }
         Some(split)
+    }
+
+    /// Put the tabs `first` at the front in that order; the rest keep
+    /// their order after them. The active tab stays active.
+    fn reorder(&mut self, first: &[TabId]) {
+        let active_id = self.tabs[self.active].id;
+        let mut rest = std::mem::take(&mut self.tabs);
+        for id in first {
+            if let Some(p) = rest.iter().position(|t| t.id == *id) {
+                self.tabs.push(rest.remove(p));
+            }
+        }
+        self.tabs.extend(rest);
+        self.active = self.position(active_id).unwrap_or(0);
     }
 
     /// Wait for pending checkpoint I/O; call before exiting.
@@ -474,11 +582,12 @@ mod tests {
         ws.new_tab(); // untitled: not recorded
         ws.open(&b).unwrap();
         let s = ws.session(None);
-        assert_eq!(s.paths, vec![a.clone(), b.clone()]);
+        assert_eq!(s.paths(), vec![a.clone(), b.clone()]);
+        assert_eq!(s.tabs.len(), 2);
         assert_eq!(s.active, 1);
         fs::remove_file(&a).unwrap();
         let mut ws2 = Workspace::new(None);
-        assert_eq!(ws2.restore_session(&s), None);
+        assert_eq!(ws2.restore_session(&s, true), None);
         assert_eq!(ws2.len(), 1);
         assert_eq!(ws2.active().editor.document().text(), "B");
     }
@@ -507,7 +616,7 @@ mod tests {
         split.set_focus(2);
         let s = ws.session(Some(&split));
         let mut ws2 = Workspace::new(None);
-        let back = ws2.restore_session(&s).unwrap();
+        let back = ws2.restore_session(&s, true).unwrap();
         assert_eq!(back.len(), 3);
         assert_eq!(back.direction(), Direction::Right);
         assert!((back.fractions()[0].x1 - 0.3).abs() < 1e-5);
@@ -520,7 +629,7 @@ mod tests {
         // A file that is gone takes its pane with it.
         fs::remove_file(&b).unwrap();
         let mut ws3 = Workspace::new(None);
-        let back = ws3.restore_session(&s).unwrap();
+        let back = ws3.restore_session(&s, true).unwrap();
         assert_eq!(back.len(), 2);
         assert_eq!(back.direction(), Direction::Right);
         // Only the file in a pane with an untitled tab: no split.
@@ -540,6 +649,7 @@ mod tests {
                 path: None,
                 encoding: TextEncoding::Utf8,
                 text: text.into(),
+                base: None,
             };
             store.write(id, &s).unwrap();
         }
@@ -585,5 +695,274 @@ mod tests {
         ws.set_pinned(0, false);
         assert_eq!(ids(&ws), vec![2, 3, 1, 0]);
         assert_eq!(ws.pinned_count(), 1);
+    }
+
+    fn snapshots(store: &RecoveryStore) -> Vec<Entry> {
+        store
+            .list()
+            .unwrap()
+            .into_iter()
+            .map(|r| r.unwrap())
+            .collect()
+    }
+
+    const WAIT: Duration = Duration::from_secs(10);
+
+    /// Quit with hot exit, then start again: untitled and edited tabs come
+    /// back with their text, still unsaved, in order, with the selection,
+    /// pins and split; the file keeps its encoding and line endings.
+    #[test]
+    fn hot_exit_then_restart_restores_every_tab() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = RecoveryStore::open(dir.path().join("r")).unwrap();
+        let utf16 = dir.path().join("wide.txt");
+        let mut bytes = vec![0xFF, 0xFE];
+        bytes.extend("one\r\ntwo\r\n".encode_utf16().flat_map(u16::to_le_bytes));
+        fs::write(&utf16, &bytes).unwrap();
+        let clean = dir.path().join("clean.txt");
+        fs::write(&clean, "as is\n").unwrap();
+
+        let mut ws = Workspace::new(Some(store.clone()));
+        ws.active_mut()
+            .editor
+            .execute(Command::Insert("scratch\nnote".into()));
+        let untitled = ws.active().id;
+        ws.active_mut().editor.set_selection(2, 5);
+        let i = ws.open(&utf16).unwrap();
+        let wide = ws.tabs()[i].id;
+        ws.tab_mut(i).unwrap().editor.select(5..5);
+        ws.tab_mut(i)
+            .unwrap()
+            .editor
+            .execute(Command::Insert("2½".into()));
+        ws.open(&clean).unwrap();
+        ws.new_tab(); // empty: nothing to keep, not recorded
+        ws.set_pinned(ws.position(wide).unwrap(), true);
+        ws.activate(ws.position(untitled).unwrap());
+        let mut split = Panes::new(untitled);
+        split.split(Direction::Right, wide);
+
+        let kept = ws.hot_exit(usize::MAX, WAIT);
+        assert!(kept.failed.is_empty(), "{:?}", kept.failed);
+        assert_eq!(kept.kept.len(), 2);
+        let session = ws.session_with(Some(&split), &kept.kept);
+        drop(ws); // the process ends: nothing is closed or removed
+
+        let session = Session::decode(&session.encode()).unwrap();
+        let (mut ws, errors, restored) =
+            Workspace::startup(Some(store.clone()), snapshots(&store), &[]);
+        assert!(errors.is_empty());
+        assert_eq!(restored, 2);
+        let back = ws.restore_session(&session, true).unwrap();
+        assert_eq!(back.len(), 2);
+        let names: Vec<_> = ws.tabs().iter().map(|t| t.editor.file_name()).collect();
+        assert_eq!(
+            names,
+            [Some("wide.txt".into()), None, Some("clean.txt".into())],
+            "pinned first, then the saved order"
+        );
+        let [w, u, c] = [0, 1, 2].map(|i| &ws.tabs()[i]);
+        assert!(w.pinned);
+        assert_eq!(u.editor.document().text(), "scratch\nnote");
+        assert!(u.editor.document().is_dirty());
+        assert!(u.editor.file().is_none());
+        let sel = u.editor.selections().primary();
+        assert_eq!((sel.anchor, sel.head), (2, 5));
+        assert_eq!(w.editor.document().text(), "one\r\n2½two\r\n");
+        assert!(w.editor.document().is_dirty());
+        assert_eq!(w.editor.encoding(), text3_io::TextEncoding::Utf16LeBom);
+        assert!(!c.editor.document().is_dirty());
+        assert!(
+            ws.active().editor.file().is_none(),
+            "the focused pane's tab"
+        );
+        assert!(ws.take_restore_notes().is_empty());
+
+        // Saving writes the restored edit in the file's own encoding.
+        let i = ws.position(ws.tabs()[0].id).unwrap();
+        assert!(matches!(
+            ws.tab_mut(i).unwrap().editor.save(),
+            crate::SaveOutcome::Saved
+        ));
+        let mut want = vec![0xFF, 0xFE];
+        want.extend("one\r\n2½two\r\n".encode_utf16().flat_map(u16::to_le_bytes));
+        assert_eq!(fs::read(&utf16).unwrap(), want);
+    }
+
+    #[test]
+    fn without_session_restore_only_kept_tabs_come_back() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = RecoveryStore::open(dir.path().join("r")).unwrap();
+        let clean = dir.path().join("clean.txt");
+        fs::write(&clean, "x").unwrap();
+        let mut ws = Workspace::new(Some(store.clone()));
+        ws.open(&clean).unwrap();
+        ws.new_tab();
+        ws.active_mut().editor.execute(Command::Insert("b".into()));
+        ws.new_tab();
+        ws.active_mut().editor.execute(Command::Insert("a".into()));
+        ws.move_tab(2, 1); // order: clean, "a", "b"
+        let kept = ws.hot_exit(usize::MAX, WAIT).kept;
+        let session = ws.session_with(None, &kept);
+        drop(ws);
+        let (mut ws, _, _) = Workspace::startup(Some(store.clone()), snapshots(&store), &[]);
+        ws.restore_session(&session, false);
+        let texts: Vec<_> = ws
+            .tabs()
+            .iter()
+            .map(|t| t.editor.document().text())
+            .collect();
+        assert_eq!(texts, ["a", "b"], "the clean file is not reopened");
+    }
+
+    #[test]
+    fn many_tabs_are_all_kept_in_order() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = RecoveryStore::open(dir.path().join("r")).unwrap();
+        let mut ws = Workspace::new(Some(store.clone()));
+        for n in 0..60 {
+            if n > 0 {
+                ws.new_tab();
+            }
+            ws.active_mut()
+                .editor
+                .execute(Command::Insert(format!("tab {n}")));
+        }
+        let kept = ws.hot_exit(usize::MAX, WAIT).kept;
+        assert_eq!(kept.len(), 60);
+        let session = ws.session_with(None, &kept);
+        drop(ws);
+        let (mut ws, _, restored) = Workspace::startup(Some(store.clone()), snapshots(&store), &[]);
+        assert_eq!(restored, 60);
+        ws.restore_session(&session, true);
+        let texts: Vec<_> = ws
+            .tabs()
+            .iter()
+            .map(|t| t.editor.document().text())
+            .collect();
+        let want: Vec<_> = (0..60).map(|n| format!("tab {n}")).collect();
+        assert_eq!(texts, want);
+    }
+
+    /// A tab over the size cap is not written (the others are) and is
+    /// left for the prompt; it is not recorded as kept.
+    #[test]
+    fn a_tab_over_the_cap_is_left_to_the_prompt() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = RecoveryStore::open(dir.path().join("r")).unwrap();
+        let mut ws = Workspace::new(Some(store.clone()));
+        ws.active_mut()
+            .editor
+            .execute(Command::Insert("small".into()));
+        ws.new_tab();
+        ws.active_mut()
+            .editor
+            .execute(Command::Insert("x".repeat(100)));
+        let big = ws.active().id;
+        let r = ws.hot_exit(64, WAIT);
+        assert_eq!(r.kept.len(), 1);
+        assert_eq!(r.failed, vec![(big, KeepError::TooLarge)]);
+        let session = ws.session_with(None, &r.kept);
+        assert_eq!(session.tabs.len(), 1);
+        let texts: Vec<_> = snapshots(&store)
+            .into_iter()
+            .map(|e| e.snapshot.text)
+            .collect();
+        assert_eq!(texts, ["small"]);
+    }
+
+    #[test]
+    fn without_a_store_every_unsaved_tab_is_left_to_the_prompt() {
+        let mut ws = Workspace::new(None);
+        assert!(!ws.has_store());
+        ws.active_mut().editor.execute(Command::Insert("x".into()));
+        ws.new_tab(); // clean: not asked about
+        let r = ws.hot_exit(usize::MAX, WAIT);
+        assert!(r.kept.is_empty());
+        assert_eq!(r.failed.len(), 1);
+    }
+
+    /// Another instance's kept tabs are not in this session file (the last
+    /// instance to quit writes it) but still come back, after the
+    /// session's tabs.
+    #[test]
+    fn snapshots_missing_from_the_session_still_come_back() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = RecoveryStore::open(dir.path().join("r")).unwrap();
+        let mut first = Workspace::new(Some(store.clone()));
+        first
+            .active_mut()
+            .editor
+            .execute(Command::Insert("first".into()));
+        let mut second = Workspace::new(Some(store.clone()));
+        second
+            .active_mut()
+            .editor
+            .execute(Command::Insert("second".into()));
+        let a = first.hot_exit(usize::MAX, WAIT).kept;
+        first.session_with(None, &a); // written, then overwritten:
+        let b = second.hot_exit(usize::MAX, WAIT).kept;
+        let session = second.session_with(None, &b);
+        drop((first, second));
+        let (mut ws, _, _) = Workspace::startup(Some(store.clone()), snapshots(&store), &[]);
+        ws.restore_session(&session, true);
+        let texts: Vec<_> = ws
+            .tabs()
+            .iter()
+            .map(|t| t.editor.document().text())
+            .collect();
+        assert_eq!(texts, ["second", "first"]);
+    }
+
+    #[test]
+    fn restore_notes_name_changed_and_missing_files() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = RecoveryStore::open(dir.path().join("r")).unwrap();
+        let [changed, gone] = ["changed.txt", "gone.txt"].map(|n| dir.path().join(n));
+        fs::write(&changed, "base\n").unwrap();
+        fs::write(&gone, "base\n").unwrap();
+        let mut ws = Workspace::new(Some(store.clone()));
+        for p in [&changed, &gone] {
+            let i = ws.open(p).unwrap();
+            ws.tab_mut(i)
+                .unwrap()
+                .editor
+                .execute(Command::Insert("mine ".into()));
+        }
+        let kept = ws.hot_exit(usize::MAX, WAIT).kept;
+        let session = ws.session_with(None, &kept);
+        drop(ws);
+        fs::write(&changed, "theirs\n").unwrap();
+        fs::remove_file(&gone).unwrap();
+        let (mut ws, _, restored) = Workspace::startup(Some(store.clone()), snapshots(&store), &[]);
+        assert_eq!(restored, 2);
+        ws.restore_session(&session, true);
+        assert_eq!(ws.len(), 2, "the missing file is not dropped or duplicated");
+        let mut notes: Vec<_> = ws
+            .take_restore_notes()
+            .into_iter()
+            .map(|(id, state)| {
+                let t = &ws.tabs()[ws.position(id).unwrap()];
+                (
+                    t.editor.file_name().unwrap(),
+                    t.editor.document().text(),
+                    state,
+                )
+            })
+            .collect();
+        notes.sort_by(|a, b| a.0.cmp(&b.0));
+        assert_eq!(
+            notes,
+            [
+                (
+                    "changed.txt".into(),
+                    "mine base\n".into(),
+                    Restored::ChangedOnDisk
+                ),
+                ("gone.txt".into(), "mine base\n".into(), Restored::Missing),
+            ]
+        );
+        assert_eq!(fs::read(&changed).unwrap(), b"theirs\n", "not overwritten");
+        assert!(!gone.exists(), "not recreated");
     }
 }

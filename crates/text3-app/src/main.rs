@@ -160,13 +160,16 @@ fn main() -> eframe::Result {
         .map(|l| l.into_iter().filter_map(Result::ok).collect())
         .unwrap_or_default();
     let (mut workspace, load_errors, restored) = Workspace::startup(store, snapshots, &paths);
+    // The session puts the restored tabs back in order. Its files reopen
+    // only with session restore on; tabs kept by hot exit come back anyway
+    // (their text is in the recovery folder), so the session still orders
+    // them and restores their selection.
     let mut split = None;
     if paths.is_empty()
-        && settings.restore_session
         && text3_app::migrate::var_os("NO_SESSION").is_none()
         && let Some(session) = session_file.as_deref().and_then(Session::load)
     {
-        split = workspace.restore_session(&session);
+        split = workspace.restore_session(&session, settings.restore_session);
     }
 
     // Before the event loop starts, so a file opened from Finder at launch
@@ -199,6 +202,8 @@ fn main() -> eframe::Result {
             );
             shell.set_history(history);
             shell.set_split(split);
+            shell.reveal_restored_carets();
+            shell.show_restore_notes();
             shell.start_editor_font(&cc.egui_ctx);
             let wake = cc.egui_ctx.clone();
             text3_platform::on_opened_files(move || wake.request_repaint());

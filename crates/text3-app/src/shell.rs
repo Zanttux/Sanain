@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use eframe::egui::{self, ViewportCommand};
+use text3_app::editor::Restored;
 use text3_app::syntax::{CharSpan, MAX_BYTES, SyntaxWorker};
 use text3_app::workspace::{TabId, Workspace};
 use text3_app::{Command, Editor, SaveOutcome};
@@ -197,6 +198,10 @@ enum PaneContent {
 
 /// The content of a pane: the structured view when it is on for a data
 /// file, else the Markdown mode (`md` is `None` for other files).
+/// How long hot exit waits for one tab's text to reach disk before asking
+/// about that tab instead.
+const HOT_EXIT_WAIT: std::time::Duration = std::time::Duration::from_secs(10);
+
 /// Width of the strip around a pane divider that can be dragged.
 const DIVIDER_HIT: f32 = 6.0;
 
@@ -354,6 +359,9 @@ pub struct Shell {
     themes: (Vec<crate::themes::ThemeEntry>, Vec<(String, String)>),
     /// Set once the session was recorded for the current quit attempt.
     quit_recorded: bool,
+    /// Tabs whose unsaved text hot exit kept for the next start during the
+    /// current quit attempt: they are not asked about.
+    hot_exited: Vec<TabId>,
     /// The tab the strip last scrolled into view (a new or switched-to
     /// tab past the edge of an overflowing strip is brought into view).
     tab_in_view: Option<TabId>,
@@ -540,6 +548,7 @@ impl Shell {
             applied_theme: None,
             themes: (Vec::new(), Vec::new()),
             quit_recorded: false,
+            hot_exited: Vec::new(),
             tab_in_view: None,
             focus: Default::default(),
             #[cfg(target_os = "macos")]
@@ -851,16 +860,24 @@ impl Shell {
         }
     }
 
-    /// Quit, asking about each unsaved tab in turn.
+    /// Quit. With hot exit on, unsaved tabs are kept for the next start
+    /// without asking; any that cannot be kept (and all of them with hot
+    /// exit off) are asked about in turn.
     fn request_quit(&mut self, ctx: &egui::Context) {
         // Record open files before the quit flow starts closing tabs.
-        if !std::mem::replace(&mut self.quit_recorded, true)
-            && let Some(f) = &self.session_file
-            && let Err(e) = self.ws.session(self.split.as_ref()).save(f)
-        {
-            eprintln!("text3: could not save session: {e}");
+        if !std::mem::replace(&mut self.quit_recorded, true) {
+            self.hot_exited.clear();
+            if self.settings.hot_exit {
+                self.keep_unsaved();
+            }
+            self.save_session();
         }
-        match self.ws.first_dirty() {
+        let ask = self
+            .ws
+            .tabs()
+            .iter()
+            .position(|t| t.editor.document().is_dirty() && !self.hot_exited.contains(&t.id));
+        match ask {
             Some(i) => {
                 self.ws.activate(i);
                 self.dialog = Some(Dialog::Unsaved(Then::Quit));
@@ -870,6 +887,119 @@ impl Shell {
                 self.allow_close = true;
                 ctx.send_viewport_cmd(ViewportCommand::Close);
             }
+        }
+    }
+
+    /// Hot exit: write every unsaved tab to the recovery folder now. Tabs
+    /// that could not be written are left to the quit prompts, and the
+    /// status bar says why.
+    fn keep_unsaved(&mut self) {
+        let result = self
+            .ws
+            .hot_exit(text3_io::recovery::MAX_TEXT, HOT_EXIT_WAIT);
+        self.hot_exited = result.kept;
+        let name_of = |id: TabId| {
+            self.ws
+                .position(id)
+                .map(|i| self.name_of(&self.ws.tabs()[i].editor))
+                .unwrap_or_default()
+        };
+        let too_large = result
+            .failed
+            .iter()
+            .find(|(_, e)| *e == text3_app::recovery::KeepError::TooLarge);
+        let msg = match (too_large, result.failed.first()) {
+            (Some((id, _)), _) => Some(self.t(
+                "status-hot-exit-too-large",
+                &[("name", name_of(*id).into())],
+            )),
+            (None, Some((_, text3_app::recovery::KeepError::Failed(reason)))) => Some(self.t(
+                "status-hot-exit-failed",
+                &[("reason", reason.clone().into())],
+            )),
+            _ => None,
+        };
+        if let Some(msg) = msg {
+            self.status = Some((msg, true));
+        }
+    }
+
+    /// Write the session file, with the tabs hot exit kept.
+    fn save_session(&self) {
+        if let Some(f) = &self.session_file
+            && let Err(e) = self
+                .ws
+                .session_with(self.split.as_ref(), &self.hot_exited)
+                .save(f)
+        {
+            eprintln!("text3: could not save session: {e}");
+        }
+    }
+
+    /// The process is ending without the quit flow having finished (the
+    /// system is logging out or shutting down, or the app was quit from
+    /// outside, e.g. the Dock): nothing can be asked any more. Every
+    /// unsaved tab is written to the recovery folder, so it comes back at
+    /// the next start; with hot exit on, the session records them too.
+    fn exiting(&mut self) {
+        if !self.allow_close {
+            let result = self
+                .ws
+                .hot_exit(text3_io::recovery::MAX_TEXT, HOT_EXIT_WAIT);
+            for (id, e) in &result.failed {
+                eprintln!("text3: unsaved tab {id} could not be kept: {e:?}");
+            }
+            self.hot_exited = if self.settings.hot_exit {
+                result.kept
+            } else {
+                Vec::new()
+            };
+            self.save_session();
+        }
+        self.ws.flush();
+    }
+
+    /// Tell the user about restored tabs whose file changed on disk or is
+    /// gone. A changed file opens the external-change dialog for its tab:
+    /// the recovered text stays in the tab and the file is not touched
+    /// until the user chooses.
+    pub fn show_restore_notes(&mut self) {
+        let mut messages = Vec::new();
+        for (id, state) in self.ws.take_restore_notes() {
+            let Some(i) = self.ws.position(id) else {
+                continue;
+            };
+            let name = self.name_of(&self.ws.tabs()[i].editor);
+            match state {
+                Restored::ChangedOnDisk => {
+                    messages.push(self.t("status-restored-changed", &[("name", name.into())]));
+                    if self.dialog.is_none() {
+                        self.ws.activate(i);
+                        self.dialog = Some(Dialog::Conflict);
+                    }
+                }
+                Restored::Missing => {
+                    messages.push(self.t("status-restored-missing", &[("name", name.into())]))
+                }
+                Restored::Applied => {}
+            }
+        }
+        if !messages.is_empty() {
+            self.status = Some((messages.join(" "), true));
+        }
+    }
+
+    /// Scroll each tab to its restored selection when it is first shown.
+    pub fn reveal_restored_carets(&mut self) {
+        let ids: Vec<TabId> = self
+            .ws
+            .tabs()
+            .iter()
+            .filter(|t| t.editor.selections().primary().head > 0)
+            .map(|t| t.id)
+            .collect();
+        for id in ids {
+            self.views.entry(id).or_default().reveal();
         }
     }
 
@@ -1205,6 +1335,10 @@ impl Shell {
                                             &mut s.restore_session,
                                             l("settings-restore-session"),
                                         );
+                                        ui.end_row();
+                                        ui.label("");
+                                        ui.checkbox(&mut s.hot_exit, l("settings-hot-exit"))
+                                            .on_hover_text(l("settings-hot-exit-detail"));
                                         ui.end_row();
                                         ui.label("");
                                         ui.checkbox(
@@ -5102,6 +5236,7 @@ impl Shell {
             self.t("file-close-tab", &[]),
         );
         let (strip_l, close_tab_l) = (self.t("a11y-tab-strip", &[]), self.t("tab-close", &[]));
+        let missing_l = self.t("tab-missing-on-disk", &[]);
         let new_tab_l = self.t(MenuAction::New.label_id(), &[]);
         let new_tab_tip = match MenuAction::New.shortcut(&self.settings.keymap) {
             Some(s) => format!("{new_tab_l} ({})", ctx.format_shortcut(&s)),
@@ -5132,11 +5267,15 @@ impl Shell {
                             let is_active = i == active;
                             let dirty = tab.editor.document().is_dirty();
                             let name = self.name_of(&tab.editor);
-                            let ax_name = if dirty {
+                            let missing = tab.editor.is_missing();
+                            let mut ax_name = if dirty {
                                 self.t("a11y-tab-unsaved", &[("name", name.as_str().into())])
                             } else {
                                 name.clone()
                             };
+                            if missing {
+                                ax_name = format!("{ax_name}, {missing_l}");
+                            }
                             let frame = egui::Frame::NONE
                                 .fill(if is_active { p.canvas } else { p.surface })
                                 .inner_margin(egui::Margin {
@@ -5154,11 +5293,16 @@ impl Shell {
                                 ui.horizontal(|ui| {
                                     ui.spacing_mut().item_spacing.x = 6.0;
                                     let color = if is_active { p.text } else { p.muted };
-                                    // Clicks go to the whole tab (below).
-                                    ui.add(
-                                        egui::Label::new(egui::RichText::new(&name).color(color))
-                                            .selectable(false),
-                                    );
+                                    // Clicks go to the whole tab (below). A file
+                                    // that is gone is struck through.
+                                    let mut text = egui::RichText::new(&name).color(color);
+                                    if missing {
+                                        text = text.strikethrough();
+                                    }
+                                    let label = ui.add(egui::Label::new(text).selectable(false));
+                                    if missing {
+                                        label.on_hover_text(missing_l.as_str());
+                                    }
                                     if tab.pinned && !dirty {
                                         // Pinned tabs show a pin, not a close
                                         // button (closing stays in the menus).
@@ -5731,8 +5875,10 @@ impl Shell {
         if close {
             self.dialog = None;
             if after.is_none() {
-                // Cancelled: a later quit records the session afresh.
+                // Cancelled: a later quit records the session afresh (the
+                // texts hot exit wrote stay as ordinary checkpoints).
                 self.quit_recorded = false;
+                self.hot_exited.clear();
             }
             self.focus_active();
             match after {
@@ -5771,6 +5917,17 @@ impl Shell {
 }
 
 impl eframe::App for Shell {
+    #[cfg(not(windows))]
+    fn on_exit(&mut self) {
+        self.exiting();
+    }
+
+    // Windows builds include the glow renderer, which changes the signature.
+    #[cfg(windows)]
+    fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
+        self.exiting();
+    }
+
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
         self.ctx = ctx.clone();

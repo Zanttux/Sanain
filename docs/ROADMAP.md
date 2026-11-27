@@ -18,7 +18,7 @@ No calendar promises. Each milestone is split into small PR-sized tasks. First v
 - Paid Mac App Store and Microsoft Store builds as a support model; free builds and all features stay free (#79). Store accounts and pricing are owner decisions.
 - (2026-11-27) Done: new-tab button: a "+" button right after the last tab in the tab strip opens a new untitled tab, as in other editors (#151). Same command as File › New Tab; localized tooltip and accessible name; reachable in the tab-strip focus order.
 - (2026-11-27) Gaps from the competitor feature map (PRODUCT.md, Notepad++, Sublime Text, Windows Notepad), by priority:
-  - Must: hot exit — quit without prompts, unsaved and untitled tabs come back on next launch (completes E06; opt-out in Settings).
+  - Done (2026-11-27): hot exit — quit without prompts, unsaved and untitled tabs come back on next launch (completes E06; opt-out in Settings › General). Follow-up: single-instance lock, so a second window does not adopt the first one's live checkpoints.
   - Must: measure cold/warm startup and idle memory against the TESTING budgets before claiming "lightweight"; fix what misses.
   - Should: Goto Anything — fuzzy quick open of files in the current folder and recent files, with `:line` and `@heading/symbol` jumps.
   - Should: status-bar character and word count for the document and the selection.

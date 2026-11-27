@@ -9,7 +9,10 @@
 //! `magic "SANAINRC"` · `u32 version` · `u32 header_len` · header ·
 //! `u64 text_len` · text (UTF-8) · `u64 FNV-1a of everything before`.
 //! The header is UTF-8 `key=value` lines: `encoding`, optional `path`,
-//! `saved` (Unix seconds).
+//! `saved` (Unix seconds) and, for a file-backed buffer, the disk state its
+//! edits were made on: `base_len`, `base_hash` (FNV-1a, hex) and optional
+//! `base_mtime` (nanoseconds since the Unix epoch). Readers ignore keys they
+//! do not know, so older versions still read newer snapshots.
 
 use std::fs;
 use std::io;
@@ -17,13 +20,19 @@ use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::encoding::TextEncoding;
-use crate::file::write_atomic;
+use crate::file::{Fingerprint, fnv1a, write_atomic};
 
 const MAGIC: &[u8; 8] = b"SANAINRC";
 const VERSION: u32 = 1;
 const EXTENSION: &str = "sanain-recovery";
 /// Refuse to read absurdly large or hostile files.
 const MAX_FILE: u64 = 1 << 32;
+/// Largest text a snapshot holds (bytes of UTF-8), leaving room for the
+/// header and checksum under [`MAX_FILE`]. Larger buffers are not written,
+/// since they could not be read back.
+pub const MAX_TEXT: usize = (MAX_FILE - (1 << 20)) as usize;
+// A snapshot at the cap, with a generous header, can be read back.
+const _: () = assert!(MAX_TEXT as u64 + 64 * 1024 < MAX_FILE);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Snapshot {
@@ -31,6 +40,10 @@ pub struct Snapshot {
     pub path: Option<PathBuf>,
     pub encoding: TextEncoding,
     pub text: String,
+    /// The file's state on disk when the buffer was loaded or last saved,
+    /// i.e. what the unsaved edits apply to. `None` for untitled buffers
+    /// and snapshots from older versions.
+    pub base: Option<Fingerprint>,
 }
 
 #[derive(Debug)]
@@ -125,7 +138,16 @@ impl RecoveryStore {
         self.dir.join(format!("{id}.{EXTENSION}"))
     }
 
+    /// Write a snapshot atomically: a crash mid-write leaves the previous
+    /// snapshot (or none) in place, never a partial one. Text over
+    /// [`MAX_TEXT`] is refused with `InvalidInput`.
     pub fn write(&self, id: &str, snapshot: &Snapshot) -> io::Result<()> {
+        if snapshot.text.len() > MAX_TEXT {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "the text is too large for a recovery snapshot",
+            ));
+        }
         let bytes = encode(snapshot, SystemTime::now());
         #[cfg(unix)]
         let perms = {
@@ -180,12 +202,6 @@ fn read_file(path: &Path) -> Result<(SystemTime, Snapshot), RecoveryError> {
     decode(&bytes).map_err(corrupt)
 }
 
-fn fnv1a(bytes: &[u8]) -> u64 {
-    bytes.iter().fold(0xcbf2_9ce4_8422_2325, |h, b| {
-        (h ^ u64::from(*b)).wrapping_mul(0x0100_0000_01b3)
-    })
-}
-
 fn encoding_name(e: TextEncoding) -> &'static str {
     match e {
         TextEncoding::Utf8 => "utf-8",
@@ -207,6 +223,20 @@ fn encode(s: &Snapshot, saved: SystemTime) -> Vec<u8> {
         && !p.contains('\n')
     {
         header.push_str(&format!("path={p}\n"));
+    }
+    if let Some(b) = &s.base {
+        header.push_str(&format!(
+            "base_len={}\nbase_hash={:x}\n",
+            b.len(),
+            b.content_hash()
+        ));
+        if let Some(ns) = b
+            .modified()
+            .and_then(|m| m.duration_since(UNIX_EPOCH).ok())
+            .map(|d| d.as_nanos())
+        {
+            header.push_str(&format!("base_mtime={ns}\n"));
+        }
     }
     let mut out = Vec::with_capacity(32 + header.len() + s.text.len());
     out.extend_from_slice(MAGIC);
@@ -243,6 +273,7 @@ fn decode(bytes: &[u8]) -> Result<(SystemTime, Snapshot), &'static str> {
     let text = String::from_utf8(rest.to_vec()).map_err(|_| "text is not UTF-8")?;
 
     let (mut encoding, mut path, mut saved) = (None, None, UNIX_EPOCH);
+    let (mut base_len, mut base_hash, mut base_mtime) = (None, None, None);
     for line in header.lines() {
         match line.split_once('=') {
             Some(("encoding", v)) => {
@@ -264,16 +295,34 @@ fn decode(bytes: &[u8]) -> Result<(SystemTime, Snapshot), &'static str> {
                 let secs: u64 = v.parse().map_err(|_| "bad time")?;
                 saved = UNIX_EPOCH + std::time::Duration::from_secs(secs);
             }
+            // A bad base is dropped rather than failing the snapshot: the
+            // text matters more than the conflict check.
+            Some(("base_len", v)) => base_len = v.parse::<u64>().ok(),
+            Some(("base_hash", v)) => base_hash = u64::from_str_radix(v, 16).ok(),
+            Some(("base_mtime", v)) => {
+                base_mtime = v.parse::<u128>().ok().and_then(|ns| {
+                    let secs = u64::try_from(ns / 1_000_000_000).ok()?;
+                    let d = std::time::Duration::new(secs, (ns % 1_000_000_000) as u32);
+                    UNIX_EPOCH.checked_add(d)
+                });
+            }
             _ => {} // unknown keys are ignored for forward compatibility
         }
     }
     let encoding = encoding.ok_or("missing encoding")?;
+    let base = match (base_len, base_hash) {
+        (Some(len), Some(hash)) if path.is_some() => {
+            Some(Fingerprint::from_parts(len, base_mtime, hash))
+        }
+        _ => None,
+    };
     Ok((
         saved,
         Snapshot {
             path,
             encoding,
             text,
+            base,
         },
     ))
 }
@@ -287,6 +336,11 @@ mod tests {
             path: Some(PathBuf::from("/tmp/notes ä.txt")),
             encoding: TextEncoding::Utf16LeBom,
             text: "line\r\n🙂 é\n".into(),
+            base: Some(Fingerprint::from_parts(
+                42,
+                Some(UNIX_EPOCH + std::time::Duration::new(1_700_000_000, 123_456_789)),
+                0xdead_beef_0123_4567,
+            )),
         }
     }
 
@@ -298,6 +352,7 @@ mod tests {
             path: None,
             encoding: TextEncoding::Utf8,
             text: String::new(),
+            base: None,
         };
         store.write("a", &sample()).unwrap();
         store.write("b", &untitled).unwrap();
@@ -343,6 +398,43 @@ mod tests {
         assert_eq!(list.len(), 2);
         assert_eq!(list.iter().filter(|r| r.is_err()).count(), 1);
         assert!(bad.exists());
+    }
+
+    #[test]
+    fn base_round_trips_and_old_snapshots_have_none() {
+        let back = decode(&encode(&sample(), UNIX_EPOCH)).unwrap().1;
+        assert_eq!(back.base, sample().base, "mtime kept to the nanosecond");
+        // Written by an older version: no base keys.
+        let old = Snapshot {
+            base: None,
+            ..sample()
+        };
+        assert_eq!(decode(&encode(&old, UNIX_EPOCH)).unwrap().1.base, None);
+        // A base without mtime (platforms without one) still round-trips.
+        let no_mtime = Snapshot {
+            base: Some(Fingerprint::from_parts(3, None, 7)),
+            ..sample()
+        };
+        assert_eq!(
+            decode(&encode(&no_mtime, UNIX_EPOCH)).unwrap().1.base,
+            no_mtime.base
+        );
+    }
+
+    /// A crash during a write leaves the write's temporary file behind and
+    /// the previous snapshot untouched: listing ignores the former and
+    /// still reads the latter.
+    #[test]
+    fn interrupted_write_keeps_the_previous_snapshot() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = RecoveryStore::open(dir.path()).unwrap();
+        store.write("t", &sample()).unwrap();
+        let mut partial = encode(&sample(), UNIX_EPOCH);
+        partial.truncate(partial.len() / 2);
+        fs::write(dir.path().join(".text3-save-1-0-0.tmp"), &partial).unwrap();
+        let list = store.list().unwrap();
+        assert_eq!(list.len(), 1);
+        assert_eq!(list[0].as_ref().unwrap().snapshot, sample());
     }
 
     #[cfg(unix)]
