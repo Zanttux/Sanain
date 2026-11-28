@@ -14,6 +14,7 @@ Usage: scripts/package.py [--no-build]
 """
 
 import hashlib
+import json
 import os
 import platform
 import re
@@ -148,6 +149,50 @@ end tell
 """
 
 
+def sign_app(app):
+    """Seal `app`: ad-hoc by default (#166), or with the Developer ID in
+    TEXT3_SIGN_IDENTITY, hardened runtime and a secure timestamp (#174)."""
+    identity = os.environ.get("TEXT3_SIGN_IDENTITY")
+    if identity:
+        run("codesign", "--force", "--options", "runtime", "--timestamp",
+            "--sign", identity, app)
+    else:
+        run("codesign", "--force", "--sign", "-", "--timestamp=none", app)
+    run("codesign", "--verify", "--strict", app)
+
+
+def notary_args():
+    """notarytool credentials from TEXT3_NOTARY_KEY (path to the App Store
+    Connect API key), TEXT3_NOTARY_KEY_ID and TEXT3_NOTARY_ISSUER, or None
+    when not notarizing."""
+    key = os.environ.get("TEXT3_NOTARY_KEY")
+    if not key:
+        return None
+    return ["--key", key, "--key-id", os.environ["TEXT3_NOTARY_KEY_ID"],
+            "--issuer", os.environ["TEXT3_NOTARY_ISSUER"]]
+
+
+def notarize(path):
+    """Submit `path` (.zip or .dmg) to Apple's notary service and wait.
+    Fails the build unless Apple accepts it."""
+    creds = notary_args()
+    out = subprocess.run(
+        ["xcrun", "notarytool", "submit", path, "--wait", "--timeout", "30m",
+         "--output-format", "json", *creds],
+        capture_output=True, text=True,
+    )
+    print(out.stdout, out.stderr, sep="\n")
+    try:
+        result = json.loads(out.stdout)
+    except ValueError:
+        result = {}
+    if result.get("status") != "Accepted":
+        sub = result.get("id")
+        if sub:
+            subprocess.run(["xcrun", "notarytool", "log", sub, *creds], check=False)
+        raise SystemExit(f"notarization of {path} failed: {result.get('status')}")
+
+
 def dmg_layout(rw):
     """Apply the window layout to the read-write image `rw`. Needs Finder
     (a logged-in session); on failure the DMG keeps Finder's default
@@ -184,8 +229,7 @@ def macos_dmg(stage_app, dist, name, notices):
     for doc in DOCS:
         shutil.copy2(os.path.join(ROOT, doc), os.path.join(res, doc))
     shutil.copy2(notices, os.path.join(res, "THIRD_PARTY_NOTICES.md"))
-    run("codesign", "--force", "--sign", "-", "--timestamp=none", app)
-    run("codesign", "--verify", "--strict", app)
+    sign_app(app)
     os.makedirs(os.path.join(tmp, ".background"))
     shutil.copy2(
         os.path.join(ROOT, "packaging", "macos", "dmg-background.tiff"),
@@ -202,6 +246,12 @@ def macos_dmg(stage_app, dist, name, notices):
     run("hdiutil", "convert", rw, "-format", "UDZO", "-o", dmg)
     os.remove(rw)
     shutil.rmtree(tmp)
+    identity = os.environ.get("TEXT3_SIGN_IDENTITY")
+    if identity:
+        run("codesign", "--force", "--timestamp", "--sign", identity, dmg)
+    if notary_args():
+        notarize(dmg)
+        run("xcrun", "stapler", "staple", dmg)
     return dmg
 
 
@@ -314,6 +364,16 @@ def main():
         installer = linux_deb(ver, arch, dist, notices)
     if installer:
         checksum(installer)
+
+    # Signed builds: notarize the app of the portable archive and staple the
+    # ticket to it, so it opens offline too (the DMG has its own ticket).
+    if system == "macos" and notary_args():
+        app = os.path.join(stage, "Text³.app")
+        submission = os.path.join(dist, name + "-notarize.zip")
+        run("ditto", "-c", "-k", "--keepParent", app, submission)
+        notarize(submission)
+        os.remove(submission)
+        run("xcrun", "stapler", "staple", app)
 
     # Portable archive: the marker keeps settings and data next to the app.
     with open(os.path.join(stage, "text3-portable"), "w", encoding="utf-8") as f:
