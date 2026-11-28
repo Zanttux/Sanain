@@ -1291,7 +1291,7 @@ mod tests {
         out
     }
 
-    const SAMPLE: &str = "# Asetukset\r\nname: Sanain   # nimi\r\nversion: 1.2.3\r\nquoted: 'it''s'\r\ndq: \"a\\tb\"  # tab\r\nempty:\r\nlist:\r\n  # first\r\n  - one\r\n  - two: 2\r\n    three: 3 # c3\r\n  - - x\r\n    - y\r\nflow: [1, 2]\r\nbase: &b {x: 1}\r\ncopy: *b\r\ntagged: !!str 5\r\nlit: |\r\n  line1\r\n  line2\r\nafter: z\r\n";
+    const SAMPLE: &str = "# Asetukset\r\nname: Text3   # nimi\r\nversion: 1.2.3\r\nquoted: 'it''s'\r\ndq: \"a\\tb\"  # tab\r\nempty:\r\nlist:\r\n  # first\r\n  - one\r\n  - two: 2\r\n    three: 3 # c3\r\n  - - x\r\n    - y\r\nflow: [1, 2]\r\nbase: &b {x: 1}\r\ncopy: *b\r\ntagged: !!str 5\r\nlit: |\r\n  line1\r\n  line2\r\nafter: z\r\n";
 
     fn chars(src: &str, r: &Range<usize>) -> String {
         src.chars().skip(r.start).take(r.end - r.start).collect()
@@ -1305,11 +1305,11 @@ mod tests {
         assert_eq!(d.items[root].children.len(), 12);
         let name = at(&d, &[0, 0]);
         assert_eq!(d.key_text(name), Some("name"));
-        assert_eq!(d.value_text(name), Some("Sanain"));
+        assert_eq!(d.value_text(name), Some("Text3"));
         let sp = &d.items[name].spans;
         assert_eq!(
             chars(SAMPLE, sp.removal.as_ref().unwrap()),
-            "name: Sanain   # nimi\r\n"
+            "name: Text3   # nimi\r\n"
         );
         let q = at(&d, &[0, 2]);
         assert_eq!(d.value_text(q), Some("'it''s'"));
@@ -1374,9 +1374,9 @@ mod tests {
             assert_eq!(e.len(), 1);
             ok(SAMPLE, &e)
         };
-        let name = |to: &str| SAMPLE.replace("name: Sanain ", &format!("name: {to} "));
+        let name = |to: &str| SAMPLE.replace("name: Text3 ", &format!("name: {to} "));
         // A plain string stays a string: the Norway problem and friends.
-        assert_eq!(set(&[0, 0], "Sanain 2"), name("Sanain 2"));
+        assert_eq!(set(&[0, 0], "Text3 2"), name("Text3 2"));
         for (typed, written) in [
             ("no", "\"no\""),
             ("yes", "\"yes\""),
@@ -1456,7 +1456,7 @@ mod tests {
             set(&[0, 5, 1, 1], "4"),
             SAMPLE.replace("three: 3 #", "three: 4 #")
         );
-        assert_eq!(d.set_value(at(&d, &[0, 0]), "Sanain"), Ok(None));
+        assert_eq!(d.set_value(at(&d, &[0, 0]), "Text3"), Ok(None));
         // The new value reads back as typed and as a string.
         let out = set(&[0, 0], "no");
         let nd = doc(&out).unwrap();
@@ -1486,11 +1486,11 @@ mod tests {
         let d = doc(SAMPLE).unwrap();
         let rn = |path: &[usize], v: &str| d.rename_key(at(&d, path), v);
         let out = ok(SAMPLE, &rn(&[0, 0], "nimi").unwrap().unwrap());
-        assert_eq!(out, SAMPLE.replace("name: Sanain", "nimi: Sanain"));
+        assert_eq!(out, SAMPLE.replace("name: Text3", "nimi: Text3"));
         let out = ok(SAMPLE, &rn(&[0, 0], "no").unwrap().unwrap());
-        assert_eq!(out, SAMPLE.replace("name: Sanain", "\"no\": Sanain"));
+        assert_eq!(out, SAMPLE.replace("name: Text3", "\"no\": Text3"));
         let out = ok(SAMPLE, &rn(&[0, 0], "a: b").unwrap().unwrap());
-        assert_eq!(out, SAMPLE.replace("name: Sanain", "\"a: b\": Sanain"));
+        assert_eq!(out, SAMPLE.replace("name: Text3", "\"a: b\": Text3"));
         let out = ok(SAMPLE, &rn(&[0, 5, 1, 0], "kaksi").unwrap().unwrap());
         assert_eq!(out, SAMPLE.replace("- two: 2", "- kaksi: 2"));
         assert_eq!(rn(&[0, 0], "version"), Err(EditError::DuplicateKey));
@@ -1539,10 +1539,7 @@ mod tests {
     fn delete_entries_with_their_lines() {
         let d = doc(SAMPLE).unwrap();
         let del = |path: &[usize]| ok(SAMPLE, &d.delete(at(&d, path)).unwrap());
-        assert_eq!(
-            del(&[0, 0]),
-            SAMPLE.replace("name: Sanain   # nimi\r\n", "")
-        );
+        assert_eq!(del(&[0, 0]), SAMPLE.replace("name: Text3   # nimi\r\n", ""));
         assert_eq!(
             del(&[0, 5, 0]),
             SAMPLE.replace("  - one\r\n", ""),

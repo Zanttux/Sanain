@@ -184,7 +184,7 @@ fn writes_fail_cleanly_on_a_full_disk() {
     // than SLACK so the copy cannot fit.
     let newer = dir.join("config-newer");
     fs::create_dir_all(&newer).unwrap();
-    let mut future = String::from("sanain-macros 99\n");
+    let mut future = String::from("text3-macros 99\n");
     while future.len() < 2 * SLACK as usize {
         future.push_str("a macro from a newer version\n");
     }

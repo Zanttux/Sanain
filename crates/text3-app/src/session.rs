@@ -1,6 +1,7 @@
 //! The list of open files, restored on the next launch.
 //!
-//! Format (UTF-8 text): first line `sanain-session 1`, then `active=N` and
+//! Format (UTF-8 text): first line `text3-session 1` (or `sanain-session
+//! 1`, written before the rename), then `active=N` and
 //! one line per tab in order: `path=...` for a file, `untitled=ID` for an
 //! untitled tab kept by hot exit (its text is recovery snapshot `ID`).
 //! A tab line may be followed by `recovery=ID` (a file tab's unsaved edits
@@ -36,7 +37,9 @@ use std::path::{Path, PathBuf};
 
 use crate::panes::{Direction, GroupLayout, Layout};
 
-const HEADER: &str = "sanain-session 1";
+const HEADER: &str = "text3-session 1";
+/// The header before the rename to Text³ (docs/REBRAND.md).
+const LEGACY_HEADER: &str = "sanain-session 1";
 
 /// One tab of a session.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -216,7 +219,7 @@ impl Session {
     /// Parse a session file. Anything malformed yields `None`, never a panic.
     pub fn decode(text: &str) -> Option<Self> {
         let mut lines = text.lines();
-        if lines.next()? != HEADER {
+        if !matches!(lines.next()?, HEADER | LEGACY_HEADER) {
             return None;
         }
         let mut s = Session::default();
@@ -273,6 +276,17 @@ impl Session {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Written as Text³; files from Sanain are still read (docs/REBRAND.md).
+    #[test]
+    fn header_new_and_legacy() {
+        let s = Session::of_paths(["/a.txt".into()]);
+        assert!(s.encode().starts_with("text3-session 1\n"));
+        assert_eq!(
+            Session::decode("sanain-session 1\nactive=0\npath=/a.txt\n"),
+            Some(s)
+        );
+    }
 
     #[test]
     fn round_trip_and_clamping() {
