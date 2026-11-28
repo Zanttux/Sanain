@@ -203,6 +203,48 @@ pub fn set_default_editor(uti: &str, bundle_id: &str) -> std::io::Result<()> {
     }
 }
 
+/// Show `path` selected in Finder (NSWorkspace). Works inside the App
+/// Store sandbox, where starting `/usr/bin/open` is not allowed (#79).
+/// Returns false on other platforms or when Finder could not be asked.
+pub fn reveal_in_finder(path: &std::path::Path) -> bool {
+    #[cfg(target_os = "macos")]
+    return finder::reveal(path);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = path;
+        false
+    }
+}
+
+#[cfg(target_os = "macos")]
+mod finder {
+    use objc2::msg_send;
+    use objc2::rc::Retained;
+    use objc2::runtime::{AnyClass, AnyObject};
+    use objc2_foundation::{NSArray, NSString, NSURL};
+
+    pub(super) fn reveal(path: &std::path::Path) -> bool {
+        let Some(s) = path.to_str() else { return false };
+        let url = NSURL::fileURLWithPath(&NSString::from_str(s));
+        let urls = NSArray::from_retained_slice(&[url]);
+        // AppKit is loaded by the window library; without it there is no
+        // NSWorkspace and nothing to do.
+        let Some(cls) = AnyClass::get(c"NSWorkspace") else {
+            return false;
+        };
+        // SAFETY: `sharedWorkspace` returns the shared NSWorkspace and
+        // `activateFileViewerSelectingURLs:` takes an NSArray<NSURL> and
+        // returns nothing; both may be called from any thread.
+        #[allow(unsafe_code)]
+        unsafe {
+            let ws: Option<Retained<AnyObject>> = msg_send![cls, sharedWorkspace];
+            let Some(ws) = ws else { return false };
+            let _: () = msg_send![&*ws, activateFileViewerSelectingURLs: &*urls];
+        }
+        true
+    }
+}
+
 #[cfg(target_os = "macos")]
 mod launch_services {
     use std::ffi::c_void;
@@ -451,6 +493,16 @@ mod tests {
         } else {
             assert_eq!(plain, None);
             assert!(set_default_editor("public.plain-text", "x.y").is_err());
+        }
+    }
+
+    /// Never panics: without AppKit (this test binary) it reports false.
+    #[test]
+    fn reveal_without_appkit_is_harmless() {
+        let d = std::env::temp_dir();
+        let shown = reveal_in_finder(&d);
+        if !cfg!(target_os = "macos") {
+            assert!(!shown);
         }
     }
 
