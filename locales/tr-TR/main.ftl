@@ -475,10 +475,33 @@ cli-help-integration =
     Dosya yöneticisi tümleştirmesi (yalnızca geçerli kullanıcı):
       text3 --register            Text³ uygulamasını "Birlikte Aç" menüsüne ekle (Linux, Windows)
       text3 --unregister          yeniden kaldır
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  Text³ uygulamasını bu dosyalar için varsayılan yap
 cli-registered = Text³ "Birlikte Aç" menüsüne eklendi. { $place }
 cli-unregistered = Text³ "Birlikte Aç" menüsünden kaldırıldı.
 cli-register-failed = Dosya yöneticisi tümleştirmesi değiştirilemedi: { $reason }
 cli-register-macos = macOS'ta hiçbir şeyin kaydedilmesi gerekmez: Text³.app Uygulamalar klasörüne konduğunda Finder onu "Birlikte Aç" menüsünde sunar.
+cli-default-apps-set = Text³ artık bu dosya türlerini açıyor: { $types }
+cli-default-apps-unknown = Bilinmeyen dosya türü grubu: { $group }. Bilinen gruplar: plain, markdown, code, data, web.
+default-apps-title = Dosyaları Text³ ile aç
+default-apps-body = Text³, bu dosyalara çift tıkladığınızda onları açan uygulama olabilir. Bunu daha sonra Ayarlar › Genel bölümünden değiştirebilirsiniz.
+default-apps-body-windows = Windows'ta varsayılan uygulamaları kendiniz seçersiniz: Text³, Ayarlar › Varsayılan uygulamalar sayfasını açar; orada her dosya türü için Text³ uygulamasını seçersiniz.
+default-apps-unavailable = Text³ uygulamasının bu kopyası varsayılan uygulamaları değiştiremez: taşınabilir bir kopyadır veya macOS'ta Text³.app üzerinden başlatılmamıştır.
+default-apps-plain = Metin ve günlükler
+default-apps-markdown = Markdown
+default-apps-code = Kaynak kod ve betikler
+default-apps-data = Veri ve yapılandırma
+default-apps-web = Web sayfaları ve stiller
+default-apps-is-default = zaten Text³
+default-apps-apply = Text³ uygulamasını varsayılan yap
+default-apps-open-settings = Windows Ayarlarını aç
+default-apps-not-now = Şimdi değil
+default-apps-close = Kapat
+default-apps-done = Text³ artık seçilen dosya türlerini açıyor.
+default-apps-settings-opened = Windows Ayarları açık: Text³ uygulamasının açması gereken dosya türleri için onu seçin.
+default-apps-failed = Varsayılan uygulamalar değiştirilemedi: { $reason }
+settings-default-apps = Varsayılan uygulamalar
+settings-default-apps-button = Dosya türlerini seç…
 settings-tab-general = Genel
 settings-tab-editor = Düzenleyici
 settings-tab-appearance = Görünüm

@@ -451,10 +451,33 @@ cli-help-integration =
     Integrasi dengan pengelola berkas (hanya pengguna saat ini):
       text3 --register            tambahkan Text³ ke "Buka Dengan" (Linux, Windows)
       text3 --unregister          hapus lagi dari sana
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  jadikan Text³ aplikasi default untuk file ini
 cli-registered = Text³ telah ditambahkan ke "Buka Dengan". { $place }
 cli-unregistered = Text³ telah dihapus dari "Buka Dengan".
 cli-register-failed = Integrasi pengelola berkas tidak dapat diubah: { $reason }
 cli-register-macos = Di macOS tidak ada yang perlu didaftarkan: setelah Text³.app berada di folder Aplikasi, Finder akan menawarkannya di "Buka Dengan".
+cli-default-apps-set = Text³ kini membuka jenis file ini: { $types }
+cli-default-apps-unknown = Grup jenis file tidak dikenal: { $group }. Grup yang dikenal: plain, markdown, code, data, web.
+default-apps-title = Buka file dengan Text³
+default-apps-body = Text³ dapat menjadi aplikasi yang membuka file ini saat Anda mengklik dua kali. Anda dapat mengubahnya nanti di Pengaturan › Umum.
+default-apps-body-windows = Di Windows Anda memilih aplikasi default sendiri: Text³ membuka Pengaturan › Aplikasi default, tempat Anda memilih Text³ untuk setiap jenis file.
+default-apps-unavailable = Salinan Text³ ini tidak dapat mengubah aplikasi default: ini adalah salinan portabel, atau di macOS tidak dijalankan dari Text³.app.
+default-apps-plain = Teks dan log
+default-apps-markdown = Markdown
+default-apps-code = Kode sumber dan skrip
+default-apps-data = Data dan konfigurasi
+default-apps-web = Halaman web dan gaya
+default-apps-is-default = sudah Text³
+default-apps-apply = Jadikan Text³ default
+default-apps-open-settings = Buka Pengaturan Windows
+default-apps-not-now = Nanti saja
+default-apps-close = Tutup
+default-apps-done = Text³ kini membuka jenis file yang dipilih.
+default-apps-settings-opened = Pengaturan Windows terbuka: pilih Text³ untuk jenis file yang harus dibukanya.
+default-apps-failed = Aplikasi default tidak dapat diubah: { $reason }
+settings-default-apps = Aplikasi default
+settings-default-apps-button = Pilih jenis file…
 settings-tab-general = Umum
 settings-tab-editor = Editor
 settings-tab-appearance = Tampilan

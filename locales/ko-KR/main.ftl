@@ -451,10 +451,33 @@ cli-help-integration =
     파일 관리자 통합 (현재 사용자만):
       text3 --register            "연결 프로그램"에 Text³ 추가 (Linux, Windows)
       text3 --unregister          다시 제거
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  이 파일들의 기본 앱을 Text³ 앱으로 설정
 cli-registered = Text³ 앱을 "연결 프로그램"에 추가했습니다. { $place }
 cli-unregistered = Text³ 앱을 "연결 프로그램"에서 제거했습니다.
 cli-register-failed = 파일 관리자 통합을 변경할 수 없습니다: { $reason }
 cli-register-macos = macOS에서는 등록할 필요가 없습니다. Text³.app이 응용 프로그램 폴더에 있으면 Finder가 "연결 프로그램"에 표시합니다.
+cli-default-apps-set = 이제 Text³ 앱이 다음 파일 형식을 엽니다: { $types }
+cli-default-apps-unknown = 알 수 없는 파일 형식 그룹: { $group }. 사용 가능한 그룹: plain, markdown, code, data, web.
+default-apps-title = Text³ 앱으로 파일 열기
+default-apps-body = 이 파일들을 두 번 클릭할 때 여는 앱을 Text³ 앱으로 할 수 있습니다. 나중에 설정 › 일반에서 바꿀 수 있습니다.
+default-apps-body-windows = Windows에서는 기본 앱을 직접 선택합니다. Text³ 앱이 설정 › 기본 앱을 열면 파일 형식마다 Text³ 앱을 선택하세요.
+default-apps-unavailable = 이 Text³ 사본은 기본 앱을 바꿀 수 없습니다. 휴대용 사본이거나 macOS에서 Text³.app으로 실행하지 않았습니다.
+default-apps-plain = 텍스트 및 로그
+default-apps-markdown = Markdown
+default-apps-code = 소스 코드 및 스크립트
+default-apps-data = 데이터 및 구성
+default-apps-web = 웹 페이지 및 스타일
+default-apps-is-default = 이미 Text³
+default-apps-apply = Text³ 앱을 기본으로 설정
+default-apps-open-settings = Windows 설정 열기
+default-apps-not-now = 나중에
+default-apps-close = 닫기
+default-apps-done = 이제 Text³ 앱이 선택한 파일 형식을 엽니다.
+default-apps-settings-opened = Windows 설정이 열려 있습니다. Text³ 앱이 열어야 할 파일 형식에 Text³ 앱을 선택하세요.
+default-apps-failed = 기본 앱을 바꾸지 못했습니다: { $reason }
+settings-default-apps = 기본 앱
+settings-default-apps-button = 파일 형식 선택…
 settings-tab-general = 일반
 settings-tab-editor = 편집기
 settings-tab-appearance = 모양

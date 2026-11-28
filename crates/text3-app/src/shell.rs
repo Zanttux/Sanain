@@ -63,6 +63,7 @@ enum SettingsTab {
 /// Upper bound for Play Macro Multiple Times.
 const MACRO_TIMES_MAX: usize = 10_000;
 
+mod default_apps;
 mod goto_anything;
 
 /// Markdown outline (level, title, line) for a tab at a revision.
@@ -296,6 +297,8 @@ pub struct Shell {
     headings: Option<HeadingCache>,
     /// Goto Anything's file listing and caches.
     goto: goto_anything::GotoState,
+    /// The Default apps window, when open (#164).
+    default_apps: Option<default_apps::DefaultApps>,
     /// The Markdown outline side panel is shown.
     outline_open: bool,
     /// Languages chosen by hand per tab (`None` = plain text).
@@ -540,6 +543,7 @@ impl Shell {
             about_logo: None,
             headings: None,
             goto: Default::default(),
+            default_apps: None,
             outline_open: false,
             lang_override: HashMap::new(),
             settings_tab: SettingsTab::General,
@@ -1225,6 +1229,7 @@ impl Shell {
         let families = self.font_families.clone();
         let scanning = self.font_rx.is_some();
         let mut scan_fonts = false;
+        let mut open_default_apps = false;
         let was_recording = recording.is_some();
         let mut focus_search = false;
         let focus_tab = std::mem::take(&mut self.settings_focus);
@@ -1395,6 +1400,11 @@ impl Shell {
                                             l("settings-check-updates"),
                                         )
                                         .on_hover_text(l("settings-check-updates-detail"));
+                                        ui.end_row();
+                                        ui.label(l("settings-default-apps"));
+                                        if ui.button(l("settings-default-apps-button")).clicked() {
+                                            open_default_apps = true;
+                                        }
                                         ui.end_row();
                                     });
                             }
@@ -1760,6 +1770,9 @@ impl Shell {
                     }
                 }
             });
+        if open_default_apps {
+            self.open_default_apps();
+        }
         if scan_fonts {
             self.font_job(|| FontMsg::Families(text3_app::fonts::monospace_families()));
         }
@@ -6404,6 +6417,7 @@ impl eframe::App for Shell {
         self.poll_update();
         self.dialogs(&ctx);
         self.settings_window(&ctx);
+        self.default_apps_window(&ctx);
         self.compare_picker(&ctx);
         self.history_window(&ctx);
         self.replace_preview_window(&ctx);

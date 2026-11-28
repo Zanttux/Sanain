@@ -475,10 +475,33 @@ cli-help-integration =
     Integrering med filhanteraren (endast aktuell användare):
       text3 --register            lägg till Text³ i ”Öppna med” (Linux, Windows)
       text3 --unregister          ta bort det igen
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  gör Text³ till standardapp för dessa filer
 cli-registered = Text³ lades till i ”Öppna med”. { $place }
 cli-unregistered = Text³ togs bort från ”Öppna med”.
 cli-register-failed = Integreringen med filhanteraren kunde inte ändras: { $reason }
 cli-register-macos = I macOS behöver ingenting registreras: när Text³.app ligger i mappen Program erbjuder Finder den under ”Öppna med”.
+cli-default-apps-set = Text³ öppnar nu dessa filtyper: { $types }
+cli-default-apps-unknown = Okänd filtypsgrupp: { $group }. Kända grupper: plain, markdown, code, data, web.
+default-apps-title = Öppna filer med Text³
+default-apps-body = Text³ kan vara appen som öppnar de här filerna när du dubbelklickar på dem. Du kan ändra det senare under Inställningar › Allmänt.
+default-apps-body-windows = I Windows väljer du standardappar själv: Text³ öppnar Inställningar › Standardappar, där du väljer Text³ för varje filtyp.
+default-apps-unavailable = Den här kopian av Text³ kan inte ändra standardapparna: den är portabel, eller så startades den inte från Text³.app i macOS.
+default-apps-plain = Text och loggar
+default-apps-markdown = Markdown
+default-apps-code = Källkod och skript
+default-apps-data = Data och konfiguration
+default-apps-web = Webbsidor och stilmallar
+default-apps-is-default = redan Text³
+default-apps-apply = Gör Text³ till standard
+default-apps-open-settings = Öppna Windows-inställningar
+default-apps-not-now = Inte nu
+default-apps-close = Stäng
+default-apps-done = Text³ öppnar nu de valda filtyperna.
+default-apps-settings-opened = Windows-inställningar är öppna: välj Text³ för de filtyper som det ska öppna.
+default-apps-failed = Standardapparna kunde inte ändras: { $reason }
+settings-default-apps = Standardappar
+settings-default-apps-button = Välj filtyper…
 settings-tab-general = Allmänt
 settings-tab-editor = Redigerare
 settings-tab-appearance = Utseende

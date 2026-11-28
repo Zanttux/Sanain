@@ -475,10 +475,33 @@ cli-help-integration =
     Integration med filhåndteringen (kun den aktuelle bruger):
       text3 --register            føj Text³ til “Åbn med” (Linux, Windows)
       text3 --unregister          fjern den igen
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  gør Text³ til standardapp for disse filer
 cli-registered = Text³ blev føjet til “Åbn med”. { $place }
 cli-unregistered = Text³ blev fjernet fra “Åbn med”.
 cli-register-failed = Integrationen med filhåndteringen kunne ikke ændres: { $reason }
 cli-register-macos = På macOS skal intet registreres: Når Text³.app ligger i mappen Programmer, tilbyder Finder den under “Åbn med”.
+cli-default-apps-set = Text³ åbner nu disse filtyper: { $types }
+cli-default-apps-unknown = Ukendt filtypegruppe: { $group }. Kendte grupper: plain, markdown, code, data, web.
+default-apps-title = Åbn filer med Text³
+default-apps-body = Text³ kan være den app, der åbner disse filer, når du dobbeltklikker på dem. Du kan ændre det senere under Indstillinger › Generelt.
+default-apps-body-windows = I Windows vælger du selv standardapps: Text³ åbner Indstillinger › Standardapps, hvor du vælger Text³ for hver filtype.
+default-apps-unavailable = Denne kopi af Text³ kan ikke ændre standardapps: den er en bærbar kopi, eller på macOS blev den ikke startet fra Text³.app.
+default-apps-plain = Tekst og logfiler
+default-apps-markdown = Markdown
+default-apps-code = Kildekode og scripts
+default-apps-data = Data og konfiguration
+default-apps-web = Websider og typografier
+default-apps-is-default = allerede Text³
+default-apps-apply = Gør Text³ til standard
+default-apps-open-settings = Åbn Windows-indstillinger
+default-apps-not-now = Ikke nu
+default-apps-close = Luk
+default-apps-done = Text³ åbner nu de valgte filtyper.
+default-apps-settings-opened = Windows-indstillinger er åbne: vælg Text³ for de filtyper, den skal åbne.
+default-apps-failed = Standardapps kunne ikke ændres: { $reason }
+settings-default-apps = Standardapps
+settings-default-apps-button = Vælg filtyper…
 settings-tab-general = Generelt
 settings-tab-editor = Editor
 settings-tab-appearance = Udseende

@@ -22,6 +22,9 @@ pub enum Parsed {
     Register,
     /// `--unregister`: undo `--register`.
     Unregister,
+    /// `--default-apps[=groups]`: make Text³ the default app for the
+    /// listed file type groups (default: the preselected ones).
+    DefaultApps(Option<String>),
     /// The offending argument.
     Unknown(String),
     /// `--diff` without two paths.
@@ -43,6 +46,10 @@ pub fn parse(args: impl IntoIterator<Item = OsString>) -> Parsed {
                 "--help" | "-h" => return Parsed::Help,
                 "--register" => return Parsed::Register,
                 "--unregister" => return Parsed::Unregister,
+                "--default-apps" => return Parsed::DefaultApps(None),
+                s if s.starts_with("--default-apps=") => {
+                    return Parsed::DefaultApps(Some(s["--default-apps=".len()..].to_owned()));
+                }
                 "--diff" | "-d" => {
                     let (Some(l), Some(r)) = (args.next(), args.next()) else {
                         return Parsed::DiffNeedsTwo;
@@ -89,6 +96,11 @@ mod tests {
         assert_eq!(p(&["-h"]), Parsed::Help);
         assert_eq!(p(&["--register"]), Parsed::Register);
         assert_eq!(p(&["--unregister"]), Parsed::Unregister);
+        assert_eq!(p(&["--default-apps"]), Parsed::DefaultApps(None));
+        assert_eq!(
+            p(&["--default-apps=plain,code"]),
+            Parsed::DefaultApps(Some("plain,code".into()))
+        );
         assert_eq!(p(&["--nope"]), Parsed::Unknown("--nope".into()));
         assert_eq!(
             p(&["--", "--nope", "-"]),

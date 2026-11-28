@@ -475,10 +475,33 @@ cli-help-integration =
     Integratie met het bestandsbeheer (alleen huidige gebruiker):
       text3 --register            Text³ toevoegen aan ‘Openen met’ (Linux, Windows)
       text3 --unregister          weer verwijderen
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  Text³ de standaard-app voor deze bestanden maken
 cli-registered = Text³ is toegevoegd aan ‘Openen met’. { $place }
 cli-unregistered = Text³ is verwijderd uit ‘Openen met’.
 cli-register-failed = De integratie met het bestandsbeheer kon niet worden gewijzigd: { $reason }
 cli-register-macos = Op macOS hoeft niets te worden geregistreerd: zodra Text³.app in de map Apps staat, biedt de Finder het aan onder ‘Openen met’.
+cli-default-apps-set = Text³ opent nu deze bestandstypen: { $types }
+cli-default-apps-unknown = Onbekende groep bestandstypen: { $group }. Bekende groepen: plain, markdown, code, data, web.
+default-apps-title = Bestanden openen met Text³
+default-apps-body = Text³ kan de app zijn die deze bestanden opent als je erop dubbelklikt. Je kunt dit later wijzigen in Instellingen › Algemeen.
+default-apps-body-windows = In Windows kies je de standaard-apps zelf: Text³ opent Instellingen › Standaard-apps, waar je Text³ kiest voor elk bestandstype.
+default-apps-unavailable = Deze kopie van Text³ kan de standaard-apps niet wijzigen: het is een draagbare kopie, of op macOS is hij niet gestart vanuit Text³.app.
+default-apps-plain = Tekst en logbestanden
+default-apps-markdown = Markdown
+default-apps-code = Broncode en scripts
+default-apps-data = Gegevens en configuratie
+default-apps-web = Webpagina's en stijlen
+default-apps-is-default = al Text³
+default-apps-apply = Text³ als standaard instellen
+default-apps-open-settings = Windows-instellingen openen
+default-apps-not-now = Niet nu
+default-apps-close = Sluiten
+default-apps-done = Text³ opent nu de gekozen bestandstypen.
+default-apps-settings-opened = Windows-instellingen zijn geopend: kies Text³ voor de bestandstypen die het moet openen.
+default-apps-failed = De standaard-apps konden niet worden gewijzigd: { $reason }
+settings-default-apps = Standaard-apps
+settings-default-apps-button = Bestandstypen kiezen…
 settings-tab-general = Algemeen
 settings-tab-editor = Editor
 settings-tab-appearance = Weergave

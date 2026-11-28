@@ -523,10 +523,33 @@ cli-help-integration =
     Integrace se správcem souborů (jen pro aktuálního uživatele):
       text3 --register            přidat Text³ do nabídky „Otevřít v aplikaci“ (Linux, Windows)
       text3 --unregister          znovu jej odebrat
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  nastavit Text³ jako výchozí aplikaci pro tyto soubory
 cli-registered = Text³ byl přidán do nabídky „Otevřít v aplikaci“. { $place }
 cli-unregistered = Text³ byl odebrán z nabídky „Otevřít v aplikaci“.
 cli-register-failed = Integraci se správcem souborů nebylo možné změnit: { $reason }
 cli-register-macos = V macOS není potřeba nic registrovat: jakmile je Text³.app ve složce Aplikace, Finder jej nabídne v nabídce „Otevřít v aplikaci“.
+cli-default-apps-set = Text³ nyní otevírá tyto typy souborů: { $types }
+cli-default-apps-unknown = Neznámá skupina typů souborů: { $group }. Známé skupiny: plain, markdown, code, data, web.
+default-apps-title = Otevírat soubory v Text³
+default-apps-body = Text³ může být aplikace, která tyto soubory otevře po dvojitém kliknutí. Později to můžete změnit v Nastavení › Obecné.
+default-apps-body-windows = Ve Windows si výchozí aplikace volíte sami: Text³ otevře Nastavení › Výchozí aplikace, kde vyberete Text³ pro každý typ souboru.
+default-apps-unavailable = Tato kopie Text³ nemůže měnit výchozí aplikace: je to přenosná kopie, nebo v macOS nebyla spuštěna z Text³.app.
+default-apps-plain = Text a protokoly
+default-apps-markdown = Markdown
+default-apps-code = Zdrojový kód a skripty
+default-apps-data = Data a konfigurace
+default-apps-web = Webové stránky a styly
+default-apps-is-default = již Text³
+default-apps-apply = Nastavit Text³ jako výchozí
+default-apps-open-settings = Otevřít Nastavení Windows
+default-apps-not-now = Teď ne
+default-apps-close = Zavřít
+default-apps-done = Text³ nyní otevírá vybrané typy souborů.
+default-apps-settings-opened = Nastavení Windows je otevřené: vyberte Text³ pro typy souborů, které má otevírat.
+default-apps-failed = Výchozí aplikace se nepodařilo změnit: { $reason }
+settings-default-apps = Výchozí aplikace
+settings-default-apps-button = Vybrat typy souborů…
 settings-tab-general = Obecné
 settings-tab-editor = Editor
 settings-tab-appearance = Vzhled

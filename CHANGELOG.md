@@ -5,6 +5,13 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 ## [Unreleased]
 
 ### Added
+- Default apps (#164): on first start Text³ offers to become the app
+  that opens plain text, Markdown, source code, data and (unticked) web
+  files; later from Settings › General › Choose file types…, or
+  `text3 --default-apps[=plain,markdown,code,data,web]`. macOS and Linux
+  set it directly; on Windows Text³ registers itself and opens Settings ›
+  Default apps for you to confirm, and the installer offers the same on
+  its last page.
 - The Windows installer speaks all 26 interface languages (#169) and
   picks the Windows display language without asking when it is one of
   them. Its texts are Inno Setup's translations (kept in

@@ -114,6 +114,9 @@ pub struct Settings {
     pub color_theme: Option<String>,
     /// Show the character and word count in the status bar.
     pub show_counts: bool,
+    /// The first-start offer to become the default app was answered
+    /// (or `--default-apps` was run), so it is not shown again (#164).
+    pub default_apps_asked: bool,
 }
 
 impl Default for Settings {
@@ -134,6 +137,7 @@ impl Default for Settings {
             editor_font: None,
             color_theme: None,
             show_counts: true,
+            default_apps_asked: false,
         }
     }
 }
@@ -177,13 +181,14 @@ impl Settings {
             out.push_str(&format!("locale={l}\n"));
         }
         out.push_str(&format!(
-            "check_updates={}\nlast_update_check={}\nlocal_history={}\nword_wrap={}\nhot_exit={}\nshow_counts={}\n",
+            "check_updates={}\nlast_update_check={}\nlocal_history={}\nword_wrap={}\nhot_exit={}\nshow_counts={}\ndefault_apps_asked={}\n",
             self.check_updates,
             self.last_update_check,
             self.local_history,
             self.word_wrap,
             self.hot_exit,
-            self.show_counts
+            self.show_counts,
+            self.default_apps_asked
         ));
         if let Some(f) = &self.editor_font {
             out.push_str(&format!("editor_font={f}\n"));
@@ -238,6 +243,7 @@ impl Settings {
                 "word_wrap" => s.word_wrap = v.parse().unwrap_or(true),
                 "hot_exit" => s.hot_exit = v.parse().unwrap_or(true),
                 "show_counts" => s.show_counts = v.parse().unwrap_or(true),
+                "default_apps_asked" => s.default_apps_asked = v.parse().unwrap_or(false),
                 "editor_font" if !v.is_empty() && v.len() <= 200 => {
                     s.editor_font = Some(v.to_owned())
                 }
@@ -372,6 +378,7 @@ mod tests {
             editor_font: Some("JetBrains Mono".into()),
             color_theme: Some("nord".into()),
             show_counts: false,
+            default_apps_asked: true,
         };
         assert_eq!(Settings::decode(&s.encode()), Some(s.clone()));
         let hc = Settings {

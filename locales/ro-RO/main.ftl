@@ -499,10 +499,33 @@ cli-help-integration =
     Integrare cu managerul de fișiere (doar pentru utilizatorul curent):
       text3 --register            adaugă Text³ la „Deschide cu” (Linux, Windows)
       text3 --unregister          îl elimină din nou
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  fă din Text³ aplicația implicită pentru aceste fișiere
 cli-registered = Text³ a fost adăugat la „Deschide cu”. { $place }
 cli-unregistered = Text³ a fost eliminat din „Deschide cu”.
 cli-register-failed = Integrarea cu managerul de fișiere nu a putut fi modificată: { $reason }
 cli-register-macos = Pe macOS nu trebuie înregistrat nimic: odată ce Text³.app se află în dosarul Aplicații, Finder îl oferă în „Deschide cu”.
+cli-default-apps-set = Text³ deschide acum aceste tipuri de fișiere: { $types }
+cli-default-apps-unknown = Grup de tipuri de fișiere necunoscut: { $group }. Grupuri cunoscute: plain, markdown, code, data, web.
+default-apps-title = Deschide fișierele cu Text³
+default-apps-body = Text³ poate fi aplicația care deschide aceste fișiere când faci dublu clic pe ele. Poți schimba asta mai târziu în Setări › General.
+default-apps-body-windows = În Windows alegi singur aplicațiile implicite: Text³ deschide Setări › Aplicații implicite, unde alegi Text³ pentru fiecare tip de fișier.
+default-apps-unavailable = Această copie Text³ nu poate schimba aplicațiile implicite: este o copie portabilă sau, pe macOS, nu a fost pornită din Text³.app.
+default-apps-plain = Text și jurnale
+default-apps-markdown = Markdown
+default-apps-code = Cod sursă și scripturi
+default-apps-data = Date și configurare
+default-apps-web = Pagini web și stiluri
+default-apps-is-default = deja Text³
+default-apps-apply = Fă din Text³ aplicația implicită
+default-apps-open-settings = Deschide Setările Windows
+default-apps-not-now = Nu acum
+default-apps-close = Închide
+default-apps-done = Text³ deschide acum tipurile de fișiere alese.
+default-apps-settings-opened = Setările Windows sunt deschise: alege Text³ pentru tipurile de fișiere pe care trebuie să le deschidă.
+default-apps-failed = Aplicațiile implicite nu au putut fi schimbate: { $reason }
+settings-default-apps = Aplicații implicite
+settings-default-apps-button = Alege tipurile de fișiere…
 settings-tab-general = General
 settings-tab-editor = Editor
 settings-tab-appearance = Aspect

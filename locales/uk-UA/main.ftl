@@ -523,10 +523,33 @@ cli-help-integration =
     Інтеграція з файловим менеджером (лише для поточного користувача):
       text3 --register            додати Text³ до «Відкрити за допомогою» (Linux, Windows)
       text3 --unregister          знову вилучити його
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  зробити Text³ типовим застосунком для цих файлів
 cli-registered = Text³ додано до «Відкрити за допомогою». { $place }
 cli-unregistered = Text³ вилучено з «Відкрити за допомогою».
 cli-register-failed = Не вдалося змінити інтеграцію з файловим менеджером: { $reason }
 cli-register-macos = У macOS нічого реєструвати не потрібно: щойно Text³.app опиниться в папці «Програми», Finder запропонує його в меню «Відкрити за допомогою».
+cli-default-apps-set = Text³ тепер відкриває ці типи файлів: { $types }
+cli-default-apps-unknown = Невідома група типів файлів: { $group }. Відомі групи: plain, markdown, code, data, web.
+default-apps-title = Відкривати файли в Text³
+default-apps-body = Text³ може бути застосунком, що відкриває ці файли подвійним клацанням. Це можна змінити пізніше в Налаштування › Загальні.
+default-apps-body-windows = У Windows застосунки за замовчуванням ви обираєте самі: Text³ відкриє Параметри › Застосунки за замовчуванням, де ви оберете Text³ для кожного типу файлів.
+default-apps-unavailable = Ця копія Text³ не може змінювати застосунки за замовчуванням: це портативна копія або в macOS її запущено не з Text³.app.
+default-apps-plain = Текст і журнали
+default-apps-markdown = Markdown
+default-apps-code = Вихідний код і скрипти
+default-apps-data = Дані та конфігурація
+default-apps-web = Вебсторінки та стилі
+default-apps-is-default = уже Text³
+default-apps-apply = Зробити Text³ типовим
+default-apps-open-settings = Відкрити параметри Windows
+default-apps-not-now = Не зараз
+default-apps-close = Закрити
+default-apps-done = Text³ тепер відкриває вибрані типи файлів.
+default-apps-settings-opened = Параметри Windows відкрито: оберіть Text³ для типів файлів, які він має відкривати.
+default-apps-failed = Не вдалося змінити застосунки за замовчуванням: { $reason }
+settings-default-apps = Застосунки за замовчуванням
+settings-default-apps-button = Вибрати типи файлів…
 settings-tab-general = Загальні
 settings-tab-editor = Редактор
 settings-tab-appearance = Оформлення

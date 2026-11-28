@@ -41,7 +41,8 @@ fn main() -> eframe::Result {
         | text3_app::cli::Parsed::Unknown(_)
         | text3_app::cli::Parsed::DiffNeedsTwo
         | text3_app::cli::Parsed::Register
-        | text3_app::cli::Parsed::Unregister => {
+        | text3_app::cli::Parsed::Unregister
+        | text3_app::cli::Parsed::DefaultApps(_) => {
             text3_platform::attach_parent_console();
         }
         text3_app::cli::Parsed::Run(_) => {}
@@ -113,6 +114,15 @@ fn main() -> eframe::Result {
         text3_app::cli::Parsed::Register | text3_app::cli::Parsed::Unregister => {
             let register = parsed == text3_app::cli::Parsed::Register;
             std::process::exit(shell_registration(&l10n, register));
+        }
+        text3_app::cli::Parsed::DefaultApps(list) => {
+            let code = default_apps_cli(
+                &l10n,
+                list.as_deref(),
+                settings_dir.as_deref(),
+                settings.clone(),
+            );
+            std::process::exit(code);
         }
         text3_app::cli::Parsed::Unknown(arg) => {
             let mut args = text3_i18n::FluentArgs::new();
@@ -242,10 +252,63 @@ fn main() -> eframe::Result {
             }
             shell.install_menu(&cc.egui_ctx);
             shell.auto_update_check(&cc.egui_ctx);
+            shell.offer_default_apps();
             text3_app::startprobe::mark("app");
             Ok(Box::new(shell))
         }),
     )
+}
+
+/// `--default-apps[=groups]`: prints the outcome, returns the exit code.
+/// Counts as the answer to the first-start offer.
+fn default_apps_cli(
+    l10n: &Localizer,
+    list: Option<&str>,
+    settings_dir: Option<&std::path::Path>,
+    mut settings: Settings,
+) -> i32 {
+    use text3_app::defaults;
+    let plain = |s: String| s.replace(['\u{2068}', '\u{2069}'], "");
+    let fmt = |id: &str, k: &str, v: String| {
+        let mut a = text3_i18n::FluentArgs::new();
+        a.set(k, v);
+        plain(l10n.format(id, Some(&a)))
+    };
+    let groups = match list.map(defaults::parse_groups) {
+        None => defaults::preselected(),
+        Some(Ok(g)) if !g.is_empty() => g,
+        Some(Ok(_)) => defaults::preselected(),
+        Some(Err(bad)) => {
+            eprintln!("text3: {}", fmt("cli-default-apps-unknown", "group", bad));
+            return 2;
+        }
+    };
+    let result = defaults::current_exe().and_then(|exe| defaults::apply(&exe, &groups));
+    match result {
+        Ok(applied) => {
+            settings.default_apps_asked = true;
+            if let Some(dir) = settings_dir {
+                let _ = settings.save(dir);
+            }
+            match applied {
+                defaults::Applied::Set => {
+                    let names: Vec<&str> = groups.iter().map(|g| g.id()).collect();
+                    println!("{}", fmt("cli-default-apps-set", "types", names.join(", ")));
+                }
+                defaults::Applied::OpenedSettings => {
+                    println!("{}", l10n.get("default-apps-settings-opened"));
+                }
+            }
+            0
+        }
+        Err(e) => {
+            eprintln!(
+                "text3: {}",
+                fmt("default-apps-failed", "reason", e.to_string())
+            );
+            1
+        }
+    }
 }
 
 /// `--register` / `--unregister`: prints the outcome, returns the exit code.

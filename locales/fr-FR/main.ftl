@@ -499,10 +499,33 @@ cli-help-integration =
     Intégration au gestionnaire de fichiers (utilisateur actuel uniquement) :
       text3 --register            ajouter Text³ à « Ouvrir avec » (Linux, Windows)
       text3 --unregister          le retirer
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  faire de Text³ l’application par défaut pour ces fichiers
 cli-registered = Text³ a été ajouté à « Ouvrir avec ». { $place }
 cli-unregistered = Text³ a été retiré de « Ouvrir avec ».
 cli-register-failed = Impossible de modifier l’intégration au gestionnaire de fichiers : { $reason }
 cli-register-macos = Sous macOS, aucun enregistrement n’est nécessaire : dès que Text³.app se trouve dans le dossier Applications, le Finder le propose dans « Ouvrir avec ».
+cli-default-apps-set = Text³ ouvre désormais ces types de fichiers : { $types }
+cli-default-apps-unknown = Groupe de types de fichiers inconnu : { $group }. Groupes connus : plain, markdown, code, data, web.
+default-apps-title = Ouvrir les fichiers avec Text³
+default-apps-body = Text³ peut être l’application qui ouvre ces fichiers lorsque vous double-cliquez dessus. Vous pourrez modifier ce choix dans Réglages › Général.
+default-apps-body-windows = Sous Windows, vous choisissez vous-même les applications par défaut : Text³ ouvre Paramètres › Applications par défaut, où vous choisissez Text³ pour chaque type de fichier.
+default-apps-unavailable = Cette copie de Text³ ne peut pas modifier les applications par défaut : c’est une copie portable, ou sous macOS elle n’a pas été lancée depuis Text³.app.
+default-apps-plain = Texte et journaux
+default-apps-markdown = Markdown
+default-apps-code = Code source et scripts
+default-apps-data = Données et configuration
+default-apps-web = Pages web et styles
+default-apps-is-default = déjà Text³
+default-apps-apply = Faire de Text³ l’application par défaut
+default-apps-open-settings = Ouvrir les paramètres Windows
+default-apps-not-now = Pas maintenant
+default-apps-close = Fermer
+default-apps-done = Text³ ouvre désormais les types de fichiers choisis.
+default-apps-settings-opened = Les paramètres Windows sont ouverts : choisissez Text³ pour les types de fichiers qu’il doit ouvrir.
+default-apps-failed = Les applications par défaut n’ont pas pu être modifiées : { $reason }
+settings-default-apps = Applications par défaut
+settings-default-apps-button = Choisir les types de fichiers…
 settings-tab-general = Général
 settings-tab-editor = Éditeur
 settings-tab-appearance = Apparence
