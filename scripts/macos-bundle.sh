@@ -4,7 +4,9 @@
 set -eu
 cd "$(dirname "$0")/.."
 profile=${1:-release}
-if [ "$profile" = release ]; then cargo build --release --locked -p text3-app; else cargo build --locked -p text3-app; fi
+# TEXT3_CARGO_FEATURES=store builds the Mac App Store flavour (#79).
+features=${TEXT3_CARGO_FEATURES:+--features $TEXT3_CARGO_FEATURES}
+if [ "$profile" = release ]; then cargo build --release --locked -p text3-app $features; else cargo build --locked -p text3-app $features; fi
 version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
 app="target/$profile/Text³.app"
 rm -rf "$app"

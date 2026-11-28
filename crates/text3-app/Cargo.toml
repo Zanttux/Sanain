@@ -12,6 +12,11 @@ publish.workspace = true
 name = "text3"
 path = "src/main.rs"
 
+[features]
+# Mac App Store build (#79): sandboxed, no update check, no default-app
+# offer or shell registration (the store handles updates and installs).
+store = []
+
 [dependencies]
 text3-core = { path = "../text3-core" }
 text3-io = { path = "../text3-io" }

@@ -217,7 +217,7 @@ pub enum Support {
 
 /// What Text³ can do for the executable at `exe`.
 pub fn support(exe: &Path) -> Support {
-    if crate::settings::portable_root_for(exe).is_some() {
+    if crate::STORE || crate::settings::portable_root_for(exe).is_some() {
         // A portable copy leaves the system alone.
         Support::Unavailable
     } else if cfg!(windows) {
@@ -547,7 +547,10 @@ mod tests {
         assert_eq!(is_default(&exe, Group::PlainText), None);
         assert!(apply(&exe, &[Group::PlainText]).is_err());
         let loose = Path::new("/opt/text3/text3");
-        if cfg!(target_os = "macos") {
+        if crate::STORE {
+            // The App Store build never changes system defaults.
+            assert_eq!(support(loose), Support::Unavailable);
+        } else if cfg!(target_os = "macos") {
             assert_eq!(support(loose), Support::Unavailable);
             assert_eq!(
                 support(Path::new("/Applications/Text³.app/Contents/MacOS/text3")),

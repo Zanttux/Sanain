@@ -31,6 +31,13 @@ are cross-platform verification and release readiness.
   (#79).
 
 ## Done
+- Mac App Store preparation (#79, docs/APP_STORE.md): `store` feature,
+  entitlements, `scripts/package-mas.sh`; Apple App ID
+  `io.github.zanttux.text3`, distribution certificates, provisioning
+  profile and the App Store Connect record "Text³" created in Chrome with
+  the owner signed in. Sandbox launch verified. Open: bookmarks for
+  recent files and session restore, NSWorkspace for Show in Finder, CI
+  upload job, listing; owner decides the price.
 - Default apps (#164, D29): `text3_app::defaults` (five groups with
   extensions, MIME types and macOS content types; web pages unticked),
   `text3_platform::{default_editor, set_default_editor}` (Launch Services,

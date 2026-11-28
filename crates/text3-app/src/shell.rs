@@ -1394,18 +1394,25 @@ impl Shell {
                                         )
                                         .on_hover_text(l("settings-local-history-detail"));
                                         ui.end_row();
-                                        ui.label("");
-                                        ui.checkbox(
-                                            &mut s.check_updates,
-                                            l("settings-check-updates"),
-                                        )
-                                        .on_hover_text(l("settings-check-updates-detail"));
-                                        ui.end_row();
-                                        ui.label(l("settings-default-apps"));
-                                        if ui.button(l("settings-default-apps-button")).clicked() {
-                                            open_default_apps = true;
+                                        // The App Store build: updates come from the
+                                        // store; the sandbox cannot change defaults.
+                                        if !text3_app::STORE {
+                                            ui.label("");
+                                            ui.checkbox(
+                                                &mut s.check_updates,
+                                                l("settings-check-updates"),
+                                            )
+                                            .on_hover_text(l("settings-check-updates-detail"));
+                                            ui.end_row();
+                                            ui.label(l("settings-default-apps"));
+                                            if ui
+                                                .button(l("settings-default-apps-button"))
+                                                .clicked()
+                                            {
+                                                open_default_apps = true;
+                                            }
+                                            ui.end_row();
                                         }
-                                        ui.end_row();
                                     });
                             }
                             SettingsTab::Editor => {
@@ -2192,7 +2199,8 @@ impl Shell {
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map_or(0, |d| d.as_secs());
-        if self.settings.check_updates
+        if !text3_app::STORE
+            && self.settings.check_updates
             && now.saturating_sub(self.settings.last_update_check) >= 24 * 3600
         {
             self.settings.last_update_check = now;
@@ -4871,7 +4879,9 @@ impl Shell {
                 return;
             }
             MenuAction::CheckUpdates => {
-                self.start_update_check(ctx, true);
+                if !text3_app::STORE {
+                    self.start_update_check(ctx, true);
+                }
                 return;
             }
             MenuAction::FindInFolder => {
@@ -6457,6 +6467,7 @@ impl eframe::App for Shell {
             let entries: Vec<Entry> = MenuAction::ALL
                 .into_iter()
                 .filter(|a| *a != MenuAction::CommandPalette)
+                .filter(|a| !(text3_app::STORE && *a == MenuAction::CheckUpdates))
                 .map(|a| Entry {
                     action: a,
                     label: self.t(a.label_id(), &[]).trim_end_matches('…').to_owned(),
