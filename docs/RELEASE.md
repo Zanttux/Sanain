@@ -41,8 +41,16 @@ keeps the archives as workflow artifacts for 14 days. Since 2026-11-26
 (D23) it also runs on every push to main and publishes them: a `publish`
 job (the only one with `contents: write`, pushes only) replaces the
 `nightly` pre-release, or creates a pre-release for a `v*` tag, with the
-archives and `SHA256SUMS`. Still missing for a stable release: signing
-and notarization, an SBOM, and a Linux desktop entry and icon.
+archives and `SHA256SUMS`. Since 2026-11-28 (D28, #174) pushes also run a `package (macOS, signed)`
+job in the `signing` environment (main and `v*` tags only): Developer ID
+signature with the hardened runtime and a secure timestamp, notarization of
+the DMG and of the portable app (`xcrun notarytool`, App Store Connect API
+key), stapled tickets, and a Gatekeeper check; its files replace the
+unsigned macOS ones in the release. Locally: `TEXT3_SIGN_IDENTITY`
+(certificate SHA-1 or name), `TEXT3_NOTARY_KEY`, `TEXT3_NOTARY_KEY_ID`,
+`TEXT3_NOTARY_ISSUER` for scripts/package.py; secrets policy in
+docs/SECURITY_SECRETS.md. Still missing for a stable release: Windows
+signing (SignPath, pending), an SBOM.
 
 CI builds releases from tagged commits with the lockfile and produces
 checksums, SBOM, notices and release notes. The owner approves publishing.

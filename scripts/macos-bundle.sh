@@ -20,7 +20,14 @@ sed "s/@VERSION@/$version/g" packaging/macos/Info.plist > "$app/Contents/Info.pl
 # cover Info.plist and Resources is reported as "damaged" by Gatekeeper
 # and cannot be opened at all (#166). With a sealed ad-hoc signature macOS
 # instead offers Privacy & Security › Open Anyway for the unsigned app.
-codesign --force --sign - --timestamp=none "$app"
+# With TEXT3_SIGN_IDENTITY (a Developer ID Application identity in the
+# keychain; set only by the signed release job, #174) the bundle is signed
+# for real with the hardened runtime and a secure timestamp instead.
+if [ -n "${TEXT3_SIGN_IDENTITY:-}" ]; then
+  codesign --force --options runtime --timestamp --sign "$TEXT3_SIGN_IDENTITY" "$app"
+else
+  codesign --force --sign - --timestamp=none "$app"
+fi
 codesign --verify --strict "$app"
 echo "$app"
 if [ "${2:-}" = --open ]; then
