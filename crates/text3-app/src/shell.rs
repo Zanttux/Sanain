@@ -29,7 +29,7 @@ use text3_app::update::{Status as UpdateStatus, UpdateError};
 
 /// Background font work for the editor font setting.
 enum FontMsg {
-    Families(Vec<String>),
+    Families(text3_app::fonts::FontList),
     /// (family, regular face bytes and index); `None` if not found.
     Loaded(String, Option<(Vec<u8>, u32)>),
 }
@@ -310,7 +310,7 @@ pub struct Shell {
     /// Filter text of the shortcut list in Settings.
     shortcut_filter: String,
     /// Installed monospaced families (None until scanned).
-    font_families: Option<Vec<String>>,
+    font_families: Option<text3_app::fonts::FontList>,
     /// Results of background font work.
     font_rx: Option<std::sync::mpsc::Receiver<FontMsg>>,
     /// The editor font requested last, to apply only the latest result.
@@ -1438,12 +1438,22 @@ impl Shell {
                                                             None,
                                                             default_name,
                                                         );
-                                                        for f in list {
-                                                            ui.selectable_value(
-                                                                &mut s.editor_font,
-                                                                Some(f.clone()),
-                                                                f,
-                                                            );
+                                                        // Popular fonts first (#176).
+                                                        for (i, group) in
+                                                            [&list.recommended, &list.others]
+                                                                .into_iter()
+                                                                .enumerate()
+                                                        {
+                                                            if i > 0 && !group.is_empty() {
+                                                                ui.separator();
+                                                            }
+                                                            for f in group {
+                                                                ui.selectable_value(
+                                                                    &mut s.editor_font,
+                                                                    Some(f.clone()),
+                                                                    f,
+                                                                );
+                                                            }
                                                         }
                                                     });
                                             }

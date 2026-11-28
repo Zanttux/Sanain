@@ -12,6 +12,11 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   set it directly; on Windows Text³ registers itself and opens Settings ›
   Default apps for you to confirm, and the installer offers the same on
   its last page.
+- Six popular coding fonts ship with Text³ (#176): JetBrains Mono, Fira
+  Code, Cascadia Code, Source Code Pro, IBM Plex Mono and Inconsolata
+  (SIL OFL). Settings › Editor › Font lists the fonts Notepad++ and
+  Sublime Text users like most first, including Consolas and Menlo when
+  installed. The fonts are separate files, loaded only when chosen.
 - The Windows installer speaks all 26 interface languages (#169) and
   picks the Windows display language without asking when it is one of
   them. Its texts are Inno Setup's translations (kept in

@@ -227,6 +227,7 @@ def linux_deb(ver, arch, dist, notices):
         p("usr", "share", "applications", "io.github.zanttux.text3.desktop"),
     )
     shutil.copy2(os.path.join(ROOT, "LICENSE"), p("usr", "share", "doc", "text3", "copyright"))
+    shutil.copytree(os.path.join(ROOT, "assets", "fonts"), p("usr", "share", "text3", "fonts"))
     shutil.copy2(notices, p("usr", "share", "doc", "text3", "THIRD_PARTY_NOTICES.md"))
     depends = "libc6, libgcc-s1"
     if shutil.which("dpkg-shlibdeps"):
@@ -291,6 +292,9 @@ def main():
             run("cargo", "build", "--release", "--locked", "-p", "text3-app")
         exe = "text3.exe" if system == "windows" else "text3"
         shutil.copy2(os.path.join(ROOT, "target", "release", exe), os.path.join(stage, exe))
+        # Bundled editor fonts with their licences (#176); macOS has them in
+        # the bundle (scripts/macos-bundle.sh).
+        shutil.copytree(os.path.join(ROOT, "assets", "fonts"), os.path.join(stage, "fonts"))
         if system == "linux":
             # Compatibility: the command's name before the rename.
             os.symlink("text3", os.path.join(stage, "sanain"))
