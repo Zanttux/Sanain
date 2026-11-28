@@ -21,6 +21,9 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   flavour (sandboxed, no update check, no default-app offer), entitlements
   and `scripts/package-mas.sh` for a signed store package. Not in the
   store yet: price and review submission are pending.
+### Changed
+- macOS: Show in Finder asks Finder directly (NSWorkspace) instead of
+  starting `open -R`; it also works in the sandboxed App Store build (#79).
 
 ### Added
 - Default apps (#164): on first start Text³ offers to become the app

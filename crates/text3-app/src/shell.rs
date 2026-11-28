@@ -874,6 +874,11 @@ impl Shell {
         // folder of text3.exe first on Windows (planted explorer.exe).
         use text3_platform::{SystemDir, system_program};
         let missing = || std::io::Error::other("the system folder was not found");
+        // macOS: ask Finder through NSWorkspace (also inside the App Store
+        // sandbox, which cannot start programs); `open -R` as a fallback.
+        if cfg!(target_os = "macos") && text3_platform::reveal_in_finder(&path) {
+            return;
+        }
         let spawned = if cfg!(target_os = "macos") {
             system_program("open", SystemDir::System)
                 .ok_or_else(missing)
