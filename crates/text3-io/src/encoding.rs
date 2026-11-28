@@ -477,7 +477,7 @@ mod tests {
 
     #[test]
     fn guesses_utf16_without_bom_and_legacy_text() {
-        let text = "Hello, Sanain!\r\nUTF-16 without a byte order mark.\r\n";
+        let text = "Hello, Text3!\r\nUTF-16 without a byte order mark.\r\n";
         let le = encode(text, TextEncoding::Utf16Le).unwrap();
         let be = encode(text, TextEncoding::Utf16Be).unwrap();
         assert!(!le.starts_with(BOM_UTF16LE) && !be.starts_with(BOM_UTF16BE));
