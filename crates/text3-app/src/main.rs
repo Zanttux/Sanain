@@ -189,6 +189,10 @@ fn main() -> eframe::Result {
         },
         None => (None, None),
     };
+    // The App Store build gets access to remembered files back first.
+    if let Some(dir) = settings_dir.as_deref() {
+        text3_app::bookmarks::restore(dir);
+    }
     let snapshots = store
         .as_ref()
         .and_then(|s| s.list().ok())

@@ -40,11 +40,9 @@ The store app and the download are separate apps with separate settings.
 
 ## Still to do
 Engineering (Claude):
-1. Security-scoped bookmarks so Open Recent, session restore and hot exit
-   reopen files after a restart inside the sandbox (today they need the
-   user to open the file again).
-2. Show in Finder through NSWorkspace instead of `/usr/bin/open` (the
-   sandbox does not allow starting programs).
+1. ~~Security-scoped bookmarks for Open Recent, session restore and hot
+   exit~~ (done: `text3_app::bookmarks`).
+2. ~~Show in Finder through NSWorkspace~~ (done).
 3. Find in Folder and Goto Anything on a folder the user chose (folder
    bookmark).
 4. CI job for `v*` tags: build the store package and upload it to App Store

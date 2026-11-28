@@ -462,6 +462,7 @@ impl Shell {
         self.recent.push(path);
         if let Some(dir) = &self.settings_dir {
             let _ = self.recent.save(dir);
+            text3_app::bookmarks::remember(dir, path);
         }
     }
 
