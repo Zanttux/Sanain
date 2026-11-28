@@ -19,7 +19,14 @@ guard args.count >= 3, let timeout = Double(args[1]) else {
     FileHandle.standardError.write("usage: window-wait <timeout-s> <App.app> [open args...]\n".data(using: .utf8)!)
     exit(2)
 }
-let bundle = URL(fileURLWithPath: args[2]).standardizedFileURL.resolvingSymlinksInPath().path + "/"
+// realpath, not URL.resolvingSymlinksInPath: the latter turns /private/tmp
+// into /tmp, which then never matches the process paths.
+guard let real = realpath(args[2], nil) else {
+    FileHandle.standardError.write("no such app: \(args[2])\n".data(using: .utf8)!)
+    exit(2)
+}
+let bundle = String(cString: real) + "/"
+free(real)
 
 func path(of pid: pid_t) -> String? {
     var buf = [CChar](repeating: 0, count: 4 * Int(MAXPATHLEN))
