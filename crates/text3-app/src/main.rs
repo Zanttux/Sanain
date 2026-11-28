@@ -111,6 +111,16 @@ fn main() -> eframe::Result {
             );
             return Ok(());
         }
+        text3_app::cli::Parsed::Register
+        | text3_app::cli::Parsed::Unregister
+        | text3_app::cli::Parsed::DefaultApps(_)
+            if text3_app::STORE =>
+        {
+            // The App Store build is sandboxed: installing and defaults
+            // are handled by macOS and the store.
+            println!("{}", l10n.get("cli-register-macos"));
+            return Ok(());
+        }
         text3_app::cli::Parsed::Register | text3_app::cli::Parsed::Unregister => {
             let register = parsed == text3_app::cli::Parsed::Register;
             std::process::exit(shell_registration(&l10n, register));

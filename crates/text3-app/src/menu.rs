@@ -773,13 +773,12 @@ pub fn in_window(
     let ctx = ui.ctx().clone();
     egui::MenuBar::new().ui(ui, |ui| {
         let mut file: Vec<Option<MenuAction>> = FILE_ITEMS.to_vec();
-        file.extend([
-            None,
-            Some(MenuAction::Settings),
-            Some(MenuAction::CheckUpdates),
-            None,
-            Some(MenuAction::Quit),
-        ]);
+        file.extend([None, Some(MenuAction::Settings)]);
+        // The store build has no update check (the App Store updates it).
+        if !text3_app::STORE {
+            file.push(Some(MenuAction::CheckUpdates));
+        }
+        file.extend([None, Some(MenuAction::Quit)]);
         for (title, items) in [
             ("menu-file", file.as_slice()),
             ("menu-edit", EDIT_ITEMS),
@@ -1065,6 +1064,10 @@ mod native {
                 ],
             )
             .ok()?;
+            // The store build has no update check (the App Store updates it).
+            if text3_app::STORE {
+                let _ = app.remove(&updates);
+            }
             let file_items = section(FILE_ITEMS, &mut make);
             let file_refs: Vec<&dyn muda::IsMenuItem> =
                 file_items.iter().map(|b| b.as_ref()).collect();

@@ -16,6 +16,11 @@ All notable changes are listed here. Versions follow Semantic Versioning.
   ID and notarized by Apple (#174, D28): Text³ opens without the
   Privacy & Security › Open Anyway step. Pull-request builds stay
   unsigned; the signing secrets are reachable only from main and tags.
+### Added (in preparation)
+- Mac App Store support build (#79, docs/APP_STORE.md): `store` build
+  flavour (sandboxed, no update check, no default-app offer), entitlements
+  and `scripts/package-mas.sh` for a signed store package. Not in the
+  store yet: price and review submission are pending.
 
 ### Added
 - Default apps (#164): on first start Text³ offers to become the app
