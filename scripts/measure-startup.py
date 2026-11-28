@@ -102,7 +102,7 @@ def fresh_profile(path, editor_font=None):
     if editor_font:
         # Settings format: crates/text3-app/src/settings.rs.
         (path / "config" / "settings").write_text(
-            f"sanain-settings 1\neditor_font={editor_font}\n"
+            f"text3-settings 1\neditor_font={editor_font}\n"
         )
 
 

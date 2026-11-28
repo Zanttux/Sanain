@@ -647,10 +647,10 @@ mod tests {
 
     #[test]
     fn yaml_maps_sequences_and_aliases() {
-        let src = "name: Sanain\nlist:\n  - one\n  - two: 2\nbase: &b {x: 1}\ncopy: *b\n";
+        let src = "name: Text3\nlist:\n  - one\n  - two: 2\nbase: &b {x: 1}\ncopy: *b\n";
         let root = yaml_tree(src).unwrap();
         let m = obj(&root);
-        assert_eq!(m[0], ("name".into(), Node::Scalar("Sanain".into())));
+        assert_eq!(m[0], ("name".into(), Node::Scalar("Text3".into())));
         match &m[1].1 {
             Node::Array(items) => {
                 assert_eq!(scalar(&items[0]), "one");

@@ -2,6 +2,7 @@
 
 pub mod cli;
 pub mod counts;
+pub mod defaults;
 pub mod editor;
 pub mod editorconfig;
 pub mod filesearch;

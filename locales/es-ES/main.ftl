@@ -475,10 +475,33 @@ cli-help-integration =
     Integración con el gestor de archivos (solo para el usuario actual):
       text3 --register            añadir Text³ a «Abrir con» (Linux, Windows)
       text3 --unregister          quitarlo de nuevo
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  hacer de Text³ la aplicación predeterminada para estos archivos
 cli-registered = Text³ se ha añadido a «Abrir con». { $place }
 cli-unregistered = Text³ se ha quitado de «Abrir con».
 cli-register-failed = No se ha podido cambiar la integración con el gestor de archivos: { $reason }
 cli-register-macos = En macOS no hay que registrar nada: en cuanto Text³.app esté en la carpeta Aplicaciones, Finder lo ofrecerá en «Abrir con».
+cli-default-apps-set = Text³ abre ahora estos tipos de archivo: { $types }
+cli-default-apps-unknown = Grupo de tipos de archivo desconocido: { $group }. Grupos conocidos: plain, markdown, code, data, web.
+default-apps-title = Abrir archivos con Text³
+default-apps-body = Text³ puede ser la aplicación que abre estos archivos al hacer doble clic en ellos. Puedes cambiarlo más tarde en Ajustes › General.
+default-apps-body-windows = En Windows eliges tú las aplicaciones predeterminadas: Text³ abre Configuración › Aplicaciones predeterminadas, donde eliges Text³ para cada tipo de archivo.
+default-apps-unavailable = Esta copia de Text³ no puede cambiar las aplicaciones predeterminadas: es una copia portátil o, en macOS, no se inició desde Text³.app.
+default-apps-plain = Texto y registros
+default-apps-markdown = Markdown
+default-apps-code = Código fuente y scripts
+default-apps-data = Datos y configuración
+default-apps-web = Páginas web y estilos
+default-apps-is-default = ya es Text³
+default-apps-apply = Hacer de Text³ la predeterminada
+default-apps-open-settings = Abrir Configuración de Windows
+default-apps-not-now = Ahora no
+default-apps-close = Cerrar
+default-apps-done = Text³ abre ahora los tipos de archivo elegidos.
+default-apps-settings-opened = La Configuración de Windows está abierta: elige Text³ para los tipos de archivo que debe abrir.
+default-apps-failed = No se pudieron cambiar las aplicaciones predeterminadas: { $reason }
+settings-default-apps = Aplicaciones predeterminadas
+settings-default-apps-button = Elegir tipos de archivo…
 settings-tab-general = General
 settings-tab-editor = Editor
 settings-tab-appearance = Apariencia

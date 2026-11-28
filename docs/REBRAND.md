@@ -50,24 +50,25 @@ plus 100 paths containing the name (crate folders, icons, packaging files).
 | Internal identifier + packaging | binary, bundle contents, icons, `.rc`/`.iss`/desktop file names, release file names, deb package, desktop id, registry keys, user agent | ~90 | → `text3` (`Text3/<ver>` user agent: HTTP tokens are ASCII) |
 | External reference | github.com/Zanttux/Sanain, zanttux.github.io/Sanain | 27 | → Zanttux/text3 and zanttux.github.io/text3 (rename approved; old release-page prefix still accepted by the update check) |
 | Compatibility alias | `SANAIN_*` variables (33 lines), data folders, `sanain-portable`, registry keys, desktop entry | — | Kept working; see Compatibility |
-| Compatibility (on-disk format) | `sanain-settings 1`, `sanain-session 1`, `sanain-macros 1`, `SANAINRC` magic, `.sanain-recovery` | 32 | **Kept**: renaming would make Text³ unable to read copied Sanain data and Sanain unable to read Text³'s, for no user-visible gain |
+| Compatibility (on-disk format) | `sanain-settings 1`, `sanain-session 1`, `sanain-macros 1`, `SANAINRC` magic, `.sanain-recovery` | 32 | Text headers **renamed** 2026-11-28 (#171): Text³ writes `text3-settings 1`, `text3-session 1`, `text3-macros 1` and still reads the `sanain-` ones. Cost: a Sanain or Text³ ≤ 0.2.1 build started afterwards ignores those files (defaults, no session restore, no macros). The binary recovery format (`SANAINRC`, `.sanain-recovery`) is **kept**: unseen by users, and an older build must still find unsaved work |
 | Historical record | CHANGELOG entries, docs/NAME_RESEARCH.md, docs/ACCEPTANCE.md test records, DECISIONS D04/D15/D18/D20 (marked superseded), STATUS name-availability notes | 39+ | Kept as written |
-| Test fixture | sample YAML/text in text3-tools and text3-io tests ("name: Sanain") | 13 | Kept (arbitrary data) |
+| Test fixture | sample YAML/text in text3-tools and text3-io tests ("name: Sanain") | 13 | Renamed to Text3 (#171) |
 
 ### Intentional remaining "Sanain" after the branch (191 lines, all reviewed)
 - Compatibility code and its tests: `crates/text3-app/src/migrate.rs`,
   legacy dirs in `settings.rs` and `text3-io/src/recovery.rs`, legacy
   registry keys and desktop entry in `shellreg.rs`, the
   `sanain-portable` marker, old release-page prefix in `update.rs`.
-- On-disk format headers (`macros.rs`, `session.rs`, `settings.rs`,
-  `recovery.rs`).
+- Reading the old on-disk headers (`macros.rs`, `session.rs`,
+  `settings.rs`) and the recovery format (`recovery.rs`).
 - Inno Setup upgrade cleanup (`sanain.exe`, old shortcuts and keys) and
   the deb `Provides/Conflicts/Replaces: sanain` plus `sanain` symlink.
 - The macOS bundle id `io.github.zanttux.sanain` (Info.plist, build.rs).
 - "Formerly Sanain" notes: README, website, CLAUDE.md, PRIVACY, the
   migration notice string in each locale (it names the old app on
   purpose), CHANGELOG Unreleased.
-- Historical records and test fixtures listed above.
+- Historical records listed above, and the GitHub releases v0.1.0–v0.2.1
+  (titles and file names as published).
 
 ## Decisions
 - **Names:** Text³ in UI, docs, installer, bundle display name and file

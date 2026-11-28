@@ -451,10 +451,33 @@ cli-help-integration =
     Tích hợp với trình quản lý tệp (chỉ người dùng hiện tại):
       text3 --register            thêm Text³ vào "Mở bằng" (Linux, Windows)
       text3 --unregister          gỡ lại khỏi đó
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  đặt Text³ làm ứng dụng mặc định cho các tệp này
 cli-registered = Đã thêm Text³ vào "Mở bằng". { $place }
 cli-unregistered = Đã gỡ Text³ khỏi "Mở bằng".
 cli-register-failed = Không thể thay đổi tích hợp với trình quản lý tệp: { $reason }
 cli-register-macos = Trên macOS không cần đăng ký gì: khi Text³.app nằm trong thư mục Ứng dụng, Finder sẽ hiển thị nó trong "Mở bằng".
+cli-default-apps-set = Text³ hiện mở các loại tệp này: { $types }
+cli-default-apps-unknown = Nhóm loại tệp không xác định: { $group }. Các nhóm đã biết: plain, markdown, code, data, web.
+default-apps-title = Mở tệp bằng Text³
+default-apps-body = Text³ có thể là ứng dụng mở các tệp này khi bạn nhấp đúp vào chúng. Bạn có thể thay đổi điều này sau trong Cài đặt › Chung.
+default-apps-body-windows = Trên Windows, bạn tự chọn ứng dụng mặc định: Text³ mở Cài đặt › Ứng dụng mặc định, nơi bạn chọn Text³ cho từng loại tệp.
+default-apps-unavailable = Bản Text³ này không thể thay đổi ứng dụng mặc định: đây là bản di động, hoặc trên macOS nó không được khởi động từ Text³.app.
+default-apps-plain = Văn bản và nhật ký
+default-apps-markdown = Markdown
+default-apps-code = Mã nguồn và tập lệnh
+default-apps-data = Dữ liệu và cấu hình
+default-apps-web = Trang web và kiểu dáng
+default-apps-is-default = đã là Text³
+default-apps-apply = Đặt Text³ làm mặc định
+default-apps-open-settings = Mở Cài đặt Windows
+default-apps-not-now = Để sau
+default-apps-close = Đóng
+default-apps-done = Text³ hiện mở các loại tệp đã chọn.
+default-apps-settings-opened = Cài đặt Windows đang mở: chọn Text³ cho các loại tệp mà nó cần mở.
+default-apps-failed = Không thể thay đổi ứng dụng mặc định: { $reason }
+settings-default-apps = Ứng dụng mặc định
+settings-default-apps-button = Chọn loại tệp…
 settings-tab-general = Chung
 settings-tab-editor = Trình soạn thảo
 settings-tab-appearance = Giao diện

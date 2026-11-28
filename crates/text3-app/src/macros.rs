@@ -3,7 +3,7 @@
 //! Format (version 1), one entry per line:
 //!
 //! ```text
-//! sanain-macros 1
+//! text3-macros 1
 //! macro Wrap in quotes
 //! insert "
 //! line-end
@@ -29,7 +29,13 @@ use std::path::Path;
 
 use crate::editor::Command;
 
-const HEADER: &str = "sanain-macros 1";
+const HEADER: &str = "text3-macros 1";
+/// The header before the rename to Text³ (docs/REBRAND.md).
+const LEGACY_HEADER: &str = "sanain-macros 1";
+
+fn known_header(line: Option<&str>) -> bool {
+    matches!(line.map(str::trim), Some(HEADER | LEGACY_HEADER))
+}
 const FILE: &str = "macros";
 
 /// Most macros kept.
@@ -127,7 +133,7 @@ impl MacroStore {
             return false;
         }
         let mut lines = text.lines();
-        if lines.next().map(str::trim) != Some(HEADER) {
+        if !known_header(lines.next()) {
             return false;
         }
         let blocks = lines.filter(|l| l.starts_with("macro ")).count();
@@ -140,7 +146,7 @@ impl MacroStore {
             return store;
         }
         let mut lines = text.lines();
-        if lines.next().map(str::trim) != Some(HEADER) {
+        if !known_header(lines.next()) {
             return store;
         }
         // The macro being read: its name (None if invalid) and steps (None
@@ -450,7 +456,7 @@ mod tests {
         s.insert("  All steps ", &every_step()).unwrap();
         s.insert("Ääkköset 😀", &[Command::NewLine]).unwrap();
         let text = s.encode();
-        assert!(text.starts_with("sanain-macros 1\nmacro All steps\n"));
+        assert!(text.starts_with("text3-macros 1\nmacro All steps\n"));
         assert!(text.contains("insert \\slead, trail\\s\n"));
         assert!(
             text.lines().all(|l| l == l.trim()),

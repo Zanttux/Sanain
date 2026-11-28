@@ -475,10 +475,33 @@ cli-help-integration =
     Integráció a fájlkezelővel (csak az aktuális felhasználónak):
       text3 --register            a Text³ hozzáadása a „Megnyitás ezzel” menühöz (Linux, Windows)
       text3 --unregister          eltávolítás onnan
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  a Text³ legyen ezeknek a fájloknak az alapértelmezett alkalmazása
 cli-registered = A Text³ bekerült a „Megnyitás ezzel” menübe. { $place }
 cli-unregistered = A Text³ kikerült a „Megnyitás ezzel” menüből.
 cli-register-failed = A fájlkezelő-integrációt nem sikerült módosítani: { $reason }
 cli-register-macos = macOS-en semmit sem kell regisztrálni: amint a Text³.app az Alkalmazások mappában van, a Finder felkínálja a „Megnyitás ezzel” menüben.
+cli-default-apps-set = A Text³ mostantól ezeket a fájltípusokat nyitja meg: { $types }
+cli-default-apps-unknown = Ismeretlen fájltípus-csoport: { $group }. Ismert csoportok: plain, markdown, code, data, web.
+default-apps-title = Fájlok megnyitása a Text³ programmal
+default-apps-body = A Text³ lehet az alkalmazás, amely dupla kattintásra megnyitja ezeket a fájlokat. Ezt később a Beállítások › Általános részben módosíthatod.
+default-apps-body-windows = Windowson az alapértelmezett alkalmazásokat te választod ki: a Text³ megnyitja a Beállítások › Alapértelmezett alkalmazások oldalt, ahol minden fájltípushoz kiválaszthatod a Text³ programot.
+default-apps-unavailable = A Text³ ezen példánya nem módosíthatja az alapértelmezett alkalmazásokat: hordozható példány, vagy macOS-en nem a Text³.app-ból indult.
+default-apps-plain = Szöveg és naplók
+default-apps-markdown = Markdown
+default-apps-code = Forráskód és szkriptek
+default-apps-data = Adatok és konfiguráció
+default-apps-web = Weboldalak és stílusok
+default-apps-is-default = már a Text³
+default-apps-apply = A Text³ legyen az alapértelmezett
+default-apps-open-settings = Windows Beállítások megnyitása
+default-apps-not-now = Most nem
+default-apps-close = Bezárás
+default-apps-done = A Text³ mostantól a kiválasztott fájltípusokat nyitja meg.
+default-apps-settings-opened = A Windows Beállítások meg van nyitva: válaszd ki a Text³ programot azokhoz a fájltípusokhoz, amelyeket meg kell nyitnia.
+default-apps-failed = Az alapértelmezett alkalmazások nem módosíthatók: { $reason }
+settings-default-apps = Alapértelmezett alkalmazások
+settings-default-apps-button = Fájltípusok kiválasztása…
 settings-tab-general = Általános
 settings-tab-editor = Szerkesztő
 settings-tab-appearance = Megjelenés

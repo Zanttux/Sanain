@@ -475,10 +475,33 @@ cli-help-integration =
     Integration in den Dateimanager (nur für den aktuellen Benutzer):
       text3 --register            Text³ zu „Öffnen mit“ hinzufügen (Linux, Windows)
       text3 --unregister          wieder entfernen
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  Text³ als Standard-App für diese Dateien festlegen
 cli-registered = Text³ wurde zu „Öffnen mit“ hinzugefügt. { $place }
 cli-unregistered = Text³ wurde aus „Öffnen mit“ entfernt.
 cli-register-failed = Die Integration in den Dateimanager konnte nicht geändert werden: { $reason }
 cli-register-macos = Unter macOS muss nichts registriert werden: Sobald sich Text³.app im Ordner „Programme“ befindet, bietet der Finder es unter „Öffnen mit“ an.
+cli-default-apps-set = Text³ öffnet jetzt diese Dateitypen: { $types }
+cli-default-apps-unknown = Unbekannte Dateitypgruppe: { $group }. Bekannte Gruppen: plain, markdown, code, data, web.
+default-apps-title = Dateien mit Text³ öffnen
+default-apps-body = Text³ kann die App sein, die diese Dateien bei einem Doppelklick öffnet. Du kannst das später unter Einstellungen › Allgemein ändern.
+default-apps-body-windows = Unter Windows wählst du die Standard-Apps selbst: Text³ öffnet Einstellungen › Standard-Apps, wo du Text³ für jeden Dateityp auswählst.
+default-apps-unavailable = Diese Kopie von Text³ kann die Standard-Apps nicht ändern: Sie ist eine portable Kopie oder wurde unter macOS nicht aus Text³.app gestartet.
+default-apps-plain = Text und Protokolle
+default-apps-markdown = Markdown
+default-apps-code = Quellcode und Skripte
+default-apps-data = Daten und Konfiguration
+default-apps-web = Webseiten und Stile
+default-apps-is-default = bereits Text³
+default-apps-apply = Text³ als Standard festlegen
+default-apps-open-settings = Windows-Einstellungen öffnen
+default-apps-not-now = Nicht jetzt
+default-apps-close = Schließen
+default-apps-done = Text³ öffnet jetzt die gewählten Dateitypen.
+default-apps-settings-opened = Die Windows-Einstellungen sind geöffnet: Wähle Text³ für die Dateitypen, die es öffnen soll.
+default-apps-failed = Die Standard-Apps konnten nicht geändert werden: { $reason }
+settings-default-apps = Standard-Apps
+settings-default-apps-button = Dateitypen wählen…
 settings-tab-general = Allgemein
 settings-tab-editor = Editor
 settings-tab-appearance = Erscheinungsbild

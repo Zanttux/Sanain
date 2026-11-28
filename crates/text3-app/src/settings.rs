@@ -1,6 +1,7 @@
 //! User settings, stored as a small versioned text file.
 //!
-//! Format: first line `sanain-settings 1`, then `key=value` lines. Unknown
+//! Format: first line `text3-settings 1` (`sanain-settings 1`, written
+//! before the rename, is read the same way), then `key=value` lines. Unknown
 //! keys and invalid values are ignored (the default is kept), so files from
 //! newer versions or hand edits never prevent startup.
 
@@ -8,7 +9,9 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
-const HEADER: &str = "sanain-settings 1";
+const HEADER: &str = "text3-settings 1";
+/// The header before the rename to Text³ (docs/REBRAND.md).
+const LEGACY_HEADER: &str = "sanain-settings 1";
 
 pub const FONT_SIZE_MIN: f32 = 8.0;
 pub const FONT_SIZE_MAX: f32 = 40.0;
@@ -111,6 +114,9 @@ pub struct Settings {
     pub color_theme: Option<String>,
     /// Show the character and word count in the status bar.
     pub show_counts: bool,
+    /// The first-start offer to become the default app was answered
+    /// (or `--default-apps` was run), so it is not shown again (#164).
+    pub default_apps_asked: bool,
 }
 
 impl Default for Settings {
@@ -131,6 +137,7 @@ impl Default for Settings {
             editor_font: None,
             color_theme: None,
             show_counts: true,
+            default_apps_asked: false,
         }
     }
 }
@@ -174,13 +181,14 @@ impl Settings {
             out.push_str(&format!("locale={l}\n"));
         }
         out.push_str(&format!(
-            "check_updates={}\nlast_update_check={}\nlocal_history={}\nword_wrap={}\nhot_exit={}\nshow_counts={}\n",
+            "check_updates={}\nlast_update_check={}\nlocal_history={}\nword_wrap={}\nhot_exit={}\nshow_counts={}\ndefault_apps_asked={}\n",
             self.check_updates,
             self.last_update_check,
             self.local_history,
             self.word_wrap,
             self.hot_exit,
-            self.show_counts
+            self.show_counts,
+            self.default_apps_asked
         ));
         if let Some(f) = &self.editor_font {
             out.push_str(&format!("editor_font={f}\n"));
@@ -196,7 +204,7 @@ impl Settings {
     /// `None` only if the header is wrong (a different or unknown format).
     pub fn decode(text: &str) -> Option<Self> {
         let mut lines = text.lines();
-        if lines.next()?.trim() != HEADER {
+        if !matches!(lines.next()?.trim(), HEADER | LEGACY_HEADER) {
             return None;
         }
         let mut s = Settings::default();
@@ -235,6 +243,7 @@ impl Settings {
                 "word_wrap" => s.word_wrap = v.parse().unwrap_or(true),
                 "hot_exit" => s.hot_exit = v.parse().unwrap_or(true),
                 "show_counts" => s.show_counts = v.parse().unwrap_or(true),
+                "default_apps_asked" => s.default_apps_asked = v.parse().unwrap_or(false),
                 "editor_font" if !v.is_empty() && v.len() <= 200 => {
                     s.editor_font = Some(v.to_owned())
                 }
@@ -333,6 +342,19 @@ mod tests {
     }
     use super::*;
 
+    /// Written as Text³; files from Sanain are still read (docs/REBRAND.md).
+    #[test]
+    fn header_new_and_legacy() {
+        let s = Settings {
+            tab_width: 3,
+            ..Settings::default()
+        };
+        assert!(s.encode().starts_with("text3-settings 1\n"));
+        let old = Settings::decode("sanain-settings 1\ntab_width=3\n").unwrap();
+        assert_eq!(old.tab_width, 3);
+        assert_eq!(Settings::decode("other-settings 1\ntab_width=3\n"), None);
+    }
+
     #[test]
     fn round_trip() {
         let s = Settings {
@@ -356,6 +378,7 @@ mod tests {
             editor_font: Some("JetBrains Mono".into()),
             color_theme: Some("nord".into()),
             show_counts: false,
+            default_apps_asked: true,
         };
         assert_eq!(Settings::decode(&s.encode()), Some(s.clone()));
         let hc = Settings {

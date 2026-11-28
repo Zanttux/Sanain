@@ -451,10 +451,33 @@ cli-help-integration =
     與檔案管理器整合（僅限目前使用者）：
       text3 --register            將 Text³ 加入「開啟檔案」（Linux、Windows）
       text3 --unregister          再次移除
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  將 Text³ 設為這些檔案的預設 App
 cli-registered = 已將 Text³ 加入「開啟檔案」。{ $place }
 cli-unregistered = 已從「開啟檔案」中移除 Text³。
 cli-register-failed = 無法變更檔案管理器整合：{ $reason }
 cli-register-macos = macOS 上無需註冊：只要 Text³.app 位於「應用程式」檔案夾中，Finder 就會在「開啟檔案」中提供它。
+cli-default-apps-set = Text³ 現在會開啟這些檔案類型：{ $types }
+cli-default-apps-unknown = 不明的檔案類型群組：{ $group }。可用的群組：plain, markdown, code, data, web。
+default-apps-title = 用 Text³ 開啟檔案
+default-apps-body = Text³ 可以成為按兩下這些檔案時開啟它們的 App。你可以稍後在「設定 › 一般」中變更。
+default-apps-body-windows = 在 Windows 中，預設 App 由你自行選擇：Text³ 會開啟「設定 › 預設應用程式」，你可以在那裡為每種檔案類型選擇 Text³。
+default-apps-unavailable = 此 Text³ 副本無法變更預設 App：它是可攜版，或在 macOS 上不是從 Text³.app 啟動的。
+default-apps-plain = 文字與記錄檔
+default-apps-markdown = Markdown
+default-apps-code = 原始碼與指令碼
+default-apps-data = 資料與設定
+default-apps-web = 網頁與樣式
+default-apps-is-default = 已是 Text³
+default-apps-apply = 將 Text³ 設為預設
+default-apps-open-settings = 開啟 Windows 設定
+default-apps-not-now = 以後再說
+default-apps-close = 關閉
+default-apps-done = Text³ 現在會開啟所選的檔案類型。
+default-apps-settings-opened = Windows 設定已開啟：請為 Text³ 應開啟的檔案類型選擇 Text³。
+default-apps-failed = 無法變更預設 App：{ $reason }
+settings-default-apps = 預設 App
+settings-default-apps-button = 選擇檔案類型…
 settings-tab-general = 一般
 settings-tab-editor = 編輯器
 settings-tab-appearance = 外觀
