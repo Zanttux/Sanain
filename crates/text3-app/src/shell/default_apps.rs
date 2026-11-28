@@ -221,78 +221,93 @@ mod tests {
             out.platform_output.accesskit_update
         }
 
-        /// Centre of the node labelled `label` (buttons) or with that
-        /// value (text labels), if shown.
-        fn find(&mut self, label: &str) -> Option<egui::Pos2> {
+        /// The AccessKit node labelled `label` (buttons, check boxes) or
+        /// with that value (text labels), if shown.
+        fn find(&mut self, label: &str) -> Option<egui::accesskit::NodeId> {
             self.frame(Vec::new());
             let update = self.frame(Vec::new())?;
-            update.nodes.into_iter().find_map(|(_, n)| {
-                (n.label() == Some(label) || n.value() == Some(label))
-                    .then(|| n.bounds())
-                    .flatten()
-                    .map(|b| egui::pos2(((b.x0 + b.x1) / 2.0) as f32, ((b.y0 + b.y1) / 2.0) as f32))
+            update.nodes.into_iter().find_map(|(id, n)| {
+                (n.label() == Some(label) || n.value() == Some(label)).then_some(id)
             })
         }
 
+        /// Activate it as a screen reader would. (Pointer positions from
+        /// the tree go stale once the window has settled.)
         fn click(&mut self, label: &str) {
-            let pos = self.find(label).unwrap_or_else(|| panic!("no {label:?}"));
-            let button = |pressed| egui::Event::PointerButton {
-                pos,
-                button: egui::PointerButton::Primary,
-                pressed,
-                modifiers: egui::Modifiers::NONE,
-            };
-            self.frame(vec![egui::Event::PointerMoved(pos)]);
-            self.frame(vec![button(true)]);
-            self.frame(vec![button(false)]);
+            let target_node = self.find(label).unwrap_or_else(|| panic!("no {label:?}"));
+            self.frame(vec![egui::Event::AccessKitActionRequest(
+                egui::accesskit::ActionRequest {
+                    action: egui::accesskit::Action::Click,
+                    target_tree: egui::accesskit::TreeId::ROOT,
+                    target_node,
+                    data: None,
+                },
+            )]);
             self.frame(Vec::new());
         }
+    }
+
+    /// The window as each platform shows it (the test binary itself is
+    /// not Text³.app, so the kind of support is set by hand).
+    fn opened(support: Support) -> Harness {
+        let mut h = Harness::new();
+        h.shell.open_default_apps();
+        h.shell.default_apps.as_mut().unwrap().support = support;
+        h
     }
 
     #[test]
     fn not_now_is_remembered_and_settings_reopen_it() {
-        let mut h = Harness::new();
-        h.shell.open_default_apps();
-        // A test binary is not Text³.app (macOS): it cannot change
-        // defaults and says so; on Linux it could, and on Windows it would
-        // open Settings. Either way one button closes without changes.
-        let support = h.shell.default_apps.as_ref().unwrap().support;
-        let close = if support == Support::Unavailable {
-            assert!(
-                h.find(&h.shell.t("default-apps-unavailable", &[]))
-                    .is_some()
-            );
-            h.shell.t("default-apps-close", &[])
-        } else {
-            h.shell.t("default-apps-not-now", &[])
-        };
-        h.click(&close);
-        assert!(h.shell.default_apps.is_none(), "closed");
-        assert!(h.shell.settings.default_apps_asked);
-        // An answered offer is not made again.
-        h.shell.offer_default_apps();
-        assert!(h.shell.default_apps.is_none());
-        // Settings › General still opens it.
-        h.shell.open_default_apps();
-        assert!(h.shell.default_apps.is_some());
+        for (support, button) in [
+            (Support::Direct, "default-apps-not-now"),
+            (Support::SystemSettings, "default-apps-not-now"),
+            (Support::Unavailable, "default-apps-close"),
+        ] {
+            let mut h = opened(support);
+            if support == Support::Unavailable {
+                let note = h.shell.t("default-apps-unavailable", &[]);
+                assert!(h.find(&note).is_some());
+            }
+            let label = h.shell.t(button, &[]);
+            h.click(&label);
+            assert!(h.shell.default_apps.is_none(), "{support:?}: closed");
+            assert!(h.shell.settings.default_apps_asked, "{support:?}");
+            // An answered offer is not made again.
+            h.shell.offer_default_apps();
+            assert!(h.shell.default_apps.is_none());
+            // Settings › General still opens it.
+            h.shell.open_default_apps();
+            assert!(h.shell.default_apps.is_some());
+        }
     }
 
     #[test]
     fn closing_the_window_counts_as_answered() {
-        let mut h = Harness::new();
-        h.shell.open_default_apps();
-        h.frame(Vec::new());
-        h.frame(vec![egui::Event::Key {
-            key: egui::Key::Escape,
-            physical_key: None,
-            pressed: true,
-            repeat: false,
-            modifiers: egui::Modifiers::NONE,
-        }]);
-        // Escape does not close an egui window; the close button does.
-        assert!(h.shell.default_apps.is_some());
-        h.shell.default_apps = None;
-        assert!(!h.shell.settings.default_apps_asked);
+        let mut h = opened(Support::Direct);
+        // Ticking works from the keyboard and screen readers too.
+        let md = h.shell.t(Group::Markdown.label_id(), &[]);
+        h.click(&md);
+        assert!(
+            !h.shell.default_apps.as_ref().unwrap().chosen[1],
+            "unticked"
+        );
+        assert!(!h.shell.settings.default_apps_asked, "not answered yet");
+        h.click("Close window");
+        assert!(h.shell.default_apps.is_none());
+        assert!(h.shell.settings.default_apps_asked);
+    }
+
+    #[test]
+    fn groups_shown_only_where_they_can_be_set() {
+        let label = |h: &Harness| h.shell.t(Group::Markdown.label_id(), &[]);
+        let mut h = opened(Support::Direct);
+        let l = label(&h);
+        assert!(h.find(&l).is_some(), "checkboxes on macOS and Linux");
+        let mut h = opened(Support::SystemSettings);
+        let l = label(&h);
+        assert!(h.find(&l).is_none(), "Windows asks in its own Settings");
+        let open = h.shell.t("default-apps-open-settings", &[]);
+        assert!(h.find(&open).is_some());
     }
 
     #[test]
