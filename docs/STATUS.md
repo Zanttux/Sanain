@@ -43,6 +43,13 @@ are cross-platform verification and release readiness.
   read-only Launch Services lookup on macOS. Not tested: actually
   changing defaults on macOS/Linux/Windows (would change this machine's
   settings; needs a person or VM), the Windows Settings deep link.
+- Editor fonts (#176, docs/FONTS.md): six OFL fonts in `assets/fonts`
+  copied next to the program by scripts/package.py and
+  macos-bundle.sh (not compiled in; +1.8 MB download, no start-up or
+  memory cost); `fonts::FontList` with `RECOMMENDED` first. Tested: unit
+  tests (all six load by name as regular faces, licences present, bundle
+  layouts, ordering), bundle seal verified on macOS. Not tested by hand:
+  the font menu in a packaged build on Windows and Linux.
 - Goto Anything (ROADMAP gap, Should): Edit › Go to Anything…, Cmd/Ctrl+P
   (default and Notepad++ presets; Notepad++'s Ctrl+P is Print, which
   Text³ does not have). Palette mode `Mode::Anything` reusing the

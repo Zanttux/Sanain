@@ -11,6 +11,9 @@ rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "target/$profile/text3" "$app/Contents/MacOS/text3"
 cp packaging/icons/text3.icns packaging/icons/text3-document.icns "$app/Contents/Resources/"
+# Bundled editor fonts with their licences (#176), loaded only when chosen.
+rm -rf "$app/Contents/Resources/fonts"
+cp -R assets/fonts "$app/Contents/Resources/fonts"
 sed "s/@VERSION@/$version/g" packaging/macos/Info.plist > "$app/Contents/Info.plist"
 # Seal the whole bundle with an ad-hoc signature. The linker signs only the
 # executable; a downloaded (quarantined) bundle whose signature does not
