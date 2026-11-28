@@ -3,3 +3,16 @@
 .env.*
 *.local
 .DS_Store
+# Signing material never belongs in the repository (docs/SECURITY_SECRETS.md).
+*.p8
+*.p12
+*.pfx
+*.key
+*.pem
+*.cer
+*.mobileprovision
+*.provisionprofile
+*.keychain
+*.keychain-db
+AuthKey_*
+*.notarize.zip
