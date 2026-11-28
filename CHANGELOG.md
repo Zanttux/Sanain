@@ -4,6 +4,10 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.2.2] — 2026-11-28
+
+First release under the name Text³ (formerly Sanain).
+
 ### Performance
 - Speed and lightness are measured against other editors and shown on
   GitHub (#179): `scripts/bench/compare.py` (same method for every app:
