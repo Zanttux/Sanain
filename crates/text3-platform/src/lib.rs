@@ -13,6 +13,9 @@
 //! - macOS: [`default_editor`] and [`set_default_editor`] read and set
 //!   the user's default application for a content type (Launch
 //!   Services), for the Default apps dialog (#164).
+//! - macOS: [`bookmark`] and [`open_bookmark`] keep access to files the
+//!   user chose, across restarts, inside the App Store sandbox
+//!   (security-scoped bookmarks, #79).
 
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -242,6 +245,85 @@ mod finder {
             let _: () = msg_send![&*ws, activateFileViewerSelectingURLs: &*urls];
         }
         true
+    }
+}
+
+/// A security-scoped bookmark for `path`, a file or folder this process
+/// may use now (the user chose it). Stored and handed to
+/// [`open_bookmark`] after a restart, it gives the sandboxed App Store
+/// build access to the file again. `None` on other platforms or when the
+/// system refuses (outside the sandbox it usually works too).
+pub fn bookmark(path: &std::path::Path) -> Option<Vec<u8>> {
+    #[cfg(target_os = "macos")]
+    return bookmarks::create(path);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = path;
+        None
+    }
+}
+
+/// Resolve a bookmark from [`bookmark`] and start using the file it
+/// names; access lasts until the process exits. Returns the file's
+/// current path and, when the bookmark is out of date (the file moved),
+/// fresh bookmark data to store instead.
+pub fn open_bookmark(data: &[u8]) -> Option<(PathBuf, Option<Vec<u8>>)> {
+    #[cfg(target_os = "macos")]
+    return bookmarks::open(data);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = data;
+        None
+    }
+}
+
+#[cfg(target_os = "macos")]
+mod bookmarks {
+    use std::path::{Path, PathBuf};
+
+    use objc2::runtime::Bool;
+    use objc2_foundation::{
+        NSData, NSString, NSURL, NSURLBookmarkCreationOptions, NSURLBookmarkResolutionOptions,
+    };
+
+    pub(super) fn create(path: &Path) -> Option<Vec<u8>> {
+        let s = path.to_str()?;
+        let url = NSURL::fileURLWithPath(&NSString::from_str(s));
+        url.bookmarkDataWithOptions_includingResourceValuesForKeys_relativeToURL_error(
+            NSURLBookmarkCreationOptions::WithSecurityScope,
+            None,
+            None,
+        )
+        .ok()
+        .map(|d| d.to_vec())
+    }
+
+    pub(super) fn open(data: &[u8]) -> Option<(PathBuf, Option<Vec<u8>>)> {
+        let data = NSData::with_bytes(data);
+        let mut stale = Bool::NO;
+        // SAFETY: `stale` is a valid, writable Bool for the whole call;
+        // the other arguments are owned Objective-C objects or None.
+        #[allow(unsafe_code)]
+        let url = unsafe {
+            NSURL::URLByResolvingBookmarkData_options_relativeToURL_bookmarkDataIsStale_error(
+                &data,
+                NSURLBookmarkResolutionOptions::WithSecurityScope
+                    | NSURLBookmarkResolutionOptions::WithoutUI,
+                None,
+                &mut stale,
+            )
+        }
+        .ok()?;
+        // SAFETY: `url` came from a security-scoped bookmark. The access
+        // is never stopped on purpose: the file stays usable until exit.
+        #[allow(unsafe_code)]
+        let started = unsafe { url.startAccessingSecurityScopedResource() };
+        if !started {
+            return None;
+        }
+        let path = PathBuf::from(url.path()?.to_string());
+        let fresh = if stale.as_bool() { create(&path) } else { None };
+        Some((path, fresh))
     }
 }
 
@@ -511,5 +593,26 @@ mod tests {
         push_opened(vec![PathBuf::from("/a"), PathBuf::from("/b")]);
         assert_eq!(take_opened_files().len(), 2);
         assert!(take_opened_files().is_empty());
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn bookmarks_round_trip_outside_the_sandbox() {
+        let dir = std::env::temp_dir().join(format!("text3-bm-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("a b.txt");
+        std::fs::write(&file, "x").unwrap();
+        let data = bookmark(&file).expect("bookmark");
+        let (path, _) = open_bookmark(&data).expect("resolve");
+        assert_eq!(path.canonicalize().unwrap(), file.canonicalize().unwrap());
+        assert!(open_bookmark(b"not a bookmark").is_none());
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    #[test]
+    fn bookmarks_are_macos_only() {
+        assert!(bookmark(std::path::Path::new("/")).is_none());
+        assert!(open_bookmark(b"x").is_none());
     }
 }

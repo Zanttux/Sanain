@@ -13,7 +13,7 @@ windows-sys = { version = "0.59", default-features = false, features = ["Win32_S
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"
-objc2-foundation = { version = "0.3.2", default-features = false, features = ["std", "NSAppleEventManager", "NSAppleEventDescriptor", "NSString", "NSURL", "NSArray", "NSObject", "NSNotification", "objc2-core-services"] }
+objc2-foundation = { version = "0.3.2", default-features = false, features = ["std", "NSAppleEventManager", "NSAppleEventDescriptor", "NSString", "NSURL", "NSArray", "NSData", "NSError", "NSObject", "NSNotification", "objc2-core-services"] }
 
 # Same as the workspace lints, except that unsafe code is denied rather
 # than forbidden, so the audited blocks below can allow it one by one.

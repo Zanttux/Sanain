@@ -35,9 +35,13 @@ are cross-platform verification and release readiness.
   entitlements, `scripts/package-mas.sh`; Apple App ID
   `io.github.zanttux.text3`, distribution certificates, provisioning
   profile and the App Store Connect record "Text³" created in Chrome with
-  the owner signed in. Sandbox launch verified. Open: bookmarks for
-  recent files and session restore, NSWorkspace for Show in Finder, CI
-  upload job, listing; owner decides the price.
+  the owner signed in. Sandbox launch verified. Done since: Show in
+  Finder through NSWorkspace; security-scoped bookmarks for recent
+  files, session restore and hot exit (`text3_app::bookmarks`,
+  `text3_platform::{bookmark, open_bookmark}`; verified with a sandboxed
+  build: the file reopens after restart with the bookmark and is dropped
+  without it). Open: folder bookmarks for Find in Folder, CI upload job,
+  listing; owner decides the price.
 - Default apps (#164, D29): `text3_app::defaults` (five groups with
   extensions, MIME types and macOS content types; web pages unticked),
   `text3_platform::{default_editor, set_default_editor}` (Launch Services,

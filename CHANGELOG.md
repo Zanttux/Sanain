@@ -4,6 +4,12 @@ All notable changes are listed here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+- App Store build: files you opened come back after a restart inside the
+  sandbox. Open Recent, session restore and hot exit keep access through
+  security-scoped bookmarks (`bookmarks` in the config folder). Other
+  builds are unchanged (#79).
+
 ## [0.2.2] — 2026-11-28
 
 First release under the name Text³ (formerly Sanain).
