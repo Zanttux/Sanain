@@ -478,10 +478,33 @@ cli-help-integration =
     Liittäminen tiedostonhallintaan (vain nykyiselle käyttäjälle):
       text3 --register            lisää Text³ "Avaa sovelluksella" -valikkoon (Linux, Windows)
       text3 --unregister          poista se sieltä
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  tee Text³:sta näiden tiedostojen oletussovellus
 cli-registered = Text³ lisättiin "Avaa sovelluksella" -valikkoon. { $place }
 cli-unregistered = Text³ poistettiin "Avaa sovelluksella" -valikosta.
 cli-register-failed = Tiedostonhallinnan liitosta ei voitu muuttaa: { $reason }
 cli-register-macos = macOS:ssä mitään ei tarvitse rekisteröidä: kun Text³.app on Ohjelmat-kansiossa, Finder tarjoaa sitä Avaa sovelluksella -valikossa.
+cli-default-apps-set = Text³ avaa nyt nämä tiedostotyypit: { $types }
+cli-default-apps-unknown = Tuntematon tiedostotyyppiryhmä: { $group }. Ryhmät: plain, markdown, code, data, web.
+default-apps-title = Avaa tiedostot Text³:lla
+default-apps-body = Text³ voi olla sovellus, joka avaa nämä tiedostot, kun kaksoisnapsautat niitä. Voit muuttaa tätä myöhemmin kohdassa Asetukset › Yleiset.
+default-apps-body-windows = Windowsissa valitset oletussovellukset itse: Text³ avaa Asetukset › Oletussovellukset, jossa valitset Text³:n kullekin tiedostotyypille.
+default-apps-unavailable = Tämä Text³-kopio ei voi muuttaa oletussovelluksia: se on siirrettävä kopio, tai macOS:ssä sitä ei käynnistetty Text³.app-sovelluksesta.
+default-apps-plain = Tekstitiedostot ja lokit
+default-apps-markdown = Markdown
+default-apps-code = Lähdekoodi ja skriptit
+default-apps-data = Data ja asetustiedostot
+default-apps-web = Verkkosivut ja tyylit
+default-apps-is-default = jo Text³
+default-apps-apply = Tee Text³:sta oletus
+default-apps-open-settings = Avaa Windowsin asetukset
+default-apps-not-now = Ei nyt
+default-apps-close = Sulje
+default-apps-done = Text³ avaa nyt valitut tiedostotyypit.
+default-apps-settings-opened = Windowsin asetukset on auki: valitse Text³ tiedostotyypeille, jotka se avaa.
+default-apps-failed = Oletussovelluksia ei voitu muuttaa: { $reason }
+settings-default-apps = Oletussovellukset
+settings-default-apps-button = Valitse tiedostotyypit…
 settings-tab-general = Yleiset
 settings-tab-editor = Editori
 settings-tab-appearance = Ulkoasu

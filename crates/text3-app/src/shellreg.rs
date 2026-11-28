@@ -7,7 +7,8 @@
 //!   managers offer "Open With Text³".
 //! - Windows: per-user registry keys (HKCU) for "Edit with Text³" in the
 //!   Explorer context menu of every file and an "Open with" entry, written
-//!   with `reg.exe`.
+//!   with `reg.exe`, plus the ProgID and capabilities that list Text³ in
+//!   Settings › Default apps ([`crate::defaults::windows_reg_commands`]).
 //! - Both `--register` and `--unregister` also remove what Sanain (the
 //!   name before Text³) registered, so no stale "Edit with Sanain" entry
 //!   pointing at a removed program is left behind.
@@ -56,6 +57,13 @@ pub const MIME_TYPES: &[&str] = &[
     "text/javascript",
     "application/javascript",
     "text/x-typescript",
+    "text/x-c++hdr",
+    "text/x-python3",
+    "text/x-lua",
+    "application/sql",
+    "text/x-patch",
+    "text/x-diff",
+    "application/yaml",
 ];
 
 /// The `.desktop` entry for the executable at `exe`.
@@ -211,10 +219,12 @@ pub fn windows_reg_commands(exe: &Path, register: bool) -> Vec<Vec<String>> {
             ]),
         ];
         cmds.extend(legacy);
+        cmds.extend(crate::defaults::windows_reg_commands(&exe, true));
         cmds
     } else {
         let mut cmds = vec![s(&["delete", &menu, "/f"]), s(&["delete", &app, "/f"])];
         cmds.extend(legacy);
+        cmds.extend(crate::defaults::windows_reg_commands(&exe, false));
         cmds
     }
 }
@@ -342,7 +352,10 @@ mod tests {
             "per user only"
         );
         let undo = windows_reg_commands(Path::new(r"C:\Apps\Text3\text3.exe"), false);
-        assert_eq!(undo.len(), 4);
+        assert_eq!(
+            undo.len(),
+            4 + crate::defaults::windows_reg_commands("x", false).len()
+        );
         for key in LEGACY_WINDOWS_KEYS {
             let delete = vec!["delete".to_owned(), key.to_owned(), "/f".to_owned()];
             assert!(undo.contains(&delete), "unregister removes {key}");

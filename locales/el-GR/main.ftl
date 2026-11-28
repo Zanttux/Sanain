@@ -475,10 +475,33 @@ cli-help-integration =
     Ενσωμάτωση στη διαχείριση αρχείων (μόνο για τον τρέχοντα χρήστη):
       text3 --register            προσθήκη του Text³ στο «Άνοιγμα με» (Linux, Windows)
       text3 --unregister          αφαίρεσή του ξανά
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  ορισμός του Text³ ως προεπιλεγμένης εφαρμογής για αυτά τα αρχεία
 cli-registered = Το Text³ προστέθηκε στο «Άνοιγμα με». { $place }
 cli-unregistered = Το Text³ αφαιρέθηκε από το «Άνοιγμα με».
 cli-register-failed = Δεν ήταν δυνατή η αλλαγή της ενσωμάτωσης στη διαχείριση αρχείων: { $reason }
 cli-register-macos = Στο macOS δεν χρειάζεται καμία καταχώριση: μόλις το Text³.app βρίσκεται στον φάκελο «Εφαρμογές», το Finder το προσφέρει στο «Άνοιγμα με».
+cli-default-apps-set = Το Text³ ανοίγει πλέον αυτούς τους τύπους αρχείων: { $types }
+cli-default-apps-unknown = Άγνωστη ομάδα τύπων αρχείων: { $group }. Γνωστές ομάδες: plain, markdown, code, data, web.
+default-apps-title = Άνοιγμα αρχείων με το Text³
+default-apps-body = Το Text³ μπορεί να είναι η εφαρμογή που ανοίγει αυτά τα αρχεία όταν κάνετε διπλό κλικ. Μπορείτε να το αλλάξετε αργότερα στις Ρυθμίσεις › Γενικά.
+default-apps-body-windows = Στα Windows επιλέγετε εσείς τις προεπιλεγμένες εφαρμογές: το Text³ ανοίγει τις Ρυθμίσεις › Προεπιλεγμένες εφαρμογές, όπου επιλέγετε το Text³ για κάθε τύπο αρχείου.
+default-apps-unavailable = Αυτό το αντίγραφο του Text³ δεν μπορεί να αλλάξει τις προεπιλεγμένες εφαρμογές: είναι φορητό αντίγραφο ή, στο macOS, δεν ξεκίνησε από το Text³.app.
+default-apps-plain = Κείμενο και αρχεία καταγραφής
+default-apps-markdown = Markdown
+default-apps-code = Πηγαίος κώδικας και σενάρια
+default-apps-data = Δεδομένα και ρυθμίσεις
+default-apps-web = Ιστοσελίδες και στυλ
+default-apps-is-default = ήδη Text³
+default-apps-apply = Ορισμός του Text³ ως προεπιλογής
+default-apps-open-settings = Άνοιγμα Ρυθμίσεων των Windows
+default-apps-not-now = Όχι τώρα
+default-apps-close = Κλείσιμο
+default-apps-done = Το Text³ ανοίγει πλέον τους επιλεγμένους τύπους αρχείων.
+default-apps-settings-opened = Οι Ρυθμίσεις των Windows είναι ανοιχτές: επιλέξτε το Text³ για τους τύπους αρχείων που πρέπει να ανοίγει.
+default-apps-failed = Δεν ήταν δυνατή η αλλαγή των προεπιλεγμένων εφαρμογών: { $reason }
+settings-default-apps = Προεπιλεγμένες εφαρμογές
+settings-default-apps-button = Επιλογή τύπων αρχείων…
 settings-tab-general = Γενικά
 settings-tab-editor = Επεξεργαστής
 settings-tab-appearance = Εμφάνιση

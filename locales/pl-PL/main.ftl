@@ -523,10 +523,33 @@ cli-help-integration =
     Integracja z menedżerem plików (tylko bieżący użytkownik):
       text3 --register            dodaj Text³ do menu „Otwórz za pomocą” (Linux, Windows)
       text3 --unregister          usuń go ponownie
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  ustaw Text³ jako domyślną aplikację dla tych plików
 cli-registered = Dodano Text³ do menu „Otwórz za pomocą”. { $place }
 cli-unregistered = Usunięto Text³ z menu „Otwórz za pomocą”.
 cli-register-failed = Nie można zmienić integracji z menedżerem plików: { $reason }
 cli-register-macos = W systemie macOS nie trzeba niczego rejestrować: gdy Text³.app znajdzie się w folderze Aplikacje, Finder zaproponuje go w menu „Otwórz za pomocą”.
+cli-default-apps-set = Text³ otwiera teraz te typy plików: { $types }
+cli-default-apps-unknown = Nieznana grupa typów plików: { $group }. Znane grupy: plain, markdown, code, data, web.
+default-apps-title = Otwieraj pliki w Text³
+default-apps-body = Text³ może być aplikacją, która otwiera te pliki po dwukrotnym kliknięciu. Możesz to później zmienić w Ustawienia › Ogólne.
+default-apps-body-windows = W systemie Windows aplikacje domyślne wybierasz sam: Text³ otwiera Ustawienia › Aplikacje domyślne, gdzie wybierasz Text³ dla każdego typu pliku.
+default-apps-unavailable = Ta kopia Text³ nie może zmienić aplikacji domyślnych: jest to kopia przenośna lub w systemie macOS nie została uruchomiona z Text³.app.
+default-apps-plain = Tekst i dzienniki
+default-apps-markdown = Markdown
+default-apps-code = Kod źródłowy i skrypty
+default-apps-data = Dane i konfiguracja
+default-apps-web = Strony internetowe i style
+default-apps-is-default = już Text³
+default-apps-apply = Ustaw Text³ jako domyślną
+default-apps-open-settings = Otwórz Ustawienia systemu Windows
+default-apps-not-now = Nie teraz
+default-apps-close = Zamknij
+default-apps-done = Text³ otwiera teraz wybrane typy plików.
+default-apps-settings-opened = Ustawienia systemu Windows są otwarte: wybierz Text³ dla typów plików, które ma otwierać.
+default-apps-failed = Nie udało się zmienić aplikacji domyślnych: { $reason }
+settings-default-apps = Aplikacje domyślne
+settings-default-apps-button = Wybierz typy plików…
 settings-tab-general = Ogólne
 settings-tab-editor = Edytor
 settings-tab-appearance = Wygląd

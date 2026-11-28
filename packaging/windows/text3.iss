@@ -117,6 +117,35 @@ chinesesimplified.OpenWithTask=将 %1 添加到“打开方式”和文件资源
 chinesetraditional.IntegrationGroup=整合：
 chinesetraditional.OpenWithTask=將 %1 加入「開啟檔案」和檔案總管的快顯功能表
 
+; The installer's last page offers the Default apps choice (#164):
+; text3.exe --default-apps registers Text³ and opens Windows Settings.
+english.DefaultAppsRun=Open files with %1
+czech.DefaultAppsRun=Otevírat soubory v %1
+danish.DefaultAppsRun=Åbn filer med %1
+german.DefaultAppsRun=Dateien mit %1 öffnen
+greek.DefaultAppsRun=Άνοιγμα αρχείων με το %1
+spanish.DefaultAppsRun=Abrir archivos con %1
+finnish.DefaultAppsRun=Avaa tiedostot %1:lla
+french.DefaultAppsRun=Ouvrir les fichiers avec %1
+hungarian.DefaultAppsRun=Fájlok megnyitása a %1 programmal
+indonesian.DefaultAppsRun=Buka file dengan %1
+italian.DefaultAppsRun=Apri i file con %1
+japanese.DefaultAppsRun=%1 でファイルを開く
+korean.DefaultAppsRun=%1 앱으로 파일 열기
+norwegian.DefaultAppsRun=Åpne filer med %1
+dutch.DefaultAppsRun=Bestanden openen met %1
+polish.DefaultAppsRun=Otwieraj pliki w %1
+brazilianportuguese.DefaultAppsRun=Abrir arquivos com o %1
+portuguese.DefaultAppsRun=Abrir ficheiros com o %1
+romanian.DefaultAppsRun=Deschide fișierele cu %1
+russian.DefaultAppsRun=Открывать файлы в %1
+swedish.DefaultAppsRun=Öppna filer med %1
+turkish.DefaultAppsRun=Dosyaları %1 ile aç
+ukrainian.DefaultAppsRun=Відкривати файли в %1
+vietnamese.DefaultAppsRun=Mở tệp bằng %1
+chinesesimplified.DefaultAppsRun=用 %1 打开文件
+chinesetraditional.DefaultAppsRun=用 %1 開啟檔案
+
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 Name: "openwith"; Description: "{cm:OpenWithTask,{#AppName}}"; GroupDescription: "{cm:IntegrationGroup}"
@@ -144,6 +173,7 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\text3.exe"; Tasks: desktopico
 
 [Run]
 Filename: "{app}\text3.exe"; Parameters: "--register"; Tasks: openwith; Flags: runhidden
+Filename: "{app}\text3.exe"; Parameters: "--default-apps"; Description: "{cm:DefaultAppsRun,{#AppName}}"; Flags: nowait postinstall skipifsilent unchecked
 Filename: "{app}\text3.exe"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]

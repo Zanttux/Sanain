@@ -475,10 +475,33 @@ cli-help-integration =
     Integrasjon med filbehandleren (bare for gjeldende bruker):
       text3 --register            legg Text³ til i «Åpne med» (Linux, Windows)
       text3 --unregister          fjern den igjen
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  gjør Text³ til standardapp for disse filene
 cli-registered = Text³ ble lagt til i «Åpne med». { $place }
 cli-unregistered = Text³ ble fjernet fra «Åpne med».
 cli-register-failed = Integrasjonen med filbehandleren kunne ikke endres: { $reason }
 cli-register-macos = På macOS trenger ingenting å registreres: Når Text³.app ligger i Programmer-mappen, tilbyr Finder den under «Åpne med».
+cli-default-apps-set = Text³ åpner nå disse filtypene: { $types }
+cli-default-apps-unknown = Ukjent filtypegruppe: { $group }. Kjente grupper: plain, markdown, code, data, web.
+default-apps-title = Åpne filer med Text³
+default-apps-body = Text³ kan være appen som åpner disse filene når du dobbeltklikker på dem. Du kan endre dette senere under Innstillinger › Generelt.
+default-apps-body-windows = I Windows velger du standardapper selv: Text³ åpner Innstillinger › Standardapper, der du velger Text³ for hver filtype.
+default-apps-unavailable = Denne kopien av Text³ kan ikke endre standardappene: den er en bærbar kopi, eller på macOS ble den ikke startet fra Text³.app.
+default-apps-plain = Tekst og logger
+default-apps-markdown = Markdown
+default-apps-code = Kildekode og skript
+default-apps-data = Data og konfigurasjon
+default-apps-web = Nettsider og stiler
+default-apps-is-default = allerede Text³
+default-apps-apply = Gjør Text³ til standard
+default-apps-open-settings = Åpne Windows-innstillinger
+default-apps-not-now = Ikke nå
+default-apps-close = Lukk
+default-apps-done = Text³ åpner nå de valgte filtypene.
+default-apps-settings-opened = Windows-innstillinger er åpne: velg Text³ for filtypene den skal åpne.
+default-apps-failed = Standardappene kunne ikke endres: { $reason }
+settings-default-apps = Standardapper
+settings-default-apps-button = Velg filtyper…
 settings-tab-general = Generelt
 settings-tab-editor = Redigering
 settings-tab-appearance = Utseende

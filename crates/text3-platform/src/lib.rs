@@ -10,6 +10,9 @@
 //!   invoking console without allocating a console window, and
 //!   [`system_program`] names programs that ship with the system by their
 //!   full path.
+//! - macOS: [`default_editor`] and [`set_default_editor`] read and set
+//!   the user's default application for a content type (Launch
+//!   Services), for the Default apps dialog (#164).
 
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -172,6 +175,97 @@ pub fn file_url_to_path(url: &str) -> Option<PathBuf> {
     let s = String::from_utf8(bytes).ok()?;
     let s = s.trim_end_matches('/');
     (!s.is_empty()).then(|| PathBuf::from(s))
+}
+
+/// Bundle identifier of the user's default application for the content
+/// type `uti` (e.g. `public.plain-text`), any role. `None` when there is
+/// none or on other platforms.
+pub fn default_editor(uti: &str) -> Option<String> {
+    #[cfg(target_os = "macos")]
+    return launch_services::default_handler(uti);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = uti;
+        None
+    }
+}
+
+/// Make the application `bundle_id` the user's default for the content
+/// type `uti`, all roles. The system may ask the user to confirm. Errors
+/// carry the Launch Services status; other platforms return an error.
+pub fn set_default_editor(uti: &str, bundle_id: &str) -> std::io::Result<()> {
+    #[cfg(target_os = "macos")]
+    return launch_services::set_default_handler(uti, bundle_id);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = (uti, bundle_id);
+        Err(std::io::Error::other("only available on macOS"))
+    }
+}
+
+#[cfg(target_os = "macos")]
+mod launch_services {
+    use std::ffi::c_void;
+
+    use objc2::rc::Retained;
+    use objc2_foundation::NSString;
+
+    /// `kLSRolesAll` from LSConstants.h.
+    const ROLES_ALL: u32 = 0xFFFF_FFFF;
+
+    // SAFETY: the declarations match LSInfo.h (CFStringRef arguments and
+    // result, LSRolesMask is UInt32, OSStatus is SInt32).
+    #[allow(unsafe_code)]
+    #[link(name = "CoreServices", kind = "framework")]
+    unsafe extern "C" {
+        // Deprecated in favour of NSWorkspace's asynchronous calls (macOS
+        // 12+), but still supported; Text³ runs on macOS 11 as well.
+        fn LSCopyDefaultRoleHandlerForContentType(
+            content_type: *const c_void,
+            role: u32,
+        ) -> *mut c_void;
+        fn LSSetDefaultRoleHandlerForContentType(
+            content_type: *const c_void,
+            role: u32,
+            bundle_id: *const c_void,
+        ) -> i32;
+    }
+
+    /// NSString is toll-free bridged to CFString: the same pointer is a
+    /// valid CFStringRef for as long as the NSString lives.
+    fn cf(s: &NSString) -> *const c_void {
+        (s as *const NSString).cast()
+    }
+
+    pub(super) fn default_handler(uti: &str) -> Option<String> {
+        let uti = NSString::from_str(uti);
+        // SAFETY: `uti` is a valid CFStringRef (toll-free bridged) that
+        // outlives the call; the function only reads it.
+        #[allow(unsafe_code)]
+        let raw = unsafe { LSCopyDefaultRoleHandlerForContentType(cf(&uti), ROLES_ALL) };
+        // SAFETY: a non-null result is a CFStringRef we own (the Copy
+        // rule, +1); CFString is bridged to NSString, so `Retained` takes
+        // that reference over and releases it once.
+        #[allow(unsafe_code)]
+        let id: Option<Retained<NSString>> = unsafe { Retained::from_raw(raw.cast()) };
+        id.map(|s| s.to_string())
+    }
+
+    pub(super) fn set_default_handler(uti: &str, bundle_id: &str) -> std::io::Result<()> {
+        let uti = NSString::from_str(uti);
+        let id = NSString::from_str(bundle_id);
+        // SAFETY: both arguments are valid CFStringRefs (toll-free bridged)
+        // that outlive the call; the function only reads them.
+        #[allow(unsafe_code)]
+        let status = unsafe { LSSetDefaultRoleHandlerForContentType(cf(&uti), ROLES_ALL, cf(&id)) };
+        if status == 0 {
+            Ok(())
+        } else {
+            Err(std::io::Error::other(format!(
+                "Launch Services error {status}"
+            )))
+        }
+    }
 }
 
 #[cfg(target_os = "macos")]
@@ -342,6 +436,21 @@ mod tests {
             assert!(Path::new("/usr/bin/open").is_file());
         } else {
             assert_eq!((reg, explorer), (None, None));
+        }
+    }
+
+    /// Reading is harmless; setting is not tested (it would change the
+    /// user's defaults).
+    #[test]
+    fn default_editor_lookup() {
+        let plain = default_editor("public.plain-text");
+        if cfg!(target_os = "macos") {
+            // Every Mac has a handler for plain text (TextEdit at least).
+            assert!(plain.is_some_and(|id| id.contains('.')));
+            assert_eq!(default_editor("invalid.text3.no-such-type"), None);
+        } else {
+            assert_eq!(plain, None);
+            assert!(set_default_editor("public.plain-text", "x.y").is_err());
         }
     }
 

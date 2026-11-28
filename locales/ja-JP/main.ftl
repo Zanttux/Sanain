@@ -451,10 +451,33 @@ cli-help-integration =
     ファイルマネージャーとの統合（現在のユーザーのみ）:
       text3 --register            Text³ を「プログラムから開く」に追加（Linux、Windows）
       text3 --unregister          再び削除
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  これらのファイルの既定のアプリを Text³ にする
 cli-registered = Text³ を「プログラムから開く」に追加しました。{ $place }
 cli-unregistered = Text³ を「プログラムから開く」から削除しました。
 cli-register-failed = ファイルマネージャーとの統合を変更できませんでした: { $reason }
 cli-register-macos = macOS では登録は不要です。Text³.app を「アプリケーション」フォルダに入れると、Finder の「プログラムから開く」に表示されます。
+cli-default-apps-set = Text³ で次のファイルの種類を開くようになりました: { $types }
+cli-default-apps-unknown = 不明なファイルの種類グループです: { $group }。使用できるグループ: plain, markdown, code, data, web。
+default-apps-title = Text³ でファイルを開く
+default-apps-body = ダブルクリックしたときにこれらのファイルを開くアプリを Text³ にできます。あとで [設定] › [一般] で変更できます。
+default-apps-body-windows = Windows では既定のアプリをご自身で選びます。Text³ が [設定] › [既定のアプリ] を開くので、ファイルの種類ごとに Text³ を選んでください。
+default-apps-unavailable = この Text³ は既定のアプリを変更できません。ポータブル版であるか、macOS で Text³.app から起動されていません。
+default-apps-plain = テキストとログ
+default-apps-markdown = Markdown
+default-apps-code = ソースコードとスクリプト
+default-apps-data = データと設定ファイル
+default-apps-web = Web ページとスタイル
+default-apps-is-default = 既に Text³
+default-apps-apply = Text³ を既定にする
+default-apps-open-settings = Windows の設定を開く
+default-apps-not-now = 後で
+default-apps-close = 閉じる
+default-apps-done = 選んだファイルの種類を Text³ で開くようになりました。
+default-apps-settings-opened = Windows の設定が開いています。Text³ で開くファイルの種類に Text³ を選んでください。
+default-apps-failed = 既定のアプリを変更できませんでした: { $reason }
+settings-default-apps = 既定のアプリ
+settings-default-apps-button = ファイルの種類を選択…
 settings-tab-general = 一般
 settings-tab-editor = エディタ
 settings-tab-appearance = 外観

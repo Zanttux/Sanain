@@ -31,6 +31,18 @@ are cross-platform verification and release readiness.
   (#79).
 
 ## Done
+- Default apps (#164, D29): `text3_app::defaults` (five groups with
+  extensions, MIME types and macOS content types; web pages unticked),
+  `text3_platform::{default_editor, set_default_editor}` (Launch Services,
+  audited FFI), first-start offer and Settings › General button
+  (`shell/default_apps.rs`, `default_apps_asked` setting), CLI
+  `--default-apps[=groups]`, Windows ProgID `Text3.Document` +
+  capabilities + `RegisteredApplications` in `--register` (never
+  `UserChoice`) and Settings deep link, installer post-install option,
+  21 strings in 26 locales. Tested: unit tests, headless UI tests, a
+  read-only Launch Services lookup on macOS. Not tested: actually
+  changing defaults on macOS/Linux/Windows (would change this machine's
+  settings; needs a person or VM), the Windows Settings deep link.
 - Goto Anything (ROADMAP gap, Should): Edit › Go to Anything…, Cmd/Ctrl+P
   (default and Notepad++ presets; Notepad++'s Ctrl+P is Print, which
   Text³ does not have). Palette mode `Mode::Anything` reusing the

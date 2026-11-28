@@ -475,10 +475,33 @@ cli-help-integration =
     Integrazione con il file manager (solo per l’utente corrente):
       text3 --register            aggiunge Text³ ad «Apri con» (Linux, Windows)
       text3 --unregister          lo rimuove di nuovo
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  rendi Text³ l’app predefinita per questi file
 cli-registered = Text³ è stato aggiunto ad «Apri con». { $place }
 cli-unregistered = Text³ è stato rimosso da «Apri con».
 cli-register-failed = Impossibile modificare l’integrazione con il file manager: { $reason }
 cli-register-macos = Su macOS non serve registrare nulla: quando Text³.app si trova nella cartella Applicazioni, il Finder lo propone in «Apri con».
+cli-default-apps-set = Text³ ora apre questi tipi di file: { $types }
+cli-default-apps-unknown = Gruppo di tipi di file sconosciuto: { $group }. Gruppi noti: plain, markdown, code, data, web.
+default-apps-title = Apri i file con Text³
+default-apps-body = Text³ può essere l’app che apre questi file quando fai doppio clic. Puoi cambiarlo in seguito in Impostazioni › Generali.
+default-apps-body-windows = In Windows scegli tu le app predefinite: Text³ apre Impostazioni › App predefinite, dove scegli Text³ per ogni tipo di file.
+default-apps-unavailable = Questa copia di Text³ non può cambiare le app predefinite: è una copia portatile oppure, su macOS, non è stata avviata da Text³.app.
+default-apps-plain = Testo e log
+default-apps-markdown = Markdown
+default-apps-code = Codice sorgente e script
+default-apps-data = Dati e configurazione
+default-apps-web = Pagine web e stili
+default-apps-is-default = già Text³
+default-apps-apply = Rendi Text³ predefinita
+default-apps-open-settings = Apri Impostazioni di Windows
+default-apps-not-now = Non ora
+default-apps-close = Chiudi
+default-apps-done = Text³ ora apre i tipi di file scelti.
+default-apps-settings-opened = Le Impostazioni di Windows sono aperte: scegli Text³ per i tipi di file che deve aprire.
+default-apps-failed = Impossibile cambiare le app predefinite: { $reason }
+settings-default-apps = App predefinite
+settings-default-apps-button = Scegli i tipi di file…
 settings-tab-general = Generale
 settings-tab-editor = Editor
 settings-tab-appearance = Aspetto

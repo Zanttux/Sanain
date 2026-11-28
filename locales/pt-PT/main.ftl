@@ -499,10 +499,33 @@ cli-help-integration =
     Integração com o gestor de ficheiros (apenas o utilizador atual):
       text3 --register            adiciona o Text³ a "Abrir com" (Linux, Windows)
       text3 --unregister          remove-o novamente
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  tornar o Text³ a aplicação predefinida para estes ficheiros
 cli-registered = O Text³ foi adicionado a "Abrir com". { $place }
 cli-unregistered = O Text³ foi removido de "Abrir com".
 cli-register-failed = Não foi possível alterar a integração com o gestor de ficheiros: { $reason }
 cli-register-macos = No macOS não é necessário registar nada: assim que o Text³.app estiver na pasta Aplicações, o Finder disponibiliza-o em "Abrir com".
+cli-default-apps-set = O Text³ abre agora estes tipos de ficheiro: { $types }
+cli-default-apps-unknown = Grupo de tipos de ficheiro desconhecido: { $group }. Grupos conhecidos: plain, markdown, code, data, web.
+default-apps-title = Abrir ficheiros com o Text³
+default-apps-body = O Text³ pode ser a aplicação que abre estes ficheiros quando faz duplo clique neles. Pode alterar isto mais tarde em Definições › Geral.
+default-apps-body-windows = No Windows, é o utilizador que escolhe as aplicações predefinidas: o Text³ abre Definições › Aplicações predefinidas, onde escolhe o Text³ para cada tipo de ficheiro.
+default-apps-unavailable = Esta cópia do Text³ não pode alterar as aplicações predefinidas: é uma cópia portátil ou, no macOS, não foi iniciada a partir do Text³.app.
+default-apps-plain = Texto e registos
+default-apps-markdown = Markdown
+default-apps-code = Código-fonte e scripts
+default-apps-data = Dados e configuração
+default-apps-web = Páginas web e estilos
+default-apps-is-default = já é o Text³
+default-apps-apply = Tornar o Text³ predefinido
+default-apps-open-settings = Abrir Definições do Windows
+default-apps-not-now = Agora não
+default-apps-close = Fechar
+default-apps-done = O Text³ abre agora os tipos de ficheiro escolhidos.
+default-apps-settings-opened = As Definições do Windows estão abertas: escolha o Text³ para os tipos de ficheiro que deve abrir.
+default-apps-failed = Não foi possível alterar as aplicações predefinidas: { $reason }
+settings-default-apps = Aplicações predefinidas
+settings-default-apps-button = Escolher tipos de ficheiro…
 settings-tab-general = Geral
 settings-tab-editor = Editor
 settings-tab-appearance = Aspeto

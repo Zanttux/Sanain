@@ -477,10 +477,33 @@ cli-help-integration =
     Integration with the file manager (current user only):
       text3 --register            add Text³ to "Open With" (Linux, Windows)
       text3 --unregister          remove it again
+      text3 --default-apps[=plain,markdown,code,data,web]
+                                  make Text³ the default app for these files
 cli-registered = Text³ was added to "Open With". { $place }
 cli-unregistered = Text³ was removed from "Open With".
 cli-register-failed = The file manager integration could not be changed: { $reason }
 cli-register-macos = On macOS nothing needs to be registered: once Text³.app is in the Applications folder, Finder offers it in Open With.
+cli-default-apps-set = Text³ now opens these file types: { $types }
+cli-default-apps-unknown = Unknown file type group: { $group }. Known groups: plain, markdown, code, data, web.
+default-apps-title = Open files with Text³
+default-apps-body = Text³ can be the app that opens these files when you double-click them. You can change this later in Settings › General.
+default-apps-body-windows = On Windows you choose the default apps yourself: Text³ opens Settings › Default apps, where you pick Text³ for each file type.
+default-apps-unavailable = This copy of Text³ cannot change the default apps: it is a portable copy, or on macOS it was not started from Text³.app.
+default-apps-plain = Plain text and logs
+default-apps-markdown = Markdown
+default-apps-code = Source code and scripts
+default-apps-data = Data and configuration
+default-apps-web = Web pages and styles
+default-apps-is-default = already Text³
+default-apps-apply = Make Text³ the default
+default-apps-open-settings = Open Windows Settings
+default-apps-not-now = Not now
+default-apps-close = Close
+default-apps-done = Text³ now opens the chosen file types.
+default-apps-settings-opened = Windows Settings is open: choose Text³ for the file types it should open.
+default-apps-failed = The default apps could not be changed: { $reason }
+settings-default-apps = Default apps
+settings-default-apps-button = Choose file types…
 settings-tab-general = General
 settings-tab-editor = Editor
 settings-tab-appearance = Appearance
