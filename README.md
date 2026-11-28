@@ -8,7 +8,7 @@ Rust for Windows, macOS and Linux. Website: https://zanttux.github.io/text3/
 
 ![Text³ editing a Rust file with tabs and syntax highlighting](docs/screenshots/editor.png)
 
-> **Status: pre-alpha (0.2.1).** Unsigned development builds for macOS,
+> **Status: pre-alpha (0.2.2).** Unsigned development builds for macOS,
 > Windows and Linux are published automatically as the
 > [nightly pre-release](https://github.com/Zanttux/text3/releases/tag/nightly)
 > (macOS builds are signed and notarized; Windows may show a SmartScreen
