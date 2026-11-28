@@ -48,6 +48,8 @@ jobs:
           persist-credentials: false
       - run: rustup toolchain install
       - run: ${{ matrix.python }} scripts/package.py
+      # Lightness: downloads must stay within bench/budgets.json (#179).
+      - run: ${{ matrix.python }} scripts/bench/size-check.py
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: text3-${{ matrix.os }}
