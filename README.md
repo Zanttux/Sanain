@@ -15,6 +15,14 @@ Rust for Windows, macOS and Linux. Website: https://zanttux.github.io/text3/
 > Security › Open Anyway; Windows may show a SmartScreen warning). Tested by hand on macOS; Windows and Linux are
 > built and tested in CI but not yet tried interactively.
 
+## Fast and light
+
+Measured, not claimed: on a Mac, Text³ shows its window sooner than
+TextEdit, CotEditor and VS Code, with a fraction of VS Code's memory.
+Method, machine, versions and all numbers: [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+
+![Time to first window, compared](docs/performance/compare-window.svg)
+
 ## Features
 
 - **Editing:** tabs (drag to reorder, pin, close others), a split editor,

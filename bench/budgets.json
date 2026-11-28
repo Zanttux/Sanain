@@ -1,0 +1,5 @@
+{
+  "_comment": "Download size budgets in bytes (docs/QUALITY_GATES.md G2, #179). Raising one needs a decision in the pull request. Sizes 2026-11-28: 10.8-15.4 MB.",
+  "download_max_bytes": 18000000,
+  "unpacked_binary_max_bytes": 60000000
+}
