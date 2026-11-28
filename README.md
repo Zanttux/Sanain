@@ -15,7 +15,7 @@ Rust for Windows, macOS and Linux. Website: https://zanttux.github.io/text3/
 > Security › Open Anyway; Windows may show a SmartScreen warning). Tested by hand on macOS; Windows and Linux are
 > built and tested in CI but not yet tried interactively.
 
-## What works today
+## Features
 
 - **Editing:** tabs (drag to reorder, pin, close others), a split editor,
   multiple cursors (Option/Alt+click, Option/Alt+drag for a column
